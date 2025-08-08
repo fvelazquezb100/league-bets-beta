@@ -67,10 +67,11 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
         .from('bets')
         .insert({
           user_id: user.id,
-          selections: selectedBets,
           stake: parseFloat(stake),
-          total_odds: totalOdds,
-          potential_winnings: parseFloat(potentialWinnings),
+          odds: totalOdds,
+          payout: parseFloat(potentialWinnings),
+          match_description: selectedBets.map(bet => bet.matchDescription).join(' + '),
+          bet_selection: selectedBets.map(bet => `${bet.selection} @ ${bet.odds}`).join(' + '),
           status: 'pending'
         });
 
