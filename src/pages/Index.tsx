@@ -1,6 +1,40 @@
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 const Index = () => {
+  const { toast } = useToast();
+  const [isUpdatingCache, setIsUpdatingCache] = useState(false);
+
+  const handleUpdateCache = async () => {
+    setIsUpdatingCache(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('secure-run-update-football-cache');
+      
+      if (error) {
+        toast({
+          title: "Error",
+          description: `Failed to update cache: ${error.message}`,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Football cache updated successfully!"
+        });
+      }
+    } catch (err) {
+      toast({
+        title: "Error", 
+        description: `Network error: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        variant: "destructive"
+      });
+    } finally {
+      setIsUpdatingCache(false);
+    }
+  };
+
   return (
     <main>
       <section className="min-h-screen relative flex items-center justify-center bg-background">
@@ -22,6 +56,17 @@ const Index = () => {
             </Button>
             <Button variant="outline" size="lg" aria-label="Learn more about Betadona">
               Learn More
+            </Button>
+          </div>
+          
+          <div className="mt-8 flex justify-center">
+            <Button 
+              onClick={handleUpdateCache}
+              disabled={isUpdatingCache}
+              variant="outline"
+              size="sm"
+            >
+              {isUpdatingCache ? "Updating..." : "Test Cache Update"}
             </Button>
           </div>
         </article>
