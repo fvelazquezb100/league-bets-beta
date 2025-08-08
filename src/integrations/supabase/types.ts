@@ -128,7 +128,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      schedule_one_time_http_call: {
+        Args: {
+          job_name: string
+          schedule: string
+          url: string
+          auth_header: string
+          body: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
