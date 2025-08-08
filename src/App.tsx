@@ -10,7 +10,7 @@ import { Landing } from "./pages/Landing";
 import { Login } from "./pages/Login";
 import { Signup } from "./pages/Signup";
 import { Home } from "./pages/Home";
-import { Bets } from "./pages/Bets";
+import Bets from "./pages/Bets";
 import { BetHistory } from "./pages/BetHistory";
 import NotFound from "./pages/NotFound";
 
