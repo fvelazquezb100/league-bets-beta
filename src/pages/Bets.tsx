@@ -76,9 +76,7 @@ const Bets = () => {
         console.log("Data from cache:", apiData);
 
         if (apiData && Array.isArray(apiData.response)) {
-          const validMatches = apiData.response.filter(match => 
-            match.fixture && match.teams?.home && match.teams?.away
-          );
+          const validMatches = apiData.response.filter(match => match.fixture);
           setMatches(validMatches);
         } else {
           setMatches([]);
@@ -98,7 +96,7 @@ const Bets = () => {
   const handleAddToSlip = (match: MatchData, marketName: string, selection: BetValue) => {
     const bet = {
       id: `${match.fixture.id}-${marketName}-${selection.value}`,
-      matchDescription: `${match.teams.home.name} vs ${match.teams.away.name}`,
+      matchDescription: `${match.teams?.home?.name ?? 'Local'} vs ${match.teams?.away?.name ?? 'Visitante'}`,
       market: marketName,
       selection: selection.value,
       odds: parseFloat(selection.odd),
@@ -165,7 +163,7 @@ const Bets = () => {
               <AccordionItem value={`match-${match.fixture.id}`} key={match.fixture.id} className="border rounded-lg p-4 bg-white shadow-sm">
                 <AccordionTrigger>
                   <div className="text-left">
-                    <p className="font-bold text-lg">{match.teams.home.name} vs {match.teams.away.name}</p>
+                    <p className="font-bold text-lg">{match.teams?.home?.name ?? 'Local'} vs {match.teams?.away?.name ?? 'Visitante'}</p>
                     <p className="text-sm text-gray-500">{new Date(match.fixture.date).toLocaleString()}</p>
                   </div>
                 </AccordionTrigger>
@@ -173,12 +171,12 @@ const Bets = () => {
                   <div className="space-y-4 pt-4">
                     {matchWinnerMarket ? (
                       <div>
-                        <h4 className="font-semibold mb-2">Match Winner</h4>
+                        <h4 className="font-semibold mb-2">Ganador del Partido</h4>
                         <div className="grid grid-cols-3 gap-2">
                           {matchWinnerMarket.values.map(value => (
-                            <Button key={value.value} variant="outline" className="flex flex-col h-auto" onClick={() => handleAddToSlip(match, 'Match Winner', value)}>
-                              <span>{value.value}</span>
-                              <span className="font-bold">{value.odd}</span>
+                              <Button key={value.value} variant="outline" className="flex flex-col h-auto" onClick={() => handleAddToSlip(match, 'Ganador del Partido', value)}>
+                                <span>{value.value}</span>
+                                <span className="font-bold">{value.odd}</span>
                             </Button>
                           ))}
                         </div>
@@ -186,12 +184,12 @@ const Bets = () => {
                     ) : null}
                     {bttsMarket ? (
                        <div>
-                        <h4 className="font-semibold mb-2">Both Teams To Score</h4>
+                        <h4 className="font-semibold mb-2">Ambos Equipos Marcan</h4>
                         <div className="grid grid-cols-2 gap-2">
                           {bttsMarket.values.map(value => (
-                            <Button key={value.value} variant="outline" className="flex flex-col h-auto" onClick={() => handleAddToSlip(match, 'Both Teams To Score', value)}>
-                              <span>{value.value}</span>
-                              <span className="font-bold">{value.odd}</span>
+                              <Button key={value.value} variant="outline" className="flex flex-col h-auto" onClick={() => handleAddToSlip(match, 'Ambos Equipos Marcan', value)}>
+                                <span>{value.value}</span>
+                                <span className="font-bold">{value.odd}</span>
                             </Button>
                           ))}
                         </div>
@@ -199,12 +197,12 @@ const Bets = () => {
                     ) : null}
                     {goalsMarket ? (
                       <div>
-                        <h4 className="font-semibold mb-2">Goals Over/Under</h4>
+                        <h4 className="font-semibold mb-2">Goles Más/Menos de</h4>
                          <div className="grid grid-cols-2 gap-2">
                           {goalsMarket.values.map(value => (
-                            <Button key={value.value} variant="outline" className="flex flex-col h-auto" onClick={() => handleAddToSlip(match, 'Goals Over/Under', value)}>
-                              <span>{value.value}</span>
-                              <span className="font-bold">{value.odd}</span>
+                              <Button key={value.value} variant="outline" className="flex flex-col h-auto" onClick={() => handleAddToSlip(match, 'Goles Más/Menos de', value)}>
+                                <span>{value.value}</span>
+                                <span className="font-bold">{value.odd}</span>
                             </Button>
                           ))}
                         </div>
