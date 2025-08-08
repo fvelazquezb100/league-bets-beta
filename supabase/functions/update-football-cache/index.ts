@@ -27,8 +27,7 @@ Deno.serve(async (req) => {
     
     const fixturesResponse = await fetch(fixturesUrl, {
       headers: {
-        'x-rapidapi-host': 'v3.football.api-sports.io',
-        'x-rapidapi-key': apiKey,
+        'x-apisports-key': apiKey,
       },
     });
 
@@ -58,8 +57,7 @@ Deno.serve(async (req) => {
       console.log(`Fetching odds from: ${oddsUrl}`);
       const oddsResponse = await fetch(oddsUrl, {
          headers: {
-          'x-rapidapi-host': 'v3.football.api-sports.io',
-          'x-rapidapi-key': apiKey,
+          'x-apisports-key': apiKey,
         },
       });
 
