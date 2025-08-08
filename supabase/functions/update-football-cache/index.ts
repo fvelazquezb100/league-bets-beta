@@ -1,128 +1,104 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+console.log(`Function "update-football-cache" is starting.`);
 
-// League constant – easy to change
-const leagueId = 40; // UK Championship
+// Helper function to add a delay between API calls to respect rate limits
+const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
+Deno.serve(async (req) => {
   try {
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "https://jhsjszflscbpcfzuurwq.supabase.co";
-    const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const API_FOOTBALL_KEY = Deno.env.get("API_FOOTBALL_KEY");
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+    console.log("Supabase admin client initialized.");
 
-    if (!SERVICE_ROLE_KEY) throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY secret");
-    if (!API_FOOTBALL_KEY) throw new Error("Missing API_FOOTBALL_KEY secret");
-
-    const sb = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
-    console.log('Supabase admin client initialized.');
-
-    const baseUrl = "https://v3.football.api-sports.io";
-
+    const apiKey = Deno.env.get('API_FOOTBALL_KEY');
+    if (!apiKey) {
+      throw new Error('API_FOOTBALL_KEY is not set in Edge Function secrets.');
+    }
     console.log('API Key found. Starting two-step odds fetch...');
 
-    // 1) Get next 10 upcoming fixtures for the league
-    console.log(`Fetching fixtures from: ${baseUrl}/fixtures?league=${leagueId}&season=2025&next=10`);
-    const fixturesRes = await fetch(`${baseUrl}/fixtures?league=${leagueId}&season=2025&next=10`, {
-      headers: { "x-apisports-key": API_FOOTBALL_KEY },
-    });
-    if (!fixturesRes.ok) throw new Error(`Fixtures fetch failed: ${fixturesRes.status}`);
-    const fixturesJson = await fixturesRes.json();
-    const fixtures = fixturesJson?.response ?? [];
-
-    console.log(`Found ${fixtures.length} upcoming fixtures.`);
-
-    // 2) Fetch odds for each fixture
-    const oddsList = await Promise.all(
-      fixtures.map(async (fx: any) => {
-        const id = fx?.fixture?.id;
-        if (!id) return { fixtureId: null, odds: [] };
-        
-        console.log(`Fetching odds from: ${baseUrl}/odds?fixture=${id}`);
-        const oddsRes = await fetch(`${baseUrl}/odds?fixture=${id}`, {
-          headers: { "x-apisports-key": API_FOOTBALL_KEY },
-        });
-        const oddsJson = await oddsRes.json().catch(() => ({ response: [] }));
-        return { fixtureId: id, odds: oddsJson?.response ?? [] };
-      })
-    );
-
-    const oddsMap = new Map<number, any>();
-    oddsList.forEach((o) => {
-      if (o.fixtureId) oddsMap.set(o.fixtureId as number, o.odds);
+    // --- STEP 1: Fetch the NEXT 10 upcoming fixture IDs ---
+    const leagueId = 40; // UK Championship
+    const currentYear = new Date().getFullYear();
+    const fixturesUrl = `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${currentYear}&next=10`;
+    console.log(`Fetching fixtures from: ${fixturesUrl}`);
+    
+    const fixturesResponse = await fetch(fixturesUrl, {
+      headers: {
+        'x-rapidapi-host': 'v3.football.api-sports.io',
+        'x-rapidapi-key': apiKey,
+      },
     });
 
-    // 3) Combine fixtures with odds in the expected format
-    const combined = fixtures.map((fx: any) => {
-      const fixtureOdds = oddsMap.get(fx?.fixture?.id) ?? [];
-      return {
-        fixture: fx.fixture,
-        teams: fx.teams,
-        league: fx.league,
-        bookmakers: fixtureOdds.length > 0 ? fixtureOdds[0]?.bookmakers : []
-      };
-    });
-
-    // 4) Store in match_odds_cache with response wrapper for compatibility
-    const { error: upsertErr } = await sb
-      .from("match_odds_cache")
-      .upsert({ 
-        id: 1, 
-        data: { response: combined }, 
-        last_updated: new Date().toISOString() 
-      });
-    if (upsertErr) throw upsertErr;
-
-    console.log(`Successfully fetched odds for ${fixtures.length} matches.`);
-
-    // 5) Schedule results processing 5 hours after the last fixture of this set
-    if (fixtures.length > 0) {
-      const lastDate = fixtures
-        .map((f: any) => new Date(f?.fixture?.date))
-        .filter((d: Date) => !isNaN(d.getTime()))
-        .sort((a: Date, b: Date) => b.getTime() - a.getTime())[0];
-
-      if (lastDate) {
-        const runAt = new Date(lastDate.getTime() + 5 * 60 * 60 * 1000); // +5h
-        const pad = (n: number) => n.toString().padStart(2, "0");
-        const year = runAt.getUTCFullYear();
-        const month = runAt.getUTCMonth() + 1;
-        const day = runAt.getUTCDate();
-        const hour = runAt.getUTCHours();
-        const minute = runAt.getUTCMinutes();
-        const cron = `${minute} ${hour} ${day} ${month} *`;
-        const jobName = `process_results_${year}${pad(month)}${pad(day)}_${pad(hour)}${pad(minute)}`;
-
-        const url = `${SUPABASE_URL}/functions/v1/secure-run-process-matchday-results`;
-        const { data: jobId, error: schedErr } = await sb.rpc("schedule_one_time_http_call", {
-          job_name: jobName,
-          schedule: cron,
-          url,
-          auth_header: "", // public wrapper; no secrets here
-          body: { job_name: jobName },
-        });
-        if (schedErr) throw schedErr;
-      }
+    if (!fixturesResponse.ok) {
+      throw new Error(`Failed to fetch fixtures: ${await fixturesResponse.text()}`);
     }
 
+    const fixturesData = await fixturesResponse.json();
+    const fixtureIDs: number[] = fixturesData.response.map((item: any) => item.fixture.id);
+    console.log(`Found ${fixtureIDs.length} upcoming fixtures.`);
+
+    if (fixtureIDs.length === 0) {
+      console.log('No upcoming fixtures found. Cache will not be updated.');
+       return new Response(JSON.stringify({ message: 'No upcoming fixtures to fetch odds for.' }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    }
+
+    // --- STEP 2: Fetch odds for each of those fixture IDs ---
+    const allOddsData = [];
+    for (const fixtureId of fixtureIDs) {
+      const oddsUrl = `https://v3.football.api-sports.io/odds?fixture=${fixtureId}`;
+      console.log(`Fetching odds from: ${oddsUrl}`);
+      const oddsResponse = await fetch(oddsUrl, {
+         headers: {
+          'x-rapidapi-host': 'v3.football.api-sports.io',
+          'x-rapidapi-key': apiKey,
+        },
+      });
+
+      if (oddsResponse.ok) {
+        const oddsJson = await oddsResponse.json();
+        if (oddsJson.response && oddsJson.response.length > 0) {
+            allOddsData.push(...oddsJson.response);
+        }
+      } else {
+        console.warn(`Could not fetch odds for fixture ${fixtureId}: ${await oddsResponse.text()}`);
+      }
+      await delay(200); // Small delay to be safe with API limits
+    }
+
+    console.log(`Successfully fetched odds for ${allOddsData.length} matches.`);
+
+    // --- STEP 3: Update the cache ---
+    const finalCacheObject = { response: allOddsData };
+    const { error: updateError } = await supabaseAdmin
+      .from('match_odds_cache')
+      .update({
+        data: finalCacheObject, 
+        last_updated: new Date().toISOString(),
+      })
+      .eq('id', 1);
+
+    if (updateError) {
+      throw new Error(`Failed to update cache: ${updateError.message}`);
+    }
     
     console.log('Cache updated successfully!');
-    return new Response(JSON.stringify({ ok: true, fixtures: fixtures.length }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+
+    return new Response(JSON.stringify({ message: 'Cache updated successfully!', fixtures_found: fixtureIDs.length, odds_fetched: allOddsData.length }), {
+      headers: { 'Content-Type': 'application/json' },
+      status: 200,
     });
-  } catch (e) {
-    console.error("update-football-cache error", e);
-    return new Response(JSON.stringify({ error: String(e) }), {
+
+  } catch (error) {
+    console.error('CRITICAL ERROR in Edge Function:', error.message);
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { 'Content-Type': 'application/json' },
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
