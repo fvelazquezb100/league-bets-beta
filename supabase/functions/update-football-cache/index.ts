@@ -23,22 +23,30 @@ serve(async (req) => {
     if (!API_FOOTBALL_KEY) throw new Error("Missing API_FOOTBALL_KEY secret");
 
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+    console.log('Supabase admin client initialized.');
 
     const baseUrl = "https://v3.football.api-sports.io";
 
+    console.log('API Key found. Starting two-step odds fetch...');
+
     // 1) Get next 10 upcoming fixtures for the league
-    const fixturesRes = await fetch(`${baseUrl}/fixtures?league=${leagueId}&next=10`, {
+    console.log(`Fetching fixtures from: ${baseUrl}/fixtures?league=${leagueId}&season=2025&next=10`);
+    const fixturesRes = await fetch(`${baseUrl}/fixtures?league=${leagueId}&season=2025&next=10`, {
       headers: { "x-apisports-key": API_FOOTBALL_KEY },
     });
     if (!fixturesRes.ok) throw new Error(`Fixtures fetch failed: ${fixturesRes.status}`);
     const fixturesJson = await fixturesRes.json();
     const fixtures = fixturesJson?.response ?? [];
 
+    console.log(`Found ${fixtures.length} upcoming fixtures.`);
+
     // 2) Fetch odds for each fixture
     const oddsList = await Promise.all(
       fixtures.map(async (fx: any) => {
         const id = fx?.fixture?.id;
         if (!id) return { fixtureId: null, odds: [] };
+        
+        console.log(`Fetching odds from: ${baseUrl}/odds?fixture=${id}`);
         const oddsRes = await fetch(`${baseUrl}/odds?fixture=${id}`, {
           headers: { "x-apisports-key": API_FOOTBALL_KEY },
         });
@@ -52,18 +60,30 @@ serve(async (req) => {
       if (o.fixtureId) oddsMap.set(o.fixtureId as number, o.odds);
     });
 
-    const combined = fixtures.map((fx: any) => ({
-      fixture: fx,
-      odds: oddsMap.get(fx?.fixture?.id) ?? [],
-    }));
+    // 3) Combine fixtures with odds in the expected format
+    const combined = fixtures.map((fx: any) => {
+      const fixtureOdds = oddsMap.get(fx?.fixture?.id) ?? [];
+      return {
+        fixture: fx.fixture,
+        teams: fx.teams,
+        league: fx.league,
+        bookmakers: fixtureOdds.length > 0 ? fixtureOdds[0]?.bookmakers : []
+      };
+    });
 
-    // 3) Store in match_odds_cache (single row id=1)
+    // 4) Store in match_odds_cache with response wrapper for compatibility
     const { error: upsertErr } = await sb
       .from("match_odds_cache")
-      .upsert({ id: 1, data: combined, last_updated: new Date().toISOString() });
+      .upsert({ 
+        id: 1, 
+        data: { response: combined }, 
+        last_updated: new Date().toISOString() 
+      });
     if (upsertErr) throw upsertErr;
 
-    // 4) Schedule results processing 5 hours after the last fixture of this set
+    console.log(`Successfully fetched odds for ${fixtures.length} matches.`);
+
+    // 5) Schedule results processing 5 hours after the last fixture of this set
     if (fixtures.length > 0) {
       const lastDate = fixtures
         .map((f: any) => new Date(f?.fixture?.date))
@@ -93,6 +113,8 @@ serve(async (req) => {
       }
     }
 
+    
+    console.log('Cache updated successfully!');
     return new Response(JSON.stringify({ ok: true, fixtures: fixtures.length }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
