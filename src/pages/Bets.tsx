@@ -20,14 +20,23 @@ export const Bets = () => {
 
   useEffect(() => {
     const fetchOdds = async () => {
-      const { data } = await supabase
-        .from('match_odds_cache')
-        .select('data')
-        .eq('id', 1)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from('match_odds_cache')
+          .select('data')
+          .eq('id', 1)
+          .maybeSingle();
 
-      if (data?.data) {
-        setOddsData(data.data);
+        if (error) {
+          console.error('Error fetching odds:', error);
+          return;
+        }
+
+        if (data && data.data) {
+          setOddsData(data.data);
+        }
+      } catch (error) {
+        console.error('Error:', error);
       }
     };
 

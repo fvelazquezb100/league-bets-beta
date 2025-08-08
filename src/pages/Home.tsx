@@ -17,27 +17,32 @@ export const Home = () => {
     const fetchData = async () => {
       if (!user) return;
 
-      // Fetch league standings
-      const { data: profilesData } = await supabase
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, username, total_points, league_id')
         .order('total_points', { ascending: false });
 
-      if (profilesData) {
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+      } else if (profilesData) {
         setProfiles(profilesData);
         const currentUser = profilesData.find(p => p.id === user.id);
-        setUserProfile(currentUser);
+        if (currentUser) {
+          setUserProfile(currentUser);
+        }
       }
 
       // Fetch user's recent bets
-      const { data: betsData } = await supabase
+      const { data: betsData, error: betsError } = await supabase
         .from('bets')
         .select('*')
         .eq('user_id', user.id)
         .order('id', { ascending: false })
         .limit(5);
 
-      if (betsData) {
+      if (betsError) {
+        console.error('Error fetching user bets:', betsError);
+      } else if (betsData) {
         setUserBets(betsData);
       }
     };

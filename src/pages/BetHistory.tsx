@@ -16,13 +16,15 @@ export const BetHistory = () => {
     const fetchBets = async () => {
       if (!user) return;
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('bets')
         .select('*')
         .eq('user_id', user.id)
         .order('id', { ascending: false });
 
-      if (data) {
+      if (error) {
+        console.error('Error fetching bets:', error);
+      } else if (data) {
         setBets(data);
       }
     };

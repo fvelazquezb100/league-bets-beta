@@ -14,23 +14,32 @@ export const Header = () => {
     const fetchProfile = async () => {
       if (!user) return;
       
-      const { data: profileData } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('username, weekly_budget, league_id')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
+      
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        return;
+      }
       
       if (profileData) {
         setProfile(profileData);
         
         if (profileData.league_id) {
-          const { data: leagueData } = await supabase
+          const { data: leagueData, error: leagueError } = await supabase
             .from('leagues')
             .select('name')
             .eq('id', profileData.league_id)
-            .single();
+            .maybeSingle();
           
-          setLeague(leagueData);
+          if (leagueError) {
+            console.error('Error fetching league:', leagueError);
+          } else if (leagueData) {
+            setLeague(leagueData);
+          }
         }
       }
     };
