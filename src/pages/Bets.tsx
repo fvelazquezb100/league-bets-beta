@@ -234,7 +234,11 @@ const Bets = () => {
           {renderContent()}
         </div>
         <div className="w-full md:w-1/3">
-          <BetSlip selectedBets={selectedBets} setSelectedBets={setSelectedBets} />
+          <BetSlip 
+            selectedBets={selectedBets} 
+            onRemoveBet={(betId) => setSelectedBets(prev => prev.filter(bet => bet.id !== betId))}
+            onClearAll={() => setSelectedBets([])}
+          />
         </div>
       </div>
     </div>
