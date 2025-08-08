@@ -1,1 +1,7 @@
 project_id = "jhsjszflscbpcfzuurwq"
+
+[functions.secure-run-update-football-cache]
+verify_jwt = false
+
+[functions.secure-run-process-matchday-results]
+verify_jwt = false
