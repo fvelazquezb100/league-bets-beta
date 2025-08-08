@@ -2,13 +2,60 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { DollarSign, History, Trophy, TrendingUp } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useEffect, useState } from 'react';
 
 export const Home = () => {
+  const { user } = useAuth();
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [userBets, setUserBets] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user) return;
+
+      // Fetch league standings
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, username, total_points, league_id')
+        .order('total_points', { ascending: false });
+
+      if (profilesData) {
+        setProfiles(profilesData);
+        const currentUser = profilesData.find(p => p.id === user.id);
+        setUserProfile(currentUser);
+      }
+
+      // Fetch user's recent bets
+      const { data: betsData } = await supabase
+        .from('bets')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('id', { ascending: false })
+        .limit(5);
+
+      if (betsData) {
+        setUserBets(betsData);
+      }
+    };
+
+    fetchData();
+  }, [user]);
+
+  const activeBets = userBets.filter(bet => bet.status === 'pending').length;
+  const wonBets = userBets.filter(bet => bet.status === 'won').length;
+  const totalBets = userBets.length;
+  const winRate = totalBets > 0 ? Math.round((wonBets / totalBets) * 100) : 0;
+  const userPosition = profiles.findIndex(p => p.id === user?.id) + 1;
+
   return (
     <div className="space-y-8">
       <div className="text-center">
         <h1 className="text-4xl font-bold text-foreground mb-4">
-          Bienvenido a Liga de Apuestas
+          Clasificación de la Liga
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
           Tu centro de apuestas simuladas. Demuestra tu conocimiento del fútbol y compite con tus amigos.
@@ -24,8 +71,8 @@ export const Home = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-primary">1,250</div>
-            <p className="text-sm text-muted-foreground">+15% este mes</p>
+            <div className="text-3xl font-bold text-primary">{userProfile?.total_points || 0}</div>
+            <p className="text-sm text-muted-foreground">Puntos acumulados</p>
           </CardContent>
         </Card>
 
@@ -37,8 +84,8 @@ export const Home = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-primary">3</div>
-            <p className="text-sm text-muted-foreground">En partidos de hoy</p>
+            <div className="text-3xl font-bold text-primary">{activeBets}</div>
+            <p className="text-sm text-muted-foreground">Pendientes de resultado</p>
           </CardContent>
         </Card>
 
@@ -50,8 +97,8 @@ export const Home = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-primary">67%</div>
-            <p className="text-sm text-muted-foreground">Últimas 30 apuestas</p>
+            <div className="text-3xl font-bold text-primary">{winRate}%</div>
+            <p className="text-sm text-muted-foreground">De tus apuestas</p>
           </CardContent>
         </Card>
 
@@ -63,11 +110,43 @@ export const Home = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-primary">2°</div>
-            <p className="text-sm text-muted-foreground">de 15 jugadores</p>
+            <div className="text-3xl font-bold text-primary">{userPosition}°</div>
+            <p className="text-sm text-muted-foreground">de {profiles.length} jugadores</p>
           </CardContent>
         </Card>
       </div>
+
+      {/* League Standings Table */}
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle>Clasificación de la Liga</CardTitle>
+          <CardDescription>
+            Posiciones actuales de todos los jugadores
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Pos.</TableHead>
+                <TableHead>Jugador</TableHead>
+                <TableHead>Puntos Totales</TableHead>
+                <TableHead>Última Jornada</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {profiles.slice(0, 10).map((profile, index) => (
+                <TableRow key={profile.id} className={profile.id === user?.id ? 'bg-muted/50' : ''}>
+                  <TableCell className="font-medium">{index + 1}</TableCell>
+                  <TableCell>{profile.username || 'Usuario'}</TableCell>
+                  <TableCell>{profile.total_points || 0}</TableCell>
+                  <TableCell className="text-muted-foreground">-</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <div className="grid md:grid-cols-2 gap-8">
         <Card className="shadow-lg">

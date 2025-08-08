@@ -1,219 +1,311 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Calendar, Clock, DollarSign, Trophy } from 'lucide-react';
-
-const mockMatches = [
-  {
-    id: 1,
-    homeTeam: 'Real Madrid',
-    awayTeam: 'Barcelona',
-    date: '2024-01-15',
-    time: '21:00',
-    league: 'La Liga',
-    odds: { home: 2.1, draw: 3.4, away: 2.8 },
-    status: 'upcoming'
-  },
-  {
-    id: 2,
-    homeTeam: 'Liverpool',
-    awayTeam: 'Arsenal',
-    date: '2024-01-16',
-    time: '17:30',
-    league: 'Premier League',
-    odds: { home: 1.8, draw: 3.2, away: 4.1 },
-    status: 'upcoming'
-  },
-  {
-    id: 3,
-    homeTeam: 'PSG',
-    awayTeam: 'Monaco',
-    date: '2024-01-16',
-    time: '20:00',
-    league: 'Ligue 1',
-    odds: { home: 1.5, draw: 4.2, away: 5.8 },
-    status: 'upcoming'
-  },
-  {
-    id: 4,
-    homeTeam: 'Bayern Munich',
-    awayTeam: 'Dortmund',
-    date: '2024-01-17',
-    time: '18:30',
-    league: 'Bundesliga',
-    odds: { home: 1.9, draw: 3.6, away: 3.8 },
-    status: 'upcoming'
-  }
-];
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Calendar, Clock, DollarSign, Trophy, CircleDot } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 export const Bets = () => {
-  const [selectedMatch, setSelectedMatch] = useState<any>(null);
-  const [selectedOutcome, setSelectedOutcome] = useState<string>('');
-  const [betAmount, setBetAmount] = useState('');
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [oddsData, setOddsData] = useState<any>(null);
+  const [betSlip, setBetSlip] = useState<any[]>([]);
+  const [stakeAmount, setStakeAmount] = useState('');
 
-  const handlePlaceBet = () => {
-    // TODO: Implement bet placement logic
-    console.log('Placing bet:', { selectedMatch, selectedOutcome, betAmount });
-    setSelectedMatch(null);
-    setSelectedOutcome('');
-    setBetAmount('');
-  };
+  useEffect(() => {
+    const fetchOdds = async () => {
+      const { data } = await supabase
+        .from('match_odds_cache')
+        .select('data')
+        .eq('id', 1)
+        .single();
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('es-ES', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+      if (data?.data) {
+        setOddsData(data.data);
+      }
+    };
+
+    fetchOdds();
+  }, []);
+
+  const addToBetSlip = (fixture: any, market: string, selection: string, odds: number) => {
+    const newBet = {
+      id: `${fixture.fixture.id}-${market}-${selection}`,
+      fixture,
+      market,
+      selection,
+      odds,
+      matchDescription: `${fixture.teams.home.name} vs ${fixture.teams.away.name}`,
+    };
+
+    setBetSlip(prev => {
+      const exists = prev.find(bet => bet.id === newBet.id);
+      if (exists) {
+        toast({
+          title: "Ya añadido",
+          description: "Esta selección ya está en tu boleto",
+        });
+        return prev;
+      }
+      
+      toast({
+        title: "Añadido al boleto",
+        description: `${newBet.matchDescription} - ${selection}`,
+      });
+      
+      return [...prev, newBet];
     });
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-foreground mb-4">
-          Partidos Disponibles
-        </h1>
-        <p className="text-xl text-muted-foreground">
-          Elige un partido y demuestra tu conocimiento del fútbol
-        </p>
+  const removeFromBetSlip = (betId: string) => {
+    setBetSlip(prev => prev.filter(bet => bet.id !== betId));
+  };
+
+  const placeBets = async () => {
+    if (!user || betSlip.length === 0 || !stakeAmount) {
+      toast({
+        title: "Error",
+        description: "Debes añadir selecciones y un importe válido",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const betsToInsert = betSlip.map(bet => ({
+        user_id: user.id,
+        match_description: bet.matchDescription,
+        bet_selection: bet.selection,
+        stake: parseFloat(stakeAmount),
+        odds: bet.odds,
+        status: 'pending'
+      }));
+
+      const { error } = await supabase
+        .from('bets')
+        .insert(betsToInsert);
+
+      if (error) throw error;
+
+      toast({
+        title: "¡Apuestas realizadas!",
+        description: `${betSlip.length} apuesta(s) guardada(s) correctamente`,
+      });
+
+      setBetSlip([]);
+      setStakeAmount('');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudieron realizar las apuestas",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const totalStake = betSlip.length > 0 && stakeAmount ? parseFloat(stakeAmount) * betSlip.length : 0;
+  const potentialWinnings = betSlip.reduce((total, bet) => {
+    return total + (parseFloat(stakeAmount || '0') * bet.odds);
+  }, 0);
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('es-ES', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getMarketName = (market: string) => {
+    switch (market) {
+      case 'Match Winner': return 'Ganador del Partido';
+      case 'Both Teams Score': return 'Ambos Equipos Marcan';
+      case 'Goals Over/Under': return 'Goles Más/Menos de';
+      default: return market;
+    }
+  };
+
+  if (!oddsData) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando cuotas...</p>
+        </div>
       </div>
+    );
+  }
 
-      <div className="grid gap-6">
-        {mockMatches.map((match) => (
-          <Card key={match.id} className="shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-xl">
-                    {match.homeTeam} vs {match.awayTeam}
-                  </CardTitle>
-                  <CardDescription className="flex items-center gap-4 mt-2">
-                    <span className="flex items-center gap-1">
-                      <Trophy className="h-4 w-4" />
-                      {match.league}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      {formatDate(match.date)}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      {match.time}
-                    </span>
-                  </CardDescription>
-                </div>
-                <Badge variant="secondary">
-                  Próximo
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="text-center p-4 bg-muted/50 rounded-lg">
-                  <p className="text-sm text-muted-foreground mb-1">{match.homeTeam}</p>
-                  <p className="text-2xl font-bold text-primary">{match.odds.home}</p>
-                </div>
-                <div className="text-center p-4 bg-muted/50 rounded-lg">
-                  <p className="text-sm text-muted-foreground mb-1">Empate</p>
-                  <p className="text-2xl font-bold text-primary">{match.odds.draw}</p>
-                </div>
-                <div className="text-center p-4 bg-muted/50 rounded-lg">
-                  <p className="text-sm text-muted-foreground mb-1">{match.awayTeam}</p>
-                  <p className="text-2xl font-bold text-primary">{match.odds.away}</p>
-                </div>
-              </div>
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      {/* Main betting area */}
+      <div className="lg:col-span-3 space-y-6">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-foreground mb-4">
+            UK Championship - Cuotas en Vivo
+          </h1>
+          <p className="text-xl text-muted-foreground">
+            Haz clic en una cuota para añadirla a tu boleto
+          </p>
+        </div>
 
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button 
-                    className="w-full" 
-                    onClick={() => setSelectedMatch(match)}
-                  >
-                    <DollarSign className="h-4 w-4 mr-2" />
-                    Apostar
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Realizar Apuesta</DialogTitle>
-                    <DialogDescription>
-                      {match.homeTeam} vs {match.awayTeam} - {formatDate(match.date)} a las {match.time}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-base font-medium">Selecciona el resultado:</Label>
-                      <div className="grid grid-cols-3 gap-2 mt-2">
-                        <Button
-                          variant={selectedOutcome === 'home' ? 'default' : 'outline'}
-                          onClick={() => setSelectedOutcome('home')}
-                          className="p-4 h-auto flex flex-col"
-                        >
-                          <span className="text-sm">{match.homeTeam}</span>
-                          <span className="text-lg font-bold">{match.odds.home}</span>
-                        </Button>
-                        <Button
-                          variant={selectedOutcome === 'draw' ? 'default' : 'outline'}
-                          onClick={() => setSelectedOutcome('draw')}
-                          className="p-4 h-auto flex flex-col"
-                        >
-                          <span className="text-sm">Empate</span>
-                          <span className="text-lg font-bold">{match.odds.draw}</span>
-                        </Button>
-                        <Button
-                          variant={selectedOutcome === 'away' ? 'default' : 'outline'}
-                          onClick={() => setSelectedOutcome('away')}
-                          className="p-4 h-auto flex flex-col"
-                        >
-                          <span className="text-sm">{match.awayTeam}</span>
-                          <span className="text-lg font-bold">{match.odds.away}</span>
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="betAmount">Cantidad a apostar (puntos):</Label>
-                      <Input
-                        id="betAmount"
-                        type="number"
-                        value={betAmount}
-                        onChange={(e) => setBetAmount(e.target.value)}
-                        placeholder="100"
-                        min="1"
-                        max="1000"
-                      />
-                    </div>
-
-                    {selectedOutcome && betAmount && (
-                      <div className="p-4 bg-muted/50 rounded-lg">
-                        <p className="text-sm text-muted-foreground">Ganancia potencial:</p>
-                        <p className="text-xl font-bold text-primary">
-                          {(parseFloat(betAmount) * 
-                            (selectedOutcome === 'home' ? match.odds.home :
-                             selectedOutcome === 'draw' ? match.odds.draw : match.odds.away)
-                          ).toFixed(0)} puntos
+        <Accordion type="single" collapsible className="space-y-4">
+          {oddsData?.response?.map((fixture: any, index: number) => (
+            <AccordionItem key={fixture.fixture.id} value={`fixture-${index}`}>
+              <Card>
+                <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-4">
+                      <CircleDot className="h-5 w-5 text-primary" />
+                      <div className="text-left">
+                        <h3 className="font-semibold text-lg">
+                          {fixture.teams.home.name} vs {fixture.teams.away.name}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {formatDate(fixture.fixture.date)}
                         </p>
                       </div>
-                    )}
-
-                    <Button 
-                      onClick={handlePlaceBet}
-                      disabled={!selectedOutcome || !betAmount}
-                      className="w-full"
-                    >
-                      Confirmar Apuesta
-                    </Button>
+                    </div>
+                    <Badge variant="secondary">En vivo</Badge>
                   </div>
-                </DialogContent>
-              </Dialog>
-            </CardContent>
-          </Card>
-        ))}
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="px-6 pb-6 space-y-6">
+                    {/* Match Winner */}
+                    <div>
+                      <h4 className="font-medium mb-3">Ganador del Partido</h4>
+                      <div className="grid grid-cols-3 gap-3">
+                        {fixture.bookmakers?.[0]?.bets?.find((bet: any) => bet.name === 'Match Winner')?.values?.map((value: any) => (
+                          <Button
+                            key={value.value}
+                            variant="outline"
+                            className="p-4 h-auto flex flex-col hover:bg-primary hover:text-primary-foreground"
+                            onClick={() => addToBetSlip(fixture, 'Match Winner', value.value, parseFloat(value.odd))}
+                          >
+                            <span className="text-sm font-medium">
+                              {value.value === 'Home' ? fixture.teams.home.name : 
+                               value.value === 'Away' ? fixture.teams.away.name : 'Empate'}
+                            </span>
+                            <span className="text-lg font-bold">{value.odd}</span>
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Both Teams Score */}
+                    {fixture.bookmakers?.[0]?.bets?.find((bet: any) => bet.name === 'Both Teams Score') && (
+                      <div>
+                        <h4 className="font-medium mb-3">Ambos Equipos Marcan</h4>
+                        <div className="grid grid-cols-2 gap-3">
+                          {fixture.bookmakers[0].bets.find((bet: any) => bet.name === 'Both Teams Score').values.map((value: any) => (
+                            <Button
+                              key={value.value}
+                              variant="outline"
+                              className="p-4 h-auto flex flex-col hover:bg-primary hover:text-primary-foreground"
+                              onClick={() => addToBetSlip(fixture, 'Both Teams Score', value.value === 'Yes' ? 'Sí' : 'No', parseFloat(value.odd))}
+                            >
+                              <span className="text-sm font-medium">{value.value === 'Yes' ? 'Sí' : 'No'}</span>
+                              <span className="text-lg font-bold">{value.odd}</span>
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </AccordionContent>
+              </Card>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </div>
+
+      {/* Bet Slip */}
+      <div className="lg:col-span-1">
+        <Card className="sticky top-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5" />
+              Boleto de Apuestas
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {betSlip.length === 0 ? (
+              <p className="text-muted-foreground text-center py-8">
+                Haz clic en una cuota para añadirla a tu boleto.
+              </p>
+            ) : (
+              <>
+                <div className="space-y-3">
+                  {betSlip.map((bet) => (
+                    <div key={bet.id} className="p-3 border rounded-lg space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1 pr-2">
+                          <p className="font-medium text-sm">{bet.matchDescription}</p>
+                          <p className="text-sm text-muted-foreground">{bet.selection}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold">{bet.odds}</p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={() => removeFromBetSlip(bet.id)}
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="stake">Importe (por apuesta)</Label>
+                    <Input
+                      id="stake"
+                      type="number"
+                      value={stakeAmount}
+                      onChange={(e) => setStakeAmount(e.target.value)}
+                      placeholder="100"
+                      min="1"
+                      max="1000"
+                    />
+                  </div>
+
+                  {stakeAmount && betSlip.length > 0 && (
+                    <div className="p-3 bg-muted/50 rounded-lg space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Total a apostar:</span>
+                        <span className="font-medium">{totalStake.toFixed(0)} pts</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Ganancia Potencial:</span>
+                        <span className="font-bold text-green-600">{potentialWinnings.toFixed(0)} pts</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <Button
+                    onClick={placeBets}
+                    disabled={betSlip.length === 0 || !stakeAmount}
+                    className="w-full"
+                  >
+                    Realizar Apuestas
+                  </Button>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

@@ -2,149 +2,65 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Calendar, TrendingDown, TrendingUp, Trophy } from 'lucide-react';
-
-const mockBetHistory = [
-  {
-    id: 1,
-    homeTeam: 'Valencia',
-    awayTeam: 'Sevilla',
-    date: '2024-01-10',
-    betOutcome: 'home',
-    actualOutcome: 'home',
-    betAmount: 100,
-    odds: 2.5,
-    payout: 250,
-    status: 'won',
-    league: 'La Liga'
-  },
-  {
-    id: 2,
-    homeTeam: 'Milan',
-    awayTeam: 'Inter',
-    date: '2024-01-08',
-    betOutcome: 'away',
-    actualOutcome: 'home',
-    betAmount: 150,
-    odds: 2.1,
-    payout: 0,
-    status: 'lost',
-    league: 'Serie A'
-  },
-  {
-    id: 3,
-    homeTeam: 'Manchester City',
-    awayTeam: 'Chelsea',
-    date: '2024-01-06',
-    betOutcome: 'draw',
-    actualOutcome: 'draw',
-    betAmount: 75,
-    odds: 3.2,
-    payout: 240,
-    status: 'won',
-    league: 'Premier League'
-  },
-  {
-    id: 4,
-    homeTeam: 'Atletico Madrid',
-    awayTeam: 'Real Sociedad',
-    date: '2024-01-04',
-    betOutcome: 'home',
-    actualOutcome: 'away',
-    betAmount: 200,
-    odds: 1.8,
-    payout: 0,
-    status: 'lost',
-    league: 'La Liga'
-  }
-];
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useEffect, useState } from 'react';
 
 export const BetHistory = () => {
-  const wonBets = mockBetHistory.filter(bet => bet.status === 'won');
-  const lostBets = mockBetHistory.filter(bet => bet.status === 'lost');
+  const { user } = useAuth();
+  const [bets, setBets] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchBets = async () => {
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('bets')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('id', { ascending: false });
+
+      if (data) {
+        setBets(data);
+      }
+    };
+
+    fetchBets();
+  }, [user]);
+
+  const wonBets = bets.filter(bet => bet.status === 'won');
+  const lostBets = bets.filter(bet => bet.status === 'lost');
+  const pendingBets = bets.filter(bet => bet.status === 'pending');
   
-  const totalBetAmount = mockBetHistory.reduce((sum, bet) => sum + bet.betAmount, 0);
-  const totalPayout = mockBetHistory.reduce((sum, bet) => sum + bet.payout, 0);
+  const totalBetAmount = bets.reduce((sum, bet) => sum + (parseFloat(bet.stake) || 0), 0);
+  const totalPayout = bets.reduce((sum, bet) => sum + (parseFloat(bet.payout) || 0), 0);
   const netProfit = totalPayout - totalBetAmount;
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('es-ES', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  const getOutcomeText = (outcome: string, homeTeam: string, awayTeam: string) => {
-    switch (outcome) {
-      case 'home': return homeTeam;
-      case 'away': return awayTeam;
-      case 'draw': return 'Empate';
-      default: return outcome;
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'pending': return 'Pendiente';
+      case 'won': return 'Ganada';
+      case 'lost': return 'Perdida';
+      default: return status;
     }
   };
 
-  const BetCard = ({ bet }: { bet: any }) => (
-    <Card className="shadow-md hover:shadow-lg transition-all duration-300">
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-lg">
-              {bet.homeTeam} vs {bet.awayTeam}
-            </CardTitle>
-            <CardDescription className="flex items-center gap-4 mt-1">
-              <span className="flex items-center gap-1">
-                <Trophy className="h-3 w-3" />
-                {bet.league}
-              </span>
-              <span className="flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                {formatDate(bet.date)}
-              </span>
-            </CardDescription>
-          </div>
-          <Badge variant={bet.status === 'won' ? 'default' : 'destructive'}>
-            {bet.status === 'won' ? 'Ganada' : 'Perdida'}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <p className="text-muted-foreground">Tu apuesta:</p>
-            <p className="font-semibold">
-              {getOutcomeText(bet.betOutcome, bet.homeTeam, bet.awayTeam)} ({bet.odds})
-            </p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Resultado real:</p>
-            <p className="font-semibold">
-              {getOutcomeText(bet.actualOutcome, bet.homeTeam, bet.awayTeam)}
-            </p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Cantidad apostada:</p>
-            <p className="font-semibold">{bet.betAmount} puntos</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">
-              {bet.status === 'won' ? 'Ganancia:' : 'Pérdida:'}
-            </p>
-            <p className={`font-bold ${bet.status === 'won' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-              {bet.status === 'won' ? `+${bet.payout}` : `-${bet.betAmount}`} puntos
-            </p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case 'won': return 'default';
+      case 'lost': return 'destructive';
+      case 'pending': return 'secondary';
+      default: return 'secondary';
+    }
+  };
 
   return (
     <div className="space-y-6">
       <div className="text-center">
         <h1 className="text-4xl font-bold text-foreground mb-4">
-          Historial de Apuestas
+          Mi Historial de Apuestas
         </h1>
         <p className="text-xl text-muted-foreground">
           Revisa tu rendimiento y estadísticas de apuestas
@@ -199,7 +115,7 @@ export const BetHistory = () => {
               <div>
                 <p className="text-sm text-muted-foreground">Tasa de Acierto</p>
                 <p className="text-2xl font-bold text-primary">
-                  {Math.round((wonBets.length / mockBetHistory.length) * 100)}%
+                  {bets.length > 0 ? Math.round((wonBets.length / bets.length) * 100) : 0}%
                 </p>
               </div>
               <Trophy className="h-5 w-5 text-primary" />
@@ -208,32 +124,49 @@ export const BetHistory = () => {
         </Card>
       </div>
 
-      {/* Tabs for filtering */}
-      <Tabs defaultValue="all" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="all">Todas las Apuestas ({mockBetHistory.length})</TabsTrigger>
-          <TabsTrigger value="won">Ganadas ({wonBets.length})</TabsTrigger>
-          <TabsTrigger value="lost">Perdidas ({lostBets.length})</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="all" className="space-y-4">
-          {mockBetHistory.map((bet) => (
-            <BetCard key={bet.id} bet={bet} />
-          ))}
-        </TabsContent>
-        
-        <TabsContent value="won" className="space-y-4">
-          {wonBets.map((bet) => (
-            <BetCard key={bet.id} bet={bet} />
-          ))}
-        </TabsContent>
-        
-        <TabsContent value="lost" className="space-y-4">
-          {lostBets.map((bet) => (
-            <BetCard key={bet.id} bet={bet} />
-          ))}
-        </TabsContent>
-      </Tabs>
+      {/* Bets Table */}
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle>Mis Apuestas</CardTitle>
+          <CardDescription>
+            Historial completo de todas tus apuestas
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Partido</TableHead>
+                <TableHead>Apuesta</TableHead>
+                <TableHead>Importe</TableHead>
+                <TableHead>Cuota</TableHead>
+                <TableHead>Resultado</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {bets.length > 0 ? bets.map((bet) => (
+                <TableRow key={bet.id}>
+                  <TableCell className="font-medium">{bet.match_description}</TableCell>
+                  <TableCell>{bet.bet_selection}</TableCell>
+                  <TableCell>{parseFloat(bet.stake || 0).toFixed(0)} pts</TableCell>
+                  <TableCell>{parseFloat(bet.odds || 0).toFixed(2)}</TableCell>
+                  <TableCell>
+                    <Badge variant={getStatusVariant(bet.status)}>
+                      {getStatusText(bet.status)}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              )) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                    No tienes apuestas todavía. ¡Ve a la sección de apuestas para empezar!
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 };
