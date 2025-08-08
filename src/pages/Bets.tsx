@@ -50,7 +50,7 @@ export const Bets = () => {
       market,
       selection,
       odds,
-      matchDescription: `${fixture.teams.home.name} vs ${fixture.teams.away.name}`,
+      matchDescription: `${fixture.teams?.home?.name || 'Local'} vs ${fixture.teams?.away?.name || 'Visitante'}`,
     };
 
     setBetSlip(prev => {
@@ -167,25 +167,31 @@ export const Bets = () => {
         </div>
 
         <Accordion type="single" collapsible className="space-y-4">
-          {oddsData?.response?.map((fixture: any, index: number) => (
-            <AccordionItem key={fixture.fixture.id} value={`fixture-${index}`}>
-              <Card>
-                <AccordionTrigger className="px-6 py-4 hover:no-underline">
-                  <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center gap-4">
-                      <CircleDot className="h-5 w-5 text-primary" />
-                      <div className="text-left">
-                        <h3 className="font-semibold text-lg">
-                          {fixture.teams.home.name} vs {fixture.teams.away.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {formatDate(fixture.fixture.date)}
-                        </p>
+          {oddsData?.response?.map((fixture: any, index: number) => {
+            // Check if fixture has the expected structure
+            if (!fixture?.teams?.home?.name || !fixture?.teams?.away?.name) {
+              return null; // Skip fixtures without proper team data
+            }
+            
+            return (
+              <AccordionItem key={fixture.fixture.id} value={`fixture-${index}`}>
+                <Card>
+                  <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-4">
+                        <CircleDot className="h-5 w-5 text-primary" />
+                        <div className="text-left">
+                          <h3 className="font-semibold text-lg">
+                            {fixture.teams.home.name} vs {fixture.teams.away.name}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {formatDate(fixture.fixture.date)}
+                          </p>
+                        </div>
                       </div>
+                      <Badge variant="secondary">En vivo</Badge>
                     </div>
-                    <Badge variant="secondary">En vivo</Badge>
-                  </div>
-                </AccordionTrigger>
+                  </AccordionTrigger>
                 <AccordionContent>
                   <div className="px-6 pb-6 space-y-6">
                     {/* Match Winner */}
@@ -200,8 +206,8 @@ export const Bets = () => {
                             onClick={() => addToBetSlip(fixture, 'Match Winner', value.value, parseFloat(value.odd))}
                           >
                             <span className="text-sm font-medium">
-                              {value.value === 'Home' ? fixture.teams.home.name : 
-                               value.value === 'Away' ? fixture.teams.away.name : 'Empate'}
+                              {value.value === 'Home' ? fixture.teams?.home?.name || 'Local' : 
+                               value.value === 'Away' ? fixture.teams?.away?.name || 'Visitante' : 'Empate'}
                             </span>
                             <span className="text-lg font-bold">{value.odd}</span>
                           </Button>
@@ -232,7 +238,8 @@ export const Bets = () => {
                 </AccordionContent>
               </Card>
             </AccordionItem>
-          ))}
+          );
+          })}
         </Accordion>
       </div>
 
