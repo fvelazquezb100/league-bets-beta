@@ -63,11 +63,39 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
         return;
       }
 
-      const { error } = await supabase
+      const stakeAmount = parseFloat(stake);
+
+      // Check if user has enough budget
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('weekly_budget')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError || !profile) {
+        toast({
+          title: 'Error',
+          description: 'No se pudo verificar tu presupuesto.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      if (profile.weekly_budget < stakeAmount) {
+        toast({
+          title: 'Error',
+          description: `Presupuesto insuficiente. Disponible: €${profile.weekly_budget}`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Place the bet and update budget in a transaction
+      const { error: betError } = await supabase
         .from('bets')
         .insert({
           user_id: user.id,
-          stake: parseFloat(stake),
+          stake: stakeAmount,
           odds: totalOdds,
           payout: parseFloat(potentialWinnings),
           match_description: selectedBets.map(bet => bet.matchDescription).join(' + '),
@@ -75,8 +103,20 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
           status: 'pending'
         });
 
-      if (error) {
-        throw error;
+      if (betError) {
+        throw betError;
+      }
+
+      // Update user's weekly budget
+      const { error: budgetError } = await supabase
+        .from('profiles')
+        .update({ 
+          weekly_budget: profile.weekly_budget - stakeAmount 
+        })
+        .eq('id', user.id);
+
+      if (budgetError) {
+        throw budgetError;
       }
 
       toast({
