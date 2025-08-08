@@ -38,8 +38,11 @@ Deno.serve(async (req) => {
 
     const fixturesData = await fixturesResponse.json();
     const fixtureIDs: number[] = fixturesData.response.map((item: any) => item.fixture.id);
+    const teamsByFixture = new Map<number, any>();
+    fixturesData.response.forEach((item: any) => {
+      if (item?.fixture?.id && item?.teams) teamsByFixture.set(item.fixture.id, item.teams);
+    });
     console.log(`Found ${fixtureIDs.length} upcoming fixtures.`);
-
     if (fixtureIDs.length === 0) {
       console.log('No upcoming fixtures found. Cache will not be updated.');
        return new Response(JSON.stringify({ message: 'No upcoming fixtures to fetch odds for.' }), {
@@ -74,7 +77,12 @@ Deno.serve(async (req) => {
     console.log(`Successfully fetched odds for ${allOddsData.length} matches.`);
 
     // --- STEP 3: Update the cache ---
-    const finalCacheObject = { response: allOddsData };
+    const mergedOdds = allOddsData.map((entry: any) => {
+      const fxId = entry?.fixture?.id;
+      const teams = fxId ? teamsByFixture.get(fxId) : null;
+      return teams ? { ...entry, teams } : entry;
+    });
+    const finalCacheObject = { response: mergedOdds };
     const { error: updateError } = await supabaseAdmin
       .from('match_odds_cache')
       .update({
