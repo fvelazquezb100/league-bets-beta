@@ -74,9 +74,12 @@ const Bets = () => {
         const apiData = cacheData.data as unknown as CachedOddsData;
         
         console.log("Data from cache:", apiData);
+        console.log("First match data:", apiData?.response?.[0]);
 
         if (apiData && Array.isArray(apiData.response)) {
           const validMatches = apiData.response.filter(match => match.fixture);
+          console.log("Valid matches:", validMatches);
+          console.log("First valid match teams:", validMatches[0]?.teams);
           setMatches(validMatches);
         } else {
           setMatches([]);
