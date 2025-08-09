@@ -95,6 +95,55 @@ Deno.serve(async (req) => {
     
     console.log('Cache updated successfully!');
 
+    // --- STEP 4: Dynamically schedule results processing 5 hours after the latest fixture ends ---
+    try {
+      // Extract latest fixture kickoff time from the fetched fixtures
+      const fixtureTimes: number[] = Array.isArray(fixturesData?.response)
+        ? fixturesData.response
+            .map((item: any) => {
+              const iso = item?.fixture?.date;
+              const t = iso ? Date.parse(iso) : NaN;
+              return Number.isFinite(t) ? t : NaN;
+            })
+            .filter((t: number) => Number.isFinite(t))
+        : [];
+
+      if (fixtureTimes.length > 0) {
+        const latestKickoff = Math.max(...fixtureTimes);
+        // Assume typical match duration; schedule 5 hours after kickoff to ensure completion + buffers
+        const dynamicRunTime = new Date(latestKickoff + 5 * 60 * 60 * 1000);
+
+        // Build a cron expression at the specific UTC minute/hour/day/month (one-time style)
+        const cronExpr = `${dynamicRunTime.getUTCMinutes()} ${dynamicRunTime.getUTCHours()} ${dynamicRunTime.getUTCDate()} ${dynamicRunTime.getUTCMonth() + 1} *`;
+        const jobName = `process-matchday-results-${Math.floor(dynamicRunTime.getTime() / 1000)}`;
+
+        const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? 'https://jhsjszflscbpcfzuurwq.supabase.co';
+        const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
+        const scheduleUrl = `${SUPABASE_URL}/functions/v1/secure-run-process-matchday-results`;
+        const authHeader = ANON_KEY ? `Bearer ${ANON_KEY}` : '';
+
+        console.log(`Scheduling secure-run-process-matchday-results at ${dynamicRunTime.toISOString()} (cron: "${cronExpr}") with job name ${jobName}`);
+
+        const { data: jobId, error: scheduleErr } = await supabaseAdmin.rpc('schedule_one_time_http_call', {
+          job_name: jobName,
+          schedule: cronExpr,
+          url: scheduleUrl,
+          auth_header: authHeader,
+          body: JSON.stringify({ reason: 'auto-scheduled by update-football-cache', target_time: dynamicRunTime.toISOString() })
+        });
+
+        if (scheduleErr) {
+          console.warn('Failed to schedule one-time results processing job:', scheduleErr.message);
+        } else {
+          console.log('One-time results processing job scheduled with id:', jobId);
+        }
+      } else {
+        console.log('No valid fixture times found to schedule dynamic results processing.');
+      }
+    } catch (e) {
+      console.warn('Dynamic scheduling encountered an issue (continuing):', (e as Error).message);
+    }
+
     return new Response(JSON.stringify({ message: 'Cache updated successfully!', fixtures_found: fixtureIDs.length, odds_fetched: allOddsData.length }), {
       headers: { 'Content-Type': 'application/json' },
       status: 200,
