@@ -14,6 +14,7 @@ interface Bet {
   market: string;
   selection: string;
   odds: number;
+  fixtureId?: number;
 }
 
 interface BetSlipProps {
@@ -100,6 +101,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
           payout: parseFloat(potentialWinnings),
           match_description: selectedBets.map(bet => bet.matchDescription).join(' + '),
           bet_selection: selectedBets.map(bet => `${bet.selection} @ ${bet.odds}`).join(' + '),
+          fixture_id: selectedBets.length > 0 ? selectedBets[0].fixtureId : null,
           status: 'pending'
         });
 

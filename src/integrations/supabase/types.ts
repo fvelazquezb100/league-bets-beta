@@ -17,6 +17,7 @@ export type Database = {
       bets: {
         Row: {
           bet_selection: string | null
+          fixture_id: number | null
           id: number
           match_description: string | null
           odds: number | null
@@ -27,6 +28,7 @@ export type Database = {
         }
         Insert: {
           bet_selection?: string | null
+          fixture_id?: number | null
           id?: number
           match_description?: string | null
           odds?: number | null
@@ -37,6 +39,7 @@ export type Database = {
         }
         Update: {
           bet_selection?: string | null
+          fixture_id?: number | null
           id?: number
           match_description?: string | null
           odds?: number | null
