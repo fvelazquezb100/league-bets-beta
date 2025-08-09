@@ -15,6 +15,7 @@ interface Bet {
   selection: string;
   odds: number;
   fixtureId?: number;
+  kickoff?: string;
 }
 
 interface BetSlipProps {
@@ -50,8 +51,22 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
       return;
     }
 
-    setIsSubmitting(true);
+    // Bloqueo por cierre: 15 minutos antes del inicio
+    const isAnyFrozen = selectedBets.some(bet => {
+      if (!bet.kickoff) return false;
+      const freeze = new Date(new Date(bet.kickoff).getTime() - 15 * 60 * 1000);
+      return new Date() >= freeze;
+    });
+    if (isAnyFrozen) {
+      toast({
+        title: 'Apuestas cerradas',
+        description: 'Al menos una selección está cerrada (15 min antes del inicio).',
+        variant: 'destructive',
+      });
+      return;
+    }
 
+    setIsSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -209,7 +224,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
               <div className="space-y-2">
                 <Button
                   onClick={handlePlaceBet}
-                  disabled={isSubmitting || !stake || parseFloat(stake) <= 0}
+                  disabled={isSubmitting || !stake || parseFloat(stake) <= 0 || selectedBets.some(bet => bet.kickoff ? (new Date() >= new Date(new Date(bet.kickoff).getTime() - 15 * 60 * 1000)) : false)}
                   className="w-full"
                 >
                   {isSubmitting ? 'Procesando...' : 'Realizar Apuestas'}

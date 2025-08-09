@@ -103,6 +103,8 @@ const Bets = () => {
       market: marketName,
       selection: selection.value,
       odds: parseFloat(selection.odd),
+      fixtureId: match.fixture.id,
+      kickoff: match.fixture.date,
     };
 
     if (selectedBets.some(b => b.id === bet.id)) {
@@ -161,6 +163,9 @@ const Bets = () => {
             const matchWinnerMarket = findMarket(match, 'Match Winner');
             const goalsMarket = findMarket(match, 'Goals Over/Under');
             const bttsMarket = findMarket(match, 'Both Teams To Score');
+            const kickoff = new Date(match.fixture.date);
+            const freezeTime = new Date(kickoff.getTime() - 15 * 60 * 1000);
+            const isFrozen = new Date() >= freezeTime;
 
             return (
               <AccordionItem value={`match-${match.fixture.id}`} key={match.fixture.id} className="border rounded-lg p-4 bg-white shadow-sm">
@@ -177,10 +182,10 @@ const Bets = () => {
                         <h4 className="font-semibold mb-2">Ganador del Partido</h4>
                         <div className="grid grid-cols-3 gap-2">
                           {matchWinnerMarket.values.map(value => (
-                              <Button key={value.value} variant="outline" className="flex flex-col h-auto" onClick={() => handleAddToSlip(match, 'Ganador del Partido', value)}>
+                              <Button key={value.value} variant="outline" className="flex flex-col h-auto" disabled={isFrozen} onClick={() => handleAddToSlip(match, 'Ganador del Partido', value)}>
                                 <span>{value.value}</span>
                                 <span className="font-bold">{value.odd}</span>
-                            </Button>
+                              </Button>
                           ))}
                         </div>
                       </div>
@@ -190,10 +195,10 @@ const Bets = () => {
                         <h4 className="font-semibold mb-2">Ambos Equipos Marcan</h4>
                         <div className="grid grid-cols-2 gap-2">
                           {bttsMarket.values.map(value => (
-                              <Button key={value.value} variant="outline" className="flex flex-col h-auto" onClick={() => handleAddToSlip(match, 'Ambos Equipos Marcan', value)}>
+                              <Button key={value.value} variant="outline" className="flex flex-col h-auto" disabled={isFrozen} onClick={() => handleAddToSlip(match, 'Ambos Equipos Marcan', value)}>
                                 <span>{value.value}</span>
                                 <span className="font-bold">{value.odd}</span>
-                            </Button>
+                              </Button>
                           ))}
                         </div>
                       </div>
@@ -203,10 +208,10 @@ const Bets = () => {
                         <h4 className="font-semibold mb-2">Goles Más/Menos de</h4>
                          <div className="grid grid-cols-2 gap-2">
                           {goalsMarket.values.map(value => (
-                              <Button key={value.value} variant="outline" className="flex flex-col h-auto" onClick={() => handleAddToSlip(match, 'Goles Más/Menos de', value)}>
+                              <Button key={value.value} variant="outline" className="flex flex-col h-auto" disabled={isFrozen} onClick={() => handleAddToSlip(match, 'Goles Más/Menos de', value)}>
                                 <span>{value.value}</span>
                                 <span className="font-bold">{value.odd}</span>
-                            </Button>
+                              </Button>
                           ))}
                         </div>
                       </div>
