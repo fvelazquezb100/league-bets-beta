@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.secure-run-process-matchday-results]
 verify_jwt = false
+
+[functions.process-matchday-results]
+verify_jwt = false
+
+[functions.update-football-cache]
+verify_jwt = false
