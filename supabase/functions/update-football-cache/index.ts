@@ -110,8 +110,12 @@ Deno.serve(async (req) => {
 
       if (fixtureTimes.length > 0) {
         const latestKickoff = Math.max(...fixtureTimes);
-        // Assume typical match duration; schedule 5 hours after kickoff to ensure completion + buffers
+        const latestKickoffISO = new Date(latestKickoff).toISOString();
+        console.log('Latest fixture kickoff (UTC):', latestKickoffISO);
+
+        // Schedule 5 hours after the latest kickoff
         const dynamicRunTime = new Date(latestKickoff + 5 * 60 * 60 * 1000);
+        console.log('Calculated job time (UTC, +5h):', dynamicRunTime.toISOString());
 
         // Build a cron expression at the specific UTC minute/hour/day/month (one-time style)
         const cronExpr = `${dynamicRunTime.getUTCMinutes()} ${dynamicRunTime.getUTCHours()} ${dynamicRunTime.getUTCDate()} ${dynamicRunTime.getUTCMonth() + 1} *`;
