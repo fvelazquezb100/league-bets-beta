@@ -51,6 +51,16 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
       return;
     }
 
+    // Enforce single selection bets (no parlays/accumulators)
+    if (selectedBets.length > 1) {
+      toast({
+        title: 'Apuesta simple requerida',
+        description: 'Solo se permite una selección por apuesta. No se permiten combinadas.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     // Bloqueo por cierre: 15 minutos antes del inicio
     const isAnyFrozen = selectedBets.some(bet => {
       if (!bet.kickoff) return false;
@@ -224,7 +234,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
               <div className="space-y-2">
                 <Button
                   onClick={handlePlaceBet}
-                  disabled={isSubmitting || !stake || parseFloat(stake) <= 0 || selectedBets.some(bet => bet.kickoff ? (new Date() >= new Date(new Date(bet.kickoff).getTime() - 15 * 60 * 1000)) : false)}
+                  disabled={isSubmitting || !stake || parseFloat(stake) <= 0 || selectedBets.length > 1 || selectedBets.some(bet => bet.kickoff ? (new Date() >= new Date(new Date(bet.kickoff).getTime() - 15 * 60 * 1000)) : false)}
                   className="w-full"
                 >
                   {isSubmitting ? 'Procesando...' : 'Realizar Apuestas'}

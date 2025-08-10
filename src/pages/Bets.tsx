@@ -107,6 +107,16 @@ const Bets = () => {
       kickoff: match.fixture.date,
     };
 
+    // Prevent parlays/accumulators: only one selection per slip
+    if (selectedBets.length >= 1) {
+      toast({
+        title: 'Seleccion única por apuesta',
+        description: 'No se permiten combinadas. Realiza o elimina la selección actual antes de añadir otra.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (selectedBets.some(b => b.id === bet.id)) {
       toast({
         title: 'Bet already in slip',
