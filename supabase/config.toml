@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.update-football-cache]
 verify_jwt = false
+
+[functions.admin-reset-budgets]
+verify_jwt = false

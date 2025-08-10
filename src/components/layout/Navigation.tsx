@@ -1,6 +1,9 @@
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Home, DollarSign, History } from 'lucide-react';
+import { Home, DollarSign, History, Shield } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const navigationItems = [
   {
@@ -22,6 +25,23 @@ const navigationItems = [
 
 export const Navigation = () => {
   const location = useLocation();
+  const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const check = async () => {
+      if (!user) { setIsAdmin(false); return; }
+      const { data } = await supabase
+        .from('profiles')
+        .select('*' as any)
+        .eq('id', user.id)
+        .single();
+      if (!cancelled) setIsAdmin((data as any)?.role === 'admin');
+    };
+    check();
+    return () => { cancelled = true; };
+  }, [user]);
 
   return (
     <nav className="bg-card border-b border-border/50">
@@ -47,6 +67,21 @@ export const Navigation = () => {
               </Link>
             );
           })}
+          {isAdmin && (
+            <Link
+              key="Admin"
+              to="/admin"
+              className={cn(
+                'flex items-center gap-2 py-4 px-2 text-sm font-medium border-b-2 transition-colors',
+                location.pathname === '/admin'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Shield className="h-4 w-4" />
+              Admin
+            </Link>
+          )}
         </div>
       </div>
     </nav>

@@ -13,6 +13,8 @@ import { Home } from "./pages/Home";
 import Bets from "./pages/Bets";
 import { BetHistory } from "./pages/BetHistory";
 import NotFound from "./pages/NotFound";
+import Admin from "./pages/Admin";
+import { AdminRoute } from "./components/AdminRoute";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +49,13 @@ const App = () => (
                   <BetHistory />
                 </MainLayout>
               </ProtectedRoute>
+            } />
+            <Route path="/admin" element={
+              <AdminRoute>
+                <MainLayout>
+                  <Admin />
+                </MainLayout>
+              </AdminRoute>
             } />
             <Route path="*" element={<NotFound />} />
           </Routes>
