@@ -98,6 +98,7 @@ export type Database = {
         Row: {
           id: string
           league_id: number | null
+          role: string
           total_points: number | null
           username: string
           weekly_budget: number | null
@@ -105,6 +106,7 @@ export type Database = {
         Insert: {
           id?: string
           league_id?: number | null
+          role?: string
           total_points?: number | null
           username: string
           weekly_budget?: number | null
@@ -112,6 +114,7 @@ export type Database = {
         Update: {
           id?: string
           league_id?: number | null
+          role?: string
           total_points?: number | null
           username?: string
           weekly_budget?: number | null
@@ -140,6 +143,10 @@ export type Database = {
           body: string
         }
         Returns: string
+      }
+      update_league_points: {
+        Args: { user_id: string; points_to_add: number }
+        Returns: undefined
       }
     }
     Enums: {
