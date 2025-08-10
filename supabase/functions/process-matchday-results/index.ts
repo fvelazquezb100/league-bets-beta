@@ -22,6 +22,64 @@ function outcomeFromFixture(fx: any): "home" | "away" | "draw" | null {
   }
 }
 
+function evaluateBet(
+  b: any,
+  fr: { home_goals: number; away_goals: number; outcome: "home" | "away" | "draw" } | undefined,
+): boolean {
+  try {
+    if (!b || !fr) return false;
+
+    const sel = String(b.bet_selection || "").toLowerCase().trim();
+    const hg = Number(fr.home_goals ?? 0);
+    const ag = Number(fr.away_goals ?? 0);
+    const total = hg + ag;
+
+    // Both Teams To Score (BTTS)
+    if ((sel.includes("both") && sel.includes("score")) || sel.includes("btts")) {
+      const yes = sel.includes("yes");
+      const no = sel.includes("no");
+      const bothScored = hg > 0 && ag > 0;
+      if (yes) return bothScored;
+      if (no) return !bothScored;
+      return false;
+    }
+
+    // Goals Over/Under
+    if (sel.includes("over") || sel.includes("under") || /\b[ou]\s*\d/.test(sel)) {
+      let threshold: number | null = null;
+      let over = sel.includes("over");
+      let under = sel.includes("under");
+
+      const m1 = sel.match(/(over|under)\s*([0-9]+(?:\.[0-9]+)?)/);
+      if (m1) {
+        threshold = parseFloat(m1[2]);
+        over = m1[1] === "over";
+        under = m1[1] === "under";
+      } else {
+        const m2 = sel.match(/\b([ou])\s*([0-9]+(?:\.[0-9]+)?)/);
+        if (m2) {
+          threshold = parseFloat(m2[2]);
+          over = m2[1] === "o";
+          under = m2[1] === "u";
+        }
+      }
+
+      if (threshold == null) return false;
+      if (over) return total > threshold;
+      if (under) return total < threshold;
+    }
+
+    // Match Winner (1X2)
+    if (sel.includes("home")) return fr.outcome === "home";
+    if (sel.includes("away")) return fr.outcome === "away";
+    if (sel.includes("draw") || sel.includes("x")) return fr.outcome === "draw";
+
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -50,13 +108,18 @@ serve(async (req) => {
     const finished = finishedJson?.response ?? [];
 
     const outcomeMap = new Map<number, "home" | "away" | "draw">();
+    const resultsMap = new Map<number, { home_goals: number; away_goals: number; outcome: "home" | "away" | "draw" }>();
     for (const fx of finished) {
       const id = fx?.fixture?.id;
       const oc = outcomeFromFixture(fx);
+      const hg = fx?.goals?.home ?? fx?.score?.fulltime?.home ?? null;
+      const ag = fx?.goals?.away ?? fx?.score?.fulltime?.away ?? null;
       if (id && oc) outcomeMap.set(id, oc);
+      if (id != null && hg != null && ag != null && oc) {
+        resultsMap.set(id, { home_goals: Number(hg), away_goals: Number(ag), outcome: oc });
+      }
     }
-    const finishedIds = Array.from(outcomeMap.keys());
-
+    const finishedIds = Array.from(resultsMap.keys());
     if (finishedIds.length === 0) {
       return new Response(JSON.stringify({ ok: true, updated: 0 }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -78,22 +141,19 @@ serve(async (req) => {
       const currentStatus = (b.status ?? "pending").toLowerCase();
       if (currentStatus !== "pending") continue;
 
-      const oc = outcomeMap.get(Number(b.fixture_id));
-      if (!oc) continue;
+      const fr = resultsMap.get(Number(b.fixture_id));
+      if (!fr) continue;
 
-      const selection = String(b.bet_selection || "").toLowerCase().trim();
-      const isWin =
-        (selection.includes("home") && oc === "home") ||
-        (selection.includes("away") && oc === "away") ||
-        (selection.includes("draw") && oc === "draw");
+      const isWin = evaluateBet(b, fr);
 
       const stake = Number(b.stake ?? 0);
       const odds = Number(b.odds ?? 0);
       const payout = isWin ? stake * odds : 0;
+      const net = isWin ? payout - stake : 0;
 
       toUpdate.push({ id: b.id, status: isWin ? "won" : "lost", payout });
-      if (isWin && payout > 0) {
-        wonUpdates.push({ user: b.user_id, delta: payout });
+      if (isWin) {
+        wonUpdates.push({ user: b.user_id, delta: net });
       }
     }
 
@@ -104,7 +164,7 @@ serve(async (req) => {
     }
 
     for (const w of wonUpdates) {
-      const { error: incErr } = await sb.rpc("increment_user_points", { _user: w.user, _delta: w.delta });
+      const { error: incErr } = await sb.rpc("update_league_points", { user_id: w.user, points_to_add: w.delta });
       if (incErr) throw incErr;
     }
 
