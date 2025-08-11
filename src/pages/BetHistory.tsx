@@ -34,12 +34,11 @@ export const BetHistory = () => {
 
   const wonBets = bets.filter(bet => bet.status === 'won');
   const lostBets = bets.filter(bet => bet.status === 'lost');
-  const pendingBets = bets.filter(bet => bet.status === 'pending');
+  const pendingBets = bets.filter(bet => bet.status === 'pending').length;
   
   const totalBetAmount = bets.reduce((sum, bet) => sum + (parseFloat(bet.stake) || 0), 0);
-  const totalPayout = bets.reduce((sum, bet) => sum + (parseFloat(bet.payout) || 0), 0);
+  const totalPayout = bets.reduce((sum, bet) => sum + (bet.status === 'won' ? (parseFloat(bet.payout) || 0) : 0), 0);
   const netProfit = totalPayout - totalBetAmount;
-
   const getStatusText = (status: string) => {
     switch (status) {
       case 'pending': return 'Pendiente';
@@ -115,12 +114,10 @@ export const BetHistory = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Tasa de Acierto</p>
-                <p className="text-2xl font-bold text-primary">
-                  {bets.length > 0 ? Math.round((wonBets.length / bets.length) * 100) : 0}%
-                </p>
+                <p className="text-sm text-muted-foreground">Apuestas Pendientes</p>
+                <p className="text-2xl font-bold text-primary">{pendingBets}</p>
               </div>
-              <Trophy className="h-5 w-5 text-primary" />
+              <Calendar className="h-5 w-5 text-primary" />
             </div>
           </CardContent>
         </Card>
