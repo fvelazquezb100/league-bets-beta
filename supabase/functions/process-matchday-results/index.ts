@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 // League constant – easy to change
-const leagueId = 40; // UK Championship
+const leagueId = 140; // La Liga
 
 function outcomeFromFixture(fx: any): "home" | "away" | "draw" | null {
   try {

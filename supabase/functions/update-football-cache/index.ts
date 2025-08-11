@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
     console.log('API Key found. Starting two-step odds fetch...');
 
     // --- STEP 1: Fetch the NEXT 10 upcoming fixture IDs ---
-    const leagueId = 40; // UK Championship
+    const leagueId = 140; // La Liga
     const currentYear = new Date().getFullYear();
     const fixturesUrl = `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${currentYear}&next=10`;
     console.log(`Fetching fixtures from: ${fixturesUrl}`);
