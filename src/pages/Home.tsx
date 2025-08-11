@@ -213,7 +213,7 @@ export const Home = () => {
                 <TableRow key={profile.id} className={profile.id === user?.id ? 'bg-muted/50' : ''}>
                   <TableCell className="font-medium">{index + 1}</TableCell>
                   <TableCell>{profile.username || 'Usuario'}</TableCell>
-                  <TableCell>{profile.total_points || 0}</TableCell>
+                  <TableCell>{(Math.ceil(Number(profile.total_points ?? 0) * 10) / 10).toFixed(1)}</TableCell>
                   <TableCell className="text-muted-foreground">-</TableCell>
                 </TableRow>
               ))}
