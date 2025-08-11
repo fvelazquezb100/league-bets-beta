@@ -244,7 +244,7 @@ const Bets = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-4">UK Championship - Cuotas en Vivo</h1>
+      <h1 className="text-3xl font-bold mb-4">La Liga - Cuotas en Vivo</h1>
       <div className="flex flex-col md:flex-row gap-8">
         <div className="flex-grow">
           {renderContent()}
