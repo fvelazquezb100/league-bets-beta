@@ -6,13 +6,37 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
+
+
+// Types for odds cache minimal usage
+interface Team { id: number; name: string; logo: string }
+interface Fixture { id: number; date: string }
+interface Teams { home: Team; away: Team }
+interface BetValue { value: string; odd: string }
+interface BetMarket { id: number; name: string; values: BetValue[] }
+interface Bookmaker { id: number; name: string; bets: BetMarket[] }
+interface MatchData { fixture: Fixture; teams: Teams; bookmakers: Bookmaker[] }
+interface CachedOddsData { response?: MatchData[] }
+
+const findMarket = (match: MatchData, marketName: string) => {
+  if (!match.bookmakers || match.bookmakers.length === 0) return undefined;
+  for (const bookmaker of match.bookmakers) {
+    const market = bookmaker.bets.find(bet => bet.name === marketName);
+    if (market) return market;
+  }
+  return undefined;
+};
 
 export const Home = () => {
   const { user } = useAuth();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [userBets, setUserBets] = useState<any[]>([]);
-
+  const [upcoming, setUpcoming] = useState<MatchData[]>([]);
+  const [loadingUpcoming, setLoadingUpcoming] = useState(true);
+  const [recentBets, setRecentBets] = useState<any[]>([]);
+  const [loadingActivity, setLoadingActivity] = useState(true);
   useEffect(() => {
     const fetchData = async () => {
       if (!user) return;
@@ -50,12 +74,57 @@ export const Home = () => {
     fetchData();
   }, [user]);
 
+  useEffect(() => {
+    const fetchHomeData = async () => {
+      try {
+        setLoadingUpcoming(true);
+        setLoadingActivity(true);
+
+        // Upcoming matches from odds cache (take top 2)
+        const { data: cacheData } = await supabase
+          .from('match_odds_cache')
+          .select('data')
+          .single();
+
+        const apiData = (cacheData?.data ?? {}) as unknown as CachedOddsData;
+        const matches = Array.isArray(apiData.response)
+          ? apiData.response.filter((m: any) => m?.fixture).slice(0, 2)
+          : [];
+        setUpcoming(matches as MatchData[]);
+
+        // Recent bets (latest 2)
+        if (user) {
+          const { data: rb } = await supabase
+            .from('bets')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('id', { ascending: false })
+            .limit(2);
+          setRecentBets(rb ?? []);
+        } else {
+          setRecentBets([]);
+        }
+      } catch {
+        setUpcoming([]);
+        setRecentBets([]);
+      } finally {
+        setLoadingUpcoming(false);
+        setLoadingActivity(false);
+      }
+    };
+
+    fetchHomeData();
+  }, [user]);
+
+  useEffect(() => {
+    document.title = 'Inicio | Apuestas Simuladas';
+  }, []);
+
   const activeBets = userBets.filter(bet => bet.status === 'pending').length;
   const wonBets = userBets.filter(bet => bet.status === 'won').length;
   const totalBets = userBets.length;
   const winRate = totalBets > 0 ? Math.round((wonBets / totalBets) * 100) : 0;
   const userPosition = profiles.findIndex(p => p.id === user?.id) + 1;
-
   return (
     <div className="space-y-8">
       <div className="text-center">
@@ -162,24 +231,38 @@ export const Home = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
-              <div>
-                <p className="font-semibold">Real Madrid vs Barcelona</p>
-                <p className="text-sm text-muted-foreground">Hoy, 21:00</p>
-              </div>
-              <div className="text-sm font-medium">
-                <span className="text-primary">2.1</span> | <span className="text-primary">3.4</span> | <span className="text-primary">2.8</span>
-              </div>
-            </div>
-            <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
-              <div>
-                <p className="font-semibold">Liverpool vs Arsenal</p>
-                <p className="text-sm text-muted-foreground">Mañana, 17:30</p>
-              </div>
-              <div className="text-sm font-medium">
-                <span className="text-primary">1.8</span> | <span className="text-primary">3.2</span> | <span className="text-primary">4.1</span>
-              </div>
-            </div>
+            {loadingUpcoming ? (
+              <>
+                <div className="p-4 rounded-lg bg-muted/50">
+                  <Skeleton className="h-5 w-2/3 mb-2" />
+                  <Skeleton className="h-4 w-1/3" />
+                </div>
+                <div className="p-4 rounded-lg bg-muted/50">
+                  <Skeleton className="h-5 w-2/3 mb-2" />
+                  <Skeleton className="h-4 w-1/3" />
+                </div>
+              </>
+            ) : upcoming.length === 0 ? (
+              <p className="text-muted-foreground">No hay partidos disponibles en este momento.</p>
+            ) : (
+              upcoming.map((match) => {
+                const mw = findMarket(match, 'Match Winner');
+                const home = mw?.values.find(v => v.value.toLowerCase().includes('home'))?.odd ?? '-';
+                const draw = mw?.values.find(v => v.value.toLowerCase().includes('draw'))?.odd ?? '-';
+                const away = mw?.values.find(v => v.value.toLowerCase().includes('away'))?.odd ?? '-';
+                return (
+                  <div key={match.fixture.id} className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
+                    <div>
+                      <p className="font-semibold">{match.teams?.home?.name} vs {match.teams?.away?.name}</p>
+                      <p className="text-sm text-muted-foreground">{new Date(match.fixture.date).toLocaleString('es-ES')}</p>
+                    </div>
+                    <div className="text-sm font-medium">
+                      <span className="text-primary">{home}</span> | <span className="text-primary">{draw}</span> | <span className="text-primary">{away}</span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
             <Link to="/bets">
               <Button className="w-full mt-4">
                 Ver Todos los Partidos
@@ -196,20 +279,40 @@ export const Home = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex justify-between items-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
-              <div>
-                <p className="font-semibold text-green-800 dark:text-green-200">✓ Valencia vs Sevilla</p>
-                <p className="text-sm text-green-600 dark:text-green-400">Ganaste 150 puntos</p>
-              </div>
-              <div className="text-green-700 dark:text-green-300 font-bold">+150</div>
-            </div>
-            <div className="flex justify-between items-center p-4 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800">
-              <div>
-                <p className="font-semibold text-red-800 dark:text-red-200">✗ Milan vs Inter</p>
-                <p className="text-sm text-red-600 dark:text-red-400">Perdiste 100 puntos</p>
-              </div>
-              <div className="text-red-700 dark:text-red-300 font-bold">-100</div>
-            </div>
+            {loadingActivity ? (
+              <>
+                <div className="p-4 rounded-lg bg-muted/50">
+                  <Skeleton className="h-5 w-2/3 mb-2" />
+                  <Skeleton className="h-4 w-1/3" />
+                </div>
+                <div className="p-4 rounded-lg bg-muted/50">
+                  <Skeleton className="h-5 w-2/3 mb-2" />
+                  <Skeleton className="h-4 w-1/3" />
+                </div>
+              </>
+            ) : recentBets.length === 0 ? (
+              <p className="text-muted-foreground">Aún no has realizado ninguna apuesta.</p>
+            ) : (
+              recentBets.map((bet) => {
+                const status = String(bet.status || 'pending');
+                const stake = Number(bet.stake ?? 0);
+                const payout = Number(bet.payout ?? 0);
+                const net = payout - stake;
+                const isWon = status === 'won';
+                const isLost = status === 'lost';
+                return (
+                  <div key={bet.id} className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
+                    <div>
+                      <p className={`font-semibold ${isWon ? 'text-primary' : isLost ? 'text-destructive' : ''}`}>{bet.match_description || 'Partido'}</p>
+                      <p className="text-sm text-muted-foreground">{isWon ? 'Ganaste' : isLost ? 'Perdiste' : 'Apuesta pendiente'}</p>
+                    </div>
+                    <div className={`font-bold ${isWon ? 'text-primary' : isLost ? 'text-destructive' : 'text-foreground'}`}>
+                      {isWon ? `+${net.toFixed(2)}` : isLost ? `-${stake.toFixed(2)}` : '—'}
+                    </div>
+                  </div>
+                );
+              })
+            )}
             <Link to="/bet-history">
               <Button variant="outline" className="w-full mt-4">
                 <History className="h-4 w-4 mr-2" />
