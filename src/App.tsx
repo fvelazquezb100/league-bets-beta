@@ -16,6 +16,7 @@ import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
 import { AdminRoute } from "./components/AdminRoute";
 import { ResetPassword } from "./pages/ResetPassword";
+import { UpdatePassword } from "./pages/UpdatePassword";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/home" element={
               <ProtectedRoute>
                 <MainLayout>
