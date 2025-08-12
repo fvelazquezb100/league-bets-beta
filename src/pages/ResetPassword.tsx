@@ -42,7 +42,7 @@ export const ResetPassword = () => {
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'https://league-bets-beta.lovable.app/update-password',
+        redirectTo: 'https://betadonas.lovable.app/update-password',
       });
       if (error) {
         setError(error.message);
