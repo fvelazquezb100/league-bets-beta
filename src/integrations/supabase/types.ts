@@ -149,6 +149,10 @@ export type Database = {
         Args: { _user_id: string; _league_name: string }
         Returns: undefined
       }
+      get_current_user_league_id: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       join_league_with_code: {
         Args: { _user_id: string; _join_code: string }
         Returns: boolean
