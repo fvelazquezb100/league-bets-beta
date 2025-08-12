@@ -41,19 +41,33 @@ export const Home = () => {
     const fetchData = async () => {
       if (!user) return;
 
-      const { data: profilesData, error: profilesError } = await supabase
+      // Fetch current user's profile to get league_id
+      const { data: currentProfile, error: currentProfileError } = await supabase
         .from('profiles')
         .select('id, username, total_points, league_id')
-        .order('total_points', { ascending: false });
+        .eq('id', user.id)
+        .maybeSingle();
 
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
-      } else if (profilesData) {
-        setProfiles(profilesData);
-        const currentUser = profilesData.find(p => p.id === user.id);
-        if (currentUser) {
-          setUserProfile(currentUser);
+      if (currentProfileError) {
+        console.error('Error fetching current user profile:', currentProfileError);
+      }
+      setUserProfile(currentProfile ?? null);
+
+      // If user has a league, fetch only profiles in that league; otherwise show empty table
+      if (currentProfile?.league_id) {
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, username, total_points, league_id')
+          .eq('league_id', currentProfile.league_id)
+          .order('total_points', { ascending: false });
+
+        if (profilesError) {
+          console.error('Error fetching league profiles:', profilesError);
+        } else {
+          setProfiles(profilesData ?? []);
         }
+      } else {
+        setProfiles([]);
       }
 
       // Fetch user's recent bets
