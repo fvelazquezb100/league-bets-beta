@@ -15,6 +15,7 @@ import { BetHistory } from "./pages/BetHistory";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
 import { AdminRoute } from "./components/AdminRoute";
+import { ResetPassword } from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/home" element={
               <ProtectedRoute>
                 <MainLayout>

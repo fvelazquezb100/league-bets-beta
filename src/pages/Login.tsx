@@ -95,6 +95,11 @@ export const Login = () => {
                 />
               </div>
               
+              <div className="text-right">
+                <Link to="/reset-password" className="text-sm text-primary hover:underline">
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </div>
               <Button
                 type="submit"
                 className="w-full"
