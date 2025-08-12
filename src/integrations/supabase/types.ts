@@ -137,6 +137,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cancel_bet: {
+        Args: { bet_id_to_cancel: number }
+        Returns: boolean
+      }
       check_username_availability: {
         Args: { username_to_check: string }
         Returns: boolean
