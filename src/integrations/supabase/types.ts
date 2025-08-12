@@ -62,16 +62,19 @@ export type Database = {
         Row: {
           created_at: string
           id: number
+          join_code: string | null
           name: string | null
         }
         Insert: {
           created_at?: string
           id?: number
+          join_code?: string | null
           name?: string | null
         }
         Update: {
           created_at?: string
           id?: number
+          join_code?: string | null
           name?: string | null
         }
         Relationships: []
@@ -134,6 +137,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_username_availability: {
+        Args: { username_to_check: string }
+        Returns: boolean
+      }
+      create_league_and_join: {
+        Args: { _user_id: string; _league_name: string }
+        Returns: undefined
+      }
+      join_league_with_code: {
+        Args: { _user_id: string; _join_code: string }
+        Returns: boolean
+      }
       schedule_one_time_http_call: {
         Args: {
           job_name: string
