@@ -227,7 +227,7 @@ export const Home = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {profiles.slice(0, 10).map((profile, index) => (
+              {profiles.slice(0, 20).map((profile, index) => (
                 <TableRow key={profile.id} className={profile.id === user?.id ? 'bg-muted/50' : ''}>
                   <TableCell className="font-medium">{index + 1}</TableCell>
                   <TableCell>{profile.username || 'Usuario'}</TableCell>
