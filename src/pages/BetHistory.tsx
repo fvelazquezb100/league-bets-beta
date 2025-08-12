@@ -46,11 +46,22 @@ export const BetHistory = () => {
         .select('data')
         .maybeSingle();
 
-      if (!error && data && (data as any).data) {
+      if (!error && data && (data as any).data !== undefined) {
         try {
-          const arr = (data as any).data as any[];
+          const payload: any = (data as any).data;
+          let items: any[] = [];
+          if (Array.isArray(payload)) {
+            items = payload;
+          } else if (payload && typeof payload === 'object') {
+            // Gracefully handle object-shaped caches by scanning values
+            for (const val of Object.values(payload)) {
+              if (Array.isArray(val)) items.push(...val);
+              else if (val && typeof val === 'object') items.push(val as any);
+            }
+          }
+
           const map: Record<number, string> = {};
-          for (const item of arr) {
+          for (const item of items) {
             const id = item?.fixture?.id;
             const date = item?.fixture?.date;
             if (typeof id === 'number' && typeof date === 'string') {
