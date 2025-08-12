@@ -132,11 +132,60 @@ export type Database = {
           },
         ]
       }
+      weekly_performance: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: number
+          league_id: number | null
+          net_profit: number
+          start_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: number
+          league_id?: number | null
+          net_profit?: number
+          start_date: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: number
+          league_id?: number | null
+          net_profit?: number
+          start_date?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_performance_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_performance_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      calculate_and_store_weekly_performance: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       cancel_bet: {
         Args: { bet_id_to_cancel: number }
         Returns: boolean
@@ -156,6 +205,10 @@ export type Database = {
       join_league_with_code: {
         Args: { _user_id: string; _join_code: string }
         Returns: boolean
+      }
+      reset_all_weekly_budgets: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       schedule_one_time_http_call: {
         Args: {
