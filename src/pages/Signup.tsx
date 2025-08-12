@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,15 +6,47 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 export const Signup = () => {
   const { signUp, user, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+  const [isUsernameTaken, setIsUsernameTaken] = useState<boolean | null>(null);
+  const [usernameMsg, setUsernameMsg] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (!username) {
+      setIsUsernameTaken(null);
+      setUsernameMsg('');
+      return;
+    }
+
+    const t = setTimeout(async () => {
+      setIsCheckingUsername(true);
+      const { data, error } = await supabase.rpc('check_username_availability', {
+        username_to_check: username,
+      });
+      if (error) {
+        console.error('Error verificando usuario:', error);
+        setUsernameMsg('Error verificando usuario');
+        setIsUsernameTaken(null);
+      } else {
+        const exists = data === true;
+        setIsUsernameTaken(exists);
+        setUsernameMsg(exists ? 'Este nombre de usuario ya está en uso' : '');
+      }
+      setIsCheckingUsername(false);
+    }, 400);
+
+    return () => clearTimeout(t);
+  }, [username]);
 
   if (loading) {
     return (
@@ -33,6 +65,18 @@ export const Signup = () => {
     setError('');
     setIsLoading(true);
 
+    if (!username) {
+      setError('El nombre de usuario es requerido');
+      setIsLoading(false);
+      return;
+    }
+
+    if (isUsernameTaken) {
+      setError('El nombre de usuario ya está en uso');
+      setIsLoading(false);
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError('Las contraseñas no coinciden');
       setIsLoading(false);
@@ -46,7 +90,7 @@ export const Signup = () => {
     }
 
     try {
-      const { error } = await signUp(email, password);
+      const { error } = await signUp(email, password, username);
       if (error) {
         if (error.message.includes('already registered')) {
           setError('Este correo ya está registrado');
@@ -110,6 +154,29 @@ export const Signup = () => {
               )}
               
               <div className="space-y-2">
+                <Label htmlFor="username">Nombre de Usuario</Label>
+                <Input
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.trim())}
+                  required
+                  placeholder="elige-un-usuario"
+                />
+                <p className={`text-xs ${isUsernameTaken ? 'text-destructive' : 'text-muted-foreground'}`}>
+                  {isCheckingUsername
+                    ? 'Verificando disponibilidad...'
+                    : isUsernameTaken === null && !username
+                    ? 'Elige un nombre único para tu perfil'
+                    : isUsernameTaken
+                    ? 'Este nombre de usuario ya está en uso'
+                    : username
+                    ? 'Disponible'
+                    : ''}
+                </p>
+              </div>
+              
+              <div className="space-y-2">
                 <Label htmlFor="email">Correo Electrónico</Label>
                 <Input
                   id="email"
@@ -145,11 +212,11 @@ export const Signup = () => {
                   placeholder="••••••••"
                 />
               </div>
-              
+
               <Button
                 type="submit"
                 className="w-full"
-                disabled={isLoading}
+                disabled={isLoading || isCheckingUsername || isUsernameTaken === true}
               >
                 {isLoading ? 'Registrando...' : 'Crear Cuenta'}
               </Button>

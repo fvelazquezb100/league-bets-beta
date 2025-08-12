@@ -17,7 +17,7 @@ import Admin from "./pages/Admin";
 import { AdminRoute } from "./components/AdminRoute";
 import { ResetPassword } from "./pages/ResetPassword";
 import { UpdatePassword } from "./pages/UpdatePassword";
-
+import { LeagueSetup } from "./pages/LeagueSetup";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -33,6 +33,13 @@ const App = () => (
             <Route path="/signup" element={<Signup />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/update-password" element={<UpdatePassword />} />
+            <Route path="/league-setup" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <LeagueSetup />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
             <Route path="/home" element={
               <ProtectedRoute>
                 <MainLayout>

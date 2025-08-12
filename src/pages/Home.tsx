@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { DollarSign, History, Trophy, TrendingUp } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,6 +30,7 @@ const findMarket = (match: MatchData, marketName: string) => {
 
 export const Home = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [userBets, setUserBets] = useState<any[]>([]);
@@ -53,21 +54,24 @@ export const Home = () => {
       }
       setUserProfile(currentProfile ?? null);
 
-      // If user has a league, fetch only profiles in that league; otherwise show empty table
-      if (currentProfile?.league_id) {
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, username, total_points, league_id')
-          .eq('league_id', currentProfile.league_id)
-          .order('total_points', { ascending: false });
-
-        if (profilesError) {
-          console.error('Error fetching league profiles:', profilesError);
-        } else {
-          setProfiles(profilesData ?? []);
-        }
-      } else {
+      // If user has no league, redirect to setup and show empty table
+      if (!currentProfile?.league_id) {
         setProfiles([]);
+        navigate('/league-setup', { replace: true });
+        return;
+      }
+
+      // User has a league: fetch only profiles in that league
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username, total_points, league_id')
+        .eq('league_id', currentProfile.league_id)
+        .order('total_points', { ascending: false });
+
+      if (profilesError) {
+        console.error('Error fetching league profiles:', profilesError);
+      } else {
+        setProfiles(profilesData ?? []);
       }
 
       // Fetch user's recent bets

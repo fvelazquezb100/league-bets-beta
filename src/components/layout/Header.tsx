@@ -31,7 +31,7 @@ export const Header = () => {
         if (profileData.league_id) {
           const { data: leagueData, error: leagueError } = await supabase
             .from('leagues')
-            .select('name')
+            .select('name, join_code')
             .eq('id', profileData.league_id)
             .maybeSingle();
           
