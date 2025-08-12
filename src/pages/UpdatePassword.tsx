@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +13,8 @@ export const UpdatePassword = () => {
   const [error, setError] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [hasRecoverySession, setHasRecoverySession] = useState(false);
+  const [success, setSuccess] = useState<string>("");
+  const [recoverySession, setRecoverySession] = useState<Session | null>(null);
 
   useEffect(() => {
     // SEO: title, description, canonical
@@ -39,6 +42,7 @@ export const UpdatePassword = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") {
         setHasRecoverySession(!!session);
+        setRecoverySession(session);
       }
     });
 
@@ -48,6 +52,12 @@ export const UpdatePassword = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
+
+    if (!hasRecoverySession) {
+      setError("Este enlace de recuperación es inválido o ha expirado. Abre el enlace desde tu correo.");
+      return;
+    }
 
     if (password.length < 6) {
       setError("La contraseña debe tener al menos 6 caracteres.");
@@ -66,8 +76,11 @@ export const UpdatePassword = () => {
       if (updateError) {
         setError(updateError.message);
       } else {
-        // Redirect after successful update
-        window.location.href = "/home";
+        setSuccess("Contraseña actualizada correctamente. Redirigiendo...");
+        // Redirect only after successful update
+        setTimeout(() => {
+          window.location.href = "/home";
+        }, 1500);
       }
     } catch (err) {
       setError("Error de conexión. Inténtalo de nuevo.");
@@ -91,49 +104,59 @@ export const UpdatePassword = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {!hasRecoverySession && (
+            {success ? (
               <Alert className="mb-4">
-                <AlertDescription>
-                  Abre este enlace desde el correo de recuperación para continuar.
-                </AlertDescription>
+                <AlertDescription>{success}</AlertDescription>
               </Alert>
+            ) : (
+              <>
+                {!hasRecoverySession && (
+                  <Alert className="mb-4">
+                    <AlertDescription>
+                      Abre este enlace desde el correo de recuperación para continuar.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {error && (
+                    <Alert variant="destructive">
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Nueva Contraseña</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      placeholder="••••••••"
+                      disabled={!hasRecoverySession || isLoading}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      placeholder="••••••••"
+                      disabled={!hasRecoverySession || isLoading}
+                    />
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={!hasRecoverySession || isLoading}>
+                    {isLoading ? "Guardando..." : "Save New Password"}
+                  </Button>
+                </form>
+              </>
             )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="password">Nueva Contraseña</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                />
-              </div>
-
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Guardando..." : "Save New Password"}
-              </Button>
-            </form>
           </CardContent>
         </Card>
       </main>
