@@ -42,9 +42,17 @@ Deno.serve(async (req) => {
       throw new Error('Missing user id or email in webhook payload');
     }
 
-    const base = email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 20);
-    const suffix = Math.floor(1000 + Math.random() * 9000);
-    const username = `${base}_${suffix}`;
+    // Use username from signup data if provided, otherwise generate one from email
+    let username: string;
+    const providedUsername = record?.raw_user_meta_data?.username;
+    
+    if (providedUsername && typeof providedUsername === 'string') {
+      username = providedUsername;
+    } else {
+      const base = email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 20);
+      const suffix = Math.floor(1000 + Math.random() * 9000);
+      username = `${base}_${suffix}`;
+    }
 
     // Insert the profile (league_id left NULL on purpose)
     const { error: insertError } = await supabase
