@@ -7,10 +7,16 @@ import { Calendar, TrendingDown, TrendingUp, Trophy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 export const BetHistory = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [bets, setBets] = useState<any[]>([]);
+  const [kickoffMap, setKickoffMap] = useState<Record<number, string>>({});
+  const [now, setNow] = useState<Date>(new Date());
+  const [cancelingId, setCancelingId] = useState<number | null>(null);
+
 
   useEffect(() => {
     const fetchBets = async () => {
@@ -31,6 +37,69 @@ export const BetHistory = () => {
 
     fetchBets();
   }, [user]);
+
+  useEffect(() => {
+    // Fetch odds cache once to map fixture_id -> kickoff date
+    const loadKickoffMap = async () => {
+      const { data, error } = await supabase
+        .from('match_odds_cache')
+        .select('data')
+        .maybeSingle();
+
+      if (!error && data && (data as any).data) {
+        try {
+          const arr = (data as any).data as any[];
+          const map: Record<number, string> = {};
+          for (const item of arr) {
+            const id = item?.fixture?.id;
+            const date = item?.fixture?.date;
+            if (typeof id === 'number' && typeof date === 'string') {
+              map[id] = date;
+            }
+          }
+          setKickoffMap(map);
+        } catch (e) {
+          console.error('Error parsing odds cache:', e);
+        }
+      } else if (error) {
+        console.error('Error loading odds cache:', error);
+      }
+    };
+    loadKickoffMap();
+  }, []);
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 30000);
+    return () => clearInterval(t);
+  }, []);
+
+  const isWithinCutoff = (bet: any) => {
+    const dateStr = kickoffMap[bet.fixture_id as number];
+    if (!dateStr) return false;
+    const kickoff = new Date(dateStr);
+    const cutoff = new Date(kickoff.getTime() - 15 * 60 * 1000);
+    return now > cutoff;
+  };
+
+  const handleCancel = async (betId: number) => {
+    try {
+      setCancelingId(betId);
+      const { data, error } = await supabase.rpc('cancel_bet', { bet_id_to_cancel: betId });
+      setCancelingId(null);
+      if (error) {
+        console.error('Error canceling bet:', error);
+        toast({ title: 'No se pudo cancelar', description: error.message });
+        return;
+      }
+      // Success
+      setBets((prev) => prev.filter((b) => b.id !== betId));
+      toast({ title: 'Apuesta cancelada', description: 'Se ha reembolsado tu importe al presupuesto semanal.' });
+    } catch (e: any) {
+      setCancelingId(null);
+      console.error('Unexpected error canceling bet:', e);
+      toast({ title: 'Error', description: 'Ha ocurrido un error al cancelar la apuesta.' });
+    }
+  };
 
   const wonBets = bets.filter(bet => bet.status === 'won');
   const lostBets = bets.filter(bet => bet.status === 'lost');
@@ -140,6 +209,7 @@ export const BetHistory = () => {
                 <TableHead>Importe</TableHead>
                 <TableHead>Cuota</TableHead>
                 <TableHead>Resultado</TableHead>
+                <TableHead>Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -154,10 +224,22 @@ export const BetHistory = () => {
                       {getStatusText(bet.status)}
                     </Badge>
                   </TableCell>
+                  <TableCell>
+                    {bet.status === 'pending' ? (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleCancel(bet.id)}
+                        disabled={isWithinCutoff(bet) || cancelingId === bet.id}
+                      >
+                        {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
+                      </Button>
+                    ) : null}
+                  </TableCell>
                 </TableRow>
               )) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground">
                     No tienes apuestas todavía. ¡Ve a la sección de apuestas para empezar!
                   </TableCell>
                 </TableRow>
