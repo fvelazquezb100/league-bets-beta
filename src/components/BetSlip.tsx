@@ -30,7 +30,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
   const { toast } = useToast();
 
   const totalOdds = selectedBets.reduce((acc, bet) => acc * bet.odds, 1);
-  const potentialWinnings = stake ? (parseFloat(stake) * totalOdds).toFixed(2) : '0.00';
+  const potentialWinnings = stake ? (parseFloat(stake.replace(',', '.')) * totalOdds).toFixed(2) : '0.00';
 
   const handlePlaceBet = async () => {
     if (!stake || parseFloat(stake) <= 0) {
