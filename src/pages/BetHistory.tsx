@@ -253,6 +253,10 @@ export const BetHistory = () => {
               {bets.length > 0 ? bets.map((bet) => {
                 if (bet.bet_type === 'combo' && bet.bet_selections?.length) {
                   const rowSpan = bet.bet_selections.length;
+                  // Calculate total combo odds
+                  const totalComboOdds = bet.bet_selections.reduce((total: number, selection: any) => 
+                    total * (parseFloat(selection.odds) || 1), 1);
+                  
                   // Render combo bet with rowSpan for shared columns
                   return bet.bet_selections.map((selection: any, index: number) => (
                     <TableRow key={`${bet.id}-${selection.id}`}>
@@ -268,6 +272,13 @@ export const BetHistory = () => {
                         <div className="text-sm">
                           {formatBetDisplay(selection.market, selection.selection, parseFloat(selection.odds || 0))}
                         </div>
+                        {index > 0 && (
+                          <div className="mt-1">
+                            <Badge variant={getStatusVariant(selection.status)} className="text-xs">
+                              {getStatusText(selection.status)}
+                            </Badge>
+                          </div>
+                        )}
                       </TableCell>
                       {index === 0 && (
                         <>
@@ -275,7 +286,7 @@ export const BetHistory = () => {
                             {parseFloat(bet.stake || 0).toFixed(0)} pts
                           </TableCell>
                           <TableCell rowSpan={rowSpan} className="align-top">
-                            {parseFloat(bet.odds || 0).toFixed(2)}
+                            {totalComboOdds.toFixed(2)}
                           </TableCell>
                           <TableCell rowSpan={rowSpan} className="align-top">
                             <Badge variant={getStatusVariant(bet.status)}>
@@ -294,18 +305,6 @@ export const BetHistory = () => {
                               </Button>
                             ) : null}
                           </TableCell>
-                        </>
-                      )}
-                      {index > 0 && (
-                        <>
-                          <TableCell></TableCell>
-                          <TableCell></TableCell>
-                          <TableCell>
-                            <Badge variant={getStatusVariant(selection.status)} className="text-xs">
-                              {getStatusText(selection.status)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell></TableCell>
                         </>
                       )}
                     </TableRow>
