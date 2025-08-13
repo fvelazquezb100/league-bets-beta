@@ -224,12 +224,19 @@ export type Database = {
         Args: { user_id: string; points_to_add: number }
         Returns: undefined
       }
+      update_username: {
+        Args: { new_username: string }
+        Returns: Database["public"]["CompositeTypes"]["username_update_result"]
+      }
     }
     Enums: {
       [_ in never]: never
     }
     CompositeTypes: {
-      [_ in never]: never
+      username_update_result: {
+        success: boolean | null
+        message: string | null
+      }
     }
   }
 }
