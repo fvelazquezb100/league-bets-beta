@@ -281,7 +281,7 @@ export const Settings = () => {
                   required
                 />
                 <p className="text-sm text-muted-foreground mt-1">
-                  Debe tener entre 3 y 50 caracteres.
+                  Debe tener entre 3 y 15 caracteres.
                 </p>
               </div>
               <Button type="submit" disabled={usernameLoading}>
