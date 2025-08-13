@@ -129,17 +129,31 @@ serve(async (req) => {
     // 2) Load pending bets for these fixtures
     const { data: bets, error: betsErr } = await sb
       .from("bets")
-      .select("id,user_id,stake,odds,fixture_id,status,bet_selection")
+      .select("id,user_id,stake,odds,fixture_id,status,bet_selection,bet_type")
       .in("fixture_id", finishedIds);
     if (betsErr) throw betsErr;
 
+    // 3) Load pending bet selections for these fixtures
+    const { data: betSelections, error: selectionsErr } = await sb
+      .from("bet_selections")
+      .select("id,bet_id,fixture_id,market,selection,odds,status")
+      .in("fixture_id", finishedIds)
+      .eq("status", "pending");
+    if (selectionsErr) throw selectionsErr;
+
     const toUpdate: any[] = [];
     const wonUpdates: Array<{ user: string; delta: number }> = [];
+    const selectionsToUpdate: any[] = [];
+    const affectedComboBets = new Set<number>();
 
+    // Process single bets (existing logic)
     for (const b of bets ?? []) {
       if (!b || !b.fixture_id) continue;
       const currentStatus = (b.status ?? "pending").toLowerCase();
       if (currentStatus !== "pending") continue;
+      
+      // Skip combo bets - they will be handled separately
+      if (b.bet_type === 'combo') continue;
 
       const fr = resultsMap.get(Number(b.fixture_id));
       if (!fr) continue;
@@ -157,7 +171,32 @@ serve(async (req) => {
       }
     }
 
-    // 3) Persist bet updates and increment user points
+    // Process individual bet selections for combo bets
+    for (const bs of betSelections ?? []) {
+      if (!bs || !bs.fixture_id) continue;
+      
+      const fr = resultsMap.get(Number(bs.fixture_id));
+      if (!fr) continue;
+
+      // Create a mock bet object to use evaluateBet function
+      const mockBet = {
+        bet_selection: bs.selection,
+        fixture_id: bs.fixture_id
+      };
+
+      const isWin = evaluateBet(mockBet, fr);
+      const newStatus = isWin ? "won" : "lost";
+
+      selectionsToUpdate.push({ 
+        id: bs.id, 
+        status: newStatus 
+      });
+      
+      // Track which combo bets are affected
+      affectedComboBets.add(bs.bet_id);
+    }
+
+    // 4) Persist single bet updates and increment user points
     for (const u of toUpdate) {
       const { error: updErr } = await sb.from("bets").update({ status: u.status, payout: u.payout }).eq("id", u.id);
       if (updErr) throw updErr;
@@ -168,12 +207,34 @@ serve(async (req) => {
       if (incErr) throw incErr;
     }
 
-    // 4) Unschedule the one-time job if provided
+    // 5) Update bet selections
+    for (const s of selectionsToUpdate) {
+      const { error: selUpdErr } = await sb.from("bet_selections").update({ status: s.status }).eq("id", s.id);
+      if (selUpdErr) throw selUpdErr;
+    }
+
+    // 6) Update combo bet statuses
+    for (const comboBetId of Array.from(affectedComboBets)) {
+      const { error: comboErr } = await sb.rpc("update_combo_bet_status", { bet_id_to_check: comboBetId });
+      if (comboErr) {
+        console.error(`Error updating combo bet ${comboBetId}:`, comboErr);
+        // Continue processing other combo bets even if one fails
+      }
+    }
+
+    // 7) Unschedule the one-time job if provided
     if (jobName) {
       await sb.rpc("unschedule_job", { job_name: jobName });
     }
 
-    return new Response(JSON.stringify({ ok: true, updated: toUpdate.length }), {
+    const totalUpdated = toUpdate.length + selectionsToUpdate.length;
+    return new Response(JSON.stringify({ 
+      ok: true, 
+      updated: totalUpdated,
+      singleBets: toUpdate.length,
+      selections: selectionsToUpdate.length,
+      comboBets: affectedComboBets.size
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
