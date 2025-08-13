@@ -225,9 +225,10 @@ export const BetHistory = () => {
             </TableHeader>
             <TableBody>
               {bets.length > 0 ? bets.map((bet) => {
-                if (bet.bet_type === 'combo') {
-                  // Render combo bet with multiple rows for each selection
-                  return bet.bet_selections?.map((selection: any, index: number) => (
+                if (bet.bet_type === 'combo' && bet.bet_selections?.length) {
+                  const rowSpan = bet.bet_selections.length;
+                  // Render combo bet with rowSpan for shared columns
+                  return bet.bet_selections.map((selection: any, index: number) => (
                     <TableRow key={`${bet.id}-${selection.id}`}>
                       <TableCell className="font-medium">
                         {index === 0 && (
@@ -243,49 +244,56 @@ export const BetHistory = () => {
                           <div>{selection.selection}</div>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        {index === 0 ? `${parseFloat(bet.stake || 0).toFixed(0)} pts` : ''}
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <div>Leg: {parseFloat(selection.odds || 0).toFixed(2)}</div>
-                          {index === 0 && bet.odds && (
-                            <div className="text-xs text-muted-foreground">
-                              Total: {parseFloat(bet.odds).toFixed(2)}
+                      {index === 0 && (
+                        <>
+                          <TableCell rowSpan={rowSpan} className="align-top">
+                            {parseFloat(bet.stake || 0).toFixed(0)} pts
+                          </TableCell>
+                          <TableCell rowSpan={rowSpan} className="align-top">
+                            <div className="text-sm">
+                              <div className="text-xs text-muted-foreground mb-1">
+                                Total: {parseFloat(bet.odds || 0).toFixed(2)}
+                              </div>
+                              <div>Leg: {parseFloat(selection.odds || 0).toFixed(2)}</div>
                             </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <Badge variant={getStatusVariant(selection.status)} className="text-xs">
-                            {getStatusText(selection.status)}
-                          </Badge>
-                          {index === 0 && (
-                            <div>
-                              <Badge variant={getStatusVariant(bet.status)}>
-                                {getStatusText(bet.status)}
+                          </TableCell>
+                          <TableCell rowSpan={rowSpan} className="align-top">
+                            <div className="space-y-1">
+                              <div>
+                                <Badge variant={getStatusVariant(bet.status)}>
+                                  {getStatusText(bet.status)}
+                                </Badge>
+                              </div>
+                              <Badge variant={getStatusVariant(selection.status)} className="text-xs">
+                                Leg 1: {getStatusText(selection.status)}
                               </Badge>
                             </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {index === 0 && bet.status === 'pending' ? (
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleCancel(bet.id)}
-                            disabled={cancelingId === bet.id}
-                          >
-                            {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
-                          </Button>
-                        ) : null}
-                      </TableCell>
+                          </TableCell>
+                          <TableCell rowSpan={rowSpan} className="align-top">
+                            {bet.status === 'pending' ? (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleCancel(bet.id)}
+                                disabled={cancelingId === bet.id}
+                              >
+                                {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
+                              </Button>
+                            ) : null}
+                          </TableCell>
+                        </>
+                      )}
+                      {index > 0 && (
+                        <TableCell className="text-sm text-muted-foreground">
+                          <Badge variant={getStatusVariant(selection.status)} className="text-xs">
+                            Leg {index + 1}: {getStatusText(selection.status)}
+                          </Badge>
+                        </TableCell>
+                      )}
                     </TableRow>
-                  )) || [];
+                  ));
                 } else {
-                  // Render single bet (existing logic)
+                  // Render single bet
                   return (
                     <TableRow key={bet.id}>
                       <TableCell className="font-medium">{bet.match_description}</TableCell>
