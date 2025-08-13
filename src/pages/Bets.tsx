@@ -3,7 +3,7 @@ import { supabase } from '../integrations/supabase/client';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import BetSlip from '@/components/BetSlip';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // --- Final, Corrected Type Definitions for API-Football Odds Data ---
@@ -107,28 +107,30 @@ const Bets = () => {
       kickoff: match.fixture.date,
     };
 
-    // Prevent parlays/accumulators: only one selection per slip
-    if (selectedBets.length >= 1) {
-      toast({
-        title: 'Seleccion única por apuesta',
-        description: 'No se permiten combinadas. Realiza o elimina la selección actual antes de añadir otra.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
+    // Check if this exact selection is already in the slip
     if (selectedBets.some(b => b.id === bet.id)) {
       toast({
-        title: 'Bet already in slip',
-        description: 'You have already added this selection to your bet slip.',
+        title: 'Selección ya añadida',
+        description: 'Ya has añadido esta selección a tu boleto.',
         variant: 'destructive',
       });
       return;
     }
 
+    // Check if there's already a bet from the same fixture
+    if (selectedBets.some(b => b.fixtureId === bet.fixtureId)) {
+      toast({
+        title: 'Error',
+        description: 'Solo puedes añadir una selección por partido en una apuesta combinada.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Add the new bet to the slip
     setSelectedBets(prev => [...prev, bet]);
     toast({
-      title: 'Bet added to slip!',
+      title: 'Selección añadida',
       description: `${selection.value} @ ${selection.odd}`,
     });
   };
