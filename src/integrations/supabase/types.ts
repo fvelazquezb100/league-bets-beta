@@ -250,6 +250,10 @@ export type Database = {
         Args: { _user_id: string; _join_code: string }
         Returns: boolean
       }
+      place_combo_bet: {
+        Args: { stake_amount: number; selections: Json }
+        Returns: number
+      }
       reset_all_weekly_budgets: {
         Args: Record<PropertyKey, never>
         Returns: undefined
