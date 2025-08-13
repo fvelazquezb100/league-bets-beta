@@ -231,8 +231,8 @@ export type Database = {
         Returns: undefined
       }
       cancel_bet: {
-        Args: { bet_id_to_cancel: number }
-        Returns: boolean
+        Args: { bet_id_param: number }
+        Returns: Json
       }
       check_username_availability: {
         Args: { username_to_check: string }

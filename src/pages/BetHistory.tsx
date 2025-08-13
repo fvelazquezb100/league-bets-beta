@@ -108,16 +108,25 @@ export const BetHistory = () => {
   const handleCancel = async (betId: number) => {
     try {
       setCancelingId(betId);
-      const { data, error } = await supabase.rpc('cancel_bet', { bet_id_to_cancel: betId });
+      const { data, error } = await supabase.rpc('cancel_bet', { bet_id_param: betId });
       setCancelingId(null);
+      
       if (error) {
         console.error('Error canceling bet:', error);
         toast({ title: 'No se pudo cancelar', description: error.message });
         return;
       }
-      // Success
-      setBets((prev) => prev.filter((b) => b.id !== betId));
-      toast({ title: 'Apuesta cancelada', description: 'Se ha reembolsado tu importe al presupuesto semanal.' });
+      
+      // Handle the new jsonb response format
+      if (data && typeof data === 'object' && 'success' in data) {
+        const result = data as { success: boolean; message?: string; error?: string };
+        if (result.success) {
+          setBets((prev) => prev.filter((b) => b.id !== betId));
+          toast({ title: 'Apuesta cancelada', description: result.message || 'Se ha reembolsado tu importe al presupuesto semanal.' });
+        } else {
+          toast({ title: 'No se pudo cancelar', description: result.error || 'Error desconocido' });
+        }
+      }
     } catch (e: any) {
       setCancelingId(null);
       console.error('Unexpected error canceling bet:', e);
