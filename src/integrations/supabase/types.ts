@@ -14,9 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      bet_selections: {
+        Row: {
+          bet_id: number
+          created_at: string | null
+          fixture_id: number | null
+          id: number
+          market: string | null
+          odds: number | null
+          selection: string | null
+          status: string | null
+        }
+        Insert: {
+          bet_id: number
+          created_at?: string | null
+          fixture_id?: number | null
+          id?: number
+          market?: string | null
+          odds?: number | null
+          selection?: string | null
+          status?: string | null
+        }
+        Update: {
+          bet_id?: number
+          created_at?: string | null
+          fixture_id?: number | null
+          id?: number
+          market?: string | null
+          odds?: number | null
+          selection?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bet_selections_bet_id_fkey"
+            columns: ["bet_id"]
+            isOneToOne: false
+            referencedRelation: "bets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bets: {
         Row: {
           bet_selection: string | null
+          bet_type: string | null
           fixture_id: number | null
           id: number
           match_description: string | null
@@ -28,6 +70,7 @@ export type Database = {
         }
         Insert: {
           bet_selection?: string | null
+          bet_type?: string | null
           fixture_id?: number | null
           id?: number
           match_description?: string | null
@@ -39,6 +82,7 @@ export type Database = {
         }
         Update: {
           bet_selection?: string | null
+          bet_type?: string | null
           fixture_id?: number | null
           id?: number
           match_description?: string | null
