@@ -38,58 +38,86 @@ export const Home = () => {
   const [loadingUpcoming, setLoadingUpcoming] = useState(true);
   const [recentBets, setRecentBets] = useState<any[]>([]);
   const [loadingActivity, setLoadingActivity] = useState(true);
+
+  // Refactored data fetching functions
+  const fetchUserData = async () => {
+    if (!user) return;
+
+    // Fetch current user's profile to get league_id
+    const { data: currentProfile, error: currentProfileError } = await supabase
+      .from('profiles')
+      .select('id, username, total_points, league_id')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (currentProfileError) {
+      console.error('Error fetching current user profile:', currentProfileError);
+    }
+    setUserProfile(currentProfile ?? null);
+
+    // If user has no league, redirect to setup and show empty table
+    if (!currentProfile?.league_id) {
+      setProfiles([]);
+      navigate('/league-setup', { replace: true });
+      return;
+    }
+
+    // User has a league: fetch only profiles in that league
+    const { data: profilesData, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, username, total_points, league_id')
+      .eq('league_id', currentProfile.league_id)
+      .order('total_points', { ascending: false });
+
+    if (profilesError) {
+      console.error('Error fetching league profiles:', profilesError);
+    } else {
+      setProfiles(profilesData ?? []);
+    }
+  };
+
+  const fetchUserBets = async () => {
+    if (!user) return;
+
+    // Fetch user's recent bets
+    const { data: betsData, error: betsError } = await supabase
+      .from('bets')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('id', { ascending: false })
+      .limit(5);
+
+    if (betsError) {
+      console.error('Error fetching user bets:', betsError);
+    } else if (betsData) {
+      setUserBets(betsData);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      if (!user) return;
+    fetchUserData();
+    fetchUserBets();
+  }, [user]);
 
-      // Fetch current user's profile to get league_id
-      const { data: currentProfile, error: currentProfileError } = await supabase
-        .from('profiles')
-        .select('id, username, total_points, league_id')
-        .eq('id', user.id)
-        .maybeSingle();
+  // Add focus-based refresh for bet data
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchUserBets();
+    };
 
-      if (currentProfileError) {
-        console.error('Error fetching current user profile:', currentProfileError);
-      }
-      setUserProfile(currentProfile ?? null);
-
-      // If user has no league, redirect to setup and show empty table
-      if (!currentProfile?.league_id) {
-        setProfiles([]);
-        navigate('/league-setup', { replace: true });
-        return;
-      }
-
-      // User has a league: fetch only profiles in that league
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, username, total_points, league_id')
-        .eq('league_id', currentProfile.league_id)
-        .order('total_points', { ascending: false });
-
-      if (profilesError) {
-        console.error('Error fetching league profiles:', profilesError);
-      } else {
-        setProfiles(profilesData ?? []);
-      }
-
-      // Fetch user's recent bets
-      const { data: betsData, error: betsError } = await supabase
-        .from('bets')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('id', { ascending: false })
-        .limit(5);
-
-      if (betsError) {
-        console.error('Error fetching user bets:', betsError);
-      } else if (betsData) {
-        setUserBets(betsData);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchUserBets();
       }
     };
 
-    fetchData();
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [user]);
 
   useEffect(() => {
