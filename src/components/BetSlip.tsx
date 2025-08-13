@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { X } from 'lucide-react';
+import { X, DollarSign } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -27,10 +27,30 @@ interface BetSlipProps {
 const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
   const [stake, setStake] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [weeklyBudget, setWeeklyBudget] = useState<number | null>(null);
   const { toast } = useToast();
 
   const totalOdds = selectedBets.reduce((acc, bet) => acc * bet.odds, 1);
   const potentialWinnings = stake ? (parseFloat(stake.replace(',', '.')) * totalOdds).toFixed(2) : '0.00';
+
+  useEffect(() => {
+    const fetchWeeklyBudget = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('weekly_budget')
+        .eq('id', user.id)
+        .single();
+
+      if (profile) {
+        setWeeklyBudget(profile.weekly_budget);
+      }
+    };
+
+    fetchWeeklyBudget();
+  }, []);
 
   const handlePlaceBet = async () => {
     if (!stake || parseFloat(stake) <= 0) {
@@ -146,6 +166,9 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
         throw budgetError;
       }
 
+      // Update local weekly budget state
+      setWeeklyBudget(profile.weekly_budget - stakeAmount);
+
       toast({
         title: '¡Apuesta realizada!',
         description: `Apuesta de €${stake} realizada con éxito.`,
@@ -219,6 +242,13 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
                   step="0.01"
                 />
               </div>
+
+              {weeklyBudget !== null && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-2 rounded">
+                  <DollarSign className="h-4 w-4" />
+                  <span>Presupuesto Semanal: <span className="font-semibold">{weeklyBudget} pts</span></span>
+                </div>
+              )}
 
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
