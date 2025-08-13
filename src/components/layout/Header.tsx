@@ -1,14 +1,40 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { LogOut, User, DollarSign, Trophy } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { LogOut, User, DollarSign, Trophy, Menu, Home, History, Settings, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
+
+const navigationItems = [
+  {
+    name: 'Inicio',
+    href: '/home',
+    icon: Home,
+  },
+  {
+    name: 'Apostar',
+    href: '/bets',
+    icon: DollarSign,
+  },
+  {
+    name: 'Historial',
+    href: '/bet-history',
+    icon: History,
+  },
+  {
+    name: 'Ajustes',
+    href: '/settings',
+    icon: Settings,
+  },
+];
 
 export const Header = () => {
   const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [league, setLeague] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -16,7 +42,7 @@ export const Header = () => {
       
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('username, weekly_budget, league_id')
+        .select('username, weekly_budget, league_id, role')
         .eq('id', user.id)
         .maybeSingle();
       
@@ -27,6 +53,7 @@ export const Header = () => {
       
       if (profileData) {
         setProfile(profileData);
+        setIsAdmin(profileData.role === 'admin');
         
         if (profileData.league_id) {
           const { data: leagueData, error: leagueError } = await supabase
@@ -56,6 +83,7 @@ export const Header = () => {
           </Link>
           
           <div className="flex items-center gap-6">
+            {/* Desktop: User details (hidden on mobile) */}
             {profile && (
               <div className="hidden md:flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-2 text-muted-foreground">
@@ -79,15 +107,97 @@ export const Header = () => {
                 )}
               </div>
             )}
+
+            {/* Desktop: Logout button (hidden on mobile) */}
             <Button 
               onClick={signOut}
               variant="outline" 
               size="sm"
-              className="gap-2"
+              className="hidden md:flex gap-2"
             >
               <LogOut className="h-4 w-4" />
               Cerrar Sesión
             </Button>
+
+            {/* Mobile: Hamburger menu */}
+            <Sheet open={isOpen} onOpenChange={setIsOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm" className="md:hidden">
+                  <Menu className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-80">
+                <div className="flex flex-col h-full">
+                  {/* Header */}
+                  <div className="pb-4 mb-4 border-b">
+                    <h2 className="text-lg font-semibold">Navegación</h2>
+                    {profile && (
+                      <div className="mt-2 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          <span>{profile.username || user?.email}</span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <DollarSign className="h-4 w-4" />
+                          <span>{profile.weekly_budget || 1000} pts</span>
+                        </div>
+                        {league && (
+                          <div className="flex items-center gap-2 mt-1">
+                            <Trophy className="h-4 w-4" />
+                            <span>{league.name}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Navigation Links */}
+                  <div className="flex-1">
+                    <nav className="space-y-2">
+                      {navigationItems.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <Link
+                            key={item.name}
+                            to={item.href}
+                            onClick={() => setIsOpen(false)}
+                            className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-muted transition-colors"
+                          >
+                            <Icon className="h-4 w-4" />
+                            {item.name}
+                          </Link>
+                        );
+                      })}
+                      {isAdmin && (
+                        <Link
+                          to="/admin"
+                          onClick={() => setIsOpen(false)}
+                          className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-muted transition-colors"
+                        >
+                          <Shield className="h-4 w-4" />
+                          Admin
+                        </Link>
+                      )}
+                    </nav>
+                  </div>
+
+                  {/* Logout Button */}
+                  <div className="pt-4 mt-4 border-t">
+                    <Button 
+                      onClick={() => {
+                        signOut();
+                        setIsOpen(false);
+                      }}
+                      variant="outline" 
+                      className="w-full gap-2"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Cerrar Sesión
+                    </Button>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </div>

@@ -49,7 +49,7 @@ export const Navigation = () => {
   }, [user]);
 
   return (
-    <nav className="bg-card border-b border-border/50">
+    <nav className="bg-card border-b border-border/50 hidden md:block">
       <div className="container mx-auto px-6">
         <div className="flex space-x-8">
           {navigationItems.map((item) => {
