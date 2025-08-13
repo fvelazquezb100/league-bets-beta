@@ -268,6 +268,10 @@ export type Database = {
         }
         Returns: string
       }
+      update_combo_bet_status: {
+        Args: { bet_id_to_check: number }
+        Returns: undefined
+      }
       update_league_points: {
         Args: { user_id: string; points_to_add: number }
         Returns: undefined
