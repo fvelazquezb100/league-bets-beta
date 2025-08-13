@@ -3,8 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
-import { Calendar, TrendingDown, TrendingUp, Trophy, ChevronDown, ChevronRight } from 'lucide-react';
+import { Calendar, TrendingDown, TrendingUp, Trophy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
@@ -18,7 +17,7 @@ export const BetHistory = () => {
   const [teamNamesMap, setTeamNamesMap] = useState<Record<number, { home: string; away: string }>>({});
   const [now, setNow] = useState<Date>(new Date());
   const [cancelingId, setCancelingId] = useState<number | null>(null);
-  const [expandedCombos, setExpandedCombos] = useState<Set<number>>(new Set());
+  
 
 
   useEffect(() => {
@@ -165,18 +164,6 @@ export const BetHistory = () => {
     return `${selection} @ ${odds.toFixed(2)}`;
   };
 
-  // Helper function to toggle combo expansion
-  const toggleComboExpansion = (betId: number) => {
-    setExpandedCombos(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(betId)) {
-        newSet.delete(betId);
-      } else {
-        newSet.add(betId);
-      }
-      return newSet;
-    });
-  };
 
   return (
     <div className="space-y-6">
@@ -270,71 +257,60 @@ export const BetHistory = () => {
                   // Calculate total combo odds
                   const totalComboOdds = bet.bet_selections.reduce((total: number, selection: any) => 
                     total * (parseFloat(selection.odds) || 1), 1);
-                  const isExpanded = expandedCombos.has(bet.id);
                   
-                  return (
-                    <Collapsible key={bet.id} open={isExpanded} onOpenChange={() => toggleComboExpansion(bet.id)}>
-                      <CollapsibleTrigger asChild>
-                        <TableRow className="cursor-pointer hover:bg-muted/50">
-                          <TableCell className="font-medium">
-                            <div className="flex items-center gap-2">
-                              {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                              <div>
-                                <Badge variant="outline" className="text-xs">COMBO</Badge>
-                                <div className="text-sm mt-1">Apuesta Combinada</div>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell></TableCell>
-                          <TableCell>{parseFloat(bet.stake || 0).toFixed(0)} pts</TableCell>
-                          <TableCell>{totalComboOdds.toFixed(2)}</TableCell>
-                          <TableCell>
-                            <Badge variant={getStatusVariant(bet.status)}>
-                              {getStatusText(bet.status)}
+                  return [
+                    // Parent row - combo summary
+                    <TableRow key={bet.id} className="bg-muted/30">
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">COMBO</Badge>
+                          <span className="text-sm">Apuesta Combinada</span>
+                        </div>
+                      </TableCell>
+                      <TableCell></TableCell>
+                      <TableCell>{parseFloat(bet.stake || 0).toFixed(0)} pts</TableCell>
+                      <TableCell>{totalComboOdds.toFixed(2)}</TableCell>
+                      <TableCell>
+                        <Badge variant={getStatusVariant(bet.status)}>
+                          {getStatusText(bet.status)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {bet.status === 'pending' ? (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleCancel(bet.id)}
+                            disabled={cancelingId === bet.id}
+                          >
+                            {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
+                          </Button>
+                        ) : null}
+                      </TableCell>
+                    </TableRow>,
+                    // Child rows - individual selections
+                    ...bet.bet_selections.map((selection: any) => (
+                      <TableRow key={`${bet.id}-${selection.id}`} className="bg-muted/10 border-l-2 border-muted">
+                        <TableCell className="font-medium pl-8">
+                          {getMatchName(selection.fixture_id)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm">
+                              {formatBetDisplay(selection.market, selection.selection, parseFloat(selection.odds || 0))}
+                            </span>
+                            <Badge variant={getStatusVariant(selection.status)} className="text-xs">
+                              {getStatusText(selection.status)}
                             </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {bet.status === 'pending' ? (
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleCancel(bet.id);
-                                }}
-                                disabled={cancelingId === bet.id}
-                              >
-                                {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
-                              </Button>
-                            ) : null}
-                          </TableCell>
-                        </TableRow>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent>
-                        {bet.bet_selections.map((selection: any) => (
-                          <TableRow key={`${bet.id}-${selection.id}`} className="bg-muted/20">
-                            <TableCell className="font-medium pl-12">
-                              {getMatchName(selection.fixture_id)}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm">
-                                  {formatBetDisplay(selection.market, selection.selection, parseFloat(selection.odds || 0))}
-                                </span>
-                                <Badge variant={getStatusVariant(selection.status)} className="text-xs">
-                                  {getStatusText(selection.status)}
-                                </Badge>
-                              </div>
-                            </TableCell>
-                            <TableCell></TableCell>
-                            <TableCell></TableCell>
-                            <TableCell></TableCell>
-                            <TableCell></TableCell>
-                          </TableRow>
-                        ))}
-                      </CollapsibleContent>
-                    </Collapsible>
-                  );
+                          </div>
+                        </TableCell>
+                        <TableCell></TableCell>
+                        <TableCell></TableCell>
+                        <TableCell></TableCell>
+                        <TableCell></TableCell>
+                      </TableRow>
+                    ))
+                  ];
                 } else {
                   // Render single bet
                   return (
