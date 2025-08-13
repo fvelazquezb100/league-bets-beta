@@ -14,6 +14,7 @@ export const BetHistory = () => {
   const { toast } = useToast();
   const [bets, setBets] = useState<any[]>([]);
   const [kickoffMap, setKickoffMap] = useState<Record<number, string>>({});
+  const [teamNamesMap, setTeamNamesMap] = useState<Record<number, { home: string; away: string }>>({});
   const [now, setNow] = useState<Date>(new Date());
   const [cancelingId, setCancelingId] = useState<number | null>(null);
 
@@ -39,8 +40,8 @@ export const BetHistory = () => {
   }, [user]);
 
   useEffect(() => {
-    // Fetch odds cache once to map fixture_id -> kickoff date
-    const loadKickoffMap = async () => {
+    // Fetch odds cache once to map fixture_id -> kickoff date and team names
+    const loadOddsData = async () => {
       const { data, error } = await supabase
         .from('match_odds_cache')
         .select('data')
@@ -60,15 +61,26 @@ export const BetHistory = () => {
             }
           }
 
-          const map: Record<number, string> = {};
+          const kickoffMap: Record<number, string> = {};
+          const teamNamesMap: Record<number, { home: string; away: string }> = {};
+          
           for (const item of items) {
             const id = item?.fixture?.id;
             const date = item?.fixture?.date;
+            const homeTeam = item?.teams?.home?.name;
+            const awayTeam = item?.teams?.away?.name;
+            
             if (typeof id === 'number' && typeof date === 'string') {
-              map[id] = date;
+              kickoffMap[id] = date;
+            }
+            
+            if (typeof id === 'number' && homeTeam && awayTeam) {
+              teamNamesMap[id] = { home: homeTeam, away: awayTeam };
             }
           }
-          setKickoffMap(map);
+          
+          setKickoffMap(kickoffMap);
+          setTeamNamesMap(teamNamesMap);
         } catch (e) {
           console.error('Error parsing odds cache:', e);
         }
@@ -76,7 +88,7 @@ export const BetHistory = () => {
         console.error('Error loading odds cache:', error);
       }
     };
-    loadKickoffMap();
+    loadOddsData();
   }, []);
 
   useEffect(() => {
@@ -135,6 +147,20 @@ export const BetHistory = () => {
       case 'pending': return 'secondary';
       default: return 'secondary';
     }
+  };
+
+  // Helper function to get match name from fixture ID
+  const getMatchName = (fixtureId: number): string => {
+    const teams = teamNamesMap[fixtureId];
+    if (teams) {
+      return `${teams.home} vs ${teams.away}`;
+    }
+    return `Fixture ID: ${fixtureId}`;
+  };
+
+  // Helper function to format bet display
+  const formatBetDisplay = (market: string, selection: string, odds: number): string => {
+    return `${selection} @ ${odds.toFixed(2)}`;
   };
 
   return (
@@ -236,12 +262,11 @@ export const BetHistory = () => {
                             <Badge variant="outline" className="text-xs">COMBO</Badge>
                           </div>
                         )}
-                        <div className="text-sm">Fixture ID: {selection.fixture_id}</div>
+                        <div className="text-sm">{getMatchName(selection.fixture_id)}</div>
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          <div><strong>{selection.market}</strong></div>
-                          <div>{selection.selection}</div>
+                          {formatBetDisplay(selection.market, selection.selection, parseFloat(selection.odds || 0))}
                         </div>
                       </TableCell>
                       {index === 0 && (
@@ -250,24 +275,12 @@ export const BetHistory = () => {
                             {parseFloat(bet.stake || 0).toFixed(0)} pts
                           </TableCell>
                           <TableCell rowSpan={rowSpan} className="align-top">
-                            <div className="text-sm">
-                              <div className="text-xs text-muted-foreground mb-1">
-                                Total: {parseFloat(bet.odds || 0).toFixed(2)}
-                              </div>
-                              <div>Leg: {parseFloat(selection.odds || 0).toFixed(2)}</div>
-                            </div>
+                            {parseFloat(bet.odds || 0).toFixed(2)}
                           </TableCell>
                           <TableCell rowSpan={rowSpan} className="align-top">
-                            <div className="space-y-1">
-                              <div>
-                                <Badge variant={getStatusVariant(bet.status)}>
-                                  {getStatusText(bet.status)}
-                                </Badge>
-                              </div>
-                              <Badge variant={getStatusVariant(selection.status)} className="text-xs">
-                                Leg 1: {getStatusText(selection.status)}
-                              </Badge>
-                            </div>
+                            <Badge variant={getStatusVariant(bet.status)}>
+                              {getStatusText(bet.status)}
+                            </Badge>
                           </TableCell>
                           <TableCell rowSpan={rowSpan} className="align-top">
                             {bet.status === 'pending' ? (
@@ -284,11 +297,16 @@ export const BetHistory = () => {
                         </>
                       )}
                       {index > 0 && (
-                        <TableCell className="text-sm text-muted-foreground">
-                          <Badge variant={getStatusVariant(selection.status)} className="text-xs">
-                            Leg {index + 1}: {getStatusText(selection.status)}
-                          </Badge>
-                        </TableCell>
+                        <>
+                          <TableCell></TableCell>
+                          <TableCell></TableCell>
+                          <TableCell>
+                            <Badge variant={getStatusVariant(selection.status)} className="text-xs">
+                              {getStatusText(selection.status)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell></TableCell>
+                        </>
                       )}
                     </TableRow>
                   ));
