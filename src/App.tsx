@@ -18,6 +18,7 @@ import { AdminRoute } from "./components/AdminRoute";
 import { ResetPassword } from "./pages/ResetPassword";
 import { UpdatePassword } from "./pages/UpdatePassword";
 import { LeagueSetup } from "./pages/LeagueSetup";
+import { Settings } from "./pages/Settings";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -58,6 +59,13 @@ const App = () => (
               <ProtectedRoute>
                 <MainLayout>
                   <BetHistory />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Settings />
                 </MainLayout>
               </ProtectedRoute>
             } />

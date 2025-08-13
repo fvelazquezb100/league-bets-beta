@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Home, DollarSign, History, Shield } from 'lucide-react';
+import { Home, DollarSign, History, Shield, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -20,6 +20,11 @@ const navigationItems = [
     name: 'Historial',
     href: '/bet-history',
     icon: History,
+  },
+  {
+    name: 'Ajustes',
+    href: '/settings',
+    icon: Settings,
   },
 ];
 
