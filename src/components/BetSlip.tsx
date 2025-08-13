@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { X, DollarSign } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Bet {
@@ -29,6 +29,11 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [weeklyBudget, setWeeklyBudget] = useState<number | null>(null);
   const { toast } = useToast();
+
+  // Check for duplicate fixtures
+  const fixtureIds = selectedBets.map(bet => bet.fixtureId).filter(id => id !== undefined);
+  const uniqueFixtureIds = new Set(fixtureIds);
+  const hasDuplicateFixtures = fixtureIds.length !== uniqueFixtureIds.size;
 
   const totalOdds = selectedBets.reduce((acc, bet) => acc * bet.odds, 1);
   const potentialWinnings = stake ? (parseFloat(stake.replace(',', '.')) * totalOdds).toFixed(2) : '0.00';
@@ -71,11 +76,11 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
       return;
     }
 
-    // Enforce single selection bets (no parlays/accumulators)
-    if (selectedBets.length > 1) {
+    // Check for duplicate fixtures when multiple selections
+    if (selectedBets.length > 1 && hasDuplicateFixtures) {
       toast({
-        title: 'Apuesta simple requerida',
-        description: 'Solo se permite una selección por apuesta. No se permiten combinadas.',
+        title: 'Error',
+        description: 'No se pueden incluir múltiples selecciones del mismo partido en una apuesta combinada.',
         variant: 'destructive',
       });
       return;
@@ -136,34 +141,55 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
         return;
       }
 
-      // Place the bet and update budget in a transaction
-      const { error: betError } = await supabase
-        .from('bets')
-        .insert({
-          user_id: user.id,
-          stake: stakeAmount,
-          odds: totalOdds,
-          payout: parseFloat(potentialWinnings),
-          match_description: selectedBets.map(bet => bet.matchDescription).join(' + '),
-          bet_selection: selectedBets.map(bet => `${bet.selection} @ ${bet.odds}`).join(' + '),
-          fixture_id: selectedBets.length > 0 ? selectedBets[0].fixtureId : null,
-          status: 'pending'
+      // Place bet based on type (single or combo)
+      if (selectedBets.length === 1) {
+        // Single bet - use existing logic
+        const { error: betError } = await supabase
+          .from('bets')
+          .insert({
+            user_id: user.id,
+            stake: stakeAmount,
+            odds: totalOdds,
+            payout: parseFloat(potentialWinnings),
+            match_description: selectedBets[0].matchDescription,
+            bet_selection: `${selectedBets[0].selection} @ ${selectedBets[0].odds}`,
+            fixture_id: selectedBets[0].fixtureId,
+            bet_type: 'single',
+            status: 'pending'
+          });
+
+        if (betError) {
+          throw betError;
+        }
+
+        // Update user's weekly budget
+        const { error: budgetError } = await supabase
+          .from('profiles')
+          .update({ 
+            weekly_budget: profile.weekly_budget - stakeAmount 
+          })
+          .eq('id', user.id);
+
+        if (budgetError) {
+          throw budgetError;
+        }
+      } else {
+        // Combo bet - use RPC function
+        const selections = selectedBets.map(bet => ({
+          fixture_id: bet.fixtureId,
+          market: bet.market,
+          selection: bet.selection,
+          odds: bet.odds
+        }));
+
+        const { data: betId, error: comboError } = await supabase.rpc('place_combo_bet', {
+          stake_amount: stakeAmount,
+          selections: selections
         });
 
-      if (betError) {
-        throw betError;
-      }
-
-      // Update user's weekly budget
-      const { error: budgetError } = await supabase
-        .from('profiles')
-        .update({ 
-          weekly_budget: profile.weekly_budget - stakeAmount 
-        })
-        .eq('id', user.id);
-
-      if (budgetError) {
-        throw budgetError;
+        if (comboError) {
+          throw comboError;
+        }
       }
 
       // Update local weekly budget state
@@ -171,7 +197,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
 
       toast({
         title: '¡Apuesta realizada!',
-        description: `Apuesta de €${stake} realizada con éxito.`,
+        description: `Apuesta ${selectedBets.length > 1 ? 'combinada' : ''} de €${stake} realizada con éxito.`,
       });
 
       // Clear the bet slip
@@ -264,7 +290,13 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
               <div className="space-y-2">
                 <Button
                   onClick={handlePlaceBet}
-                  disabled={isSubmitting || !stake || parseFloat(stake) <= 0 || selectedBets.length > 1 || selectedBets.some(bet => bet.kickoff ? (new Date() >= new Date(new Date(bet.kickoff).getTime() - 15 * 60 * 1000)) : false)}
+                  disabled={
+                    isSubmitting || 
+                    !stake || 
+                    parseFloat(stake) <= 0 || 
+                    (selectedBets.length > 1 && hasDuplicateFixtures) ||
+                    selectedBets.some(bet => bet.kickoff ? (new Date() >= new Date(new Date(bet.kickoff).getTime() - 15 * 60 * 1000)) : false)
+                  }
                   className="w-full"
                 >
                   {isSubmitting ? 'Procesando...' : 'Realizar Apuestas'}
