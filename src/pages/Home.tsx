@@ -138,14 +138,11 @@ export const Home = () => {
           : [];
         setUpcoming(matches as MatchData[]);
 
-        // Recent bets (latest 2) with selection counts for combo bets
+        // Recent bets (latest 2)
         if (user) {
           const { data: rb } = await supabase
             .from('bets')
-            .select(`
-              *,
-              bet_selections(count)
-            `)
+            .select('*')
             .eq('user_id', user.id)
             .order('id', { ascending: false })
             .limit(2);
@@ -282,11 +279,12 @@ export const Home = () => {
                 const isWon = status === 'won';
                 const isLost = status === 'lost';
                 
-                // Get bet description based on type
-                let betDescription = bet.match_description || 'Partido';
-                if (bet.bet_type === 'combo' && bet.bet_selections && bet.bet_selections.length > 0) {
-                  const selectionCount = bet.bet_selections.length;
-                  betDescription = `Combinada - ${selectionCount} ${selectionCount === 1 ? 'partido' : 'partidos'}`;
+                // Get bet description based on type and stake
+                let betDescription;
+                if (bet.bet_type === 'combo') {
+                  betDescription = `Combinada @ €${stake.toFixed(0)}`;
+                } else {
+                  betDescription = `${bet.match_description || 'Partido'} @ €${stake.toFixed(0)}`;
                 }
                 
                 return (
