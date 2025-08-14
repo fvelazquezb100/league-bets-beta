@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
-import { DollarSign, History, Trophy, TrendingUp } from 'lucide-react';
+import { History } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -166,84 +166,16 @@ export const Home = () => {
     document.title = 'Inicio | Apuestas Simuladas';
   }, []);
 
-  const activeBets = userBets.filter(bet => bet.status === 'pending').length;
-  const wonBets = userBets.filter(bet => bet.status === 'won').length;
-  const totalBets = userBets.length;
-  const winRate = totalBets > 0 ? Math.round((wonBets / totalBets) * 100) : 0;
-  const userPosition = profiles.findIndex(p => p.id === user?.id) + 1;
   return (
     <div className="space-y-8">
       <div className="text-center">
         <h1 className="text-4xl font-bold text-foreground mb-4">
           Clasificación de la Liga
         </h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Tu centro de apuestas simuladas. Demuestra tu conocimiento del fútbol y compite con tus amigos.
-        </p>
-      </div>
-
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Puntos Totales</CardTitle>
-              <Trophy className="h-5 w-5 text-primary" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-primary">{userProfile?.total_points || 0}</div>
-            <p className="text-sm text-muted-foreground">Puntos acumulados</p>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Apuestas Activas</CardTitle>
-              <DollarSign className="h-5 w-5 text-primary" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-primary">{activeBets}</div>
-            <p className="text-sm text-muted-foreground">Pendientes de resultado</p>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Tasa de Acierto</CardTitle>
-              <TrendingUp className="h-5 w-5 text-primary" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-primary">{winRate}%</div>
-            <p className="text-sm text-muted-foreground">De tus apuestas</p>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Posición Liga</CardTitle>
-              <Trophy className="h-5 w-5 text-primary" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-primary">{userPosition}°</div>
-            <p className="text-sm text-muted-foreground">de {profiles.length} jugadores</p>
-          </CardContent>
-        </Card>
       </div>
 
       {/* League Standings Table */}
       <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle>Clasificación de la Liga</CardTitle>
-          <CardDescription>
-            Posiciones actuales de todos los jugadores
-          </CardDescription>
-        </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
