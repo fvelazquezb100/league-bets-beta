@@ -144,7 +144,7 @@ export const Home = () => {
             .from('bets')
             .select(`
               *,
-              bet_selections!inner(count)
+              bet_selections(count)
             `)
             .eq('user_id', user.id)
             .order('id', { ascending: false })
