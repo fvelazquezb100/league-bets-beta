@@ -138,11 +138,14 @@ export const Home = () => {
           : [];
         setUpcoming(matches as MatchData[]);
 
-        // Recent bets (latest 2)
+        // Recent bets (latest 2) with selection counts for combo bets
         if (user) {
           const { data: rb } = await supabase
             .from('bets')
-            .select('*')
+            .select(`
+              *,
+              bet_selections!inner(count)
+            `)
             .eq('user_id', user.id)
             .order('id', { ascending: false })
             .limit(2);
@@ -278,10 +281,18 @@ export const Home = () => {
                 const net = payout - stake;
                 const isWon = status === 'won';
                 const isLost = status === 'lost';
+                
+                // Get bet description based on type
+                let betDescription = bet.match_description || 'Partido';
+                if (bet.bet_type === 'combo' && bet.bet_selections && bet.bet_selections.length > 0) {
+                  const selectionCount = bet.bet_selections.length;
+                  betDescription = `Combinada - ${selectionCount} ${selectionCount === 1 ? 'partido' : 'partidos'}`;
+                }
+                
                 return (
                   <div key={bet.id} className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
                     <div>
-                      <p className={`font-semibold ${isWon ? 'text-primary' : isLost ? 'text-destructive' : ''}`}>{bet.match_description || 'Partido'}</p>
+                      <p className={`font-semibold ${isWon ? 'text-primary' : isLost ? 'text-destructive' : ''}`}>{betDescription}</p>
                       <p className="text-sm text-muted-foreground">{isWon ? 'Ganaste' : isLost ? 'Perdiste' : 'Apuesta pendiente'}</p>
                     </div>
                     <div className={`font-bold ${isWon ? 'text-primary' : isLost ? 'text-destructive' : 'text-foreground'}`}>
