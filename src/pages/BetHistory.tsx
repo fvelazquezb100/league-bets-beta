@@ -98,11 +98,31 @@ export const BetHistory = () => {
   }, []);
 
   const isWithinCutoff = (bet: any) => {
-    const dateStr = kickoffMap[bet.fixture_id as number];
-    if (!dateStr) return false;
-    const kickoff = new Date(dateStr);
-    const cutoff = new Date(kickoff.getTime() - 15 * 60 * 1000);
-    return now > cutoff;
+    if (bet.bet_type === 'combo' && bet.bet_selections?.length) {
+      // For combo bets, check all selections and find the earliest kickoff time
+      let earliestKickoff: Date | null = null;
+      
+      for (const selection of bet.bet_selections) {
+        const dateStr = kickoffMap[selection.fixture_id as number];
+        if (dateStr) {
+          const kickoff = new Date(dateStr);
+          if (!earliestKickoff || kickoff < earliestKickoff) {
+            earliestKickoff = kickoff;
+          }
+        }
+      }
+      
+      if (!earliestKickoff) return false;
+      const cutoff = new Date(earliestKickoff.getTime() - 15 * 60 * 1000);
+      return now > cutoff;
+    } else {
+      // For single bets, use the existing logic
+      const dateStr = kickoffMap[bet.fixture_id as number];
+      if (!dateStr) return false;
+      const kickoff = new Date(dateStr);
+      const cutoff = new Date(kickoff.getTime() - 15 * 60 * 1000);
+      return now > cutoff;
+    }
   };
 
   const handleCancel = async (betId: number) => {
@@ -290,7 +310,7 @@ export const BetHistory = () => {
                             variant="destructive"
                             size="sm"
                             onClick={() => handleCancel(bet.id)}
-                            disabled={cancelingId === bet.id}
+                            disabled={isWithinCutoff(bet) || cancelingId === bet.id}
                           >
                             {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
                           </Button>
