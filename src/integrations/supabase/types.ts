@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
@@ -239,7 +239,7 @@ export type Database = {
         Returns: boolean
       }
       create_league_and_join: {
-        Args: { _user_id: string; _league_name: string }
+        Args: { _league_name: string; _user_id: string }
         Returns: undefined
       }
       get_current_user_league_id: {
@@ -247,11 +247,11 @@ export type Database = {
         Returns: number
       }
       join_league_with_code: {
-        Args: { _user_id: string; _join_code: string }
+        Args: { _join_code: string; _user_id: string }
         Returns: boolean
       }
       place_combo_bet: {
-        Args: { stake_amount: number; selections: Json }
+        Args: { selections: Json; stake_amount: number }
         Returns: number
       }
       reset_all_weekly_budgets: {
@@ -260,11 +260,11 @@ export type Database = {
       }
       schedule_one_time_http_call: {
         Args: {
+          auth_header: string
+          body: string
           job_name: string
           schedule: string
           url: string
-          auth_header: string
-          body: string
         }
         Returns: string
       }
@@ -273,7 +273,7 @@ export type Database = {
         Returns: undefined
       }
       update_league_points: {
-        Args: { user_id: string; points_to_add: number }
+        Args: { points_to_add: number; user_id: string }
         Returns: undefined
       }
       update_username: {
