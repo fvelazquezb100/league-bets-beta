@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import BetSlip from '@/components/BetSlip';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/AuthContext';
 
 // --- Final, Corrected Type Definitions for API-Football Odds Data ---
 interface Team {
@@ -50,18 +52,36 @@ interface CachedOddsData {
   response?: MatchData[];
 }
 
+interface UserBet {
+  id: number;
+  stake: number;
+  status: string;
+  bet_type: string;
+  match_description?: string;
+  fixture_id?: number;
+  bet_selections?: {
+    market: string;
+    selection: string;
+    odds: number;
+    fixture_id?: number;
+  }[];
+}
+
 const Bets = () => {
   const [matches, setMatches] = useState<MatchData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedBets, setSelectedBets] = useState<any[]>([]);
+  const [userBets, setUserBets] = useState<UserBet[]>([]);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
-    const fetchOdds = async () => {
+    const fetchOddsAndBets = async () => {
       setLoading(true);
       setError(null);
       try {
+        // Fetch cached odds data
         const { data: cacheData, error: cacheError } = await supabase
           .from('match_odds_cache')
           .select('data')
@@ -85,6 +105,32 @@ const Bets = () => {
           setMatches([]);
         }
 
+        // Fetch user's existing bets if authenticated
+        if (user) {
+          const { data: betsData, error: betsError } = await supabase
+            .from('bets')
+            .select(`
+              id,
+              stake,
+              status,
+              bet_type,
+              match_description,
+              fixture_id,
+              bet_selections (
+                market,
+                selection,
+                odds,
+                fixture_id
+              )
+            `)
+            .eq('user_id', user.id)
+            .eq('status', 'pending');
+
+          if (!betsError && betsData) {
+            setUserBets(betsData as UserBet[]);
+          }
+        }
+
       } catch (err: any) {
         setError('Failed to fetch or parse live betting data. Please try again later.');
         console.error("Error details:", err);
@@ -93,8 +139,8 @@ const Bets = () => {
       }
     };
 
-    fetchOdds();
-  }, []);
+    fetchOddsAndBets();
+  }, [user]);
 
   const handleAddToSlip = (match: MatchData, marketName: string, selection: BetValue) => {
     const bet = {
@@ -144,6 +190,43 @@ const Bets = () => {
     return undefined;
   };
 
+  const getBetsForFixture = (fixtureId: number) => {
+    return userBets.filter(bet => 
+      bet.fixture_id === fixtureId || 
+      (bet.bet_type === 'combo' && bet.bet_selections?.some(sel => 
+        sel.fixture_id === fixtureId
+      ))
+    );
+  };
+
+  const getBetPreview = (fixtureId: number) => {
+    const bets = getBetsForFixture(fixtureId);
+    if (bets.length === 0) return null;
+
+    return bets.map(bet => {
+      if (bet.bet_type === 'combo') {
+        return `Combinada €${bet.stake?.toFixed(0)}`;
+      } else {
+        // For single bets, try to get market info from bet_selections if available
+        const selection = bet.bet_selections?.[0];
+        const market = selection ? `${selection.market}: ${selection.selection}` : 'Apuesta';
+        return `${market} €${bet.stake?.toFixed(0)}`;
+      }
+    }).join(', ');
+  };
+
+  const hasUserBetOnMarket = (fixtureId: number, marketName: string, selection: string) => {
+    const bets = getBetsForFixture(fixtureId);
+    return bets.some(bet => {
+      if (bet.bet_selections) {
+        return bet.bet_selections.some(sel => 
+          sel.fixture_id === fixtureId && sel.market === marketName && sel.selection === selection
+        );
+      }
+      return false;
+    });
+  };
+
   const renderContent = () => {
     if (loading) {
       return (
@@ -182,9 +265,23 @@ const Bets = () => {
             return (
               <AccordionItem value={`match-${match.fixture.id}`} key={match.fixture.id} className="border rounded-lg p-4 bg-white shadow-sm">
                 <AccordionTrigger>
-                  <div className="text-left">
-                    <p className="font-bold text-lg">{match.teams?.home?.name ?? 'Local'} vs {match.teams?.away?.name ?? 'Visitante'}</p>
-                    <p className="text-sm text-gray-500">{new Date(match.fixture.date).toLocaleString()}</p>
+                  <div className="text-left w-full">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-bold text-lg">{match.teams?.home?.name ?? 'Local'} vs {match.teams?.away?.name ?? 'Visitante'}</p>
+                        <p className="text-sm text-gray-500">{new Date(match.fixture.date).toLocaleString()}</p>
+                      </div>
+                      {getBetsForFixture(match.fixture.id).length > 0 && (
+                        <Badge variant="secondary" className="ml-2">
+                          {getBetsForFixture(match.fixture.id).length} apuesta{getBetsForFixture(match.fixture.id).length > 1 ? 's' : ''}
+                        </Badge>
+                      )}
+                    </div>
+                    {getBetPreview(match.fixture.id) && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Tus apuestas: {getBetPreview(match.fixture.id)}
+                      </p>
+                    )}
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -193,12 +290,22 @@ const Bets = () => {
                       <div>
                         <h4 className="font-semibold mb-2">Ganador del Partido</h4>
                         <div className="flex flex-wrap gap-2">
-                          {matchWinnerMarket.values.map(value => (
-                              <Button key={value.value} variant="outline" className="flex flex-col h-auto flex-1 min-w-[120px]" disabled={isFrozen} onClick={() => handleAddToSlip(match, 'Ganador del Partido', value)}>
+                          {matchWinnerMarket.values.map(value => {
+                            const hasUserBet = hasUserBetOnMarket(match.fixture.id, 'Ganador del Partido', value.value);
+                            return (
+                              <Button 
+                                key={value.value} 
+                                variant={hasUserBet ? "default" : "outline"} 
+                                className={`flex flex-col h-auto flex-1 min-w-[120px] ${hasUserBet ? 'opacity-75' : ''}`} 
+                                disabled={isFrozen} 
+                                onClick={() => handleAddToSlip(match, 'Ganador del Partido', value)}
+                              >
                                 <span>{value.value}</span>
                                 <span className="font-bold">{value.odd}</span>
+                                {hasUserBet && <span className="text-xs">✓ Apostado</span>}
                               </Button>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     ) : null}
@@ -206,12 +313,22 @@ const Bets = () => {
                        <div>
                         <h4 className="font-semibold mb-2">Ambos Equipos Marcan</h4>
                         <div className="flex flex-wrap gap-2">
-                          {bttsMarket.values.map(value => (
-                              <Button key={value.value} variant="outline" className="flex flex-col h-auto flex-1 min-w-[120px]" disabled={isFrozen} onClick={() => handleAddToSlip(match, 'Ambos Equipos Marcan', value)}>
+                          {bttsMarket.values.map(value => {
+                            const hasUserBet = hasUserBetOnMarket(match.fixture.id, 'Ambos Equipos Marcan', value.value);
+                            return (
+                              <Button 
+                                key={value.value} 
+                                variant={hasUserBet ? "default" : "outline"} 
+                                className={`flex flex-col h-auto flex-1 min-w-[120px] ${hasUserBet ? 'opacity-75' : ''}`} 
+                                disabled={isFrozen} 
+                                onClick={() => handleAddToSlip(match, 'Ambos Equipos Marcan', value)}
+                              >
                                 <span>{value.value}</span>
                                 <span className="font-bold">{value.odd}</span>
+                                {hasUserBet && <span className="text-xs">✓ Apostado</span>}
                               </Button>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     ) : null}
@@ -219,12 +336,22 @@ const Bets = () => {
                       <div>
                         <h4 className="font-semibold mb-2">Goles Más/Menos de</h4>
                          <div className="flex flex-wrap gap-2">
-                          {goalsMarket.values.map(value => (
-                              <Button key={value.value} variant="outline" className="flex flex-col h-auto flex-1 min-w-[120px]" disabled={isFrozen} onClick={() => handleAddToSlip(match, 'Goles Más/Menos de', value)}>
+                          {goalsMarket.values.map(value => {
+                            const hasUserBet = hasUserBetOnMarket(match.fixture.id, 'Goles Más/Menos de', value.value);
+                            return (
+                              <Button 
+                                key={value.value} 
+                                variant={hasUserBet ? "default" : "outline"} 
+                                className={`flex flex-col h-auto flex-1 min-w-[120px] ${hasUserBet ? 'opacity-75' : ''}`} 
+                                disabled={isFrozen} 
+                                onClick={() => handleAddToSlip(match, 'Goles Más/Menos de', value)}
+                              >
                                 <span>{value.value}</span>
                                 <span className="font-bold">{value.odd}</span>
+                                {hasUserBet && <span className="text-xs">✓ Apostado</span>}
                               </Button>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     ) : null}
