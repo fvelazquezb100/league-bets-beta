@@ -219,29 +219,32 @@ const Bets = () => {
 
   const hasUserBetOnMarket = (fixtureId: number, marketName: string, selection: string) => {
     const bets = getBetsForFixture(fixtureId);
+    console.log(`Checking market ${marketName} selection ${selection} for fixture ${fixtureId}`);
+    console.log('Available bets:', bets);
+    
     return bets.some(bet => {
       // Check combo bets
       if (bet.bet_selections) {
-        return bet.bet_selections.some(sel => 
+        const comboMatch = bet.bet_selections.some(sel => 
           sel.fixture_id === fixtureId && sel.market === marketName && sel.selection === selection
         );
+        console.log('Combo bet match:', comboMatch);
+        return comboMatch;
       }
       
       // Check single bets
       if (bet.bet_type === 'single' && bet.fixture_id === fixtureId && bet.bet_selection) {
+        console.log('Checking single bet:', bet.bet_selection);
         // Parse the bet_selection string (e.g., "Over 2.5 @ 2.1" or "Home @ 1.85")
         const parts = bet.bet_selection.split(' @ ');
         if (parts.length >= 1) {
           const betSelection = parts[0].trim();
-          // Map market names to match our display names
-          const marketMapping: { [key: string]: string } = {
-            'Match Winner': 'Ganador del Partido',
-            'Goals Over/Under': 'Goles Más/Menos de',
-            'Both Teams To Score': 'Ambos Equipos Marcan'
-          };
+          console.log(`Comparing "${betSelection}" with "${selection}"`);
           
           // Check if the selection matches
-          return betSelection === selection;
+          const singleMatch = betSelection === selection;
+          console.log('Single bet match:', singleMatch);
+          return singleMatch;
         }
       }
       
