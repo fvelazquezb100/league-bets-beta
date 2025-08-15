@@ -223,8 +223,10 @@ const Bets = () => {
     console.log('Available bets:', bets);
     
     return bets.some(bet => {
+      console.log(`Processing bet type: ${bet.bet_type}, fixture_id: ${bet.fixture_id}`);
+      
       // Check combo bets
-      if (bet.bet_selections) {
+      if (bet.bet_selections && bet.bet_selections.length > 0) {
         const comboMatch = bet.bet_selections.some(sel => 
           sel.fixture_id === fixtureId && sel.market === marketName && sel.selection === selection
         );
@@ -235,7 +237,7 @@ const Bets = () => {
       // Check single bets
       if (bet.bet_type === 'single' && bet.fixture_id === fixtureId && bet.bet_selection) {
         console.log('Checking single bet:', bet.bet_selection);
-        // Parse the bet_selection string (e.g., "Over 2.5 @ 2.1" or "Home @ 1.85")
+        // Parse the bet_selection string (e.g., "Under 2.5 @ 1.7" or "Home @ 1.85")
         const parts = bet.bet_selection.split(' @ ');
         if (parts.length >= 1) {
           const betSelection = parts[0].trim();
@@ -248,6 +250,7 @@ const Bets = () => {
         }
       }
       
+      console.log('No match found for this bet');
       return false;
     });
   };
