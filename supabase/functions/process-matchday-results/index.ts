@@ -167,7 +167,7 @@ serve(async (req) => {
 
       toUpdate.push({ id: b.id, status: isWin ? "won" : "lost", payout });
       if (isWin) {
-        wonUpdates.push({ user: b.user_id, delta: net });
+        wonUpdates.push({ user: b.user_id, delta: payout });
       }
     }
 
