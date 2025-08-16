@@ -164,7 +164,12 @@ export const BetHistory = () => {
   
   const totalBetAmount = bets.reduce((sum, bet) => sum + (parseFloat(bet.stake) || 0), 0);
   const totalPayout = bets.reduce((sum, bet) => sum + (bet.status === 'won' ? (parseFloat(bet.payout) || 0) : 0), 0);
-  const netProfit = totalPayout - totalBetAmount;
+  
+  // Calculate success percentage
+  const wonBetsStake = wonBets.reduce((sum, bet) => sum + (parseFloat(bet.stake) || 0), 0);
+  const lostBetsStake = lostBets.reduce((sum, bet) => sum + (parseFloat(bet.stake) || 0), 0);
+  const totalSettledStake = wonBetsStake + lostBetsStake;
+  const successPercentage = totalSettledStake > 0 ? Math.round((wonBetsStake / totalSettledStake) * 100) : 0;
   const getStatusText = (status: string) => {
     switch (status) {
       case 'pending': return 'Pendiente';
@@ -228,7 +233,7 @@ export const BetHistory = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Apostado</p>
-                <p className="text-2xl font-bold">{totalBetAmount}</p>
+                <p className="text-2xl font-bold">{Math.ceil(totalBetAmount)}</p>
               </div>
               <TrendingDown className="h-5 w-5 text-muted-foreground" />
             </div>
@@ -240,7 +245,7 @@ export const BetHistory = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Ganado</p>
-                <p className="text-2xl font-bold text-green-600">{totalPayout}</p>
+                <p className="text-2xl font-bold text-green-600">{Math.ceil(totalPayout)}</p>
               </div>
               <TrendingUp className="h-5 w-5 text-green-600" />
             </div>
@@ -251,14 +256,10 @@ export const BetHistory = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Beneficio Neto</p>
-                <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {netProfit >= 0 ? '+' : ''}{netProfit}
-                </p>
+                <p className="text-sm text-muted-foreground">Porcentaje de Acierto</p>
+                <p className="text-2xl font-bold text-primary">{successPercentage}%</p>
               </div>
-              <div className={`h-5 w-5 ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {netProfit >= 0 ? <TrendingUp /> : <TrendingDown />}
-              </div>
+              <Trophy className="h-5 w-5 text-primary" />
             </div>
           </CardContent>
         </Card>
