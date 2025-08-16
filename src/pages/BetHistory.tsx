@@ -52,8 +52,12 @@ export const BetHistory = () => {
         try {
           const payload: any = (data as any).data;
           let items: any[] = [];
+          
+          // Handle different cache data structures
           if (Array.isArray(payload)) {
             items = payload;
+          } else if (payload?.response && Array.isArray(payload.response)) {
+            items = payload.response;
           } else if (payload && typeof payload === 'object') {
             // Gracefully handle object-shaped caches by scanning values
             for (const val of Object.values(payload)) {
@@ -185,7 +189,7 @@ export const BetHistory = () => {
     if (teams) {
       return `${teams.home} vs ${teams.away}`;
     }
-    return `Fixture ID: ${fixtureId}`;
+    return `Partido finalizado`;
   };
 
   // Helper function to format bet display
