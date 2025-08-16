@@ -3,10 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
 import { History } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PlayerBetHistory } from '@/components/PlayerBetHistory';
 
 
 // Types for odds cache minimal usage
@@ -38,6 +40,8 @@ export const Home = () => {
   const [loadingUpcoming, setLoadingUpcoming] = useState(true);
   const [recentBets, setRecentBets] = useState<any[]>([]);
   const [loadingActivity, setLoadingActivity] = useState(true);
+  const [selectedPlayer, setSelectedPlayer] = useState<{ id: string; name: string } | null>(null);
+  const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
 
   // Refactored data fetching functions
   const fetchUserData = async () => {
@@ -166,6 +170,22 @@ export const Home = () => {
     document.title = 'Inicio | Apuestas Simuladas';
   }, []);
 
+  const handlePlayerClick = (profile: any) => {
+    // Don't open modal for current user - they have their own bet history page
+    if (profile.id === user?.id) return;
+    
+    setSelectedPlayer({
+      id: profile.id,
+      name: profile.username || 'Usuario'
+    });
+    setIsPlayerModalOpen(true);
+  };
+
+  const closePlayerModal = () => {
+    setIsPlayerModalOpen(false);
+    setSelectedPlayer(null);
+  };
+
   return (
     <div className="space-y-8">
       <div className="text-center">
@@ -188,7 +208,11 @@ export const Home = () => {
             </TableHeader>
             <TableBody>
               {profiles.slice(0, 20).map((profile, index) => (
-                <TableRow key={profile.id} className={profile.id === user?.id ? 'bg-muted/50' : ''}>
+                <TableRow 
+                  key={profile.id} 
+                  className={`${profile.id === user?.id ? 'bg-muted/50' : ''} ${profile.id !== user?.id ? 'cursor-pointer hover:bg-muted/30 transition-colors' : ''}`}
+                  onClick={() => handlePlayerClick(profile)}
+                >
                   <TableCell className="font-medium">{index + 1}</TableCell>
                   <TableCell>{profile.username || 'Usuario'}</TableCell>
                   <TableCell>{(Math.ceil(Number(profile.total_points ?? 0) * 10) / 10).toFixed(1)}</TableCell>
@@ -309,6 +333,21 @@ export const Home = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Player Bet History Modal */}
+      <Dialog open={isPlayerModalOpen} onOpenChange={setIsPlayerModalOpen}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Historial de Apuestas</DialogTitle>
+          </DialogHeader>
+          {selectedPlayer && (
+            <PlayerBetHistory 
+              playerId={selectedPlayer.id} 
+              playerName={selectedPlayer.name}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
