@@ -189,7 +189,19 @@ export const BetHistory = () => {
     if (teams) {
       return `${teams.home} vs ${teams.away}`;
     }
-    return `Partido finalizado`;
+    
+    // If not in current cache, try to find it in existing bets with the same fixture_id
+    const matchingBet = bets.find(bet => 
+      bet.fixture_id === fixtureId && 
+      bet.match_description && 
+      bet.bet_type === 'single'
+    );
+    
+    if (matchingBet?.match_description) {
+      return matchingBet.match_description;
+    }
+    
+    return `Fixture ID: ${fixtureId}`;
   };
 
   // Helper function to format bet display
