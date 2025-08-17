@@ -12,9 +12,9 @@ serve(async (req) => {
   }
 
   try {
-    const footballApiKey = Deno.env.get('FOOTBALL_API_KEY')
+    const footballApiKey = Deno.env.get('API_FOOTBALL_KEY')
     if (!footballApiKey) {
-      throw new Error('FOOTBALL_API_KEY environment variable is not set')
+      throw new Error('API_FOOTBALL_KEY environment variable is not set')
     }
 
     // Initialize Supabase client
@@ -22,11 +22,10 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Fetch upcoming Premier League matches with odds from API-Football
-    const response = await fetch(`https://v3.football.api-sports.io/odds?league=39&season=2024&bookmaker=8`, {
+    // Fetch upcoming La Liga matches with odds from API-Football
+    const response = await fetch(`https://v3.football.api-sports.io/odds?league=140&season=2025&next=10`, {
       headers: {
-        'X-RapidAPI-Key': footballApiKey,
-        'X-RapidAPI-Host': 'v3.football.api-sports.io'
+        'x-apisports-key': footballApiKey,
       }
     })
 
