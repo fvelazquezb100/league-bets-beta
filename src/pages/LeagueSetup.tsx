@@ -31,23 +31,13 @@ const handleCreate = async () => {
   setLoading(true);
 
   try {
-    // Step 1: Create the new league and get its ID
-    const { data: newLeague, error: createError } = await supabase
-      .from('leagues')
-      .insert({ name: leagueName.trim() })
-      .select('id')
-      .single();
+    // Use the RPC function that properly creates league and assigns user
+    const { error } = await supabase.rpc('create_league_and_join', {
+      _user_id: user.id,
+      _league_name: leagueName.trim()
+    });
 
-    if (createError) throw createError;
-    if (!newLeague) throw new Error("Could not create league.");
-
-    // Step 2: Update the user's profile to join the new league
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ league_id: newLeague.id })
-      .eq('id', user.id);
-
-    if (updateError) throw updateError;
+    if (error) throw error;
 
     // Success! Navigate to the homepage.
     navigate('/home', { replace: true });
