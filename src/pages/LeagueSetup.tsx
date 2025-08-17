@@ -21,25 +21,43 @@ export const LeagueSetup = () => {
     document.title = 'Configurar Liga | Apuestas Simuladas';
   }, []);
 
-  const handleCreate = async () => {
-    if (!user) return;
-    if (!leagueName.trim()) {
-      setError('El nombre de la liga es obligatorio');
-      return;
-    }
-    setError('');
-    setLoading(true);
-    const { error } = await supabase.rpc('create_league_and_join', {
-      _user_id: user.id,
-      _league_name: leagueName.trim(),
-    });
-    setLoading(false);
-    if (error) {
-      setError(error.message || 'No se pudo crear la liga');
-      return;
-    }
+const handleCreate = async () => {
+  if (!user) return;
+  if (!leagueName.trim()) {
+    setError('El nombre de la liga es obligatorio');
+    return;
+  }
+  setError('');
+  setLoading(true);
+
+  try {
+    // Step 1: Create the new league and get its ID
+    const { data: newLeague, error: createError } = await supabase
+      .from('leagues')
+      .insert({ name: leagueName.trim() })
+      .select('id')
+      .single();
+
+    if (createError) throw createError;
+    if (!newLeague) throw new Error("Could not create league.");
+
+    // Step 2: Update the user's profile to join the new league
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ league_id: newLeague.id })
+      .eq('id', user.id);
+
+    if (updateError) throw updateError;
+
+    // Success! Navigate to the homepage.
     navigate('/home', { replace: true });
-  };
+
+  } catch (err: any) {
+    setError(err.message || 'No se pudo crear la liga.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleJoin = async () => {
     if (!user) return;
