@@ -64,7 +64,7 @@ export type Database = {
           match_description: string | null
           odds: number | null
           payout: number | null
-          stake: number
+          stake: number | null
           status: string | null
           user_id: string
         }
@@ -76,7 +76,7 @@ export type Database = {
           match_description?: string | null
           odds?: number | null
           payout?: number | null
-          stake?: number
+          stake?: number | null
           status?: string | null
           user_id: string
         }
@@ -88,7 +88,7 @@ export type Database = {
           match_description?: string | null
           odds?: number | null
           payout?: number | null
-          stake?: number
+          stake?: number | null
           status?: string | null
           user_id?: string
         }
@@ -107,19 +107,19 @@ export type Database = {
           created_at: string
           id: number
           join_code: string | null
-          name: string
+          name: string | null
         }
         Insert: {
           created_at?: string
           id?: number
           join_code?: string | null
-          name: string
+          name?: string | null
         }
         Update: {
           created_at?: string
           id?: number
           join_code?: string | null
-          name?: string
+          name?: string | null
         }
         Relationships: []
       }
@@ -130,7 +130,7 @@ export type Database = {
           last_updated: string | null
         }
         Insert: {
-          data?: Json
+          data: Json
           id?: number
           last_updated?: string | null
         }
@@ -145,7 +145,7 @@ export type Database = {
         Row: {
           id: string
           league_id: number | null
-          role: string | null
+          role: string
           total_points: number | null
           username: string
           weekly_budget: number | null
@@ -153,7 +153,7 @@ export type Database = {
         Insert: {
           id?: string
           league_id?: number | null
-          role?: string | null
+          role?: string
           total_points?: number | null
           username: string
           weekly_budget?: number | null
@@ -161,7 +161,7 @@ export type Database = {
         Update: {
           id?: string
           league_id?: number | null
-          role?: string | null
+          role?: string
           total_points?: number | null
           username?: string
           weekly_budget?: number | null
@@ -226,6 +226,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_and_store_weekly_performance: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       cancel_bet: {
         Args: { bet_id_param: number }
         Returns: Json
@@ -249,6 +253,10 @@ export type Database = {
       place_combo_bet: {
         Args: { selections: Json; stake_amount: number }
         Returns: number
+      }
+      reset_all_weekly_budgets: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       schedule_one_time_http_call: {
         Args: {
