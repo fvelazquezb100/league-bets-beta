@@ -21,25 +21,33 @@ export const LeagueSetup = () => {
     document.title = 'Configurar Liga | Apuestas Simuladas';
   }, []);
 
-  const handleCreate = async () => {
-    if (!user) return;
-    if (!leagueName.trim()) {
-      setError('El nombre de la liga es obligatorio');
-      return;
-    }
-    setError('');
-    setLoading(true);
+const handleCreate = async () => {
+  if (!user) return;
+  if (!leagueName.trim()) {
+    setError('El nombre de la liga es obligatorio');
+    return;
+  }
+  setError('');
+  setLoading(true);
+
+  try {
+    // Use the RPC function that properly creates league and assigns user
     const { error } = await supabase.rpc('create_league_and_join', {
       _user_id: user.id,
-      _league_name: leagueName.trim(),
+      _league_name: leagueName.trim()
     });
-    setLoading(false);
-    if (error) {
-      setError(error.message || 'No se pudo crear la liga');
-      return;
-    }
+
+    if (error) throw error;
+
+    // Success! Navigate to the homepage.
     navigate('/home', { replace: true });
-  };
+
+  } catch (err: any) {
+    setError(err.message || 'No se pudo crear la liga.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleJoin = async () => {
     if (!user) return;

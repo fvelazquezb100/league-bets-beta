@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
       const oddsUrl = `https://v3.football.api-sports.io/odds?fixture=${fixtureId}`;
       console.log(`Fetching odds from: ${oddsUrl}`);
       const oddsResponse = await fetch(oddsUrl, {
-         headers: {
+        headers: {
           'x-apisports-key': apiKey,
         },
       });
@@ -74,23 +74,23 @@ Deno.serve(async (req) => {
 
     console.log(`Successfully fetched odds for ${allOddsData.length} matches.`);
 
-    // --- STEP 3: Update the cache ---
+    // --- STEP 3: Upsert the cache ---
     const mergedOdds = allOddsData.map((entry: any) => {
       const fxId = entry?.fixture?.id;
       const teams = fxId ? teamsByFixture.get(fxId) : null;
       return teams ? { ...entry, teams } : entry;
     });
     const finalCacheObject = { response: mergedOdds };
-    const { error: updateError } = await supabaseAdmin
+    const { error: upsertError } = await supabaseAdmin
       .from('match_odds_cache')
-      .update({
+      .upsert({
+        id: 1,
         data: finalCacheObject, 
         last_updated: new Date().toISOString(),
-      })
-      .eq('id', 1);
+      });
 
-    if (updateError) {
-      throw new Error(`Failed to update cache: ${updateError.message}`);
+    if (upsertError) {
+      throw new Error(`Failed to upsert cache: ${upsertError.message}`);
     }
     
     console.log('Cache updated successfully!');

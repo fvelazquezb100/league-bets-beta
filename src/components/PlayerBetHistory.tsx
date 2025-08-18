@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { Trophy, Calendar } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -20,8 +21,9 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
     const fetchPlayerBets = async () => {
       try {
         setLoading(true);
+        console.log('Fetching bets for player:', playerId);
         
-        // Fetch player's visible bets (won/lost/frozen)
+        // Fetch player's bets with bet selections
         const { data: betsData, error: betsError } = await supabase
           .from('bets')
           .select(`
@@ -40,8 +42,11 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
 
         if (betsError) {
           console.error('Error fetching player bets:', betsError);
+          setBets([]);
           return;
         }
+
+        console.log('Fetched bets data:', betsData);
 
         // Fetch odds cache for fixture info
         const { data: cacheData } = await supabase
@@ -76,6 +81,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
         setBets(betsData || []);
       } catch (error) {
         console.error('Error fetching player bet history:', error);
+        setBets([]);
       } finally {
         setLoading(false);
       }

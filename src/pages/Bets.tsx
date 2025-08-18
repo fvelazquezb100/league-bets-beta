@@ -86,24 +86,55 @@ const Bets = () => {
         const { data: cacheData, error: cacheError } = await supabase
           .from('match_odds_cache')
           .select('data')
-          .single();
+          .maybeSingle();
 
-        if (cacheError || !cacheData || !cacheData.data) {
-          throw new Error('Failed to fetch data from cache or cache is empty.');
+        if (cacheError) {
+          throw new Error('Failed to fetch data from cache.');
         }
 
-        const apiData = cacheData.data as unknown as CachedOddsData;
-        
-        console.log("Data from cache:", apiData);
-        console.log("First match data:", apiData?.response?.[0]);
-
-        if (apiData && Array.isArray(apiData.response)) {
-          const validMatches = apiData.response.filter(match => match.fixture);
-          console.log("Valid matches:", validMatches);
-          console.log("First valid match teams:", validMatches[0]?.teams);
-          setMatches(validMatches);
+        // If cache is empty, try to populate it automatically
+        if (!cacheData || !cacheData.data) {
+          console.log('Cache is empty, attempting to populate...');
+          try {
+            const { error: populateError } = await supabase.functions.invoke('secure-run-update-football-cache');
+            if (!populateError) {
+              // Try fetching again after population
+              const { data: newCacheData, error: retryError } = await supabase
+                .from('match_odds_cache')
+                .select('data')
+                .maybeSingle();
+              
+              if (!retryError && newCacheData && newCacheData.data) {
+                const apiData = newCacheData.data as unknown as CachedOddsData;
+                if (apiData && Array.isArray(apiData.response)) {
+                  const validMatches = apiData.response.filter(match => match.fixture);
+                  setMatches(validMatches);
+                } else {
+                  setMatches([]);
+                }
+              } else {
+                throw new Error('Cache is still empty after population attempt.');
+              }
+            } else {
+              throw new Error('Failed to populate cache automatically.');
+            }
+          } catch (autoPopulateError) {
+            throw new Error('Cache is empty and auto-population failed. Please try refreshing the page.');
+          }
         } else {
-          setMatches([]);
+          const apiData = cacheData.data as unknown as CachedOddsData;
+          
+          console.log("Data from cache:", apiData);
+          console.log("First match data:", apiData?.response?.[0]);
+
+          if (apiData && Array.isArray(apiData.response)) {
+            const validMatches = apiData.response.filter(match => match.fixture);
+            console.log("Valid matches:", validMatches);
+            console.log("First valid match teams:", validMatches[0]?.teams);
+            setMatches(validMatches);
+          } else {
+            setMatches([]);
+          }
         }
 
         // Fetch user's existing bets if authenticated

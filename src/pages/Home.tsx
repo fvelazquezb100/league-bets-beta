@@ -56,13 +56,26 @@ export const Home = () => {
 
     if (currentProfileError) {
       console.error('Error fetching current user profile:', currentProfileError);
+      setUserProfile(null);
+      setProfiles([]);
+      return;
     }
+
     setUserProfile(currentProfile ?? null);
 
-    // If user has no league, redirect to setup and show empty table
-    if (!currentProfile?.league_id) {
+    // If user has no profile, show empty state but don't redirect
+    if (!currentProfile) {
       setProfiles([]);
-      navigate('/league-setup', { replace: true });
+      return;
+    }
+
+    // If user has no league, redirect to setup only once
+    if (!currentProfile.league_id) {
+      setProfiles([]);
+      // Only redirect if we're currently on home page to avoid loops
+      if (window.location.pathname === '/home') {
+        navigate('/league-setup', { replace: true });
+      }
       return;
     }
 
