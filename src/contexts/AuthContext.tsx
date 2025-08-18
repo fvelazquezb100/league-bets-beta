@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { cleanupAuthState, ensureUserProfile } from '@/lib/authBootstrap';
 
 interface AuthContextType {
   user: User | null;
@@ -33,6 +34,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Bootstrap profile creation when user signs in
+        if (event === 'SIGNED_IN' && session?.user) {
+          setTimeout(() => {
+            ensureUserProfile(session.user);
+          }, 0);
+        }
       }
     );
 
@@ -41,6 +49,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      
+      // Bootstrap profile for existing session
+      if (session?.user) {
+        setTimeout(() => {
+          ensureUserProfile(session.user);
+        }, 0);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -61,16 +76,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+    try {
+      // Clean up existing state
+      cleanupAuthState();
+      
+      // Attempt global sign out first
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch {
+        // Continue even if this fails
+      }
+      
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      return { error };
+    } catch (error: any) {
+      return { error };
+    }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut({ scope: 'global' });
-    window.location.href = '/';
+    try {
+      // Clean up auth state
+      cleanupAuthState();
+      
+      // Attempt global sign out
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch {
+        // Ignore errors
+      }
+      
+      // Force page reload for clean state
+      window.location.href = '/';
+    } catch (error) {
+      // Force reload even on error
+      window.location.href = '/';
+    }
   };
 
   const value = {
