@@ -94,7 +94,7 @@ export const Header = () => {
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <DollarSign className="h-4 w-4" />
                   <span className="font-medium">Presupuesto Semanal:</span>
-                  <span>{profile.weekly_budget || 1000} pts</span>
+                  <span>{profile.weekly_budget !== null && profile.weekly_budget !== undefined ? `${profile.weekly_budget} pts` : 'Cargando...'}</span>
                 </div>
                 {league && (
                   <div className="flex items-center gap-2 text-muted-foreground">
@@ -139,7 +139,7 @@ export const Header = () => {
                         </div>
                         <div className="flex items-center gap-2 mt-1">
                           <DollarSign className="h-4 w-4" />
-                          <span>{profile.weekly_budget || 1000} pts</span>
+                          <span>{profile.weekly_budget !== null && profile.weekly_budget !== undefined ? `${profile.weekly_budget} pts` : 'Cargando...'}</span>
                         </div>
                         {league && (
                           <div className="flex items-center gap-2 mt-1">

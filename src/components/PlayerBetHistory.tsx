@@ -12,6 +12,7 @@ interface PlayerBetHistoryProps {
 }
 
 export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, playerName }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [bets, setBets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [kickoffTimes, setKickoffTimes] = useState<{ [key: number]: string }>({});
@@ -55,15 +56,61 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
           .single();
 
         if (cacheData?.data) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const oddsCache = cacheData.data as any;
           const kickoffMap: { [key: number]: string } = {};
           const teamMap: { [key: number]: { home: string; away: string } } = {};
 
-          if (Array.isArray(oddsCache.response)) {
-            oddsCache.response.forEach((match: any) => {
-              if (match?.fixture?.id) {
+          console.log('Processing odds cache:', oddsCache);
+
+          // Handle different cache data structures
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          let matches: any[] = [];
+          
+          if (Array.isArray(oddsCache)) {
+            // Direct array structure
+            matches = oddsCache;
+          } else if (oddsCache?.response && Array.isArray(oddsCache.response)) {
+            // Nested response structure
+            matches = oddsCache.response;
+          } else if (oddsCache?.data?.response && Array.isArray(oddsCache.data.response)) {
+            // Deep nested structure
+            matches = oddsCache.data.response;
+          } else if (typeof oddsCache === 'object') {
+            // Try to find any array in the object
+            for (const key of Object.keys(oddsCache)) {
+              const value = oddsCache[key];
+              if (Array.isArray(value)) {
+                matches = value;
+                break;
+              }
+            }
+          }
+
+          console.log('Extracted matches:', matches);
+
+          if (matches.length > 0) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            matches.forEach((match: any) => {
+              if (match?.fixture?.id && match?.fixture?.date) {
                 const fixtureId = parseInt(match.fixture.id);
-                kickoffMap[fixtureId] = match.fixture.date;
+                const fixtureDate = match.fixture.date;
+                
+                // Validate the date string
+                if (fixtureDate && typeof fixtureDate === 'string') {
+                  try {
+                    const testDate = new Date(fixtureDate);
+                    if (!isNaN(testDate.getTime())) {
+                      kickoffMap[fixtureId] = fixtureDate;
+                      console.log(`Mapped fixture ${fixtureId} to date: ${fixtureDate}`);
+                    } else {
+                      console.warn(`Invalid date for fixture ${fixtureId}: ${fixtureDate}`);
+                    }
+                  } catch (e) {
+                    console.warn(`Error parsing date for fixture ${fixtureId}: ${fixtureDate}`, e);
+                  }
+                }
+                
                 if (match.teams) {
                   teamMap[fixtureId] = {
                     home: match.teams.home?.name || 'Local',
@@ -74,8 +121,13 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
             });
           }
 
+          console.log('Final kickoff map:', kickoffMap);
+          console.log('Final team names map:', teamMap);
+
           setKickoffTimes(kickoffMap);
           setTeamNames(teamMap);
+        } else {
+          console.warn('No cache data available');
         }
 
         setBets(betsData || []);
@@ -116,10 +168,68 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
     return `${teams.home} vs ${teams.away}`;
   };
 
+  // Helper function to get fixture date for a bet
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const getFixtureDate = (bet: any): string => {
+    // For combo bets, get the earliest fixture date
+    if (bet.bet_type === 'combo' && bet.bet_selections && bet.bet_selections.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const dates = bet.bet_selections
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .map((selection: any) => {
+          if (selection.fixture_id && kickoffTimes[selection.fixture_id]) {
+            try {
+              const date = new Date(kickoffTimes[selection.fixture_id]);
+              if (!isNaN(date.getTime())) {
+                return date;
+              }
+            } catch (e) {
+              console.warn(`Error parsing date for selection ${selection.id}:`, e);
+            }
+          }
+          return null;
+        })
+        .filter((date: Date | null) => date !== null)
+        .sort((a: Date, b: Date) => a.getTime() - b.getTime());
+      
+      if (dates.length > 0) {
+        return dates[0].toLocaleDateString('es-ES');
+      }
+    }
+    
+    // For single bets, get the fixture date
+    if (bet.fixture_id && kickoffTimes[bet.fixture_id]) {
+      try {
+        const fixtureDate = new Date(kickoffTimes[bet.fixture_id]);
+        if (!isNaN(fixtureDate.getTime())) {
+          return fixtureDate.toLocaleDateString('es-ES');
+        }
+      } catch (e) {
+        console.warn(`Error parsing fixture date for bet ${bet.id}:`, e);
+      }
+    }
+    
+    // Fallback to bet creation date if no fixture date available
+    try {
+      if (bet.created_at) {
+        const createdDate = new Date(bet.created_at);
+        if (!isNaN(createdDate.getTime())) {
+          return `${createdDate.toLocaleDateString('es-ES')} (creación)`;
+        }
+      }
+    } catch (e) {
+      console.warn(`Error parsing created_at date for bet ${bet.id}:`, e);
+    }
+    
+    return 'Fecha no disponible';
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const formatBetDisplay = (bet: any) => {
     const selections = bet.bet_selections || [];
     
     if (bet.bet_type === 'combo' && selections.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return selections.map((selection: any, index: number) => (
         <div key={selection.id} className={index > 0 ? 'mt-2 pt-2 border-t' : ''}>
           <div className="text-sm">
@@ -238,7 +348,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                   <TableHead>Tipo</TableHead>
                   <TableHead>Apuesta</TableHead>
                   <TableHead>Estado</TableHead>
-                  <TableHead>Fecha</TableHead>
+                  <TableHead>Fecha del Partido</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -258,7 +368,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {new Date(bet.created_at).toLocaleDateString('es-ES')}
+                      {getFixtureDate(bet)}
                     </TableCell>
                   </TableRow>
                 ))}
