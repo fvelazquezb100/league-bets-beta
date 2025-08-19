@@ -13,6 +13,11 @@ const navigationItems = [
     icon: Home,
   },
   {
+    name: 'Clasificacion',
+    href: '/clasificacion',
+    icon: Trophy,
+  },
+  {
     name: 'Apostar',
     href: '/bets',
     icon: DollarSign,
