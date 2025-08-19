@@ -16,9 +16,15 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "https://jhsjszflscbpcfzuurwq.supabase.co";
     const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const keyInfo = {
+      present: !!SERVICE_ROLE_KEY,
+      prefix: SERVICE_ROLE_KEY ? SERVICE_ROLE_KEY.slice(0, 3) : "none",
+      isLegacyJWT: SERVICE_ROLE_KEY ? SERVICE_ROLE_KEY.startsWith("eyJ") : false,
+      length: SERVICE_ROLE_KEY?.length ?? 0,
+    };
 
     if (!SERVICE_ROLE_KEY) {
-      return new Response(JSON.stringify({ error: "Missing SUPABASE_SERVICE_ROLE_KEY secret" }), {
+      return new Response(JSON.stringify({ error: "Missing SUPABASE_SERVICE_ROLE_KEY secret", keyInfo }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -34,12 +40,12 @@ serve(async (req) => {
       throw error;
     }
 
-    return new Response(JSON.stringify({ ok: true, data }), {
+    return new Response(JSON.stringify({ ok: true, data, keyInfo }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("secure-run-process-matchday-results error", e);
-    return new Response(JSON.stringify({ error: String(e) }), {
+    return new Response(JSON.stringify({ error: String(e), keyInfo }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

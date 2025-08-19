@@ -15,9 +15,15 @@ serve(async (req) => {
   try {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "https://jhsjszflscbpcfzuurwq.supabase.co";
     const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const keyInfo = {
+      present: !!SERVICE_ROLE_KEY,
+      prefix: SERVICE_ROLE_KEY ? SERVICE_ROLE_KEY.slice(0, 3) : "none",
+      isLegacyJWT: SERVICE_ROLE_KEY ? SERVICE_ROLE_KEY.startsWith("eyJ") : false,
+      length: SERVICE_ROLE_KEY?.length ?? 0,
+    };
 
     if (!SERVICE_ROLE_KEY) {
-      return new Response(JSON.stringify({ error: "Missing SUPABASE_SERVICE_ROLE_KEY secret" }), {
+      return new Response(JSON.stringify({ error: "Missing SUPABASE_SERVICE_ROLE_KEY secret", keyInfo }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -32,12 +38,12 @@ serve(async (req) => {
 
     if (error) throw error;
 
-    return new Response(JSON.stringify({ ok: true, message: "All weekly budgets reset to 1000" }), {
+    return new Response(JSON.stringify({ ok: true, message: "All weekly budgets reset to 1000", keyInfo }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("admin-reset-budgets error", e);
-    return new Response(JSON.stringify({ error: String(e) }), {
+    return new Response(JSON.stringify({ error: String(e), keyInfo }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
