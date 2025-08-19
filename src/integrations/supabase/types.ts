@@ -141,6 +141,33 @@ export type Database = {
         }
         Relationships: []
       }
+      news: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string
+          id: number
+          is_active: boolean
+          title: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by: string
+          id?: number
+          is_active?: boolean
+          title: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string
+          id?: number
+          is_active?: boolean
+          title?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           id: string

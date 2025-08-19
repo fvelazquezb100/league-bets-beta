@@ -2,13 +2,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
 import { History } from 'lucide-react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PlayerBetHistory } from '@/components/PlayerBetHistory';
+import { NewsBoard } from '@/components/NewsBoard';
 
 
 // Types for odds cache minimal usage
@@ -33,108 +31,32 @@ const findMarket = (match: MatchData, marketName: string) => {
 export const Home = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [profiles, setProfiles] = useState<any[]>([]);
   const [userProfile, setUserProfile] = useState<any>(null);
-  const [userBets, setUserBets] = useState<any[]>([]);
   const [upcoming, setUpcoming] = useState<MatchData[]>([]);
   const [loadingUpcoming, setLoadingUpcoming] = useState(true);
   const [recentBets, setRecentBets] = useState<any[]>([]);
   const [loadingActivity, setLoadingActivity] = useState(true);
-  const [selectedPlayer, setSelectedPlayer] = useState<{ id: string; name: string } | null>(null);
-  const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
 
-  // Refactored data fetching functions
+  // Fetch user data to check league setup
   const fetchUserData = async () => {
     if (!user) return;
 
-    // Fetch current user's profile to get league_id
-    const { data: currentProfile, error: currentProfileError } = await supabase
+    const { data: currentProfile } = await supabase
       .from('profiles')
-      .select('id, username, total_points, league_id')
+      .select('id, league_id')
       .eq('id', user.id)
       .maybeSingle();
 
-    if (currentProfileError) {
-      console.error('Error fetching current user profile:', currentProfileError);
-      setUserProfile(null);
-      setProfiles([]);
-      return;
-    }
-
     setUserProfile(currentProfile ?? null);
 
-    // If user has no profile, show empty state but don't redirect
-    if (!currentProfile) {
-      setProfiles([]);
-      return;
-    }
-
-    // If user has no league, redirect to setup only once
-    if (!currentProfile.league_id) {
-      setProfiles([]);
-      // Only redirect if we're currently on home page to avoid loops
-      if (window.location.pathname === '/home') {
-        navigate('/league-setup', { replace: true });
-      }
-      return;
-    }
-
-    // User has a league: fetch only profiles in that league
-    const { data: profilesData, error: profilesError } = await supabase
-      .from('profiles')
-      .select('id, username, total_points, league_id')
-      .eq('league_id', currentProfile.league_id)
-      .order('total_points', { ascending: false });
-
-    if (profilesError) {
-      console.error('Error fetching league profiles:', profilesError);
-    } else {
-      setProfiles(profilesData ?? []);
-    }
-  };
-
-  const fetchUserBets = async () => {
-    if (!user) return;
-
-    // Fetch user's recent bets
-    const { data: betsData, error: betsError } = await supabase
-      .from('bets')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('id', { ascending: false })
-      .limit(5);
-
-    if (betsError) {
-      console.error('Error fetching user bets:', betsError);
-    } else if (betsData) {
-      setUserBets(betsData);
+    // If user has no league, redirect to setup
+    if (currentProfile && !currentProfile.league_id && window.location.pathname === '/home') {
+      navigate('/league-setup', { replace: true });
     }
   };
 
   useEffect(() => {
     fetchUserData();
-    fetchUserBets();
-  }, [user]);
-
-  // Add focus-based refresh for bet data
-  useEffect(() => {
-    const handleFocus = () => {
-      fetchUserBets();
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        fetchUserBets();
-      }
-    };
-
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
   }, [user]);
 
   useEffect(() => {
@@ -155,14 +77,14 @@ export const Home = () => {
           : [];
         setUpcoming(matches as MatchData[]);
 
-        // Recent bets (latest 2)
+        // Recent bets (latest 3)
         if (user) {
           const { data: rb } = await supabase
             .from('bets')
             .select('*')
             .eq('user_id', user.id)
             .order('id', { ascending: false })
-            .limit(2);
+            .limit(3);
           setRecentBets(rb ?? []);
         } else {
           setRecentBets([]);
@@ -183,59 +105,17 @@ export const Home = () => {
     document.title = 'Inicio | Apuestas Simuladas';
   }, []);
 
-  const handlePlayerClick = (profile: any) => {
-    // Don't open modal for current user - they have their own bet history page
-    if (profile.id === user?.id) return;
-    
-    setSelectedPlayer({
-      id: profile.id,
-      name: profile.username || 'Usuario'
-    });
-    setIsPlayerModalOpen(true);
-  };
-
-  const closePlayerModal = () => {
-    setIsPlayerModalOpen(false);
-    setSelectedPlayer(null);
-  };
-
   return (
     <div className="space-y-8">
       <div className="text-center">
         <h1 className="text-4xl font-bold text-foreground mb-4">
-          Clasificación de la Liga
+          Bienvenido a tu Liga
         </h1>
+        <p className="text-muted-foreground">Mantente al día con las últimas noticias y partidos</p>
       </div>
 
-      {/* League Standings Table */}
-      <Card className="shadow-lg">
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Pos.</TableHead>
-                <TableHead>Jugador</TableHead>
-                <TableHead>Puntos Totales</TableHead>
-                <TableHead>Última Jornada</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {profiles.slice(0, 20).map((profile, index) => (
-                <TableRow 
-                  key={profile.id} 
-                  className={`${profile.id === user?.id ? 'bg-muted/50' : ''} ${profile.id !== user?.id ? 'cursor-pointer hover:bg-muted/30 transition-colors' : ''}`}
-                  onClick={() => handlePlayerClick(profile)}
-                >
-                  <TableCell className="font-medium">{index + 1}</TableCell>
-                  <TableCell>{profile.username || 'Usuario'}</TableCell>
-                  <TableCell>{(Math.ceil(Number(profile.total_points ?? 0) * 10) / 10).toFixed(1)}</TableCell>
-                  <TableCell className="text-muted-foreground">-</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      {/* News Board */}
+      <NewsBoard />
 
       <div className="grid md:grid-cols-2 gap-8">
         <Card className="shadow-lg">
@@ -346,21 +226,6 @@ export const Home = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Player Bet History Modal */}
-      <Dialog open={isPlayerModalOpen} onOpenChange={setIsPlayerModalOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Historial de Apuestas</DialogTitle>
-          </DialogHeader>
-          {selectedPlayer && (
-            <PlayerBetHistory 
-              playerId={selectedPlayer.id} 
-              playerName={selectedPlayer.name}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { NewsManagement } from '@/components/NewsManagement';
 
 const Admin: React.FC = () => {
   const { toast } = useToast();
@@ -80,7 +81,10 @@ const Admin: React.FC = () => {
         <p className="text-muted-foreground">Herramientas para gestionar cuotas, resultados y presupuestos.</p>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* News Management Section */}
+      <NewsManagement />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
         {/* Odds Cache Section */}
         <Card>
           <CardHeader>
