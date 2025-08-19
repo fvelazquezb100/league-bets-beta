@@ -22,7 +22,7 @@ serve(async (req) => {
       isLegacyJWT: SERVICE_ROLE_KEY ? SERVICE_ROLE_KEY.startsWith("eyJ") : false,
       length: SERVICE_ROLE_KEY?.length ?? 0,
     };
-
+    console.log("secure-run-process-matchday-results keyInfo", keyInfo);
     if (!SERVICE_ROLE_KEY) {
       return new Response(JSON.stringify({ error: "Missing SUPABASE_SERVICE_ROLE_KEY secret", keyInfo }), {
         status: 500,
