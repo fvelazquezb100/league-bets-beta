@@ -1,1 +1,18 @@
 project_id = "jhsjszflscbpcfzuurwq"
+
+# Make wrapper functions public (no JWT verification required)
+[functions.secure-run-update-football-cache]
+verify_jwt = false
+
+[functions.secure-run-process-matchday-results]
+verify_jwt = false
+
+[functions.admin-reset-budgets]
+verify_jwt = false
+
+# Keep core functions protected (JWT verification required)
+[functions.update-football-cache]
+verify_jwt = true
+
+[functions.process-matchday-results]
+verify_jwt = true
