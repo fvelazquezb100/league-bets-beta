@@ -179,14 +179,16 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
           fixture_id: bet.fixtureId,
           market: bet.market,
           selection: bet.selection,
-          odds: bet.odds
+          odds: bet.odds,
+          match_description: bet.matchDescription,
         }));
 
         const { data: betId, error: comboError } = await supabase.rpc('place_combo_bet', {
           stake_amount: stakeAmount,
           selections: selections
         });
-
+        .single(); 
+        
         if (comboError) {
           throw comboError;
         }
