@@ -266,7 +266,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                   <TableHead>Tipo</TableHead>
                   <TableHead>Apuesta</TableHead>
                   <TableHead>Estado</TableHead>
-                  <TableHead>Fecha</TableHead>
+                  <TableHead>Semana</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -285,9 +285,9 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                         {getStatusText(bet.status)}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(bet.created_at).toLocaleDateString('es-ES')}
-                    </TableCell>
+<TableCell className="text-muted-foreground">
+  {bet.week || '-'}
+</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
