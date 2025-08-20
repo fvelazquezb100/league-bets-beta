@@ -299,7 +299,7 @@ const handleResetWeek = async () => {
         </Card>
 
         {/* Budget Reset Section */}
-        <Card className="md:col-span-2">
+        <Card className="md:col-span-1">
           <CardHeader>
             <CardTitle>Presupuestos Semanales</CardTitle>
           </CardHeader>
@@ -314,7 +314,7 @@ const handleResetWeek = async () => {
         </Card>
       
      {/* Week Counter  Section */}
-<Card className="md:col-span-2">
+<Card className="md:col-span-1">
   <CardHeader>
     <CardTitle>Contador de Semana</CardTitle>
   </CardHeader>
