@@ -32,6 +32,41 @@ const Admin: React.FC = () => {
   const [testingAuth, setTestingAuth] = React.useState(false);
   const [authTestResults, setAuthTestResults] = React.useState<any>(null);
 
+//contador de semana
+          // Estado para contador
+const {
+  data: weekCounterData,
+  isLoading: loadingWeekCounter,
+  refetch: refetchWeekCounter,
+} = useQuery({
+  queryKey: ['week-counter'],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from('week_counter')
+      .select('*')
+      .limit(1)
+      .single();
+    if (error) throw error;
+    return data;
+  },
+});
+
+// Botón de reset
+const [resettingWeek, setResettingWeek] = React.useState(false);
+const handleResetWeek = async () => {
+  try {
+    setResettingWeek(true);
+    const { error } = await supabase.functions.invoke('reset_week_counter', { body: {} });
+    if (error) throw error;
+    toast({ title: 'Contador reiniciado', description: 'El contador de semana se ha puesto a 1.' });
+    await refetchWeekCounter();
+  } catch (e: any) {
+    toast({ title: 'Error', description: e?.message ?? 'No se pudo reiniciar el contador.', variant: 'destructive' });
+  } finally {
+    setResettingWeek(false);
+  }
+};
+  
   const handleForceUpdateOdds = async () => {
     try {
       setUpdatingOdds(true);
@@ -277,7 +312,26 @@ const Admin: React.FC = () => {
             </Button>
           </CardFooter>
         </Card>
+      
+     {/* Week Counter  Section */}
+<Card className="md:col-span-2">
+  <CardHeader>
+    <CardTitle>Contador de Semana</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <p className="text-sm text-muted-foreground">
+      Semana actual: {loadingWeekCounter ? 'Cargando…' : weekCounterData?.current_week ?? 'N/A'}
+    </p>
+  </CardContent>
+  <CardFooter>
+    <Button onClick={handleResetWeek} disabled={resettingWeek}>
+      {resettingWeek ? 'Reiniciando…' : 'Resetear contador'}
+    </Button>
+  </CardFooter>
+</Card>
 
+
+        
         {/* Auth Test Section */}
         <Card className="md:col-span-2">
           <CardHeader>
