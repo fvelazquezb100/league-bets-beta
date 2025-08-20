@@ -121,10 +121,11 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
   return 'Partidos no disponible';
 };
   
-  /*
+
   const formatBetDisplay = (bet: any) => {
     const selections = bet.bet_selections || [];
-    
+
+    /*suistituir esto
     if (bet.bet_type === 'combo' && selections.length > 0) {
       return selections.map((selection: any, index: number) => (
         <div key={selection.id} className={index > 0 ? 'mt-2 pt-2 border-t' : ''}>
@@ -137,7 +138,26 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
           </div>
         </div>
       ));
-    } else {
+    } 
+    */
+    //por esto
+
+    if (bet.bet_type === 'combo' && selections.length > 0) {
+  return selections.map((selection: any, index: number) => (
+    <div key={selection.id} className={index > 0 ? 'mt-2 pt-2 border-t' : ''}>
+      <div className="text-sm">
+        <span className="font-medium">{getMatchName(selection.match_description)}</span>
+        <br />
+        <span className="text-muted-foreground">
+          {selection.market}: {selection.selection} @ {selection.odds}
+        </span>
+      </div>
+    </div>
+  ));
+}
+    //hasta aqui
+    
+    else {
       return (
         <div className="text-sm">
           <span className="font-medium">{bet.match_description || getMatchName(bet.fixture_id)}</span>
@@ -149,42 +169,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
       );
     }
   };
-*/
 
-  // nueva forma de sacar el nombre en las combinadas
-const formatBetDisplay = (bet: any) => {
-  const selections = bet.bet_selections || [];
-  
-  if (bet.bet_type === 'combo' && selections.length > 0) {
-    return selections.map((selection: any, index: number) => {
-      const matchName = selection.match_description || getMatchName(selection.fixture_id);
-
-      return (
-        <div key={selection.id} className={index > 0 ? 'mt-2 pt-2 border-t' : ''}>
-          <div className="text-sm">
-            <span className="font-medium">{matchName}</span>
-            <br />
-            <span className="text-muted-foreground">
-              {selection.market}: {selection.selection} @ {selection.odds}
-            </span>
-          </div>
-        </div>
-      );
-    });
-  } else {
-    return (
-      <div className="text-sm">
-        <span className="font-medium">{bet.match_description || getMatchName(bet.fixture_id)}</span>
-        <br />
-        <span className="text-muted-foreground">
-          {bet.bet_selection} @ {bet.odds}
-        </span>
-      </div>
-    );
-  }
-};
-
-//hast aqui lelga. pero no funciona
   
   // Calculate basic stats (no stakes shown for privacy)
   const wonBets = bets.filter(bet => bet.status === 'won');
