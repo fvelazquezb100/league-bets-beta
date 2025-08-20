@@ -292,7 +292,7 @@ export const BetHistory = () => {
                 <TableHead>Partido</TableHead>
                 <TableHead>Apuesta</TableHead>
                 <TableHead>Importe</TableHead>
-                <TableHead>Cuota</TableHead>
+                <TableHead>Ganancia</TableHead>
                 <TableHead>Resultado</TableHead>
                 <TableHead>Acciones</TableHead>
               </TableRow>
@@ -315,7 +315,8 @@ export const BetHistory = () => {
                       </TableCell>
                       <TableCell></TableCell>
                       <TableCell>{parseFloat(bet.stake || 0).toFixed(0)} pts</TableCell>
-                      <TableCell>{totalComboOdds.toFixed(2)}</TableCell>
+                      // <TableCell>{totalComboOdds.toFixed(2)}</TableCell>
+                      <TableCell>{parseFloat(bet.payout || 0).toFixed(0)} pts</TableCell>
                       <TableCell>
                         <Badge variant={getStatusVariant(bet.status)}>
                           {getStatusText(bet.status)}
@@ -364,7 +365,8 @@ export const BetHistory = () => {
                       <TableCell className="font-medium">{bet.match_description}</TableCell>
                       <TableCell>{bet.bet_selection}</TableCell>
                       <TableCell>{parseFloat(bet.stake || 0).toFixed(0)} pts</TableCell>
-                      <TableCell>{parseFloat(bet.odds || 0).toFixed(2)}</TableCell>
+                      // <TableCell>{parseFloat(bet.odds || 0).toFixed(2)}</TableCell>
+                      <TableCell>{parseFloat(bet.payout || 0).toFixed(0)} pts</TableCell>
                       <TableCell>
                         <Badge variant={getStatusVariant(bet.status)}>
                           {getStatusText(bet.status)}
