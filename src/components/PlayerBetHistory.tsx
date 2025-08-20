@@ -110,24 +110,16 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
     }
   };
 
-  /* hemos sustituido esto
   const getMatchName = (fixtureId: number | null | undefined) => {
     if (!fixtureId || !teamNames[fixtureId]) return 'Partido no disponible';
     const teams = teamNames[fixtureId];
     return `${teams.home} vs ${teams.away}`;
   };
-*/
-//por esto
-  const getMatchName = (matchDescription?: string) => {
-  if (matchDescription) return matchDescription;
-  return 'Partido no disponible';
-};
 
   
   const formatBetDisplay = (bet: any) => {
     const selections = bet.bet_selections || [];
-
-    /* hemos sustutuido esto
+    
     if (bet.bet_type === 'combo' && selections.length > 0) {
       return selections.map((selection: any, index: number) => (
         <div key={selection.id} className={index > 0 ? 'mt-2 pt-2 border-t' : ''}>
@@ -140,25 +132,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
           </div>
         </div>
       ));
-    } 
-    */
-
-    //por esto
-    if (bet.bet_type === 'combo' && selections.length > 0) {
-  return selections.map((selection: any, index: number) => (
-    <div key={selection.id} className={index > 0 ? 'mt-2 pt-2 border-t' : ''}>
-      <div className="text-sm">
-        <span className="font-medium">{getMatchName(selection.match_description)}</span>
-        <br />
-        <span className="text-muted-foreground">
-          {selection.market}: {selection.selection} @ {selection.odds}
-        </span>
-      </div>
-    </div>
-  ));
-}
-      
-    else {
+    } else {
       return (
         <div className="text-sm">
           <span className="font-medium">{bet.match_description || getMatchName(bet.fixture_id)}</span>
@@ -170,8 +144,6 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
       );
     }
   };
-
-
 
   
   // Calculate basic stats (no stakes shown for privacy)
