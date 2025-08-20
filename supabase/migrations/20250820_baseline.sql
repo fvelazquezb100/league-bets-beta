@@ -45,7 +45,7 @@ create table if not exists public.bets (
   bet_selection text
 );
 
--- bet_selections (combo legs)
+-- bet_selections (legs for combo bets)
 create table if not exists public.bet_selections (
   id bigserial primary key,
   bet_id bigint references public.bets(id) on delete cascade,
@@ -66,7 +66,7 @@ create table if not exists public.weekly_performance (
   league_id bigint
 );
 
--- match_odds_cache (single row cache)
+-- match_odds_cache (single-row cache)
 create table if not exists public.match_odds_cache (
   id smallint primary key default 1,
   data jsonb,
@@ -79,9 +79,8 @@ create index if not exists idx_bet_selections_bet_id on public.bet_selections(be
 create index if not exists idx_profiles_league_id on public.profiles(league_id);
 create index if not exists idx_weekly_performance_user_id on public.weekly_performance(user_id);
 
--- ---------- SECURITY FUNCTION NEEDED BY POLICIES ----------
--- get_current_user_league_id(): returns the league_id of the current user.
--- SECURITY DEFINER + search_path safety so it can be used inside RLS.
+-- ---------- SECURITY FUNCTION USED BY POLICIES ----------
+-- Returns the current user's league_id (used in RLS checks).
 do $$
 begin
   if not exists (
@@ -105,17 +104,17 @@ begin
   end if;
 end$$;
 
--- ---------- RLS ENABLE ----------
-alter table if exists public.profiles enable row level security;
-alter table if exists public.bets enable row level security;
-alter table if exists public.bet_selections enable row level security;
-alter table if exists public.leagues enable row level security;
-alter table if exists public.match_odds_cache enable row level security;
+-- ---------- ENABLE RLS ----------
+alter table if exists public.profiles           enable row level security;
+alter table if exists public.bets               enable row level security;
+alter table if exists public.bet_selections     enable row level security;
+alter table if exists public.leagues            enable row level security;
+alter table if exists public.match_odds_cache   enable row level security;
 alter table if exists public.weekly_performance enable row level security;
 
--- ---------- POLICIES (all guarded) ----------
+-- ---------- POLICIES (all guarded via DO blocks) ----------
 
--- profiles: users can read their own profile OR other profiles in same league
+-- profiles: users can read their own profile OR others in same league
 do $$
 begin
   if not exists (
@@ -179,7 +178,7 @@ begin
   end if;
 end$$;
 
--- bet_selections: CRUD only for selections belonging to own bets
+-- bet_selections: CRUD allowed only for selections of own bets
 do $$
 begin
   if not exists (
@@ -206,7 +205,7 @@ begin
   end if;
 end$$;
 
--- leagues: readable by any authenticated user; writes restricted (service role only)
+-- leagues: readable by any authenticated user (writes via service role only)
 do $$
 begin
   if not exists (
@@ -223,7 +222,7 @@ begin
   end if;
 end$$;
 
--- match_odds_cache: read for all authenticated; writes by service role only
+-- match_odds_cache: readable by any authenticated user (writes via service role only)
 do $$
 begin
   if not exists (
@@ -240,7 +239,7 @@ begin
   end if;
 end$$;
 
--- weekly_performance: read own or same league
+-- weekly_performance: read own or same-league users
 do $$
 begin
   if not exists (
@@ -260,10 +259,6 @@ begin
   end if;
 end$$;
 
--- OPTIONAL: forbid writes to leagues, match_odds_cache, weekly_performance from anon/auth roles.
--- Supabase RLS is deny-by-default; if you’ve only created SELECT policies above, writes are already blocked.
-
--- ---------- FINAL NOTES ----------
--- If your app relies on additional RPCs (e.g., place_combo_bet, update_combo_bet_status),
--- keep those migrations in /supabase/migrations for now.
--- After this baseline is live and previews are green, we can fold those RPCs into a second guarded baseline file.
+-- =========================================================
+-- End baseline
+-- =========================================================
