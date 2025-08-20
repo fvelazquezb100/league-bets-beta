@@ -109,14 +109,20 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
       default: return 'outline';
     }
   };
-
+/*
   const getMatchName = (fixtureId: number | null | undefined) => {
     if (!fixtureId || !teamNames[fixtureId]) return 'Partido no disponible';
     const teams = teamNames[fixtureId];
     return `${teams.home} vs ${teams.away}`;
   };
+*/
 
+  const getMatchName = (matchDescription?: string) => {
+  if (matchDescription) return matchDescription;
+  return 'Partido no disponible';
+};
   
+  /*
   const formatBetDisplay = (bet: any) => {
     const selections = bet.bet_selections || [];
     
@@ -144,6 +150,40 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
       );
     }
   };
+*/
+
+  // nueva forma de sacar el nombre en las combinadas
+const formatBetDisplay = (bet: any) => {
+  const selections = bet.bet_selections || [];
+  
+  if (bet.bet_type === 'combo' && selections.length > 0) {
+    return selections.map((selection: any, index: number) => {
+      const matchName = selection.match_description || getMatchName(selection.fixture_id);
+
+      return (
+        <div key={selection.id} className={index > 0 ? 'mt-2 pt-2 border-t' : ''}>
+          <div className="text-sm">
+            <span className="font-medium">{matchName}</span>
+            <br />
+            <span className="text-muted-foreground">
+              {selection.market}: {selection.selection} @ {selection.odds}
+            </span>
+          </div>
+        </div>
+      );
+    });
+  } else {
+    return (
+      <div className="text-sm">
+        <span className="font-medium">{bet.match_description || getMatchName(bet.fixture_id)}</span>
+        <br />
+        <span className="text-muted-foreground">
+          {bet.bet_selection} @ {bet.odds}
+        </span>
+      </div>
+    );
+  }
+};
 
 
   
