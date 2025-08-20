@@ -116,10 +116,9 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
     return `${teams.home} vs ${teams.away}`;
   };
 */
-
   const getMatchName = (matchDescription?: string) => {
   if (matchDescription) return matchDescription;
-  return 'Partido no disponible';
+  return 'Partidos no disponible';
 };
   
   /*
@@ -185,7 +184,7 @@ const formatBetDisplay = (bet: any) => {
   }
 };
 
-
+//hast aqui lelga. pero no funciona
   
   // Calculate basic stats (no stakes shown for privacy)
   const wonBets = bets.filter(bet => bet.status === 'won');
