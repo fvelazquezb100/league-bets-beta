@@ -81,21 +81,88 @@ function evaluateBet(
 }
 
 serve(async (req) => {
+  console.log('Protected function called');
+  const startTime = Date.now();
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // 1. Validate Authorization header
+    const authHeader = req.headers.get('Authorization');
+    console.log('Authorization header present:', !!authHeader);
+    
+    if (!authHeader) {
+      console.error('Missing Authorization header');
+      return new Response(JSON.stringify({ 
+        error: 'Unauthorized: Missing Authorization header',
+        code: 'MISSING_AUTH'
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // 2. Extract and validate JWT token
+    const token = authHeader.replace('Bearer ', '');
+    if (!token || !token.startsWith('eyJ')) {
+      console.error('Invalid token format');
+      return new Response(JSON.stringify({ 
+        error: 'Unauthorized: Invalid token format',
+        code: 'INVALID_TOKEN_FORMAT'
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // 3. Verify this is a service_role token by checking environment
+    const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!SERVICE_ROLE_KEY) {
+      console.error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
+      return new Response(JSON.stringify({ 
+        error: 'Server configuration error: Missing service role key',
+        code: 'MISSING_SERVICE_KEY'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // 4. Verify the token matches our service role key
+    if (token !== SERVICE_ROLE_KEY) {
+      console.error('Token does not match service role key');
+      return new Response(JSON.stringify({ 
+        error: 'Unauthorized: Invalid service role token',
+        code: 'INVALID_SERVICE_TOKEN'
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log('Service role authentication validated successfully');
+
     const body = await req.json().catch(() => ({} as any));
     const jobName: string | undefined = body?.job_name;
+    console.log('Request body:', { jobName, trigger: body?.trigger, timestamp: body?.timestamp });
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "https://jhsjszflscbpcfzuurwq.supabase.co";
-    const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const API_FOOTBALL_KEY = Deno.env.get("API_FOOTBALL_KEY");
 
-    if (!SERVICE_ROLE_KEY) throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY secret");
-    if (!API_FOOTBALL_KEY) throw new Error("Missing API_FOOTBALL_KEY secret");
+    if (!API_FOOTBALL_KEY) {
+      console.error('Missing API_FOOTBALL_KEY environment variable');
+      return new Response(JSON.stringify({ 
+        error: 'Server configuration error: Missing API Football key',
+        code: 'MISSING_API_KEY'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
+    console.log('Creating Supabase client with service role key');
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
     // 1) Fetch recently finished fixtures for this league
@@ -119,9 +186,19 @@ serve(async (req) => {
         resultsMap.set(id, { home_goals: Number(hg), away_goals: Number(ag), outcome: oc });
       }
     }
+    
     const finishedIds = Array.from(resultsMap.keys());
+    console.log(`Processing matchday results - found ${finishedIds.length} finished fixtures`);
+    
     if (finishedIds.length === 0) {
-      return new Response(JSON.stringify({ ok: true, updated: 0 }), {
+      console.log('No finished fixtures found, returning early');
+      const endTime = Date.now();
+      return new Response(JSON.stringify({ 
+        ok: true, 
+        updated: 0,
+        message: 'No finished fixtures found to process',
+        timing: { totalMs: endTime - startTime }
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -224,22 +301,51 @@ serve(async (req) => {
 
     // 7) Unschedule the one-time job if provided
     if (jobName) {
+      console.log(`Unscheduling job: ${jobName}`);
       await sb.rpc("unschedule_job", { job_name: jobName });
     }
 
     const totalUpdated = toUpdate.length + selectionsToUpdate.length;
+    const endTime = Date.now();
+    const processingTime = endTime - startTime;
+    
+    console.log(`Processing completed successfully:`, {
+      totalUpdated,
+      singleBets: toUpdate.length,
+      selections: selectionsToUpdate.length,
+      comboBets: affectedComboBets.size,
+      processingTimeMs: processingTime
+    });
+    
     return new Response(JSON.stringify({ 
       ok: true, 
       updated: totalUpdated,
       singleBets: toUpdate.length,
       selections: selectionsToUpdate.length,
-      comboBets: affectedComboBets.size
+      comboBets: affectedComboBets.size,
+      timing: { totalMs: processingTime },
+      message: `Successfully processed ${totalUpdated} bet updates`
     }), {
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    console.error("process-matchday-results error", e);
-    return new Response(JSON.stringify({ error: String(e) }), {
+    const endTime = Date.now();
+    const processingTime = endTime - startTime;
+    
+    console.error("=== PROCESS MATCHDAY RESULTS ERROR ===");
+    console.error("Error message:", e?.message || String(e));
+    console.error("Error stack:", e?.stack);
+    console.error("Processing time before error:", processingTime, "ms");
+    
+    const errorResponse = {
+      error: 'Failed to process matchday results',
+      details: e?.message || String(e),
+      code: 'PROCESSING_ERROR',
+      timing: { totalMs: processingTime }
+    };
+    
+    return new Response(JSON.stringify(errorResponse), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
