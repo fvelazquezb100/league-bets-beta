@@ -179,6 +179,8 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
           fixture_id: bet.fixtureId,
           market: bet.market,
           selection: bet.selection,
+          //añadido esto para actualizar el nombre del partido
+          match_description: bet.matchDescription
           odds: bet.odds
         }));
 
