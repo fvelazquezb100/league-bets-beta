@@ -130,7 +130,7 @@ export type Database = {
           last_updated: string | null
         }
         Insert: {
-          data: Json
+          data?: Json
           id?: number
           last_updated?: string | null
         }
@@ -253,10 +253,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      calculate_and_store_weekly_performance: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
       cancel_bet: {
         Args: { bet_id_param: number }
         Returns: Json
@@ -280,20 +276,6 @@ export type Database = {
       place_combo_bet: {
         Args: { selections: Json; stake_amount: number }
         Returns: number
-      }
-      reset_all_weekly_budgets: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      schedule_one_time_http_call: {
-        Args: {
-          auth_header: string
-          body: string
-          job_name: string
-          schedule: string
-          url: string
-        }
-        Returns: string
       }
       update_combo_bet_status: {
         Args: { bet_id_to_check: number }
