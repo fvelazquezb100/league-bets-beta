@@ -49,13 +49,46 @@ const Admin: React.FC = () => {
   const handleForceProcessResults = async () => {
     try {
       setProcessingResults(true);
-      const { error } = await supabase.functions.invoke('secure-run-process-matchday-results', {
-        body: {},
+      
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/secure-run-process-matchday-results`;
+      const body = JSON.stringify({ 
+        trigger: 'admin', 
+        timestamp: new Date().toISOString() 
       });
-      if (error) throw error;
-      toast({ title: 'Procesamiento forzado', description: 'Se inició el procesamiento de resultados.' });
+      
+      console.log('Calling secure-run-process-matchday-results function:', { url, body });
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body
+      });
+
+      console.log('Response status:', response.status, response.statusText);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      const responseData = await response.json();
+      console.log('Success response:', responseData);
+      
+      toast({ 
+        title: 'Procesamiento forzado', 
+        description: 'Se inició el procesamiento de resultados correctamente.' 
+      });
     } catch (e: any) {
-      toast({ title: 'Error', description: e?.message ?? 'No se pudo procesar los resultados.', variant: 'destructive' });
+      console.error('Failed to process results:', e);
+      const errorMessage = e?.message || 'No se pudo procesar los resultados.';
+      toast({ 
+        title: 'Error', 
+        description: `Error al procesar resultados: ${errorMessage}`, 
+        variant: 'destructive' 
+      });
     } finally {
       setProcessingResults(false);
     }
