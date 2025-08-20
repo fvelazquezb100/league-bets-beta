@@ -1,6 +1,6 @@
 project_id = "jhsjszflscbpcfzuurwq"
 
-# Make wrapper functions public (no JWT verification required)
+# Public wrapper function - no JWT required
 [functions.secure-run-process-matchday-results]
 verify_jwt = false
 
@@ -9,3 +9,7 @@ verify_jwt = false
 
 [functions.admin-reset-budgets]
 verify_jwt = false
+
+# Protected function - requires service_role key
+[functions.process-matchday-results]
+verify_jwt = true
