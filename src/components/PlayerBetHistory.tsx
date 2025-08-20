@@ -34,7 +34,8 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
               market,
               selection,
               odds,
-              status
+              status,
+              match_description
             )
           `)
           .eq('user_id', playerId)
