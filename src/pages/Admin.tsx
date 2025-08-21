@@ -6,9 +6,20 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { NewsManagement } from '@/components/NewsManagement';
 
+type Profile = {
+  league_id: string;
+};
+
+type League = {
+  id: string;
+  name: string;
+  week: number;
+};
+
 const Admin: React.FC = () => {
   const { toast } = useToast();
 
+  // ---- Caché de cuotas ----
   const {
     data: lastUpdated,
     isLoading: loadingLastUpdated,
@@ -32,47 +43,46 @@ const Admin: React.FC = () => {
   const [testingAuth, setTestingAuth] = React.useState(false);
   const [authTestResults, setAuthTestResults] = React.useState<any>(null);
 
-  // -----------------------------
-  // League Week Management
-  // -----------------------------
+  // ---- Semana de la Liga ----
   const [currentWeek, setCurrentWeek] = React.useState<number | null>(null);
   const [leagueName, setLeagueName] = React.useState<string | null>(null);
   const [loadingWeek, setLoadingWeek] = React.useState(true);
   const [resettingWeek, setResettingWeek] = React.useState(false);
-  const [profileLeagueId, setProfileLeagueId] = React.useState<string | null>(null);
+  const [leagueId, setLeagueId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const fetchWeek = async () => {
       try {
         setLoadingWeek(true);
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("Usuario no autenticado");
+        if (!user) throw new Error('Usuario no autenticado');
 
         // Buscar la liga del perfil
         const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("league_id")
-          .eq("id", user.id)
+          .from<Profile>('profiles')
+          .select('league_id')
+          .eq('id', user.id)
           .single();
-
         if (profileError) throw profileError;
+        if (!profile) throw new Error('Perfil no encontrado');
 
-        setProfileLeagueId(profile.league_id);
+        setLeagueId(profile.league_id);
 
         // Obtener la semana de esa liga
         const { data: league, error: leagueError } = await supabase
-          .from("leagues")
-          .select("name, week")
-          .eq("id", profile.league_id)
+          .from<League>('leagues')
+          .select('name, week')
+          .eq('id', profile.league_id)
           .single();
-
         if (leagueError) throw leagueError;
+        if (!league) throw new Error('Liga no encontrada');
 
         setLeagueName(league.name);
         setCurrentWeek(league.week);
-      } catch (e) {
+      } catch (e: any) {
         console.error(e);
         setCurrentWeek(null);
+        setLeagueName(null);
       } finally {
         setLoadingWeek(false);
       }
@@ -82,44 +92,37 @@ const Admin: React.FC = () => {
   }, []);
 
   const handleResetWeek = async () => {
-    if (!profileLeagueId) return;
-
+    if (!leagueId) return;
     try {
       setResettingWeek(true);
 
-      const { error } = await supabase.functions.invoke("reset_week_league", {
-        body: { league_id: profileLeagueId },
+      const { error } = await supabase.functions.invoke('reset_week_league', {
+        body: { league_id: leagueId },
       });
-
       if (error) throw error;
 
       toast({
-        title: "Semana reseteada",
+        title: 'Semana reseteada',
         description: `La semana de ${leagueName} fue reiniciada correctamente.`,
       });
 
-      // Refrescar valor
       setCurrentWeek(1);
     } catch (e: any) {
       toast({
-        title: "Error",
-        description: e?.message ?? "No se pudo resetear la semana.",
-        variant: "destructive",
+        title: 'Error',
+        description: e?.message ?? 'No se pudo resetear la semana.',
+        variant: 'destructive',
       });
     } finally {
       setResettingWeek(false);
     }
   };
 
-  // -----------------------------
-  // Odds & Results & Budgets
-  // -----------------------------
+  // ---- Funciones de acciones ----
   const handleForceUpdateOdds = async () => {
     try {
       setUpdatingOdds(true);
-      const { error } = await supabase.functions.invoke('secure-run-update-football-cache', {
-        body: {},
-      });
+      const { error } = await supabase.functions.invoke('secure-run-update-football-cache', { body: {} });
       if (error) throw error;
       toast({ title: 'Actualización forzada', description: 'Se inició la actualización de cuotas.' });
       await refetch();
@@ -135,17 +138,8 @@ const Admin: React.FC = () => {
       setProcessingResults(true);
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/secure-run-process-matchday-results`;
       const body = JSON.stringify({ trigger: 'admin', timestamp: new Date().toISOString() });
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body,
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-
+      const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+      if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
       await response.json();
       toast({ title: 'Procesamiento forzado', description: 'Se inició el procesamiento de resultados correctamente.' });
     } catch (e: any) {
@@ -172,34 +166,40 @@ const Admin: React.FC = () => {
     try {
       setTestingAuth(true);
       setAuthTestResults(null);
-
       const baseUrl = import.meta.env.VITE_SUPABASE_URL;
       const testBody = JSON.stringify({ trigger: 'auth-test', timestamp: new Date().toISOString() });
-
       const results = { publicWrapper: null as any, protectedFunction: null as any };
 
-      // Public wrapper test
+      // Public wrapper
       try {
         const response1 = await fetch(`${baseUrl}/functions/v1/secure-run-process-matchday-results`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: testBody,
         });
-        const data1 = response1.ok ? await response1.json() : await response1.text();
-        results.publicWrapper = { success: response1.ok, status: response1.status, statusText: response1.statusText, data: data1 };
+        results.publicWrapper = {
+          success: response1.ok,
+          status: response1.status,
+          statusText: response1.statusText,
+          data: response1.ok ? await response1.json() : await response1.text(),
+        };
       } catch (e: any) {
         results.publicWrapper = { success: false, status: 'Network Error', statusText: e.message, data: null };
       }
 
-      // Protected function test
+      // Protected function
       try {
         const response2 = await fetch(`${baseUrl}/functions/v1/process-matchday-results`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: testBody,
         });
-        const data2 = response2.ok ? await response2.json() : await response2.text();
-        results.protectedFunction = { success: response2.ok, status: response2.status, statusText: response2.statusText, data: data2 };
+        results.protectedFunction = {
+          success: response2.ok,
+          status: response2.status,
+          statusText: response2.statusText,
+          data: response2.ok ? await response2.json() : await response2.text(),
+        };
       } catch (e: any) {
         results.protectedFunction = { success: false, status: 'Network Error', statusText: e.message, data: null };
       }
@@ -215,7 +215,6 @@ const Admin: React.FC = () => {
       } else {
         toast({ title: 'Auth Test: Issues Found', description: 'Check the test results below for details.', variant: 'destructive' });
       }
-
     } catch (e: any) {
       toast({ title: 'Auth Test Failed', description: e?.message ?? 'Failed to run authentication tests.', variant: 'destructive' });
     } finally {
@@ -233,7 +232,7 @@ const Admin: React.FC = () => {
       <NewsManagement />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-        {/* Odds Cache */}
+        {/* Caché de cuotas */}
         <Card>
           <CardHeader>
             <CardTitle>Caché de Cuotas</CardTitle>
@@ -250,7 +249,7 @@ const Admin: React.FC = () => {
           </CardFooter>
         </Card>
 
-        {/* Results Processing */}
+        {/* Procesamiento de resultados */}
         <Card>
           <CardHeader>
             <CardTitle>Procesamiento de Resultados</CardTitle>
@@ -267,7 +266,7 @@ const Admin: React.FC = () => {
           </CardFooter>
         </Card>
 
-        {/* Budget Reset */}
+        {/* Presupuestos */}
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle>Presupuestos Semanales</CardTitle>
@@ -284,7 +283,7 @@ const Admin: React.FC = () => {
           </CardFooter>
         </Card>
 
-        {/* League Week Management */}
+        {/* Semana de la Liga */}
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle>Semana de la Liga</CardTitle>
@@ -294,8 +293,7 @@ const Admin: React.FC = () => {
               <p className="text-sm text-muted-foreground">Cargando semana…</p>
             ) : currentWeek !== null ? (
               <p className="text-sm">
-                Semana actual de <span className="font-semibold">{leagueName}</span>:{" "}
-                <span className="font-bold">#{currentWeek}</span>
+                Semana actual de <span className="font-semibold">{leagueName}</span>: <span className="font-bold">#{currentWeek}</span>
               </p>
             ) : (
               <p className="text-sm text-red-600">No se pudo obtener la semana actual.</p>
@@ -303,12 +301,12 @@ const Admin: React.FC = () => {
           </CardContent>
           <CardFooter>
             <Button onClick={handleResetWeek} disabled={resettingWeek}>
-              {resettingWeek ? "Reseteando…" : "Resetear Semana de la Liga"}
+              {resettingWeek ? 'Reseteando…' : 'Resetear Semana de la Liga'}
             </Button>
           </CardFooter>
         </Card>
 
-        {/* Auth Test */}
+        {/* Test de autenticación */}
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle>Test de Autenticación de Edge Functions</CardTitle>
