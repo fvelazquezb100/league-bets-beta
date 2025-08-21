@@ -284,8 +284,8 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
                   <span className="font-semibold">{totalOdds.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Ganancia Potencial:</span>
                   <span className="font-semibold text-primary">pts {potentialWinnings}</span>
+                  <span>Ganancia Potencial:</span>
                 </div>
               </div>
 
