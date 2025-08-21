@@ -21,6 +21,7 @@ export type Database = {
           fixture_id: number | null
           id: number
           market: string | null
+          match_description: string | null
           odds: number | null
           selection: string | null
           status: string | null
@@ -31,6 +32,7 @@ export type Database = {
           fixture_id?: number | null
           id?: number
           market?: string | null
+          match_description?: string | null
           odds?: number | null
           selection?: string | null
           status?: string | null
@@ -41,6 +43,7 @@ export type Database = {
           fixture_id?: number | null
           id?: number
           market?: string | null
+          match_description?: string | null
           odds?: number | null
           selection?: string | null
           status?: string | null
@@ -67,6 +70,7 @@ export type Database = {
           stake: number | null
           status: string | null
           user_id: string
+          week: string | null
         }
         Insert: {
           bet_selection?: string | null
@@ -79,6 +83,7 @@ export type Database = {
           stake?: number | null
           status?: string | null
           user_id: string
+          week?: string | null
         }
         Update: {
           bet_selection?: string | null
@@ -91,6 +96,7 @@ export type Database = {
           stake?: number | null
           status?: string | null
           user_id?: string
+          week?: string | null
         }
         Relationships: [
           {
@@ -108,18 +114,24 @@ export type Database = {
           id: number
           join_code: string | null
           name: string | null
+          type: Database["public"]["Enums"]["league_type"]
+          week: number
         }
         Insert: {
           created_at?: string
           id?: number
           join_code?: string | null
           name?: string | null
+          type?: Database["public"]["Enums"]["league_type"]
+          week?: number
         }
         Update: {
           created_at?: string
           id?: number
           join_code?: string | null
           name?: string | null
+          type?: Database["public"]["Enums"]["league_type"]
+          week?: number
         }
         Relationships: []
       }
@@ -202,6 +214,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      week_counter: {
+        Row: {
+          current_week: number
+          id: number
+          updated_at: string
+        }
+        Insert: {
+          current_week?: number
+          id?: number
+          updated_at?: string
+        }
+        Update: {
+          current_week?: number
+          id?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       weekly_performance: {
         Row: {
@@ -313,7 +343,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      league_type: "free" | "premium"
     }
     CompositeTypes: {
       username_update_result: {
@@ -443,6 +473,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      league_type: ["free", "premium"],
+    },
   },
 } as const

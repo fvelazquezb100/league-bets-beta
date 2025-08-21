@@ -7,11 +7,11 @@ import { useQuery } from '@tanstack/react-query';
 import { NewsManagement } from '@/components/NewsManagement';
 
 type ProfileRow = {
-  league_id: string;
+  league_id: number;
 };
 
 type LeagueRow = {
-  id: string;
+  id: number;
   name: string;
   week: number;
 };
@@ -48,7 +48,7 @@ const Admin: React.FC = () => {
   const [leagueName, setLeagueName] = React.useState<string | null>(null);
   const [loadingWeek, setLoadingWeek] = React.useState(true);
   const [resettingWeek, setResettingWeek] = React.useState(false);
-  const [leagueId, setLeagueId] = React.useState<string | null>(null);
+  const [leagueId, setLeagueId] = React.useState<number | null>(null);
 
   React.useEffect(() => {
     const fetchWeek = async () => {
@@ -76,7 +76,7 @@ const Admin: React.FC = () => {
         // Liga
         const { data: leagueData, error: leagueError } = await supabase
           .from('leagues')
-          .select('name, week')
+          .select('id, name, week')
           .eq('id', profile.league_id)
           .single();
 
@@ -103,9 +103,10 @@ const Admin: React.FC = () => {
     try {
       setResettingWeek(true);
 
-      const { error } = await supabase.functions.invoke('reset_week_league', {
-        body: { league_id: leagueId },
-      });
+      const { error } = await supabase
+        .from('leagues')
+        .update({ week: 1 })
+        .eq('id', leagueId);
       if (error) throw error;
 
       toast({
@@ -143,7 +144,7 @@ const Admin: React.FC = () => {
   const handleForceProcessResults = async () => {
     try {
       setProcessingResults(true);
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/secure-run-process-matchday-results`;
+      const url = `https://jhsjszflscbpcfzuurwq.supabase.co/functions/v1/secure-run-process-matchday-results`;
       const body = JSON.stringify({ trigger: 'admin', timestamp: new Date().toISOString() });
       const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
       if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
@@ -174,7 +175,7 @@ const Admin: React.FC = () => {
     try {
       setTestingAuth(true);
       setAuthTestResults(null);
-      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const baseUrl = 'https://jhsjszflscbpcfzuurwq.supabase.co';
       const testBody = JSON.stringify({ trigger: 'auth-test', timestamp: new Date().toISOString() });
       const results = { publicWrapper: null as any, protectedFunction: null as any };
 
