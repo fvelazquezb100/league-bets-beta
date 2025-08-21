@@ -24,6 +24,25 @@ interface BetSlipProps {
   onClearAll: () => void;
 }
 
+interface League {
+  id: number;
+  name: string;
+  join_code: string;
+  type: string;
+  week: number;
+}
+
+const { data: league, error } = await supabase
+  .from<League>('leagues')   // <- aquí tipas explícitamente
+  .select('*')
+  .eq('id', userLeagueId)
+  .single();
+
+if (error) throw error;
+
+// Ahora TypeScript sabe que league.week existe
+const currentWeek = league.week;
+
 const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
   const [stake, setStake] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
