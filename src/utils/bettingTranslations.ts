@@ -52,40 +52,7 @@ export const BETTING_TRANSLATIONS = {
   'Away/Over 1.5': 'Visitante/Más 1.5',
   'Away/Under 1.5': 'Visitante/Menos 1.5',
 
-    'Home/Over': 'Local/Más',
-  'Home/Under': 'Local/Menos',
-  'Draw/Over': 'Empate/Más',
-  'Draw/Under': 'Empate/Menos', 
-  'Away/Over': 'Visitante/Más',
-  'Away/Under': 'Visitante/Menos',
-
-    'Home/Over': 'Local/Más',
-  'Home/Under': 'Local/Menos',
-  'Draw/Over': 'Empate/Más',
-  'Draw/Under': 'Empate/Menos', 
-  'Away/Over': 'Visitante/Más',
-  'Away/Under': 'Visitante/Menos',
-
-    'Home/Over': 'Local/Más',
-  'Home/Under': 'Local/Menos',
-  'Draw/Over': 'Empate/Más',
-  'Draw/Under': 'Empate/Menos', 
-  'Away/Over': 'Visitante/Más',
-  'Away/Under': 'Visitante/Menos',
-
-    'Home/Over': 'Local/Más',
-  'Home/Under': 'Local/Menos',
-  'Draw/Over': 'Empate/Más',
-  'Draw/Under': 'Empate/Menos', 
-  'Away/Over': 'Visitante/Más',
-  'Away/Under': 'Visitante/Menos',
-
-    'Home/Over': 'Local/Más',
-  'Home/Under': 'Local/Menos',
-  'Draw/Over': 'Empate/Más',
-  'Draw/Under': 'Empate/Menos', 
-  'Away/Over': 'Visitante/Más',
-  'Away/Under': 'Visitante/Menos',
+  
   
   // Result + Both Teams Score combinations
   'Home/Yes': 'Local/Sí',
