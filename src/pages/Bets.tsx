@@ -7,48 +7,50 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import { getBetTypesSorted, findBetTypeByApiName } from '@/utils/betTypes';
+import BetMarketSection from '@/components/BetMarketSection';
 
-// --- Final, Corrected Type Definitions for API-Football Odds Data ---
-interface Team {
+// --- Type Definitions for API-Football Odds Data ---
+export interface Team {
   id: number;
   name: string;
   logo: string;
 }
 
-interface Fixture {
+export interface Fixture {
   id: number;
   date: string;
 }
 
-interface Teams {
+export interface Teams {
   home: Team;
   away: Team;
 }
 
-interface BetValue {
+export interface BetValue {
   value: string;
   odd: string;
 }
 
-interface BetMarket {
+export interface BetMarket {
   id: number;
   name: string;
   values: BetValue[];
 }
 
-interface Bookmaker {
+export interface Bookmaker {
   id: number;
   name: string;
   bets: BetMarket[];
 }
 
-interface MatchData {
+export interface MatchData {
   fixture: Fixture;
   teams: Teams;
   bookmakers: Bookmaker[];
 }
 
-interface CachedOddsData {
+export interface CachedOddsData {
   response?: MatchData[];
 }
 
@@ -291,7 +293,7 @@ const Bets = () => {
       return (
         <div className="flex-grow space-y-4">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="p-4 border rounded-lg bg-white shadow-sm">
+            <div key={i} className="p-4 border rounded-lg bg-card shadow-sm">
               <Skeleton className="h-6 w-3/4 mb-2" />
               <Skeleton className="h-4 w-1/2 mb-4" />
               <Skeleton className="h-10 w-full" />
@@ -303,7 +305,7 @@ const Bets = () => {
 
     if (error) {
       return (
-        <div className="flex-grow text-center p-8 bg-red-100 text-red-700 rounded-lg shadow">
+        <div className="flex-grow text-center p-8 bg-destructive/10 text-destructive rounded-lg shadow">
           <h2 className="text-2xl font-bold mb-2">Error</h2>
           <p>{error}</p>
         </div>
@@ -314,21 +316,18 @@ const Bets = () => {
       return (
         <Accordion type="single" collapsible className="w-full space-y-4">
           {matches.map((match) => {
-            const matchWinnerMarket = findMarket(match, 'Match Winner');
-            const goalsMarket = findMarket(match, 'Goals Over/Under');
-            const bttsMarket = findMarket(match, 'Both Teams To Score');
             const kickoff = new Date(match.fixture.date);
             const freezeTime = new Date(kickoff.getTime() - 15 * 60 * 1000);
             const isFrozen = new Date() >= freezeTime;
 
             return (
-              <AccordionItem value={`match-${match.fixture.id}`} key={match.fixture.id} className="border rounded-lg p-4 bg-white shadow-sm">
+              <AccordionItem value={`match-${match.fixture.id}`} key={match.fixture.id} className="border rounded-lg p-4 bg-card shadow-sm">
                 <AccordionTrigger>
                   <div className="text-left w-full">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-bold text-lg">{match.teams?.home?.name ?? 'Local'} vs {match.teams?.away?.name ?? 'Visitante'}</p>
-                        <p className="text-sm text-gray-500">{new Date(match.fixture.date).toLocaleString()}</p>
+                        <p className="font-bold text-lg text-foreground">{match.teams?.home?.name ?? 'Local'} vs {match.teams?.away?.name ?? 'Visitante'}</p>
+                        <p className="text-sm text-muted-foreground">{new Date(match.fixture.date).toLocaleString()}</p>
                       </div>
                       {getBetsForFixture(match.fixture.id).length > 0 && (
                         <Badge variant="secondary" className="ml-2">
@@ -344,76 +343,31 @@ const Bets = () => {
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <div className="space-y-4 pt-4">
-                    {matchWinnerMarket ? (
-                      <div>
-                        <h4 className="font-semibold mb-2">Ganador del Partido</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {matchWinnerMarket.values.map(value => {
-                            const hasUserBet = hasUserBetOnMarket(match.fixture.id, 'Ganador del Partido', value.value);
-                            return (
-                              <Button 
-                                key={value.value} 
-                                variant={hasUserBet ? "default" : "outline"} 
-                                className={`flex flex-col h-auto flex-1 min-w-[120px] ${hasUserBet ? 'opacity-75' : ''}`} 
-                                disabled={isFrozen} 
-                                onClick={() => handleAddToSlip(match, 'Ganador del Partido', value)}
-                              >
-                                <span>{value.value}</span>
-                                <span className="font-bold">{value.odd}</span>
-                                {hasUserBet && <span className="text-xs">✓ Apostado</span>}
-                              </Button>
-                            );
-                          })}
-                        </div>
+                  <div className="space-y-6 pt-4">
+                    {/* Render all available bet types dynamically */}
+                    {getBetTypesSorted().map(betType => {
+                      const market = findMarket(match, betType.apiName);
+                      if (!market) return null;
+
+                      return (
+                        <BetMarketSection
+                          key={betType.apiName}
+                          match={match}
+                          betType={betType}
+                          market={market}
+                          isFrozen={isFrozen}
+                          hasUserBetOnMarket={hasUserBetOnMarket}
+                          handleAddToSlip={handleAddToSlip}
+                        />
+                      );
+                    })}
+                    
+                    {/* Show message if no markets are available */}
+                    {getBetTypesSorted().every(betType => !findMarket(match, betType.apiName)) && (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <p>No hay mercados de apuestas disponibles para este partido.</p>
                       </div>
-                    ) : null}
-                    {bttsMarket ? (
-                       <div>
-                        <h4 className="font-semibold mb-2">Ambos Equipos Marcan</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {bttsMarket.values.map(value => {
-                            const hasUserBet = hasUserBetOnMarket(match.fixture.id, 'Ambos Equipos Marcan', value.value);
-                            return (
-                              <Button 
-                                key={value.value} 
-                                variant={hasUserBet ? "default" : "outline"} 
-                                className={`flex flex-col h-auto flex-1 min-w-[120px] ${hasUserBet ? 'opacity-75' : ''}`} 
-                                disabled={isFrozen} 
-                                onClick={() => handleAddToSlip(match, 'Ambos Equipos Marcan', value)}
-                              >
-                                <span>{value.value}</span>
-                                <span className="font-bold">{value.odd}</span>
-                                {hasUserBet && <span className="text-xs">✓ Apostado</span>}
-                              </Button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ) : null}
-                    {goalsMarket ? (
-                      <div>
-                        <h4 className="font-semibold mb-2">Goles Más/Menos de</h4>
-                         <div className="flex flex-wrap gap-2">
-                          {goalsMarket.values.map(value => {
-                            const hasUserBet = hasUserBetOnMarket(match.fixture.id, 'Goles Más/Menos de', value.value);
-                            return (
-                              <Button 
-                                key={value.value} 
-                                variant={hasUserBet ? "default" : "outline"} 
-                                className={`flex flex-col h-auto flex-1 min-w-[120px] ${hasUserBet ? 'opacity-75' : ''}`} 
-                                disabled={isFrozen} 
-                                onClick={() => handleAddToSlip(match, 'Goles Más/Menos de', value)}
-                              >
-                                <span>{value.value}</span>
-                                <span className="font-bold">{value.odd}</span>
-                                {hasUserBet && <span className="text-xs">✓ Apostado</span>}
-                              </Button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ) : null}
+                    )}
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -424,8 +378,8 @@ const Bets = () => {
     }
 
     return (
-      <div className="flex-grow text-center p-8 bg-white rounded-lg shadow">
-        <p>No hay partidos con cuotas disponibles en este momento.</p>
+      <div className="flex-grow text-center p-8 bg-card rounded-lg shadow">
+        <p className="text-muted-foreground">No hay partidos con cuotas disponibles en este momento.</p>
       </div>
     );
   };
