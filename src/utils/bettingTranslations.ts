@@ -29,6 +29,33 @@ export const BETTING_TRANSLATIONS = {
   'X2': 'X2 (Empate o Visitante)',
   '12': '12 (Local o Visitante)',
   
+  // HT/FT and combination bet values
+  'Home/Home': 'Local/Local',
+  'Home/Draw': 'Local/Empate',
+  'Home/Away': 'Local/Visitante',
+  'Draw/Home': 'Empate/Local',
+  'Draw/Draw': 'Empate/Empate',
+  'Draw/Away': 'Empate/Visitante',
+  'Away/Home': 'Visitante/Local',
+  'Away/Draw': 'Visitante/Empate',
+  'Away/Away': 'Visitante/Visitante',
+  
+  // Result + Over/Under combinations
+  'Home/Over': 'Local/Más',
+  'Home/Under': 'Local/Menos',
+  'Draw/Over': 'Empate/Más',
+  'Draw/Under': 'Empate/Menos', 
+  'Away/Over': 'Visitante/Más',
+  'Away/Under': 'Visitante/Menos',
+  
+  // Result + Both Teams Score combinations
+  'Home/Yes': 'Local/Sí',
+  'Home/No': 'Local/No',
+  'Draw/Yes': 'Empate/Sí',
+  'Draw/No': 'Empate/No',
+  'Away/Yes': 'Visitante/Sí',
+  'Away/No': 'Visitante/No',
+  
   // Bet Types
   'Match Winner': 'Ganador del Partido',
   'Goals Over/Under': 'Más/Menos Goles',
