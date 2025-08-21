@@ -199,7 +199,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
 
       toast({
         title: '¡Apuesta realizada!',
-        description: `Apuesta ${selectedBets.length > 1 ? 'combinada' : ''} de pts${stake} realizada con éxito.`,
+        description: `Apuesta ${selectedBets.length > 1 ? 'combinada' : ''} de pts ${stake} realizada con éxito.`,
       });
 
       // Clear the bet slip
@@ -274,7 +274,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
               {weeklyBudget !== null && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-2 rounded">
                   <DollarSign className="h-4 w-4" />
-                  <span>Presupuesto Semanal: <span className="font-semibold">{weeklyBudget} pts</span></span>
+                  <span>Presupuesto Semanal: <span className="font-semibold">{weeklyBudget} pts </span></span>
                 </div>
               )}
 
@@ -285,7 +285,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
                 </div>
                 <div className="flex justify-between">
                   <span>Ganancia Potencial:</span>
-                  <span className="font-semibold text-primary">pts{potentialWinnings}</span>
+                  <span className="font-semibold text-primary">pts {potentialWinnings}</span>
                 </div>
               </div>
 
