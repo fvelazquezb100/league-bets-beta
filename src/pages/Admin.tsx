@@ -6,6 +6,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { NewsManagement } from '@/components/NewsManagement';
 
+interface League {
+  id: number;
+  name: string;
+  join_code: string;
+  type: string;
+  week: number;
+}
+
 const Admin: React.FC = () => {
   const { toast } = useToast();
 
@@ -35,21 +43,18 @@ const Admin: React.FC = () => {
 //contador de semana
           // Estado para contador
 const {
-  data: weekCounterData,
-  isLoading: loadingWeekCounter,
-  refetch: refetchWeekCounter,
-} = useQuery({
-  queryKey: ['week-counter'],
-  queryFn: async () => {
-    const { data, error } = await supabase
-      .from('week_counter')
-      .select('*')
-      .limit(1)
-      .single();
-    if (error) throw error;
-    return data;
-  },
-});
+    data: leagues,
+    isLoading: loadingLeagues,
+    refetch: refetchLeagues,
+  } = useQuery({
+    queryKey: ['leagues'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('leagues').select('*');
+      if (error) throw error;
+      return data as League[];
+    },
+  });
+
 
 // Botón de reset
 const [resettingWeek, setResettingWeek] = React.useState(false);
