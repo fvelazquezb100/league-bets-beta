@@ -19,6 +19,10 @@ export const BETTING_TRANSLATIONS = {
   'Under 3.5': 'Menos de 3.5',
   'Over 4.5': 'Más de 4.5',
   'Under 4.5': 'Menos de 4.5',
+  'Over 5.5': 'Más de 5.5',
+  'Under 5.5': 'Menos de 5.5',
+  'Over 6.5': 'Más de 5.5',
+  'Under 6.5': 'Menos de 5.5',
   
   // Both Teams Score
   'Yes': 'Sí',
@@ -41,7 +45,42 @@ export const BETTING_TRANSLATIONS = {
   'Away/Away': 'Visitante/Visitante',
   
   // Result + Over/Under combinations
-  'Home/Over': 'Local/Más',
+  'Home/Over 1.5': 'Local/Más 1.5',
+  'Home/Under 1.5': 'Local/Menos 1.5',
+  'Draw/Over 1.5': 'Empate/Más 1.5',
+  'Draw/Under 1.5': 'Empate/Menos 1.5', 
+  'Away/Over 1.5': 'Visitante/Más 1.5',
+  'Away/Under 1.5': 'Visitante/Menos 1.5',
+
+    'Home/Over': 'Local/Más',
+  'Home/Under': 'Local/Menos',
+  'Draw/Over': 'Empate/Más',
+  'Draw/Under': 'Empate/Menos', 
+  'Away/Over': 'Visitante/Más',
+  'Away/Under': 'Visitante/Menos',
+
+    'Home/Over': 'Local/Más',
+  'Home/Under': 'Local/Menos',
+  'Draw/Over': 'Empate/Más',
+  'Draw/Under': 'Empate/Menos', 
+  'Away/Over': 'Visitante/Más',
+  'Away/Under': 'Visitante/Menos',
+
+    'Home/Over': 'Local/Más',
+  'Home/Under': 'Local/Menos',
+  'Draw/Over': 'Empate/Más',
+  'Draw/Under': 'Empate/Menos', 
+  'Away/Over': 'Visitante/Más',
+  'Away/Under': 'Visitante/Menos',
+
+    'Home/Over': 'Local/Más',
+  'Home/Under': 'Local/Menos',
+  'Draw/Over': 'Empate/Más',
+  'Draw/Under': 'Empate/Menos', 
+  'Away/Over': 'Visitante/Más',
+  'Away/Under': 'Visitante/Menos',
+
+    'Home/Over': 'Local/Más',
   'Home/Under': 'Local/Menos',
   'Draw/Over': 'Empate/Más',
   'Draw/Under': 'Empate/Menos', 
@@ -55,6 +94,7 @@ export const BETTING_TRANSLATIONS = {
   'Draw/No': 'Empate/No',
   'Away/Yes': 'Visitante/Sí',
   'Away/No': 'Visitante/No',
+
   
   // Bet Types
   'Match Winner': 'Ganador del Partido',
