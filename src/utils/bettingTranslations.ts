@@ -51,7 +51,34 @@ export const BETTING_TRANSLATIONS = {
   'Draw/Under 1.5': 'Empate/Menos 1.5', 
   'Away/Over 1.5': 'Visitante/Más 1.5',
   'Away/Under 1.5': 'Visitante/Menos 1.5',
+  
+  'Home/Over 2.5': 'Local/Más 2.5',
+  'Home/Under 2.5': 'Local/Menos 2.5',
+  'Draw/Over 2.5': 'Empate/Más 2.5',
+  'Draw/Under 2.5': 'Empate/Menos 2.5', 
+  'Away/Over 2.5': 'Visitante/Más 2.5',
+  'Away/Under 2.5': 'Visitante/Menos 2.5',
 
+    'Home/Over 3.5': 'Local/Más 3.5',
+  'Home/Under 3.5': 'Local/Menos 3.5',
+  'Draw/Over 3.5': 'Empate/Más 3.5',
+  'Draw/Under 3.5': 'Empate/Menos 3.5', 
+  'Away/Over 3.5': 'Visitante/Más 3.5',
+  'Away/Under 3.5': 'Visitante/Menos 3.5',
+
+    'Home/Over 4.5': 'Local/Más 4.5',
+  'Home/Under 4.5': 'Local/Menos 4.5',
+  'Draw/Over 4.5': 'Empate/Más 4.5',
+  'Draw/Under 4.5': 'Empate/Menos 4.5', 
+  'Away/Over 4.5': 'Visitante/Más 4.5',
+  'Away/Under 4.5': 'Visitante/Menos 4.5',
+
+    'Home/Over 5.5': 'Local/Más 5.5',
+  'Home/Under 5.5': 'Local/Menos 5.5',
+  'Draw/Over 5.5': 'Empate/Más 5.5',
+  'Draw/Under 5.5': 'Empate/Menos 5.5', 
+  'Away/Over 5.5': 'Visitante/Más 5.5',
+  'Away/Under 5.5': 'Visitante/Menos 5.5',
   
   
   // Result + Both Teams Score combinations
