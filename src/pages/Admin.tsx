@@ -141,6 +141,77 @@ const Admin: React.FC = () => {
     }
   };
 
+const [currentWeek, setCurrentWeek] = React.useState<number | null>(null);
+const [leagueName, setLeagueName] = React.useState<string | null>(null);
+const [loadingWeek, setLoadingWeek] = React.useState(true);
+const [resettingWeek, setResettingWeek] = React.useState(false);
+
+React.useEffect(() => {
+  const fetchWeek = async () => {
+    try {
+      setLoadingWeek(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuario no autenticado");
+
+      // Buscar la liga del perfil
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("league_id")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // Obtener la semana de esa liga
+      const { data: league, error: leagueError } = await supabase
+        .from("leagues")
+        .select("name, week")
+        .eq("id", profile.league_id)
+        .single();
+
+      if (leagueError) throw leagueError;
+
+      setLeagueName(league.name);
+      setCurrentWeek(league.week);
+    } catch (e) {
+      console.error(e);
+      setCurrentWeek(null);
+    } finally {
+      setLoadingWeek(false);
+    }
+  };
+
+  fetchWeek();
+}, []);
+
+const handleResetWeek = async () => {
+  try {
+    setResettingWeek(true);
+
+    const { error } = await supabase.functions.invoke("reset_week_league", {
+      body: { league_id: profile.league_id },
+    });
+
+    if (error) throw error;
+
+    toast({
+      title: "Semana reseteada",
+      description: `La semana de ${leagueName} fue reiniciada correctamente.`,
+    });
+
+    // Refrescar valor
+    setCurrentWeek(1);
+  } catch (e: any) {
+    toast({
+      title: "Error",
+      description: e?.message ?? "No se pudo resetear la semana.",
+      variant: "destructive",
+    });
+  } finally {
+    setResettingWeek(false);
+  }
+};
+  
   return (
     <div>
       <header className="mb-8">
@@ -202,6 +273,33 @@ const Admin: React.FC = () => {
           </CardFooter>
         </Card>
 
+{/* League Week Management */}
+<Card className="md:col-span-2">
+  <CardHeader>
+    <CardTitle>Semana de la Liga</CardTitle>
+  </CardHeader>
+  <CardContent>
+    {loadingWeek ? (
+      <p className="text-sm text-muted-foreground">Cargando semana…</p>
+    ) : currentWeek !== null ? (
+      <p className="text-sm">
+        Semana actual de <span className="font-semibold">{leagueName}</span>:{" "}
+        <span className="font-bold">#{currentWeek}</span>
+      </p>
+    ) : (
+      <p className="text-sm text-red-600">No se pudo obtener la semana actual.</p>
+    )}
+  </CardContent>
+  <CardFooter>
+    <Button onClick={handleResetWeek} disabled={resettingWeek}>
+      {resettingWeek ? "Reseteando…" : "Resetear Semana de la Liga"}
+    </Button>
+  </CardFooter>
+</Card>
+
+
+
+        
         {/* Auth Test */}
         <Card className="md:col-span-2">
           <CardHeader>
