@@ -30,7 +30,6 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
   const [weeklyBudget, setWeeklyBudget] = useState<number | null>(null);
   const { toast } = useToast();
 
-  // Check for duplicate fixtures
   const fixtureIds = selectedBets.map(bet => bet.fixtureId).filter(id => id !== undefined);
   const uniqueFixtureIds = new Set(fixtureIds);
   const hasDuplicateFixtures = fixtureIds.length !== uniqueFixtureIds.size;
@@ -49,9 +48,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
         .eq('id', user.id)
         .single();
 
-      if (profile) {
-        setWeeklyBudget(profile.weekly_budget);
-      }
+      if (profile) setWeeklyBudget(profile.weekly_budget);
     };
 
     fetchWeeklyBudget();
@@ -59,24 +56,15 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
 
   const handlePlaceBet = async () => {
     if (!stake || parseFloat(stake) <= 0) {
-      toast({
-        title: 'Error',
-        description: 'Por favor, introduce un importe válido.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'Por favor, introduce un importe válido.', variant: 'destructive' });
       return;
     }
 
     if (selectedBets.length === 0) {
-      toast({
-        title: 'Error',
-        description: 'No hay selecciones en el boleto.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'No hay selecciones en el boleto.', variant: 'destructive' });
       return;
     }
 
-    // Check for duplicate fixtures when multiple selections
     if (selectedBets.length > 1 && hasDuplicateFixtures) {
       toast({
         title: 'Error',
@@ -86,64 +74,48 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
       return;
     }
 
-    // Bloqueo por cierre: 15 minutos antes del inicio
     const isAnyFrozen = selectedBets.some(bet => {
       if (!bet.kickoff) return false;
       const freeze = new Date(new Date(bet.kickoff).getTime() - 15 * 60 * 1000);
       return new Date() >= freeze;
     });
     if (isAnyFrozen) {
-      toast({
-        title: 'Apuestas cerradas',
-        description: 'Al menos una selección está cerrada (15 min antes del inicio).',
-        variant: 'destructive',
-      });
+      toast({ title: 'Apuestas cerradas', description: 'Al menos una selección está cerrada (15 min antes del inicio).', variant: 'destructive' });
       return;
     }
 
     setIsSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast({
-          title: 'Error',
-          description: 'Debes iniciar sesión para realizar apuestas.',
-          variant: 'destructive',
-        });
-        return;
-      }
+      if (!user) throw new Error('Debes iniciar sesión para realizar apuestas.');
 
       const stakeAmount = parseFloat(stake);
 
-      // Check if user has enough budget
+      // Obtener presupuesto y liga del usuario
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('weekly_budget')
+        .select('weekly_budget, league_id')
         .eq('id', user.id)
         .single();
-
-      if (profileError || !profile) {
-        toast({
-          title: 'Error',
-          description: 'No se pudo verificar tu presupuesto.',
-          variant: 'destructive',
-        });
-        return;
-      }
+      if (profileError || !profile) throw new Error('No se pudo verificar tu presupuesto.');
 
       if (profile.weekly_budget < stakeAmount) {
-        toast({
-          title: 'Error',
-          description: `Presupuesto insuficiente. Disponible: €${profile.weekly_budget}`,
-          variant: 'destructive',
-        });
+        toast({ title: 'Error', description: `Presupuesto insuficiente. Disponible: €${profile.weekly_budget}`, variant: 'destructive' });
         return;
       }
 
-      // Place bet based on type (single or combo)
+      // Obtener semana actual de la liga
+      const { data: league, error: leagueError } = await supabase
+        .from('leagues')
+        .select('week')
+        .eq('id', profile.league_id)
+        .single();
+      if (leagueError || !league) throw new Error('No se pudo obtener la liga del usuario.');
+
+      const currentWeek = league.week ?? 1;
+
+      // Insertar apuesta
       if (selectedBets.length === 1) {
-        // Single bet - use existing logic
         const { error: betError } = await supabase
           .from('bets')
           .insert({
@@ -155,26 +127,19 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
             bet_selection: `${selectedBets[0].selection} @ ${selectedBets[0].odds}`,
             fixture_id: selectedBets[0].fixtureId,
             bet_type: 'single',
-            status: 'pending'
+            status: 'pending',
+            week: currentWeek
           });
+        if (betError) throw betError;
 
-        if (betError) {
-          throw betError;
-        }
-
-        // Update user's weekly budget
         const { error: budgetError } = await supabase
           .from('profiles')
-          .update({ 
-            weekly_budget: profile.weekly_budget - stakeAmount 
-          })
+          .update({ weekly_budget: profile.weekly_budget - stakeAmount })
           .eq('id', user.id);
+        if (budgetError) throw budgetError;
 
-        if (budgetError) {
-          throw budgetError;
-        }
       } else {
-        // Combo bet - use RPC function
+        // Combo bet
         const selections = selectedBets.map(bet => ({
           fixture_id: bet.fixtureId,
           market: bet.market,
@@ -185,33 +150,21 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
 
         const { data: betId, error: comboError } = await supabase.rpc('place_combo_bet', {
           stake_amount: stakeAmount,
-          selections: selections
+          selections: selections,
+          week: currentWeek // pasa la semana a la función RPC si es necesario
         });
-        
-        if (comboError) {
-          throw comboError;
-        }
+        if (comboError) throw comboError;
       }
 
-      // Update local weekly budget state
       setWeeklyBudget(profile.weekly_budget - stakeAmount);
+      toast({ title: '¡Apuesta realizada!', description: `Apuesta ${selectedBets.length > 1 ? 'combinada' : ''} de €${stake} realizada con éxito.` });
 
-      toast({
-        title: '¡Apuesta realizada!',
-        description: `Apuesta ${selectedBets.length > 1 ? 'combinada' : ''} de €${stake} realizada con éxito.`,
-      });
-
-      // Clear the bet slip
       onClearAll();
       setStake('');
 
     } catch (error) {
       console.error('Error placing bet:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudo realizar la apuesta. Inténtalo de nuevo.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'No se pudo realizar la apuesta. Inténtalo de nuevo.', variant: 'destructive' });
     } finally {
       setIsSubmitting(false);
     }
@@ -292,9 +245,9 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
                 <Button
                   onClick={handlePlaceBet}
                   disabled={
-                    isSubmitting || 
-                    !stake || 
-                    parseFloat(stake) <= 0 || 
+                    isSubmitting ||
+                    !stake ||
+                    parseFloat(stake) <= 0 ||
                     (selectedBets.length > 1 && hasDuplicateFixtures) ||
                     selectedBets.some(bet => bet.kickoff ? (new Date() >= new Date(new Date(bet.kickoff).getTime() - 15 * 60 * 1000)) : false)
                   }
