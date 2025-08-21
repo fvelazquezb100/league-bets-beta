@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { getBettingTranslation } from '@/utils/bettingTranslations';
 
 export const BetHistory = () => {
   const { user } = useAuth();
