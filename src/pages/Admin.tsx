@@ -6,11 +6,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { NewsManagement } from '@/components/NewsManagement';
 
-type Profile = {
+type ProfileRow = {
   league_id: string;
 };
 
-type League = {
+type LeagueRow = {
   id: string;
   name: string;
   week: number;
@@ -57,9 +57,9 @@ const Admin: React.FC = () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Usuario no autenticado');
 
-        // Buscar la liga del perfil
+        // Perfil
         const { data: profile, error: profileError } = await supabase
-          .from<Profile>('profiles')
+          .from<'profiles', ProfileRow>('profiles')
           .select('league_id')
           .eq('id', user.id)
           .single();
@@ -68,9 +68,9 @@ const Admin: React.FC = () => {
 
         setLeagueId(profile.league_id);
 
-        // Obtener la semana de esa liga
+        // Liga
         const { data: league, error: leagueError } = await supabase
-          .from<League>('leagues')
+          .from<'leagues', LeagueRow>('leagues')
           .select('name, week')
           .eq('id', profile.league_id)
           .single();
