@@ -136,7 +136,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
       if (profile.weekly_budget < stakeAmount) {
         toast({
           title: 'Error',
-          description: `Presupuesto insuficiente. Disponible: €${profile.weekly_budget}`,
+          description: `Presupuesto insuficiente. Disponible: ptos${profile.weekly_budget}`,
           variant: 'destructive',
         });
         return;
@@ -199,7 +199,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
 
       toast({
         title: '¡Apuesta realizada!',
-        description: `Apuesta ${selectedBets.length > 1 ? 'combinada' : ''} de €${stake} realizada con éxito.`,
+        description: `Apuesta ${selectedBets.length > 1 ? 'combinada' : ''} de pts${stake} realizada con éxito.`,
       });
 
       // Clear the bet slip
@@ -285,7 +285,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
                 </div>
                 <div className="flex justify-between">
                   <span>Ganancia Potencial:</span>
-                  <span className="font-semibold text-primary">€{potentialWinnings}</span>
+                  <span className="font-semibold text-primary">pts{potentialWinnings}</span>
                 </div>
               </div>
 
