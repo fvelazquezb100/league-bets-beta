@@ -4,18 +4,48 @@ export const BETTING_TRANSLATIONS = {
   home: 'Local',
   away: 'Visitante',
   draw: 'Empate',
+  Home: 'Local',
+  Away: 'Visitante',
+  Draw: 'Empate',
+  
+  // Over/Under values
+  'Over 0.5': 'Más de 0.5',
+  'Under 0.5': 'Menos de 0.5',
+  'Over 1.5': 'Más de 1.5',
+  'Under 1.5': 'Menos de 1.5',
+  'Over 2.5': 'Más de 2.5',
+  'Under 2.5': 'Menos de 2.5',
+  'Over 3.5': 'Más de 3.5',
+  'Under 3.5': 'Menos de 3.5',
+  'Over 4.5': 'Más de 4.5',
+  'Under 4.5': 'Menos de 4.5',
+  
+  // Both Teams Score
+  'Yes': 'Sí',
+  'No': 'No',
+  
+  // Double Chance combinations
+  '1X': '1X (Local o Empate)',
+  'X2': 'X2 (Empate o Visitante)',
+  '12': '12 (Local o Visitante)',
   
   // Bet Types
   'Match Winner': 'Ganador del Partido',
-  'Over/Under Goals': 'Más/Menos Goles',
+  'Goals Over/Under': 'Más/Menos Goles',
+  'Both Teams To Score': 'Ambos Equipos Marcan',
   'Both Teams Score': 'Ambos Equipos Marcan',
-  '1st Half Winner': 'Ganador 1ª Parte',
-  '2nd Half Winner': 'Ganador 2ª Parte',
+  'First Half Winner': 'Ganador 1ª Parte',
+  'Second Half Winner': 'Ganador 2ª Parte',
   'Correct Score': 'Resultado Exacto',
   'Double Chance': 'Doble Oportunidad',
   'HT/FT Double': 'Descanso/Final',
   'Result/Total Goals': 'Resultado & Total de Goles',
-  'Result/Both Teams Score': 'Resultado & Ambos Marcan'
+  'Result/Both Teams Score': 'Resultado & Ambos Marcan',
+  
+  // Legacy mappings for existing bet types
+  'Over/Under Goals': 'Más/Menos Goles',
+  '1st Half Winner': 'Ganador 1ª Parte',
+  '2nd Half Winner': 'Ganador 2ª Parte'
 } as const;
 
 // Type definitions for strong typing

@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import type { BetTypeConfig } from '@/utils/betTypes';
 import type { MatchData, BetMarket, BetValue } from '@/pages/Bets';
+import { getBettingTranslation } from '@/utils/bettingTranslations';
 
 interface BetMarketSectionProps {
   match: MatchData;
@@ -36,7 +37,7 @@ const BetMarketSection = ({
               disabled={isFrozen} 
               onClick={() => handleAddToSlip(match, betType.displayName, value)}
             >
-              <span className="text-sm">{value.value}</span>
+              <span className="text-sm">{getBettingTranslation(value.value)}</span>
               <span className="font-bold text-base">{value.odd}</span>
               {hasUserBet && <span className="text-xs">✓ Apostado</span>}
             </Button>

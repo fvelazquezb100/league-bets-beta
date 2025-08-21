@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { X, DollarSign } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { getBettingTranslation } from '@/utils/bettingTranslations';
 
 interface Bet {
   id: string;
@@ -235,8 +236,8 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <p className="font-medium text-sm">{bet.matchDescription}</p>
-                      <p className="text-xs text-muted-foreground">{bet.market}</p>
-                      <p className="text-sm font-semibold">{bet.selection}</p>
+                      <p className="text-xs text-muted-foreground">{getBettingTranslation(bet.market)}</p>
+                      <p className="text-sm font-semibold">{getBettingTranslation(bet.selection)}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-primary">{bet.odds.toFixed(2)}</span>

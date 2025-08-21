@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { getBetTypesSorted, findBetTypeByApiName } from '@/utils/betTypes';
 import BetMarketSection from '@/components/BetMarketSection';
+import { getBettingTranslation } from '@/utils/bettingTranslations';
 
 // --- Type Definitions for API-Football Odds Data ---
 export interface Team {
