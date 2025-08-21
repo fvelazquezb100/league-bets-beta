@@ -259,7 +259,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
 
             <div className="space-y-3">
               <div>
-                <Label htmlFor="stake">Importe (€)</Label>
+                <Label htmlFor="stake">Importe (pts)</Label>
                 <Input
                   id="stake"
                   type="number"
