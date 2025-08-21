@@ -24,7 +24,14 @@ function outcomeFromFixture(fx: any): "home" | "away" | "draw" | null {
 
 function evaluateBet(
   b: any,
-  fr: { home_goals: number; away_goals: number; outcome: "home" | "away" | "draw" } | undefined,
+  fr: { 
+    home_goals: number; 
+    away_goals: number; 
+    outcome: "home" | "away" | "draw";
+    halftime_home?: number;
+    halftime_away?: number;
+    halftime_outcome?: "home" | "away" | "draw";
+  } | undefined,
 ): boolean {
   try {
     if (!b || !fr) return false;
@@ -34,9 +41,135 @@ function evaluateBet(
     const ag = Number(fr.away_goals ?? 0);
     const total = hg + ag;
 
+    // Double Chance bets
+    if (sel.includes("1x") || sel.includes("local o empate")) {
+      return fr.outcome === "home" || fr.outcome === "draw";
+    }
+    if (sel.includes("x2") || sel.includes("empate o visitante")) {
+      return fr.outcome === "draw" || fr.outcome === "away";
+    }
+    if (sel.includes("12") || sel.includes("local o visitante")) {
+      return fr.outcome === "home" || fr.outcome === "away";
+    }
+
+    // Correct Score bets
+    if (sel.includes("-") && /\d+-\d+/.test(sel)) {
+      const scoreMatch = sel.match(/(\d+)-(\d+)/);
+      if (scoreMatch) {
+        const expectedHome = parseInt(scoreMatch[1]);
+        const expectedAway = parseInt(scoreMatch[2]);
+        return hg === expectedHome && ag === expectedAway;
+      }
+    }
+
+    // First Half Winner bets (if halftime data available)
+    if ((sel.includes("1st") || sel.includes("first") || sel.includes("1ª")) && sel.includes("half")) {
+      if (fr.halftime_outcome) {
+        if (sel.includes("home") || sel.includes("local")) return fr.halftime_outcome === "home";
+        if (sel.includes("away") || sel.includes("visitante")) return fr.halftime_outcome === "away";
+        if (sel.includes("draw") || sel.includes("empate")) return fr.halftime_outcome === "draw";
+      }
+      // If no halftime data, cannot evaluate - return false for now
+      return false;
+    }
+
+    // Second Half Winner bets (requires calculation from full-time and halftime)
+    if ((sel.includes("2nd") || sel.includes("second") || sel.includes("2ª")) && sel.includes("half")) {
+      if (fr.halftime_home !== undefined && fr.halftime_away !== undefined) {
+        const secondHalfHome = hg - fr.halftime_home;
+        const secondHalfAway = ag - fr.halftime_away;
+        
+        if (sel.includes("home") || sel.includes("local")) {
+          return secondHalfHome > secondHalfAway;
+        }
+        if (sel.includes("away") || sel.includes("visitante")) {
+          return secondHalfHome < secondHalfAway;
+        }
+        if (sel.includes("draw") || sel.includes("empate")) {
+          return secondHalfHome === secondHalfAway;
+        }
+      }
+      return false;
+    }
+
+    // HT/FT Double bets
+    if (sel.includes("/")) {
+      const parts = sel.split("/");
+      if (parts.length === 2 && fr.halftime_outcome) {
+        const htPart = parts[0].trim();
+        const ftPart = parts[1].trim();
+        
+        let htCorrect = false;
+        let ftCorrect = false;
+        
+        // Check halftime outcome
+        if (htPart.includes("home") || htPart.includes("local")) {
+          htCorrect = fr.halftime_outcome === "home";
+        } else if (htPart.includes("away") || htPart.includes("visitante")) {
+          htCorrect = fr.halftime_outcome === "away";
+        } else if (htPart.includes("draw") || htPart.includes("empate")) {
+          htCorrect = fr.halftime_outcome === "draw";
+        }
+        
+        // Check full-time outcome
+        if (ftPart.includes("home") || ftPart.includes("local")) {
+          ftCorrect = fr.outcome === "home";
+        } else if (ftPart.includes("away") || ftPart.includes("visitante")) {
+          ftCorrect = fr.outcome === "away";
+        } else if (ftPart.includes("draw") || ftPart.includes("empate")) {
+          ftCorrect = fr.outcome === "draw";
+        }
+        
+        return htCorrect && ftCorrect;
+      }
+    }
+
+    // Result + Over/Under combinations
+    if (sel.includes("&") || sel.includes("and")) {
+      const parts = sel.split(/[&]|and/).map(p => p.trim());
+      if (parts.length === 2) {
+        const resultPart = parts[0];
+        const overUnderPart = parts[1];
+        
+        let resultCorrect = false;
+        let overUnderCorrect = false;
+        
+        // Check result part
+        if (resultPart.includes("home") || resultPart.includes("local")) {
+          resultCorrect = fr.outcome === "home";
+        } else if (resultPart.includes("away") || resultPart.includes("visitante")) {
+          resultCorrect = fr.outcome === "away";
+        } else if (resultPart.includes("draw") || resultPart.includes("empate")) {
+          resultCorrect = fr.outcome === "draw";
+        }
+        
+        // Check over/under part
+        if (overUnderPart.includes("over") || overUnderPart.includes("más")) {
+          const thresholdMatch = overUnderPart.match(/([0-9]+(?:\.[0-9]+)?)/);
+          if (thresholdMatch) {
+            const threshold = parseFloat(thresholdMatch[1]);
+            overUnderCorrect = total > threshold;
+          }
+        } else if (overUnderPart.includes("under") || overUnderPart.includes("menos")) {
+          const thresholdMatch = overUnderPart.match(/([0-9]+(?:\.[0-9]+)?)/);
+          if (thresholdMatch) {
+            const threshold = parseFloat(thresholdMatch[1]);
+            overUnderCorrect = total < threshold;
+          }
+        } else if (overUnderPart.includes("yes") || overUnderPart.includes("sí")) {
+          overUnderCorrect = hg > 0 && ag > 0;
+        } else if (overUnderPart.includes("no")) {
+          overUnderCorrect = !(hg > 0 && ag > 0);
+        }
+        
+        return resultCorrect && overUnderCorrect;
+      }
+    }
+
     // Both Teams To Score (BTTS)
-    if ((sel.includes("both") && sel.includes("score")) || sel.includes("btts")) {
-      const yes = sel.includes("yes");
+    if ((sel.includes("both") && sel.includes("score")) || sel.includes("btts") || 
+        sel.includes("ambos") || sel.includes("marcan")) {
+      const yes = sel.includes("yes") || sel.includes("sí");
       const no = sel.includes("no");
       const bothScored = hg > 0 && ag > 0;
       if (yes) return bothScored;
@@ -45,16 +178,17 @@ function evaluateBet(
     }
 
     // Goals Over/Under
-    if (sel.includes("over") || sel.includes("under") || /\b[ou]\s*\d/.test(sel)) {
+    if (sel.includes("over") || sel.includes("under") || sel.includes("más") || 
+        sel.includes("menos") || /\b[ou]\s*\d/.test(sel)) {
       let threshold: number | null = null;
-      let over = sel.includes("over");
-      let under = sel.includes("under");
+      let over = sel.includes("over") || sel.includes("más");
+      let under = sel.includes("under") || sel.includes("menos");
 
-      const m1 = sel.match(/(over|under)\s*([0-9]+(?:\.[0-9]+)?)/);
+      const m1 = sel.match(/(over|under|más|menos)\s*(?:de\s*)?([0-9]+(?:\.[0-9]+)?)/);
       if (m1) {
         threshold = parseFloat(m1[2]);
-        over = m1[1] === "over";
-        under = m1[1] === "under";
+        over = m1[1] === "over" || m1[1] === "más";
+        under = m1[1] === "under" || m1[1] === "menos";
       } else {
         const m2 = sel.match(/\b([ou])\s*([0-9]+(?:\.[0-9]+)?)/);
         if (m2) {
@@ -70,9 +204,9 @@ function evaluateBet(
     }
 
     // Match Winner (1X2)
-    if (sel.includes("home")) return fr.outcome === "home";
-    if (sel.includes("away")) return fr.outcome === "away";
-    if (sel.includes("draw") || sel.includes("x")) return fr.outcome === "draw";
+    if (sel.includes("home") || sel.includes("local")) return fr.outcome === "home";
+    if (sel.includes("away") || sel.includes("visitante")) return fr.outcome === "away";
+    if (sel.includes("draw") || sel.includes("empate") || sel.includes("x")) return fr.outcome === "draw";
 
     return false;
   } catch {
@@ -175,15 +309,42 @@ serve(async (req) => {
     const finished = finishedJson?.response ?? [];
 
     const outcomeMap = new Map<number, "home" | "away" | "draw">();
-    const resultsMap = new Map<number, { home_goals: number; away_goals: number; outcome: "home" | "away" | "draw" }>();
+    const resultsMap = new Map<number, { 
+      home_goals: number; 
+      away_goals: number; 
+      outcome: "home" | "away" | "draw";
+      halftime_home?: number;
+      halftime_away?: number;
+      halftime_outcome?: "home" | "away" | "draw";
+    }>();
+    
     for (const fx of finished) {
       const id = fx?.fixture?.id;
       const oc = outcomeFromFixture(fx);
       const hg = fx?.goals?.home ?? fx?.score?.fulltime?.home ?? null;
       const ag = fx?.goals?.away ?? fx?.score?.fulltime?.away ?? null;
+      
+      // Extract halftime scores if available
+      const htHome = fx?.score?.halftime?.home ?? null;
+      const htAway = fx?.score?.halftime?.away ?? null;
+      let htOutcome: "home" | "away" | "draw" | undefined = undefined;
+      
+      if (htHome !== null && htAway !== null) {
+        if (htHome > htAway) htOutcome = "home";
+        else if (htHome < htAway) htOutcome = "away";
+        else htOutcome = "draw";
+      }
+      
       if (id && oc) outcomeMap.set(id, oc);
       if (id != null && hg != null && ag != null && oc) {
-        resultsMap.set(id, { home_goals: Number(hg), away_goals: Number(ag), outcome: oc });
+        resultsMap.set(id, { 
+          home_goals: Number(hg), 
+          away_goals: Number(ag), 
+          outcome: oc,
+          halftime_home: htHome !== null ? Number(htHome) : undefined,
+          halftime_away: htAway !== null ? Number(htAway) : undefined,
+          halftime_outcome: htOutcome
+        });
       }
     }
     
