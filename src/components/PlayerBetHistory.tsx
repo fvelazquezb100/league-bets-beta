@@ -15,14 +15,14 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
   const [loading, setLoading] = useState(true);
   const [kickoffTimes, setKickoffTimes] = useState<{ [key: number]: string }>({});
   const [teamNames, setTeamNames] = useState<{ [key: number]: { home: string; away: string } }>({});
-  const [now, setNow] = useState<Date>(new Date());
   const [cancelingId, setCancelingId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchPlayerBets = async () => {
       try {
         setLoading(true);
-
+        console.log('Fetching bets for player:', playerId);
+        
         // Fetch player's bets with bet selections
         const { data: betsData, error: betsError } = await supabase
           .from('bets')
@@ -46,6 +46,8 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
           setBets([]);
           return;
         }
+
+        console.log('Fetched bets data:', betsData);
 
         // Fetch odds cache for fixture info
         const { data: cacheData } = await supabase
@@ -90,11 +92,6 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
       fetchPlayerBets();
     }
   }, [playerId]);
-
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 30000);
-    return () => clearInterval(t);
-  }, []);
 
   const getStatusText = (status: string) => {
     switch (status) {
@@ -147,57 +144,40 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
     }
   };
 
-  const canCancelBet = (bet: any) => {
-    if (bet.status !== 'pending') return false;
-
-    const selections = bet.bet_selections || [];
-    let earliestKickoff: Date | null = null;
-
-    // Check if any selection is already resolved
-    for (const sel of selections) {
-      if (sel.status !== 'pending') return false;
-
-      const kickoffStr = sel.match_description ? kickoffTimes[sel.fixture_id] : null;
-      if (kickoffStr) {
-        const kickoff = new Date(kickoffStr);
-        if (!earliestKickoff || kickoff < earliestKickoff) earliestKickoff = kickoff;
-      }
-    }
-
-    // If single bet, check its kickoff
-    if (selections.length === 0 && bet.fixture_id) {
-      const kickoffStr = kickoffTimes[bet.fixture_id];
-      if (kickoffStr) earliestKickoff = new Date(kickoffStr);
-    }
-
-    if (!earliestKickoff) return false;
-
-    // 15 min cutoff
-    const cutoffTime = new Date(earliestKickoff.getTime() - 15 * 60000);
-    if (now > cutoffTime) return false;
-
-    return true;
-  };
-
+  // Cancel bet
   const handleCancel = async (betId: number) => {
     try {
       setCancelingId(betId);
-      const { data, error } = await supabase.rpc('cancel_bet', { bet_id_param: betId });
+
+      type CancelBetResponse = { success: boolean; message?: string; error?: string };
+
+      const { data, error } = await supabase
+        .rpc<CancelBetResponse>('cancel_bet', { bet_id_param: betId });
+
       setCancelingId(null);
 
-      if (error) throw error;
-      if (data && data.success) {
-        setBets(prev => prev.filter(b => b.id !== betId));
+      if (error) {
+        console.error('Error canceling bet:', error);
+        return;
       }
+
+      if (data?.success) {
+        setBets(prev => prev.filter(b => b.id !== betId));
+      } else if (data?.error) {
+        console.error('RPC error:', data.error);
+      }
+
     } catch (e) {
       setCancelingId(null);
-      console.error('Error canceling bet:', e);
+      console.error('Unexpected error canceling bet:', e);
     }
   };
 
+  // Calculate basic stats (no stakes shown for privacy)
   const wonBets = bets.filter(bet => bet.status === 'won');
   const lostBets = bets.filter(bet => bet.status === 'lost');
   const pendingBets = bets.filter(bet => bet.status === 'pending');
+
   const totalBets = wonBets.length + lostBets.length;
   const successPercentage = totalBets > 0 ? Math.round((wonBets.length / totalBets) * 100) : 0;
 
@@ -208,8 +188,12 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
           <div className="h-8 bg-muted animate-pulse rounded w-1/2 mx-auto"></div>
         </div>
         <div className="grid grid-cols-3 gap-4">
-          {[1,2,3].map(i => (
-            <Card key={i}><CardContent className="p-4"><div className="h-12 bg-muted animate-pulse rounded"></div></CardContent></Card>
+          {[1, 2, 3].map(i => (
+            <Card key={i}>
+              <CardContent className="p-4">
+                <div className="h-12 bg-muted animate-pulse rounded"></div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </div>
@@ -219,8 +203,12 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-foreground">Historial de {playerName}</h2>
-        <p className="text-muted-foreground mt-1">Apuestas visibles: ganadas, perdidas y próximas a iniciar</p>
+        <h2 className="text-2xl font-bold text-foreground">
+          Historial de {playerName}
+        </h2>
+        <p className="text-muted-foreground mt-1">
+          Apuestas visibles: ganadas, perdidas y próximas a iniciar
+        </p>
       </div>
 
       {/* Basic Stats */}
@@ -269,7 +257,9 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
         </CardHeader>
         <CardContent>
           {bets.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No se encontraron apuestas visibles para este jugador.</p>
+            <p className="text-center text-muted-foreground py-8">
+              No se encontraron apuestas visibles para este jugador.
+            </p>
           ) : (
             <Table>
               <TableHeader>
@@ -278,24 +268,32 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                   <TableHead>Apuesta</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Semana</TableHead>
-                  <TableHead>Acción</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {bets.map((bet) => (
                   <TableRow key={bet.id}>
                     <TableCell>
-                      <Badge variant="outline">{bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}</Badge>
+                      <Badge variant="outline">
+                        {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
+                      </Badge>
                     </TableCell>
-                    <TableCell>{formatBetDisplay(bet)}</TableCell>
                     <TableCell>
-                      <Badge variant={getStatusVariant(bet.status)}>{getStatusText(bet.status)}</Badge>
+                      {formatBetDisplay(bet)}
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{bet.week || '-'}</TableCell>
                     <TableCell>
-                      {canCancelBet(bet) ? (
+                      <Badge variant={getStatusVariant(bet.status)}>
+                        {getStatusText(bet.status)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {bet.week || '-'}
+                    </TableCell>
+                    <TableCell>
+                      {bet.status === 'pending' ? (
                         <button
-                          className="btn btn-sm btn-destructive"
+                          className="btn btn-destructive btn-sm"
                           onClick={() => handleCancel(bet.id)}
                           disabled={cancelingId === bet.id}
                         >
