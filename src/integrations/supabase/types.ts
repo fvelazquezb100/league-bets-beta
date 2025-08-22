@@ -182,6 +182,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          global_role: string | null
           id: string
           league_id: number | null
           role: string
@@ -190,6 +191,7 @@ export type Database = {
           weekly_budget: number | null
         }
         Insert: {
+          global_role?: string | null
           id?: string
           league_id?: number | null
           role?: string
@@ -198,6 +200,7 @@ export type Database = {
           weekly_budget?: number | null
         }
         Update: {
+          global_role?: string | null
           id?: string
           league_id?: number | null
           role?: string
@@ -303,9 +306,29 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      get_current_user_global_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_current_user_league_id: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      get_current_user_league_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      has_admin_privileges: {
+        Args: { user_id?: string }
+        Returns: boolean
+      }
+      is_superadmin: {
+        Args: { user_id?: string }
+        Returns: boolean
       }
       join_league_with_code: {
         Args: { _join_code: string; _user_id: string }
