@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { Trophy, Calendar } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -23,7 +22,6 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
         setLoading(true);
         console.log('Fetching bets for player:', playerId);
         
-        // Fetch player's bets with bet selections
         const { data: betsData, error: betsError } = await supabase
           .from('bets')
           .select(`
@@ -49,7 +47,6 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
 
         console.log('Fetched bets data:', betsData);
 
-        // Fetch odds cache for fixture info
         const { data: cacheData } = await supabase
           .from('match_odds_cache')
           .select('data')
@@ -110,28 +107,20 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
       default: return 'outline';
     }
   };
-/*
-  const getMatchName = (fixtureId: number | null | undefined) => {
-    if (!fixtureId || !teamNames[fixtureId]) return 'Partido no disponible';
-    const teams = teamNames[fixtureId];
-    return `${teams.home} vs ${teams.away}`;
-  };
-*/
-  const getMatchName = (matchDescription?: string) => {
-  if (matchDescription) return matchDescription;
-  return 'Partidos no disponible';
-};
-  
 
+  const getMatchName = (matchDescription?: string) => {
+    if (matchDescription) return matchDescription;
+    return 'Partidos no disponible';
+  };
+  
   const formatBetDisplay = (bet: any) => {
     const selections = bet.bet_selections || [];
 
-    /*suistituir esto
     if (bet.bet_type === 'combo' && selections.length > 0) {
       return selections.map((selection: any, index: number) => (
         <div key={selection.id} className={index > 0 ? 'mt-2 pt-2 border-t' : ''}>
           <div className="text-sm">
-            <span className="font-medium">{getMatchName(selection.fixture_id)}</span>
+            <span className="font-medium">{getMatchName(selection.match_description)}</span>
             <br />
             <span className="text-muted-foreground">
               {selection.market}: {selection.selection} @ {selection.odds}
@@ -139,26 +128,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
           </div>
         </div>
       ));
-    } 
-    */
-    //por esto
-
-    if (bet.bet_type === 'combo' && selections.length > 0) {
-  return selections.map((selection: any, index: number) => (
-    <div key={selection.id} className={index > 0 ? 'mt-2 pt-2 border-t' : ''}>
-      <div className="text-sm">
-        <span className="font-medium">{getMatchName(selection.match_description)}</span>
-        <br />
-        <span className="text-muted-foreground">
-          {selection.market}: {selection.selection} @ {selection.odds}
-        </span>
-      </div>
-    </div>
-  ));
-}
-    //hasta aqui
-    
-    else {
+    } else {
       return (
         <div className="text-sm">
           <span className="font-medium">{bet.match_description || getMatchName(bet.fixture_id)}</span>
@@ -171,12 +141,28 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
     }
   };
 
-  
-  // Calculate basic stats (no stakes shown for privacy)
+  const canCancelBet = (bet: any) => {
+    if (bet.status !== 'pending') return false;
+
+    const selections = bet.bet_selections || [];
+    if (selections.some((sel: any) => sel.status !== 'pending')) return false;
+
+    const earliestKickoff = selections
+      .map((sel: any) => kickoffTimes[sel.fixture_id])
+      .filter(Boolean)
+      .sort()[0]; // earliest
+
+    if (!earliestKickoff) return true; // fallback
+
+    const cutoff = new Date(earliestKickoff);
+    cutoff.setMinutes(cutoff.getMinutes() - 15);
+    return new Date() < cutoff;
+  };
+
+  // Calculate basic stats
   const wonBets = bets.filter(bet => bet.status === 'won');
   const lostBets = bets.filter(bet => bet.status === 'lost');
   const pendingBets = bets.filter(bet => bet.status === 'pending');
-  
   const totalBets = wonBets.length + lostBets.length;
   const successPercentage = totalBets > 0 ? Math.round((wonBets.length / totalBets) * 100) : 0;
 
@@ -210,7 +196,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
         </p>
       </div>
 
-      {/* Basic Stats */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4">
@@ -267,6 +253,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                   <TableHead>Apuesta</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Semana</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -277,17 +264,18 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                         {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      {formatBetDisplay(bet)}
-                    </TableCell>
+                    <TableCell>{formatBetDisplay(bet)}</TableCell>
                     <TableCell>
                       <Badge variant={getStatusVariant(bet.status)}>
                         {getStatusText(bet.status)}
                       </Badge>
                     </TableCell>
-<TableCell className="text-muted-foreground">
-  {bet.week || '-'}
-</TableCell>
+                    <TableCell className="text-muted-foreground">{bet.week || '-'}</TableCell>
+                    <TableCell>
+                      {canCancelBet(bet) ? (
+                        <button className="btn btn-sm btn-destructive">Cancelar Apuesta</button>
+                      ) : null}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
