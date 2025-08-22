@@ -21,10 +21,10 @@ export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
       }
       const { data } = await supabase
         .from('profiles')
-        .select('*' as any)
+        .select('role, global_role')
         .eq('id', user.id)
         .single();
-      setIsAdmin((data as any)?.role === 'admin');
+      setIsAdmin(data?.global_role === 'superadmin' || data?.role === 'admin_league');
       setCheckingRole(false);
     };
     checkRole();

@@ -47,7 +47,7 @@ export const Header = () => {
       
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('username, weekly_budget, league_id, role')
+        .select('username, weekly_budget, league_id, role, global_role')
         .eq('id', user.id)
         .maybeSingle();
       
@@ -58,7 +58,7 @@ export const Header = () => {
       
       if (profileData) {
         setProfile(profileData);
-        setIsAdmin(profileData.role === 'admin');
+        setIsAdmin(profileData.global_role === 'superadmin' || profileData.role === 'admin_league');
         
         if (profileData.league_id) {
           const { data: leagueData, error: leagueError } = await supabase

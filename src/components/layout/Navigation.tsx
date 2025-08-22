@@ -44,10 +44,10 @@ export const Navigation = () => {
       if (!user) { setIsAdmin(false); return; }
       const { data } = await supabase
         .from('profiles')
-        .select('*' as any)
+        .select('role, global_role')
         .eq('id', user.id)
         .single();
-      if (!cancelled) setIsAdmin((data as any)?.role === 'admin');
+      if (!cancelled) setIsAdmin(data?.global_role === 'superadmin' || data?.role === 'admin_league');
     };
     check();
     return () => { cancelled = true; };
