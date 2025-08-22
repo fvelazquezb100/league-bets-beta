@@ -220,16 +220,28 @@ export const BetHistory = () => {
                           <Badge variant={getStatusVariant(bet.status)}>{getStatusText(bet.status)}</Badge>
                         </TableCell>
                         <TableCell>
-                          {bet.status === 'pending' ? (
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleCancel(bet.id)}
-                              disabled={cancelingId === bet.id}
-                            >
-                              {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
-                            </Button>
-                          ) : null}
+                          {/* Botón actualizado para combinadas */}
+                          {bet.bet_type === 'combo' && bet.bet_selections?.length
+                            ? bet.bet_selections.every((sel: any) => sel.status === 'pending') && (
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => handleCancel(bet.id)}
+                                  disabled={cancelingId === bet.id}
+                                >
+                                  {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
+                                </Button>
+                              )
+                            : bet.status === 'pending' && (
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => handleCancel(bet.id)}
+                                  disabled={cancelingId === bet.id}
+                                >
+                                  {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
+                                </Button>
+                              )}
                         </TableCell>
                       </TableRow>,
                       ...bet.bet_selections.map((selection: any) => (
