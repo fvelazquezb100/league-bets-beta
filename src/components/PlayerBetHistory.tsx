@@ -15,7 +15,6 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
   const [loading, setLoading] = useState(true);
   const [kickoffTimes, setKickoffTimes] = useState<{ [key: number]: string }>({});
   const [teamNames, setTeamNames] = useState<{ [key: number]: { home: string; away: string } }>({});
-  const [cancelingId, setCancelingId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchPlayerBets = async () => {
@@ -23,7 +22,6 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
         setLoading(true);
         console.log('Fetching bets for player:', playerId);
         
-        // Fetch player's bets with bet selections
         const { data: betsData, error: betsError } = await supabase
           .from('bets')
           .select(`
@@ -49,7 +47,6 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
 
         console.log('Fetched bets data:', betsData);
 
-        // Fetch odds cache for fixture info
         const { data: cacheData } = await supabase
           .from('match_odds_cache')
           .select('data')
@@ -144,36 +141,16 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
     }
   };
 
-  // Cancel bet
-  const handleCancel = async (betId: number) => {
-    try {
-      setCancelingId(betId);
-
-      type CancelBetResponse = { success: boolean; message?: string; error?: string };
-
-      const { data, error } = await supabase
-        .rpc<CancelBetResponse>('cancel_bet', { bet_id_param: betId });
-
-      setCancelingId(null);
-
-      if (error) {
-        console.error('Error canceling bet:', error);
-        return;
-      }
-
-      if (data?.success) {
-        setBets(prev => prev.filter(b => b.id !== betId));
-      } else if (data?.error) {
-        console.error('RPC error:', data.error);
-      }
-
-    } catch (e) {
-      setCancelingId(null);
-      console.error('Unexpected error canceling bet:', e);
+  // Función para controlar si se puede mostrar el botón de cancelar
+  const canCancelBet = (bet: any) => {
+    if (bet.status !== 'pending') return false;
+    if (bet.bet_type === 'combo' && bet.bet_selections?.length) {
+      return bet.bet_selections.every((sel: any) => sel.status === 'pending');
     }
+    return true;
   };
 
-  // Calculate basic stats (no stakes shown for privacy)
+  // Estadísticas básicas
   const wonBets = bets.filter(bet => bet.status === 'won');
   const lostBets = bets.filter(bet => bet.status === 'lost');
   const pendingBets = bets.filter(bet => bet.status === 'pending');
@@ -268,7 +245,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                   <TableHead>Apuesta</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Semana</TableHead>
-                  <TableHead>Acciones</TableHead>
+                  <TableHead>Acción</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -279,27 +256,17 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                         {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      {formatBetDisplay(bet)}
-                    </TableCell>
+                    <TableCell>{formatBetDisplay(bet)}</TableCell>
                     <TableCell>
                       <Badge variant={getStatusVariant(bet.status)}>
                         {getStatusText(bet.status)}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {bet.week || '-'}
-                    </TableCell>
+                    <TableCell className="text-muted-foreground">{bet.week || '-'}</TableCell>
                     <TableCell>
-                      {bet.status === 'pending' ? (
-                        <button
-                          className="btn btn-destructive btn-sm"
-                          onClick={() => handleCancel(bet.id)}
-                          disabled={cancelingId === bet.id}
-                        >
-                          {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar'}
-                        </button>
-                      ) : null}
+                      {canCancelBet(bet) && (
+                        <button className="btn btn-destructive btn-sm">Cancelar</button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -311,3 +278,19 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
     </div>
   );
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
