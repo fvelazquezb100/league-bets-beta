@@ -112,7 +112,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
     if (matchDescription) return matchDescription;
     return 'Partidos no disponible';
   };
-  
+
   const formatBetDisplay = (bet: any) => {
     const selections = bet.bet_selections || [];
 
@@ -141,28 +141,20 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
     }
   };
 
+  // Función para controlar si se puede mostrar el botón de cancelar
   const canCancelBet = (bet: any) => {
     if (bet.status !== 'pending') return false;
-
-    const selections = bet.bet_selections || [];
-    if (selections.some((sel: any) => sel.status !== 'pending')) return false;
-
-    const earliestKickoff = selections
-      .map((sel: any) => kickoffTimes[sel.fixture_id])
-      .filter(Boolean)
-      .sort()[0]; // earliest
-
-    if (!earliestKickoff) return true; // fallback
-
-    const cutoff = new Date(earliestKickoff);
-    cutoff.setMinutes(cutoff.getMinutes() - 15);
-    return new Date() < cutoff;
+    if (bet.bet_type === 'combo' && bet.bet_selections?.length) {
+      return bet.bet_selections.every((sel: any) => sel.status === 'pending');
+    }
+    return true;
   };
 
-  // Calculate basic stats
+  // Estadísticas básicas
   const wonBets = bets.filter(bet => bet.status === 'won');
   const lostBets = bets.filter(bet => bet.status === 'lost');
   const pendingBets = bets.filter(bet => bet.status === 'pending');
+
   const totalBets = wonBets.length + lostBets.length;
   const successPercentage = totalBets > 0 ? Math.round((wonBets.length / totalBets) * 100) : 0;
 
@@ -196,7 +188,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
         </p>
       </div>
 
-      {/* Stats Cards */}
+      {/* Basic Stats */}
       <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4">
@@ -253,7 +245,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                   <TableHead>Apuesta</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Semana</TableHead>
-                  <TableHead>Acciones</TableHead>
+                  <TableHead>Acción</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -272,9 +264,9 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                     </TableCell>
                     <TableCell className="text-muted-foreground">{bet.week || '-'}</TableCell>
                     <TableCell>
-                      {canCancelBet(bet) ? (
-                        <button className="btn btn-sm btn-destructive">Cancelar Apuesta</button>
-                      ) : null}
+                      {canCancelBet(bet) && (
+                        <button className="btn btn-destructive btn-sm">Cancelar</button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
