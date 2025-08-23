@@ -103,35 +103,27 @@ const AdminLiga: React.FC = () => {
   };
 
   const handleResetBudgets = async () => {
+    if (!leagueId) return;
     try {
       setResettingBudgets(true);
 
-      // Obtener token del usuario actual
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      if (!token) throw new Error("No se pudo obtener el token del usuario");
+      const { error } = await supabase
+        .from('profiles')
+        .update({ weekly_budget: 1000 })
+        .eq('league_id', leagueId);
 
-      // Invocar la Edge Function con Authorization header
-      const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/admin-reset-budgets`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify({}),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Error al resetear presupuestos");
+      if (error) throw error;
 
       toast({
         title: 'Presupuestos reiniciados',
-        description: 'Todos los presupuestos semanales fueron reiniciados a 1000.',
+        description: `Todos los usuarios de la liga ${leagueName} tienen ahora presupuesto 1000.`,
       });
     } catch (e: any) {
-      toast({ title: 'Error', description: e?.message ?? 'No se pudo reiniciar los presupuestos.', variant: 'destructive' });
+      toast({
+        title: 'Error',
+        description: e?.message ?? 'No se pudo reiniciar los presupuestos.',
+        variant: 'destructive',
+      });
     } finally {
       setResettingBudgets(false);
     }
