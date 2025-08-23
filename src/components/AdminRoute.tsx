@@ -10,23 +10,32 @@ interface AdminRouteProps {
 export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
   const [checkingRole, setCheckingRole] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isLeagueAdmin, setIsLeagueAdmin] = useState(false);
 
   useEffect(() => {
     const checkRole = async () => {
       if (!user) {
-        setIsAdmin(false);
+        setIsLeagueAdmin(false);
         setCheckingRole(false);
         return;
       }
-      const { data } = await supabase
+
+      const { data, error } = await supabase
         .from('profiles')
-        .select('role, global_role')
+        .select('role')
         .eq('id', user.id)
         .single();
-      setIsAdmin(data?.global_role === 'superadmin' || data?.role === 'admin_league');
+
+      if (error) {
+        console.error('Error al comprobar rol:', error);
+        setIsLeagueAdmin(false);
+      } else {
+        setIsLeagueAdmin(data?.role === 'admin_league');
+      }
+
       setCheckingRole(false);
     };
+
     checkRole();
   }, [user]);
 
@@ -39,7 +48,7 @@ export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
   }
 
   if (!user) return <Navigate to="/login" replace />;
-  if (!isAdmin) return <Navigate to="/home" replace />;
+  if (!isLeagueAdmin) return <Navigate to="/home" replace />;
 
   return <>{children}</>;
 };
