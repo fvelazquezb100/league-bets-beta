@@ -131,7 +131,14 @@ const SuperAdmin: React.FC = () => {
         <p className="text-muted-foreground">Herramientas de administración global del sistema.</p>
       </header>
 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* 👇 Tarjeta de Noticias integrada en estilo Card */}
+       <Card className="md:col-span-2">
 
+          <CardContent>
+            <NewsManagement />
+          </CardContent>
+        </Card>
   
       
         {/* Caché de cuotas */}
