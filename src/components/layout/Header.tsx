@@ -38,7 +38,6 @@ export const Header = () => {
   const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [league, setLeague] = useState<any>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -58,7 +57,6 @@ export const Header = () => {
       
       if (profileData) {
         setProfile(profileData);
-        setIsAdmin(profileData.global_role === 'superadmin' || profileData.role === 'admin_league');
         
         if (profileData.league_id) {
           const { data: leagueData, error: leagueError } = await supabase
@@ -173,14 +171,28 @@ export const Header = () => {
                           </Link>
                         );
                       })}
-                      {isAdmin && (
+                      
+                      {/* Admin Liga */}
+                      {profile?.role === 'admin_league' && (
                         <Link
-                          to="/admin"
+                          to="/admin-liga"
                           onClick={() => setIsOpen(false)}
                           className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-muted transition-colors"
                         >
                           <Shield className="h-4 w-4" />
-                          Admin
+                          Admin Liga
+                        </Link>
+                      )}
+
+                      {/* SuperAdmin */}
+                      {profile?.global_role === 'superadmin' && (
+                        <Link
+                          to="/superadmin"
+                          onClick={() => setIsOpen(false)}
+                          className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-muted transition-colors"
+                        >
+                          <Shield className="h-4 w-4" />
+                          SuperAdmin
                         </Link>
                       )}
                     </nav>
