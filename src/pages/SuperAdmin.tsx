@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { NewsManagement } from '@/components/NewsManagement'; // 👈 Importación de la tarjeta de noticias
 
 const SuperAdmin: React.FC = () => {
   const { toast } = useToast();
@@ -131,6 +132,16 @@ const SuperAdmin: React.FC = () => {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* 👇 Tarjeta de Noticias integrada en estilo Card */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Gestión de Noticias</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <NewsManagement />
+          </CardContent>
+        </Card>
+
         {/* Caché de cuotas */}
         <Card>
           <CardHeader>
