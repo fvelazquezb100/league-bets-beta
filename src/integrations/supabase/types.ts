@@ -116,6 +116,7 @@ export type Database = {
           name: string | null
           type: Database["public"]["Enums"]["league_type"]
           week: number
+          minimum_bet: number
         }
         Insert: {
           created_at?: string
@@ -124,6 +125,7 @@ export type Database = {
           name?: string | null
           type?: Database["public"]["Enums"]["league_type"]
           week?: number
+          minimum_bet: number
         }
         Update: {
           created_at?: string
@@ -132,6 +134,7 @@ export type Database = {
           name?: string | null
           type?: Database["public"]["Enums"]["league_type"]
           week?: number
+          minimum_bet: number
         }
         Relationships: []
       }
