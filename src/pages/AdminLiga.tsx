@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { NewsManagement } from '@/components/NewsManagement';
 
 type ProfileRow = {
   league_id: number;
@@ -122,8 +121,6 @@ const AdminLiga: React.FC = () => {
         <h1 className="text-3xl font-bold">Panel de Administración</h1>
         <p className="text-muted-foreground">Herramientas para gestionar cuotas, resultados y presupuestos.</p>
       </header>
-
-      <NewsManagement />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
         {/* Presupuestos */}
