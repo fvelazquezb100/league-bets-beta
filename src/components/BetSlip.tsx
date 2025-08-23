@@ -117,10 +117,10 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
 
       const stakeAmount = parseFloat(stake);
 
-      // Check if user has enough budget
+      // Obtener perfil con weekly_budget y league_id
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('weekly_budget')
+        .select('weekly_budget, league_id')
         .eq('id', user.id)
         .single();
 
@@ -133,6 +133,33 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
         return;
       }
 
+      // ✔️ Nueva validación: mínimo por apuesta según la liga
+      const { data: league, error: leagueError } = await supabase
+        .from('leagues')
+        .select('minimum_bet')
+        .eq('id', profile.league_id)
+        .single();
+
+      if (leagueError || !league) {
+        toast({
+          title: 'Error',
+          description: 'No se pudo validar la liga.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const minimumBet = Number(league.minimum_bet ?? 0);
+      if (stakeAmount < minimumBet) {
+        toast({
+          title: 'Error',
+          description: `La apuesta mínima en esta liga es de ${minimumBet}.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Validar presupuesto semanal disponible
       if (profile.weekly_budget < stakeAmount) {
         toast({
           title: 'Error',
