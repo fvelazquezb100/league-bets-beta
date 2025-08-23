@@ -7,8 +7,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { getBetTypesSorted } from '@/utils/betTypes';
+import { getBetTypesSorted, findBetTypeByApiName } from '@/utils/betTypes';
 import BetMarketSection from '@/components/BetMarketSection';
+import { getBettingTranslation } from '@/utils/bettingTranslations';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ChevronUp, ChevronDown, ShoppingCart } from 'lucide-react';
@@ -64,7 +65,7 @@ interface UserBet {
   bet_type: string;
   match_description?: string;
   fixture_id?: number;
-  bet_selection?: string;
+  bet_selection?: string; // For single bets
   bet_selections?: {
     market: string;
     selection: string;
@@ -89,17 +90,23 @@ const Bets = () => {
       setLoading(true);
       setError(null);
       try {
+        // Fetch cached odds data
         const { data: cacheData, error: cacheError } = await supabase
           .from('match_odds_cache')
           .select('data')
           .maybeSingle();
 
-        if (cacheError) throw new Error('Failed to fetch data from cache.');
+        if (cacheError) {
+          throw new Error('Failed to fetch data from cache.');
+        }
 
+        // If cache is empty, try to populate it automatically
         if (!cacheData || !cacheData.data) {
+          console.log('Cache is empty, attempting to populate...');
           try {
             const { error: populateError } = await supabase.functions.invoke('secure-run-update-football-cache');
             if (!populateError) {
+              // Try fetching again after population
               const { data: newCacheData, error: retryError } = await supabase
                 .from('match_odds_cache')
                 .select('data')
@@ -119,19 +126,26 @@ const Bets = () => {
             } else {
               throw new Error('Failed to populate cache automatically.');
             }
-          } catch {
+          } catch (autoPopulateError) {
             throw new Error('Cache is empty and auto-population failed. Please try refreshing the page.');
           }
         } else {
           const apiData = cacheData.data as unknown as CachedOddsData;
+          
+          console.log("Data from cache:", apiData);
+          console.log("First match data:", apiData?.response?.[0]);
+
           if (apiData && Array.isArray(apiData.response)) {
             const validMatches = apiData.response.filter(match => match.fixture);
+            console.log("Valid matches:", validMatches);
+            console.log("First valid match teams:", validMatches[0]?.teams);
             setMatches(validMatches);
           } else {
             setMatches([]);
           }
         }
 
+        // Fetch user's existing bets if authenticated
         if (user) {
           const { data: betsData, error: betsError } = await supabase
             .from('bets')
@@ -180,6 +194,7 @@ const Bets = () => {
       kickoff: match.fixture.date,
     };
 
+    // Check if this exact selection is already in the slip
     if (selectedBets.some(b => b.id === bet.id)) {
       toast({
         title: 'Selección ya añadida',
@@ -189,6 +204,7 @@ const Bets = () => {
       return;
     }
 
+    // Check if there's already a bet from the same fixture
     if (selectedBets.some(b => b.fixtureId === bet.fixtureId)) {
       toast({
         title: 'Error',
@@ -198,6 +214,7 @@ const Bets = () => {
       return;
     }
 
+    // Add the new bet to the slip
     setSelectedBets(prev => [...prev, bet]);
     toast({
       title: 'Selección añadida',
@@ -208,8 +225,8 @@ const Bets = () => {
   const findMarket = (match: MatchData, marketName: string) => {
     if (!match.bookmakers || match.bookmakers.length === 0) return undefined;
     for (const bookmaker of match.bookmakers) {
-      const market = bookmaker.bets.find(bet => bet.name === marketName);
-      if (market) return market;
+        const market = bookmaker.bets.find(bet => bet.name === marketName);
+        if (market) return market;
     }
     return undefined;
   };
@@ -217,7 +234,9 @@ const Bets = () => {
   const getBetsForFixture = (fixtureId: number) => {
     return userBets.filter(bet => 
       bet.fixture_id === fixtureId || 
-      (bet.bet_type === 'combo' && bet.bet_selections?.some(sel => sel.fixture_id === fixtureId))
+      (bet.bet_type === 'combo' && bet.bet_selections?.some(sel => 
+        sel.fixture_id === fixtureId
+      ))
     );
   };
 
@@ -229,6 +248,7 @@ const Bets = () => {
       if (bet.bet_type === 'combo') {
         return `Combinada €${bet.stake?.toFixed(0)}`;
       } else {
+        // For single bets, try to get market info from bet_selections if available
         const selection = bet.bet_selections?.[0];
         const market = selection ? `${selection.market}: ${selection.selection}` : 'Apuesta';
         return `${market} €${bet.stake?.toFixed(0)}`;
@@ -238,19 +258,38 @@ const Bets = () => {
 
   const hasUserBetOnMarket = (fixtureId: number, marketName: string, selection: string) => {
     const bets = getBetsForFixture(fixtureId);
+    console.log(`Checking market ${marketName} selection ${selection} for fixture ${fixtureId}`);
+    console.log('Available bets:', bets);
+    
     return bets.some(bet => {
+      console.log(`Processing bet type: ${bet.bet_type}, fixture_id: ${bet.fixture_id}`);
+      
+      // Check combo bets
       if (bet.bet_selections && bet.bet_selections.length > 0) {
-        return bet.bet_selections.some(sel => 
+        const comboMatch = bet.bet_selections.some(sel => 
           sel.fixture_id === fixtureId && sel.market === marketName && sel.selection === selection
         );
+        console.log('Combo bet match:', comboMatch);
+        return comboMatch;
       }
+      
+      // Check single bets
       if (bet.bet_type === 'single' && bet.fixture_id === fixtureId && bet.bet_selection) {
+        console.log('Checking single bet:', bet.bet_selection);
+        // Parse the bet_selection string (e.g., "Under 2.5 @ 1.7" or "Home @ 1.85")
         const parts = bet.bet_selection.split(' @ ');
         if (parts.length >= 1) {
           const betSelection = parts[0].trim();
-          return betSelection === selection;
+          console.log(`Comparing "${betSelection}" with "${selection}"`);
+          
+          // Check if the selection matches
+          const singleMatch = betSelection === selection;
+          console.log('Single bet match:', singleMatch);
+          return singleMatch;
         }
       }
+      
+      console.log('No match found for this bet');
       return false;
     });
   };
@@ -311,6 +350,7 @@ const Bets = () => {
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-6 pt-4">
+                    {/* Render all available bet types dynamically */}
                     {getBetTypesSorted().map(betType => {
                       const market = findMarket(match, betType.apiName);
                       if (!market) return null;
@@ -328,6 +368,7 @@ const Bets = () => {
                       );
                     })}
                     
+                    {/* Show message if no markets are available */}
                     {getBetTypesSorted().every(betType => !findMarket(match, betType.apiName)) && (
                       <div className="text-center py-8 text-muted-foreground">
                         <p>No hay mercados de apuestas disponibles para este partido.</p>
@@ -374,6 +415,7 @@ const Bets = () => {
             {renderContent()}
           </div>
 
+          {/* Mobile Bottom Bar - Only show when there are selected bets */}
           {selectedBets.length > 0 && (
             <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
               <DrawerTrigger asChild>
