@@ -9,9 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { getBetTypesSorted } from '@/utils/betTypes';
 import BetMarketSection from '@/components/BetMarketSection';
-import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { ChevronUp, ChevronDown, ShoppingCart } from 'lucide-react';
 
 // --- Type Definitions for API-Football Odds Data ---
 export interface Team {
@@ -79,7 +77,6 @@ const Bets = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedBets, setSelectedBets] = useState<any[]>([]);
   const [userBets, setUserBets] = useState<UserBet[]>([]);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -369,56 +366,21 @@ const Bets = () => {
         </div>
       ) : (
         /* Mobile Layout */
-        <>
+        <div className="flex flex-col gap-8">
           <div className="pb-20">
             {renderContent()}
           </div>
 
           {selectedBets.length > 0 && (
-            <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-              <DrawerTrigger asChild>
-                <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 z-40">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <ShoppingCart className="h-5 w-5 text-primary" />
-                      <div>
-                        <p className="font-semibold">Bet Slip</p>
-                        <p className="text-sm text-muted-foreground">
-                          {selectedBets.length} selección{selectedBets.length > 1 ? 'es' : ''}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="text-right">
-                        <p className="text-sm font-semibold">
-                          @ {selectedBets.reduce((acc, bet) => acc * bet.odds, 1).toFixed(2)}
-                        </p>
-                      </div>
-                      {isDrawerOpen ? (
-                        <ChevronDown className="h-5 w-5" />
-                      ) : (
-                        <ChevronUp className="h-5 w-5" />
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </DrawerTrigger>
-
-              <DrawerContent className="max-h-[85vh]">
-                <div className="overflow-y-auto">
-                  <BetSlip 
-                    selectedBets={selectedBets} 
-                    onRemoveBet={(betId) => setSelectedBets(prev => prev.filter(bet => bet.id !== betId))}
-                    onClearAll={() => {
-                      setSelectedBets([]);
-                      setIsDrawerOpen(false);
-                    }}
-                  />
-                </div>
-              </DrawerContent>
-            </Drawer>
+            <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 z-40">
+              <BetSlip 
+                selectedBets={selectedBets} 
+                onRemoveBet={(betId) => setSelectedBets(prev => prev.filter(bet => bet.id !== betId))}
+                onClearAll={() => setSelectedBets([])}
+              />
+            </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );
