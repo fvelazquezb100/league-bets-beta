@@ -53,8 +53,8 @@ export const Navigation = () => {
         .eq('id', user.id)
         .single();
       if (!cancelled) {
-        setIsAdmin(data?.global_role === 'superadmin' || data?.role === 'admin_league');
-        setIsSuperAdmin(data?.global_role === 'superadmin');
+setIsAdmin(data?.role === 'admin_league'); // solo admin de liga
+setIsSuperAdmin(data?.global_role === 'superadmin'); // solo superadmin
       }
     };
     check();
