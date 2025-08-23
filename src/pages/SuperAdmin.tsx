@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { NewsManagement } from '@/components/NewsManagement'; // 👈 Importación de la tarjeta de noticias
+import { NewsManagement } from '@/components/NewsManagement'; // Tarjeta de noticias
 
 const SuperAdmin: React.FC = () => {
   const { toast } = useToast();
