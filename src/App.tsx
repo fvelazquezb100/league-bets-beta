@@ -16,6 +16,8 @@ import { BetHistory } from "./pages/BetHistory";
 import NotFound from "./pages/NotFound";
 import AdminLiga from "./pages/AdminLiga";
 import { AdminRoute } from "./components/AdminRoute";
+import SuperAdmin from "./pages/SuperAdmin";
+import { SuperAdminRoute } from "./components/SuperAdminRoute";
 import { ResetPassword } from "./pages/ResetPassword";
 import { UpdatePassword } from "./pages/UpdatePassword";
 import { LeagueSetup } from "./pages/LeagueSetup";
@@ -83,6 +85,13 @@ const App = () => (
                   <AdminLiga />
                 </MainLayout>
               </AdminRoute>
+            } />
+            <Route path="/superadmin" element={
+              <SuperAdminRoute>
+                <MainLayout>
+                  <SuperAdmin />
+                </MainLayout>
+              </SuperAdminRoute>
             } />
             <Route path="*" element={<NotFound />} />
           </Routes>

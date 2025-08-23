@@ -37,17 +37,25 @@ export const Navigation = () => {
   const location = useLocation();
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     const check = async () => {
-      if (!user) { setIsAdmin(false); return; }
+      if (!user) { 
+        setIsAdmin(false); 
+        setIsSuperAdmin(false); 
+        return; 
+      }
       const { data } = await supabase
         .from('profiles')
         .select('role, global_role')
         .eq('id', user.id)
         .single();
-      if (!cancelled) setIsAdmin(data?.global_role === 'superadmin' || data?.role === 'admin_league');
+      if (!cancelled) {
+        setIsAdmin(data?.global_role === 'superadmin' || data?.role === 'admin_league');
+        setIsSuperAdmin(data?.global_role === 'superadmin');
+      }
     };
     check();
     return () => { cancelled = true; };
@@ -90,6 +98,21 @@ export const Navigation = () => {
             >
               <Shield className="h-4 w-4" />
               Admin Liga
+            </Link>
+          )}
+          {isSuperAdmin && (
+            <Link
+              key="SuperAdmin"
+              to="/superadmin"
+              className={cn(
+                'flex items-center gap-2 py-4 px-2 text-sm font-medium border-b-2 transition-colors',
+                location.pathname === '/superadmin'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Shield className="h-4 w-4" />
+              SuperAdmin
             </Link>
           )}
         </div>
