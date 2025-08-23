@@ -2,36 +2,26 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { LogOut, User, DollarSign, Trophy, Menu, Home, History, Settings, Shield } from 'lucide-react';
+import { 
+  LogOut, 
+  User, 
+  DollarSign, 
+  Trophy, 
+  Menu, 
+  Home, 
+  History, 
+  Settings, 
+  Shield 
+} from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
 
 const navigationItems = [
-  {
-    name: 'Inicio',
-    href: '/home',
-    icon: Home,
-  },
-  {
-    name: 'Clasificacion',
-    href: '/clasificacion',
-    icon: Trophy,
-  },
-  {
-    name: 'Apostar',
-    href: '/bets',
-    icon: DollarSign,
-  },
-  {
-    name: 'Historial',
-    href: '/bet-history',
-    icon: History,
-  },
-  {
-    name: 'Ajustes',
-    href: '/settings',
-    icon: Settings,
-  },
+  { name: 'Inicio', href: '/home', icon: Home },
+  { name: 'Clasificacion', href: '/clasificacion', icon: Trophy },
+  { name: 'Apostar', href: '/bets', icon: DollarSign },
+  { name: 'Historial', href: '/bet-history', icon: History },
+  { name: 'Ajustes', href: '/settings', icon: Settings },
 ];
 
 export const Header = () => {
@@ -86,41 +76,78 @@ export const Header = () => {
           </Link>
           
           <div className="flex items-center gap-6">
-            {/* Desktop: User details (hidden on mobile) */}
-            {profile && (
-              <div className="hidden md:flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <User className="h-4 w-4" />
-                  <span className="font-medium">Usuario:</span>
-                  <span>{profile.username || user?.email}</span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <DollarSign className="h-4 w-4" />
-                  <span className="font-medium">Presupuesto Semanal:</span>
-                  <span>{profile.weekly_budget || 1000} pts</span>
-                </div>
-                {league && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Trophy className="h-4 w-4" />
-                    <span className="font-medium">Liga:</span>
-                    <span>{league.name}</span>
-                    <span className="font-medium">Código:</span>
-                    <span className="font-mono tracking-wider">{league.join_code}</span>
-                  </div>
-                )}
-              </div>
-            )}
+            {/* Desktop: Navigation + User info */}
+            <div className="hidden md:flex items-center gap-8">
+              <nav className="flex items-center gap-6 text-sm font-medium">
+                {navigationItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      className="flex items-center gap-2 hover:text-primary transition-colors"
+                    >
+                      <Icon className="h-4 w-4" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
 
-            {/* Desktop: Logout button (hidden on mobile) */}
-            <Button 
-              onClick={signOut}
-              variant="outline" 
-              size="sm"
-              className="hidden md:flex gap-2"
-            >
-              <LogOut className="h-4 w-4" />
-              Cerrar Sesión
-            </Button>
+                {/* Admin Liga */}
+                {profile?.role === 'admin_league' && (
+                  <Link
+                    to="/admin-liga"
+                    className="flex items-center gap-2 hover:text-primary transition-colors"
+                  >
+                    <Shield className="h-4 w-4" />
+                    Admin Liga
+                  </Link>
+                )}
+
+                {/* SuperAdmin */}
+                {profile?.global_role === 'superadmin' && (
+                  <Link
+                    to="/superadmin"
+                    className="flex items-center gap-2 hover:text-primary transition-colors"
+                  >
+                    <Shield className="h-4 w-4" />
+                    SuperAdmin
+                  </Link>
+                )}
+              </nav>
+
+              {/* User info */}
+              {profile && (
+                <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    <span>{profile.username || user?.email}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4" />
+                    <span>{profile.weekly_budget || 1000} pts</span>
+                  </div>
+                  {league && (
+                    <div className="flex items-center gap-2">
+                      <Trophy className="h-4 w-4" />
+                      <span>{league.name}</span>
+                      <span className="font-mono tracking-wider">{league.join_code}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Logout button */}
+              <Button 
+                onClick={signOut}
+                variant="outline" 
+                size="sm"
+                className="gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Cerrar Sesión
+              </Button>
+            </div>
 
             {/* Mobile: Hamburger menu */}
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
