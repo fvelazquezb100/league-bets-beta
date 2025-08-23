@@ -133,12 +133,12 @@ const SuperAdmin: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* 👇 Tarjeta de Noticias integrada en estilo Card */}
-       <Card className="md:col-span-2">
 
-          <CardContent>
+
+          <CardContent className="md:col-span-2">
             <NewsManagement />
           </CardContent>
-        </Card>
+
   
       
         {/* Caché de cuotas */}
