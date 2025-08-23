@@ -135,7 +135,7 @@ const SuperAdmin: React.FC = () => {
         {/* 👇 Tarjeta de Noticias integrada en estilo Card */}
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle>Gestión de Noticias</CardTitle>
+            <CardTitle>Gestión de Noticia</CardTitle>
           </CardHeader>
           <CardContent>
             <NewsManagement />
