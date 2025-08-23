@@ -16,7 +16,7 @@ type LeagueRow = {
   week: number;
 };
 
-const Admin: React.FC = () => {
+const AdminLiga: React.FC = () => {
   const { toast } = useToast();
 
   // Caché de cuotas
@@ -337,4 +337,4 @@ const Admin: React.FC = () => {
   );
 };
 
-export default Admin;
+export default AdminLiga;

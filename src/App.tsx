@@ -14,7 +14,7 @@ import { Clasificacion } from "./pages/Clasificacion";
 import Bets from "./pages/Bets";
 import { BetHistory } from "./pages/BetHistory";
 import NotFound from "./pages/NotFound";
-import Admin from "./pages/Admin";
+import AdminLiga from "./pages/AdminLiga";
 import { AdminRoute } from "./components/AdminRoute";
 import { ResetPassword } from "./pages/ResetPassword";
 import { UpdatePassword } from "./pages/UpdatePassword";
@@ -77,10 +77,10 @@ const App = () => (
                 </MainLayout>
               </ProtectedRoute>
             } />
-            <Route path="/admin" element={
+            <Route path="/admin-liga" element={
               <AdminRoute>
                 <MainLayout>
-                  <Admin />
+                  <AdminLiga />
                 </MainLayout>
               </AdminRoute>
             } />

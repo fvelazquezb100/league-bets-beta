@@ -79,17 +79,17 @@ export const Navigation = () => {
           })}
           {isAdmin && (
             <Link
-              key="Admin"
-              to="/admin"
+              key="AdminLiga"
+              to="/admin-liga"
               className={cn(
                 'flex items-center gap-2 py-4 px-2 text-sm font-medium border-b-2 transition-colors',
-                location.pathname === '/admin'
+                location.pathname === '/admin-liga'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               )}
             >
               <Shield className="h-4 w-4" />
-              Admin
+              Admin Liga
             </Link>
           )}
         </div>
