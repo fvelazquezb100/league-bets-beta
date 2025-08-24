@@ -150,7 +150,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
       }
 
       
-      const minimumBet = Number(league.min_bet ?? 0);
+      const minimumBet = Number((league as any).min_bet ?? 0);
       if (stakeAmount < minimumBet) {
         toast({
           title: 'Error',
