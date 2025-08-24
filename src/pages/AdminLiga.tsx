@@ -197,24 +197,7 @@ const AdminLiga: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Presupuestos */}
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>Presupuestos Semanales</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Reinicia el presupuesto semanal de todos los usuarios a 1000.
-            </p>
-          </CardContent>
-          <CardFooter>
-            <Button onClick={handleResetBudgets} disabled={resettingBudgets}>
-              {resettingBudgets ? 'Reiniciando…' : 'Reiniciar todos los presupuestos semanales'}
-            </Button>
-          </CardFooter>
-        </Card>
-
-        {/* Semana de la Liga */}
+        {/* Reseteo de la Liga */}
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle>Reseteo de la Liga</CardTitle>
