@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { LogOut, User, DollarSign, Trophy, Menu, Home, History, Settings, Shield } from 'lucide-react';
+import { LogOut, User, DollarSign, Trophy, Menu, Home, History, Settings, Shield, Award } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
 
@@ -183,7 +183,7 @@ export const Header = () => {
                           onClick={() => setIsOpen(false)}
                           className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-muted transition-colors"
                         >
-                          <Shield className="h-4 w-4" />
+                          <Award className="h-4 w-4" />
                           Tu Liga
                         </Link>
                       )}
