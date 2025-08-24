@@ -166,10 +166,10 @@ const AdminLiga: React.FC = () => {
             ) : leagueData ? (
               <div className="text-sm" style={{ lineHeight: 2 }}>
                 <p>
-                  <span className="font-semibold mr-6">Nombre:</span> {leagueData.name} ({leagueData.type})
+                  <span className="font-semibold mr-3">Nombre:</span> {leagueData.name} ({leagueData.type})
                 </p>
                 <p className="flex items-center justify-start">
-                  <span className="font-semibold">Código de unión:</span>
+                  <span className="font-semibold mr-3">Código de unión:</span>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -180,16 +180,16 @@ const AdminLiga: React.FC = () => {
                   </Button>
                 </p>
                 <p>
-                  <span className="font-semibold mr-6">Presupuesto:</span> {leagueData.budget} ({leagueData.reset_budget})
+                  <span className="font-semibold mr-3">Presupuesto:</span> {leagueData.budget} ({leagueData.reset_budget})
                 </p>
                 <p>
-                  <span className="font-semibold mr-6">Apuesta mínima:</span> {leagueData.min_bet}
+                  <span className="font-semibold mr-3">Apuesta mínima:</span> {leagueData.min_bet}
                 </p>
                 <p>
-                  <span className="font-semibold mr-6">Apuesta máxima:</span> {leagueData.max_bet}
+                  <span className="font-semibold mr-3">Apuesta máxima:</span> {leagueData.max_bet}
                 </p>
                 <p>
-                  <span className="font-semibold mr-6">Semana de la liga:</span> {leagueData.week}
+                  <span className="font-semibold mr-3">Semana de la liga:</span> {leagueData.week}
                 </p>
               </div>
             ) : (
