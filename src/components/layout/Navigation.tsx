@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Home, DollarSign, History, Shield, Settings, Trophy } from 'lucide-react';
+import { Home, DollarSign, History, Shield, Settings, Trophy, Award } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -96,8 +96,8 @@ setIsSuperAdmin(data?.global_role === 'superadmin'); // solo superadmin
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               )}
             >
-              <Shield className="h-4 w-4" />
-              Admin Liga
+              <Award className="h-4 w-4" />
+              Tu Liga
             </Link>
           )}
           {isSuperAdmin && (
