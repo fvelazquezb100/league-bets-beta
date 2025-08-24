@@ -133,7 +133,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
         return;
       }
 
-       //Nueva validación: mínimo por apuesta según la liga
+      // Nueva validación: mínimo por apuesta según la liga
       const { data: league, error: leagueError } = await supabase
         .from('leagues')
         .select('min_bet')
@@ -147,10 +147,8 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
           variant: 'destructive',
         });
         return;
-      }
-
-      
-      const minimumBet = Number((league as any).min_bet ?? 0);
+      }  
+      const minimumBet = Number(league.min_bet ?? 0);
       if (stakeAmount < minimumBet) {
         toast({
           title: 'Error',
