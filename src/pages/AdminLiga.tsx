@@ -63,9 +63,11 @@ const AdminLiga: React.FC = () => {
         if (leagueError) throw leagueError;
         if (!leagueData) throw new Error('Liga no encontrada');
 
-        setLeagueData(leagueData);
-        setLeagueName(leagueData.name);
-        setCurrentWeek(leagueData.week);
+        // Cast to LeagueRow since we know it's valid at this point
+        const validLeagueData = leagueData as unknown as LeagueRow;
+        setLeagueData(validLeagueData);
+        setLeagueName(validLeagueData.name);
+        setCurrentWeek(validLeagueData.week);
       } catch (e: any) {
         console.error(e);
         setCurrentWeek(null);
