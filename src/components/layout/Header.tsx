@@ -34,7 +34,7 @@ const navigationItems = [
   },
   {
   name: 'Liga',
-  href: '/admin_league',
+  href: '/admin_liga',
   icon: Award,
 }
 ];
