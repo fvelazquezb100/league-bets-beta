@@ -234,33 +234,7 @@ export const Settings = () => {
           </CardContent>
         </Card>
 
-        {/* Mi Liga */}
-        {profile?.league_id && league && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Mi Liga
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <Label>Nombre de la Liga</Label>
-                  <Input value={league.name} disabled className="mt-1" />
-                </div>
-                <div>
-                  <Label>Código de Unión</Label>
-                  <Input value={league.join_code} disabled className="mt-1 font-mono" />
-                </div>
-                <div>
-                  <Label>Presupuesto Semanal</Label>
-                  <Input value={`${profile.weekly_budget} pts`} disabled className="mt-1" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+
 
         {/* Cambiar Nombre de Usuario */}
         <Card>
