@@ -81,6 +81,7 @@ const AdminLiga: React.FC = () => {
     fetchWeek();
   }, []);
 
+  /*
   const handleResetWeek = async () => {
     if (!leagueId) return;
     try {
@@ -111,7 +112,67 @@ const AdminLiga: React.FC = () => {
       setResettingWeek(false);
     }
   };
+*/
+// funcion para resetear la liga
+const handleResetLeague = async () => {
+  if (!leagueId) return;
+  try {
+    setResettingWeek(true);
 
+    // 1. Resetear la semana de la liga
+    const { error: leagueError } = await supabase
+      .from('leagues')
+      .update({ week: 1 })
+      .eq('id', leagueId);
+    if (leagueError) throw leagueError;
+
+    // 2. Resetear puntos de todos los usuarios de la liga
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({ total_points: 0 })
+      .eq('league_id', leagueId);
+    if (profileError) throw profileError;
+
+    // 3. Resetear semana de todas las apuestas de los usuarios de la liga
+    // Obtenemos los ids de los usuarios de la liga
+    const { data: users, error: usersError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('league_id', leagueId);
+
+    if (usersError) throw usersError;
+
+    const userIds = users?.map(u => u.id) || [];
+
+    if (userIds.length > 0) {
+      const { error: betsError } = await supabase
+        .from('bets')
+        .update({ week: 0 })
+        .in('user_id', userIds);
+
+      if (betsError) throw betsError;
+    }
+
+    toast({
+      title: 'Liga reseteada',
+      description: `La semana de ${leagueName} fue reiniciada correctamente, puntos y apuestas también.`,
+    });
+
+    setCurrentWeek(1);
+    if (leagueData) {
+      setLeagueData({ ...leagueData, week: 1 });
+    }
+  } catch (e: any) {
+    toast({
+      title: 'Error',
+      description: e?.message ?? 'No se pudo resetear la liga.',
+      variant: 'destructive',
+    });
+  } finally {
+    setResettingWeek(false);
+  }
+};
+  
   const handleResetBudgets = async () => {
     if (!leagueId) return;
     try {
@@ -231,7 +292,7 @@ const AdminLiga: React.FC = () => {
             )}
           </CardContent>
           <CardFooter>
-            <Button onClick={handleResetWeek} disabled={resettingWeek}>
+            <Button onClick={handleResetLeague} disabled={resettingWeek}>
               {resettingWeek ? 'Reseteando…' : 'Resetear Semana de la Liga'}
             </Button>
           </CardFooter>
