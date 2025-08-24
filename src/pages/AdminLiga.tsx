@@ -169,7 +169,7 @@ const AdminLiga: React.FC = () => {
                   <span className="font-semibold mr-2">Nombre:</span> {leagueData.name} ({leagueData.type})
                 </p>
                 <p className="flex items-center justify-start">
-                  <span className="font-semibold mr-2">Código de unión:</span>
+                  <span className="font-semibold">Código de unión:</span>
                   <Button
                     variant="ghost"
                     size="sm"
