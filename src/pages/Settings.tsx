@@ -153,7 +153,7 @@ export const Settings = () => {
                 <Input value={profile.username || ''} disabled className="mt-1" />
               </div>
               <div>
-                <Label>Usuario</Label>
+                
                 <div className="flex items-center gap-3 mt-1">
                   <span>{`usuario ${displayRole}`}</span>
                   {showUpgradeButton && (
