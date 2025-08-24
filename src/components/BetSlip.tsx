@@ -157,6 +157,32 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
         return;
       }  
 
+  // Nueva validación: maximo por apuesta según la liga
+      const { data: league, error: leagueError } = await supabase
+        .from('leagues')
+        .select('max_bet')
+        .eq('id', profile.league_id)
+        .maybeSingle();
+
+      if (leagueError || !league) {
+        toast({
+          title: 'Error',
+          description: 'No se pudo validar la liga.',
+          variant: 'destructive',
+        });
+        return;
+      }  
+      const maxBet = Number((league as any)?.max_bet ?? 0);
+      if (stakeAmount < maxBet) {
+        toast({
+          title: 'Error',
+          description: `La apuesta máxima en esta liga es de ${maxBet}.`,
+          variant: 'destructive',
+        });
+        return;
+      }  
+
+
       
       // Validar presupuesto semanal disponible
       if (profile.weekly_budget < stakeAmount) {
