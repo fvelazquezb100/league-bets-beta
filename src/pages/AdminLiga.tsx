@@ -164,7 +164,7 @@ const AdminLiga: React.FC = () => {
             {loadingWeek ? (
               <p className="text-sm text-muted-foreground">Cargando datos de la liga…</p>
             ) : leagueData ? (
-              <div className="text-sm" style={{ lineHeight: 3.5 }}>
+              <div className="text-sm" style={{ lineHeight: 2 }}>
                 <p>
                   <span className="font-semibold mr-6">Nombre:</span> {leagueData.name} ({leagueData.type})
                 </p>
