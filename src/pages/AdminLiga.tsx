@@ -162,16 +162,16 @@ const AdminLiga: React.FC = () => {
             {loadingWeek ? (
               <p className="text-sm text-muted-foreground">Cargando datos de la liga…</p>
             ) : leagueData ? (
-              <div className="space-y-2 text-sm">
+              <div className="text-sm" style={{ lineHeight: 1.5 }}>
                 <p>
                   <span className="font-semibold">Nombre:</span> {leagueData.name} ({leagueData.type})
                 </p>
-                <p className="flex justify-between items-center">
-                  <span className="font-semibold">Código de unión:</span>
+                <p className="flex items-center justify-start">
+                  <span className="font-semibold mr-2">Código de unión:</span>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="ml-2 p-0"
+                    className="p-0"
                     onClick={() => handleCopyCode(leagueData.join_code)}
                   >
                     {leagueData.join_code} <Copy size={16} />
