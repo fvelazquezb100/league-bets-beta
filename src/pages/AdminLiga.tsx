@@ -197,27 +197,38 @@ const AdminLiga: React.FC = () => {
           </CardContent>
         </Card>
 
-       
+        {/* Presupuestos */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Presupuestos Semanales</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Reinicia el presupuesto semanal de todos los usuarios a 1000.
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Button onClick={handleResetBudgets} disabled={resettingBudgets}>
+              {resettingBudgets ? 'Reiniciando…' : 'Reiniciar todos los presupuestos semanales'}
+            </Button>
+          </CardFooter>
+        </Card>
 
         {/* Semana de la Liga */}
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle>Semana de la Liga</CardTitle>
+            <CardTitle>Reseteo de la Liga</CardTitle>
           </CardHeader>
           <CardContent>
-            {loadingWeek ? (
-              <p className="text-sm text-muted-foreground">Cargando semana…</p>
-            ) : currentWeek !== null ? (
+            { (
               <p className="text-sm">
-                Semana actual de <span className="font-semibold">{leagueName}</span>: <span className="font-bold">#{currentWeek}</span>
+                AVISO: Esta opción reseteará tu Liga. Todos los puntos serán 0 
               </p>
-            ) : (
-              <p className="text-sm text-red-600">No se pudo obtener la semana actual.</p>
             )}
           </CardContent>
           <CardFooter>
             <Button onClick={handleResetWeek} disabled={resettingWeek}>
-              {resettingWeek ? 'Reseteando…' : 'Resetear Semana de la Liga'}
+              {resettingWeek ? 'Reseteando…' : 'Resetear la Liga'}
             </Button>
           </CardFooter>
         </Card>
