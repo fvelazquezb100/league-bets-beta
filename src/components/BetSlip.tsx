@@ -132,8 +132,8 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
         });
         return;
       }
-/*
-      ✔️ Nueva validación: mínimo por apuesta según la liga
+
+       Nueva validación: mínimo por apuesta según la liga
       const { data: league, error: leagueError } = await supabase
         .from('leagues')
         .select('min_bet')
@@ -160,7 +160,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
         return;
       }
 
-   */   
+    
       // Validar presupuesto semanal disponible
       if (profile.weekly_budget < stakeAmount) {
         toast({
