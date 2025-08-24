@@ -15,6 +15,8 @@ type LeagueRow = {
   budget: number;
   min_bet: number;
   max_bet: number;
+  type: string;
+  reset_budget: string;
 };
 
 const AdminLiga: React.FC = () => {
@@ -56,7 +58,7 @@ const AdminLiga: React.FC = () => {
         // Liga
         const { data: leagueData, error: leagueError } = await supabase
           .from('leagues')
-          .select('id, name, week, budget, min_bet, max_bet')
+          .select('id, name, week, budget, min_bet, max_bet, type, reset_budget')
           .eq('id', profile.league_id)
           .maybeSingle();
 
@@ -157,10 +159,10 @@ const AdminLiga: React.FC = () => {
             ) : leagueData ? (
               <div className="space-y-2 text-sm">
                 <p>
-                  <span className="font-semibold">Nombre:</span> {leagueData.name}
+                  <span className="font-semibold">Nombre:</span> {leagueData.name} ({leagueData.type})
                 </p>
                 <p>
-                  <span className="font-semibold">Presupuesto:</span> {leagueData.budget}
+                  <span className="font-semibold">Presupuesto:</span> {leagueData.budget} ({leagueData.reset_budget})
                 </p>
                 <p>
                   <span className="font-semibold">Apuesta mínima:</span> {leagueData.min_bet}
