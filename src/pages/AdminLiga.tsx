@@ -32,6 +32,9 @@ const AdminLiga: React.FC = () => {
   const [leagueId, setLeagueId] = React.useState<number | null>(null);
   const [leagueData, setLeagueData] = React.useState<LeagueRow | null>(null);
 
+  // Nuevo estado para confirmación
+  const [confirmingReset, setConfirmingReset] = React.useState(false);
+
   React.useEffect(() => {
     const fetchWeek = async () => {
       try {
@@ -40,7 +43,6 @@ const AdminLiga: React.FC = () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Usuario no autenticado');
 
-        // Perfil
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('league_id')
@@ -53,7 +55,6 @@ const AdminLiga: React.FC = () => {
         const profile = profileData as ProfileRow;
         setLeagueId(profile.league_id);
 
-        // Liga
         const { data: leagueData, error: leagueError } = await supabase
           .from('leagues')
           .select('id, name, week, budget, min_bet, max_bet, type, reset_budget, join_code')
@@ -63,7 +64,6 @@ const AdminLiga: React.FC = () => {
         if (leagueError) throw leagueError;
         if (!leagueData) throw new Error('Liga no encontrada');
 
-        // Cast to LeagueRow since we know it's valid at this point
         const validLeagueData = leagueData as unknown as LeagueRow;
         setLeagueData(validLeagueData);
         setLeagueName(validLeagueData.name);
@@ -86,29 +86,46 @@ const AdminLiga: React.FC = () => {
     try {
       setResettingWeek(true);
 
-      const { error } = await supabase
+      // Reset de la semana
+      const { error: leagueError } = await supabase
         .from('leagues')
         .update({ week: 1 })
         .eq('id', leagueId);
-      if (error) throw error;
+      if (leagueError) throw leagueError;
+
+      // Reset de puntos de los usuarios
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ total_points: 0 })
+        .eq('league_id', leagueId);
+      if (profileError) throw profileError;
+
+      // Reset de apuestas (columna week)
+      const { error: betsError } = await supabase
+        .from('bets')
+        .update({ week: 0 })
+        .in(
+          'user_id',
+          (await supabase.from('profiles').select('id').eq('league_id', leagueId)).data?.map(u => u.id) || []
+        );
+      if (betsError) throw betsError;
 
       toast({
-        title: 'Semana reseteada',
-        description: `La semana de ${leagueName} fue reiniciada correctamente.`,
+        title: 'Liga reseteada',
+        description: `La semana, los puntos y las apuestas de ${leagueName} fueron reiniciados correctamente.`,
       });
 
       setCurrentWeek(1);
-      if (leagueData) {
-        setLeagueData({ ...leagueData, week: 1 });
-      }
+      if (leagueData) setLeagueData({ ...leagueData, week: 1 });
     } catch (e: any) {
       toast({
         title: 'Error',
-        description: e?.message ?? 'No se pudo resetear la semana.',
+        description: e?.message ?? 'No se pudo resetear la liga.',
         variant: 'destructive',
       });
     } finally {
       setResettingWeek(false);
+      setConfirmingReset(false);
     }
   };
 
@@ -151,7 +168,7 @@ const AdminLiga: React.FC = () => {
     <div>
       <header className="mb-8">
         <h1 className="text-3xl font-bold">Panel de Administración de tu Liga</h1>
-         </header>
+      </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
         {/* Información de la Liga */}
@@ -203,19 +220,32 @@ const AdminLiga: React.FC = () => {
             <CardTitle>Reseteo de la Liga</CardTitle>
           </CardHeader>
           <CardContent>
-            { (
-              <p className="text-sm">
-                AVISO: Esta opción reseteará tu Liga. Todos los puntos serán 0 
-              </p>
-            )}
+            <p className="text-sm">
+              AVISO: Esta opción reseteará tu Liga. Todos los puntos serán 0
+            </p>
           </CardContent>
           <CardFooter>
-            <Button onClick={handleResetWeek} disabled={resettingWeek}>
+            <Button onClick={() => setConfirmingReset(true)} disabled={resettingWeek}>
               {resettingWeek ? 'Reseteando…' : 'Resetear la Liga'}
             </Button>
           </CardFooter>
         </Card>
       </div>
+
+      {/* Modal de confirmación */}
+      {confirmingReset && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center space-y-4">
+            <p className="text-lg font-semibold">¿Estás seguro que quieres resetear la liga?</p>
+            <div className="flex justify-between gap-4">
+              <Button variant="destructive" onClick={handleResetWeek}>
+                Sí, resetear
+              </Button>
+              <Button onClick={() => setConfirmingReset(false)}>Cancelar</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
