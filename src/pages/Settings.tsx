@@ -10,9 +10,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Profile {
+  id: string;
   username: string;
   weekly_budget: number;
   league_id: number | null;
+  global_role: string;
 }
 
 interface League {
@@ -43,37 +45,23 @@ export const Settings = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       if (!user) return;
-      
       try {
-        // Fetch profile data
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('username, weekly_budget, league_id')
+          .select('id, username, weekly_budget, league_id, global_role')
           .eq('id', user.id)
           .single();
-
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-          return;
-        }
-
+        if (profileError) throw profileError;
         if (profileData) {
           setProfile(profileData);
           setNewUsername(profileData.username || '');
-
-          // Fetch league data if user is in a league
           if (profileData.league_id) {
             const { data: leagueData, error: leagueError } = await supabase
               .from('leagues')
               .select('name, join_code')
               .eq('id', profileData.league_id)
               .single();
-
-            if (leagueError) {
-              console.error('Error fetching league:', leagueError);
-            } else if (leagueData) {
-              setLeague(leagueData);
-            }
+            if (!leagueError && leagueData) setLeague(leagueData);
           }
         }
       } catch (error) {
@@ -82,52 +70,27 @@ export const Settings = () => {
         setLoading(false);
       }
     };
-
     fetchUserData();
   }, [user]);
 
   const handleUsernameUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newUsername.trim()) {
-      toast({
-        title: 'Error',
-        description: 'El nombre de usuario no puede estar vacío.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'El nombre de usuario no puede estar vacío.', variant: 'destructive' });
       return;
     }
-
     setUsernameLoading(true);
     try {
-      const { data, error } = await supabase.rpc('update_username', {
-        new_username: newUsername.trim()
-      });
-
-      if (error) {
-        throw error;
-      }
-
+      const { data, error } = await supabase.rpc('update_username', { new_username: newUsername.trim() });
+      if (error) throw error;
       if (data?.success) {
-        toast({
-          title: '¡Éxito!',
-          description: 'Nombre de usuario actualizado correctamente.',
-        });
-        // Update local state
+        toast({ title: '¡Éxito!', description: 'Nombre de usuario actualizado correctamente.' });
         setProfile(prev => prev ? { ...prev, username: newUsername.trim() } : null);
       } else {
-        toast({
-          title: 'Error',
-          description: data?.message || 'No se pudo actualizar el nombre de usuario.',
-          variant: 'destructive',
-        });
+        toast({ title: 'Error', description: data?.message || 'No se pudo actualizar el nombre de usuario.', variant: 'destructive' });
       }
-    } catch (error) {
-      console.error('Error updating username:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudo actualizar el nombre de usuario.',
-        variant: 'destructive',
-      });
+    } catch {
+      toast({ title: 'Error', description: 'No se pudo actualizar el nombre de usuario.', variant: 'destructive' });
     } finally {
       setUsernameLoading(false);
     }
@@ -135,83 +98,42 @@ export const Settings = () => {
 
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!currentPassword || !newPassword || !confirmPassword) {
-      toast({
-        title: 'Error',
-        description: 'Todos los campos son obligatorios.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'Todos los campos son obligatorios.', variant: 'destructive' });
       return;
     }
-
     if (newPassword !== confirmPassword) {
-      toast({
-        title: 'Error',
-        description: 'Las contraseñas no coinciden.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'Las contraseñas no coinciden.', variant: 'destructive' });
       return;
     }
-
     if (newPassword.length < 6) {
-      toast({
-        title: 'Error',
-        description: 'La nueva contraseña debe tener al menos 6 caracteres.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'La nueva contraseña debe tener al menos 6 caracteres.', variant: 'destructive' });
       return;
     }
-
     setPasswordLoading(true);
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      toast({
-        title: '¡Éxito!',
-        description: 'Contraseña actualizada correctamente.',
-      });
-      
-      // Clear form
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast({ title: '¡Éxito!', description: 'Contraseña actualizada correctamente.' });
+      setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
     } catch (error: any) {
-      console.error('Error updating password:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'No se pudo actualizar la contraseña.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: error.message || 'No se pudo actualizar la contraseña.', variant: 'destructive' });
     } finally {
       setPasswordLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="container mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-6">Ajustes</h1>
-        <div className="space-y-6">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-40 bg-muted rounded-lg animate-pulse" />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <p>Cargando perfil…</p>;
+  if (!profile) return <p>No se pudo cargar el perfil.</p>;
+
+  const displayRole = profile.global_role === 'user' ? 'free' : 'PRO';
+  const showUpgradeButton = profile.global_role === 'user';
 
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Ajustes</h1>
-      
       <div className="grid gap-6 max-w-2xl">
+
         {/* Mi Perfil */}
         <Card>
           <CardHeader>
@@ -228,40 +150,29 @@ export const Settings = () => {
               </div>
               <div>
                 <Label>Nombre de Usuario</Label>
-                <Input value={profile?.username || ''} disabled className="mt-1" />
+                <Input value={profile.username || ''} disabled className="mt-1" />
+              </div>
+              <div>
+                <Label>Usuario</Label>
+                <div className="flex items-center gap-3 mt-1">
+                  <span>{`usuario ${displayRole}`}</span>
+                  {showUpgradeButton && (
+                    <Button size="sm" onClick={async () => {
+                      try {
+                        const { error } = await supabase.from('profiles').update({ global_role: 'pro' }).eq('id', profile.id);
+                        if (error) throw error;
+                        setProfile({ ...profile, global_role: 'pro' });
+                        toast({ title: '¡Éxito!', description: 'Usuario actualizado a PRO.' });
+                      } catch (error: any) {
+                        toast({ title: 'Error', description: error.message || 'No se pudo actualizar a PRO.', variant: 'destructive' });
+                      }
+                    }}>
+                      Actualizar a PRO
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-
-
-        {/* Cambiar Nombre de Usuario */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Cambiar Nombre de Usuario</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleUsernameUpdate} className="space-y-4">
-              <div>
-                <Label htmlFor="newUsername">Nuevo Nombre de Usuario</Label>
-                <Input
-                  id="newUsername"
-                  type="text"
-                  value={newUsername}
-                  onChange={(e) => setNewUsername(e.target.value)}
-                  placeholder="Introduce tu nuevo nombre de usuario"
-                  className="mt-1"
-                  required
-                />
-                <p className="text-sm text-muted-foreground mt-1">
-                  Debe tener entre 3 y 15 caracteres.
-                </p>
-              </div>
-              <Button type="submit" disabled={usernameLoading}>
-                {usernameLoading ? 'Guardando...' : 'Guardar'}
-              </Button>
-            </form>
           </CardContent>
         </Card>
 
