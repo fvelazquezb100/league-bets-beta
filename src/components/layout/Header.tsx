@@ -105,9 +105,8 @@ export const Header = () => {
                     <span className="font-medium">Liga:</span>
                     <span>{league.name}</span>
                   
-                  //  <span className="font-medium">Código:</span>
-                  //  <span className="font-mono tracking-wider">{league.join_code}</span>
-                 
+                    
+    
                   </div>
                 )}
               </div>
