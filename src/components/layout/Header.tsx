@@ -141,7 +141,7 @@ export const Header = () => {
                         </div>
                         <div className="flex items-center gap-2 mt-1">
                           <DollarSign className="h-4 w-4" />
-                          <span>{profile.weekly_budget || 1000} pts</span>
+                          <span>{profile.weekly_budget} pts</span>
                         </div>
                         {league && (
                           <div className="flex items-center gap-2 mt-1">
@@ -179,7 +179,7 @@ export const Header = () => {
                           className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-muted transition-colors"
                         >
                           <Shield className="h-4 w-4" />
-                          Admin Liga
+                          Tu Liga
                         </Link>
                       )}
 
