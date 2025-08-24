@@ -147,7 +147,7 @@ const handleResetLeague = async () => {
     if (userIds.length > 0) {
       const { error: betsError } = await supabase
         .from('bets')
-        .update({ week: 0 })
+        .update({ week: '0' })
         .in('user_id', userIds);
 
       if (betsError) throw betsError;
