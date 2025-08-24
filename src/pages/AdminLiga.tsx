@@ -81,7 +81,6 @@ const AdminLiga: React.FC = () => {
     fetchWeek();
   }, []);
 
-  /*
   const handleResetWeek = async () => {
     if (!leagueId) return;
     try {
@@ -112,67 +111,7 @@ const AdminLiga: React.FC = () => {
       setResettingWeek(false);
     }
   };
-*/
-// funcion para resetear la liga
-const handleResetLeague = async () => {
-  if (!leagueId) return;
-  try {
-    setResettingWeek(true);
 
-    // 1. Resetear la semana de la liga
-    const { error: leagueError } = await supabase
-      .from('leagues')
-      .update({ week: 1 })
-      .eq('id', leagueId);
-    if (leagueError) throw leagueError;
-
-    // 2. Resetear puntos de todos los usuarios de la liga
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({ total_points: 0 })
-      .eq('league_id', leagueId);
-    if (profileError) throw profileError;
-
-    // 3. Resetear semana de todas las apuestas de los usuarios de la liga
-    // Obtenemos los ids de los usuarios de la liga
-    const { data: users, error: usersError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('league_id', leagueId);
-
-    if (usersError) throw usersError;
-
-    const userIds = users?.map(u => u.id) || [];
-
-    if (userIds.length > 0) {
-      const { error: betsError } = await supabase
-        .from('bets')
-        .update({ week: '0' })
-        .in('user_id', userIds);
-
-      if (betsError) throw betsError;
-    }
-
-    toast({
-      title: 'Liga reseteada',
-      description: `La semana de ${leagueName} fue reiniciada correctamente, puntos y apuestas también.`,
-    });
-
-    setCurrentWeek(1);
-    if (leagueData) {
-      setLeagueData({ ...leagueData, week: 1 });
-    }
-  } catch (e: any) {
-    toast({
-      title: 'Error',
-      description: e?.message ?? 'No se pudo resetear la liga.',
-      variant: 'destructive',
-    });
-  } finally {
-    setResettingWeek(false);
-  }
-};
-  
   const handleResetBudgets = async () => {
     if (!leagueId) return;
     try {
@@ -278,22 +217,18 @@ const handleResetLeague = async () => {
         {/* Semana de la Liga */}
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle>Semana de la Liga</CardTitle>
+            <CardTitle>Reseteo de la Liga</CardTitle>
           </CardHeader>
           <CardContent>
-            {loadingWeek ? (
-              <p className="text-sm text-muted-foreground">Cargando semana…</p>
-            ) : currentWeek !== null ? (
+            { (
               <p className="text-sm">
-                Semana actual de <span className="font-semibold">{leagueName}</span>: <span className="font-bold">#{currentWeek}</span>
+                AVISO: Esta opción reseteará tu Liga. Todos los puntos serán 0 
               </p>
-            ) : (
-              <p className="text-sm text-red-600">No se pudo obtener la semana actual.</p>
             )}
           </CardContent>
           <CardFooter>
-            <Button onClick={handleResetLeague} disabled={resettingWeek}>
-              {resettingWeek ? 'Reseteando…' : 'Resetear Semana de la Liga'}
+            <Button onClick={handleResetWeek} disabled={resettingWeek}>
+              {resettingWeek ? 'Reseteando…' : 'Resetear la Liga'}
             </Button>
           </CardFooter>
         </Card>
