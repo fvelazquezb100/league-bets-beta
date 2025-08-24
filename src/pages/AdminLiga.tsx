@@ -58,12 +58,12 @@ const AdminLiga: React.FC = () => {
           .from('leagues')
           .select('id, name, week, budget, min_bet, max_bet')
           .eq('id', profile.league_id)
-          .single();
+          .maybeSingle();
 
         if (leagueError) throw leagueError;
         if (!leagueData) throw new Error('Liga no encontrada');
 
-        const league = leagueData as LeagueRow;
+        const league = leagueData as unknown as LeagueRow;
         setLeagueData(league);
         setLeagueName(league.name);
         setCurrentWeek(league.week);
