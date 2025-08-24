@@ -12,6 +12,9 @@ type LeagueRow = {
   id: number;
   name: string;
   week: number;
+  budget: number;
+  min_bet: number;
+  max_bet: number;
 };
 
 const AdminLiga: React.FC = () => {
@@ -25,6 +28,7 @@ const AdminLiga: React.FC = () => {
   const [loadingWeek, setLoadingWeek] = React.useState(true);
   const [resettingWeek, setResettingWeek] = React.useState(false);
   const [leagueId, setLeagueId] = React.useState<number | null>(null);
+  const [leagueData, setLeagueData] = React.useState<LeagueRow | null>(null);
 
   React.useEffect(() => {
     const fetchWeek = async () => {
@@ -52,7 +56,7 @@ const AdminLiga: React.FC = () => {
         // Liga
         const { data: leagueData, error: leagueError } = await supabase
           .from('leagues')
-          .select('id, name, week')
+          .select('id, name, week, budget, min_bet, max_bet')
           .eq('id', profile.league_id)
           .single();
 
@@ -60,12 +64,14 @@ const AdminLiga: React.FC = () => {
         if (!leagueData) throw new Error('Liga no encontrada');
 
         const league = leagueData as LeagueRow;
+        setLeagueData(league);
         setLeagueName(league.name);
         setCurrentWeek(league.week);
       } catch (e: any) {
         console.error(e);
         setCurrentWeek(null);
         setLeagueName(null);
+        setLeagueData(null);
       } finally {
         setLoadingWeek(false);
       }
@@ -91,6 +97,9 @@ const AdminLiga: React.FC = () => {
       });
 
       setCurrentWeek(1);
+      if (leagueData) {
+        setLeagueData({ ...leagueData, week: 1 });
+      }
     } catch (e: any) {
       toast({
         title: 'Error',
@@ -136,29 +145,39 @@ const AdminLiga: React.FC = () => {
         <p className="text-muted-foreground">Herramientas para gestionar cuotas, resultados y presupuestos.</p>
       </header>
 
-      {/* Información de la liga */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Información de la Liga</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loadingWeek ? (
-            <p className="text-sm text-muted-foreground">Cargando información…</p>
-          ) : (
-            <div className="space-y-2">
-              <p className="text-sm">
-                <span className="font-semibold">Nombre: </span> {leagueName}
-              </p>
-              <p className="text-sm">
-                <span className="font-semibold">Semana actual: </span>{' '}
-                {currentWeek !== null ? `#${currentWeek}` : 'No disponible'}
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+        {/* Información de la Liga */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Información de la Liga</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingWeek ? (
+              <p className="text-sm text-muted-foreground">Cargando datos de la liga…</p>
+            ) : leagueData ? (
+              <div className="space-y-2 text-sm">
+                <p>
+                  <span className="font-semibold">Nombre:</span> {leagueData.name}
+                </p>
+                <p>
+                  <span className="font-semibold">Presupuesto:</span> {leagueData.budget}
+                </p>
+                <p>
+                  <span className="font-semibold">Apuesta mínima:</span> {leagueData.min_bet}
+                </p>
+                <p>
+                  <span className="font-semibold">Apuesta máxima:</span> {leagueData.max_bet}
+                </p>
+                <p>
+                  <span className="font-semibold">Semana de la liga:</span> {leagueData.week}
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-red-600">No se pudo cargar la información de la liga.</p>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Presupuestos */}
         <Card className="md:col-span-2">
           <CardHeader>
@@ -186,8 +205,7 @@ const AdminLiga: React.FC = () => {
               <p className="text-sm text-muted-foreground">Cargando semana…</p>
             ) : currentWeek !== null ? (
               <p className="text-sm">
-                Semana actual de <span className="font-semibold">{leagueName}</span>:{' '}
-                <span className="font-bold">#{currentWeek}</span>
+                Semana actual de <span className="font-semibold">{leagueName}</span>: <span className="font-bold">#{currentWeek}</span>
               </p>
             ) : (
               <p className="text-sm text-red-600">No se pudo obtener la semana actual.</p>
