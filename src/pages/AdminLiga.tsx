@@ -103,7 +103,7 @@ const AdminLiga: React.FC = () => {
       // Reset de apuestas (columna week)
       const { error: betsError } = await supabase
         .from('bets')
-        .update({ week: 0 })
+        .update({ week: '0' })
         .in(
           'user_id',
           (await supabase.from('profiles').select('id').eq('league_id', leagueId)).data?.map(u => u.id) || []
