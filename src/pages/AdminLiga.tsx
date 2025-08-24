@@ -136,6 +136,28 @@ const AdminLiga: React.FC = () => {
         <p className="text-muted-foreground">Herramientas para gestionar cuotas, resultados y presupuestos.</p>
       </header>
 
+      {/* Información de la liga */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Información de la Liga</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loadingWeek ? (
+            <p className="text-sm text-muted-foreground">Cargando información…</p>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-sm">
+                <span className="font-semibold">Nombre: </span> {leagueName}
+              </p>
+              <p className="text-sm">
+                <span className="font-semibold">Semana actual: </span>{' '}
+                {currentWeek !== null ? `#${currentWeek}` : 'No disponible'}
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
         {/* Presupuestos */}
         <Card className="md:col-span-2">
@@ -164,7 +186,8 @@ const AdminLiga: React.FC = () => {
               <p className="text-sm text-muted-foreground">Cargando semana…</p>
             ) : currentWeek !== null ? (
               <p className="text-sm">
-                Semana actual de <span className="font-semibold">{leagueName}</span>: <span className="font-bold">#{currentWeek}</span>
+                Semana actual de <span className="font-semibold">{leagueName}</span>:{' '}
+                <span className="font-bold">#{currentWeek}</span>
               </p>
             ) : (
               <p className="text-sm text-red-600">No se pudo obtener la semana actual.</p>
