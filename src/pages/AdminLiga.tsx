@@ -25,8 +25,6 @@ const AdminLiga: React.FC = () => {
   const { toast } = useToast();
 
   const [resettingBudgets, setResettingBudgets] = React.useState(false);
-
-  // Semana de la Liga
   const [currentWeek, setCurrentWeek] = React.useState<number | null>(null);
   const [leagueName, setLeagueName] = React.useState<string | null>(null);
   const [loadingWeek, setLoadingWeek] = React.useState(true);
@@ -39,9 +37,7 @@ const AdminLiga: React.FC = () => {
       try {
         setLoadingWeek(true);
 
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+        const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Usuario no autenticado');
 
         // Perfil
@@ -67,10 +63,9 @@ const AdminLiga: React.FC = () => {
         if (leagueError) throw leagueError;
         if (!leagueData) throw new Error('Liga no encontrada');
 
-        const league = leagueData as unknown as LeagueRow;
-        setLeagueData(league);
-        setLeagueName(league.name);
-        setCurrentWeek(league.week);
+        setLeagueData(leagueData);
+        setLeagueName(leagueData.name);
+        setCurrentWeek(leagueData.week);
       } catch (e: any) {
         console.error(e);
         setCurrentWeek(null);
@@ -145,8 +140,8 @@ const AdminLiga: React.FC = () => {
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
     toast({
-      title: 'Código copiado',
-      description: `El código ${code} se copió al portapapeles.`,
+      title: 'Copiado',
+      description: 'Código de unión copiado al portapapeles.',
     });
   };
 
@@ -171,17 +166,17 @@ const AdminLiga: React.FC = () => {
                 <p>
                   <span className="font-semibold">Nombre:</span> {leagueData.name} ({leagueData.type})
                 </p>
-                <div className="flex items-center justify-between border rounded-lg px-3 py-2">
+                <p className="flex justify-between items-center">
                   <span className="font-semibold">Código de unión:</span>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="flex items-center gap-2"
+                    className="ml-2 p-0"
                     onClick={() => handleCopyCode(leagueData.join_code)}
                   >
                     {leagueData.join_code} <Copy size={16} />
                   </Button>
-                </div>
+                </p>
                 <p>
                   <span className="font-semibold">Presupuesto:</span> {leagueData.budget} ({leagueData.reset_budget})
                 </p>
