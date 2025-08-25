@@ -159,53 +159,40 @@ const AdminLiga: React.FC = () => {
                       <CollapsibleContent className="mt-3 p-4 border rounded-lg bg-muted/50 space-y-4">
                         <div className="space-y-2"><Label>League Name</Label><Input value={editLeagueName} onChange={e => setEditLeagueName(e.target.value)} /></div>
                         <div className="space-y-2">
-<div className="space-y-2">
   <Label>Presupuesto: {editBudget}</Label>
-  <div className="flex items-center gap-2">
-    <span>500</span> {/* valor mínimo fijo */}
-    <input
-      type="range"
-      min={500}
-      max={10000}
-      step={1}
-      value={editBudget}
-      onChange={e => setEditBudget(Number(e.target.value))}
-      className="flex-1 h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-500"
-    />
-    <span>10000</span> {/* valor máximo fijo */}
-  </div>
+  <input
+    type="range"
+    min={500}
+    max={10000}
+    step={50}
+    value={editBudget}
+    onChange={e => setEditBudget(Number(e.target.value))}
+    className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-500"
+  />
 </div>
-<div className="space-y-2">
+                        <div className="space-y-2">
   <Label>Apuesta Minima: {editMinBet}</Label>
-  <div className="flex items-center gap-2">
-    <span>1</span> {/* mínimo fijo */}
-    <input
-      type="range"
-      min={1}
-      max={editMaxBet}
-      step={1}
-      value={editMinBet}
-      onChange={e => setEditMinBet(Number(e.target.value))}
-      className="flex-1 h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-green-500"
-    />
-    <span>{editMaxBet}</span> {/* máximo dinámico */}
-  </div>
+  <input
+    type="range"
+    min={1}
+    max={editMaxBet}
+    step={1}
+    value={editMinBet}
+    onChange={e => setEditMinBet(Number(e.target.value))}
+    className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-green-500"
+  />
 </div>
-<div className="space-y-2">
+                        <div className="space-y-2">
   <Label>Apuesta Maxima: {editMaxBet}</Label>
-  <div className="flex items-center gap-2">
-    <span>{editMinBet}</span> {/* mínimo dinámico */}
-    <input
-      type="range"
-      min={editMinBet}
-      max={editBudget}
-      step={1}
-      value={editMaxBet}
-      onChange={e => setEditMaxBet(Number(e.target.value))}
-      className="flex-1 h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-red-500"
-    />
-    <span>{editBudget}</span> {/* máximo dinámico */}
-  </div>
+  <input
+    type="range"
+    min={editMinBet}
+    max={editBudget}
+    step={1}
+    value={editMaxBet}
+    onChange={e => setEditMaxBet(Number(e.target.value))}
+    className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-500"
+  />
 </div>
                         
                         <div className="space-y-2"><Label>Frecuencia reseteo presupuesto</Label>
