@@ -35,8 +35,8 @@ const navigationItems = [
   },
     {
     name: 'Tu Liga',
-    href: '/Admin-Liga',
-    icon: Settings,
+    href: '/admin-liga',
+    icon: Award,
   },
 ];
 
@@ -107,10 +107,6 @@ export const Navigation = () => {
         <div className="container mx-auto px-6">
           <div className="flex space-x-8">
             {navigationItems.map(item => renderLink(item.name, item.href, item.icon))}
-            
-            {/* Tu Liga visible para todos */}
-            {renderLink('Tu Liga', '/admin-liga', Award)}
-
             {isSuperAdmin && renderLink('SuperAdmin', '/superadmin', Shield)}
           </div>
         </div>
