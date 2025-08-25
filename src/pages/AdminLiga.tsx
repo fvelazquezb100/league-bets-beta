@@ -40,6 +40,7 @@ const AdminLiga: React.FC = () => {
   const [confirmingReset, setConfirmingReset] = React.useState(false);
   const [isEditFormOpen, setIsEditFormOpen] = React.useState(false);
   const [editLeagueName, setEditLeagueName] = React.useState('');
+  const [editBudget, setEditBudget] = React.useState(1000);
   const [isUpdatingLeague, setIsUpdatingLeague] = React.useState(false);
 
   React.useEffect(() => {
@@ -93,6 +94,9 @@ const AdminLiga: React.FC = () => {
   React.useEffect(() => {
     if (leagueData?.name) {
       setEditLeagueName(leagueData.name);
+    }
+    if (leagueData?.budget) {
+      setEditBudget(leagueData.budget);
     }
   }, [leagueData]);
 
@@ -183,12 +187,18 @@ const AdminLiga: React.FC = () => {
       setIsUpdatingLeague(true);
 
       // Track changes
-      const updates: { name?: string } = {};
+      const updates: { name?: string; budget?: number } = {};
       let hasChanges = false;
 
       // Check if name changed
       if (editLeagueName !== leagueData.name) {
         updates.name = editLeagueName;
+        hasChanges = true;
+      }
+
+      // Check if budget changed
+      if (editBudget !== leagueData.budget) {
+        updates.budget = editBudget;
         hasChanges = true;
       }
 
@@ -295,6 +305,18 @@ const AdminLiga: React.FC = () => {
                               value={editLeagueName}
                               onChange={(e) => setEditLeagueName(e.target.value)}
                               placeholder="Enter league name"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="weekly-budget">Weekly Budget</Label>
+                            <Input
+                              id="weekly-budget"
+                              type="number"
+                              min={500}
+                              max={10000}
+                              value={editBudget}
+                              onChange={(e) => setEditBudget(Number(e.target.value))}
+                              placeholder="Weekly budget amount"
                             />
                           </div>
                           <div className="flex justify-end">
