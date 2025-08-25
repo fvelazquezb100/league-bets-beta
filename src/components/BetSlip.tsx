@@ -203,6 +203,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
             user_id: user.id,
             stake: stakeAmount,
             odds: totalOdds,
+            market: selectedBets[0].marketbets,
             payout: parseFloat(potentialWinnings),
             match_description: selectedBets[0].matchDescription,
             bet_selection: `${selectedBets[0].selection} @ ${selectedBets[0].odds}`,
