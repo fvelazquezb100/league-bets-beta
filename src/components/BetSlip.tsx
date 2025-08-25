@@ -209,6 +209,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
             fixture_id: selectedBets[0].fixtureId,
             bet_type: 'single',
             status: 'pending'
+            market: selectedBets[0].market
           });
 
         if (betError) {
