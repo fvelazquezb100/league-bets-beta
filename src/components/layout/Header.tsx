@@ -32,7 +32,11 @@ const navigationItems = [
     href: '/settings',
     icon: Settings,
   },
-
+    {
+    name: 'Tu Liga',
+    href: '/admin-liga',
+    icon: Award,
+  },
 
 ];
 
