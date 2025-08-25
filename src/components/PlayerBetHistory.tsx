@@ -238,7 +238,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
               No se encontraron apuestas visibles para este jugador.
             </p>
           ) : (
-            <Table>
+     <Table>
   <TableHeader>
     <TableRow>
       <TableHead>Tipo</TableHead>
@@ -266,7 +266,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                   {getMatchName(sel.match_description)}
                 </div>
               ))
-            : getMatchName(bet.bet_selections?.[0]?.match_description)}
+            : getMatchName(bet.match_description)}
         </TableCell>
 
         {/* Apuesta */}
@@ -277,7 +277,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                   {sel.market}: {sel.selection} @ {sel.odds}
                 </div>
               ))
-            : `${bet.bet_selections?.[0]?.market || ''}: ${bet.bet_selections?.[0]?.selection || ''} @ ${bet.bet_selections?.[0]?.odds || ''}`}
+            : `${bet.market_bet || ''}: ${bet.bet_selection || ''} @ ${bet.odds || ''}`}
         </TableCell>
 
         {/* Estado */}
@@ -288,7 +288,9 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
         </TableCell>
 
         {/* Semana */}
-        <TableCell className="text-muted-foreground">{bet.week || '-'}</TableCell>
+        <TableCell className="text-muted-foreground">
+          {bet.week || '-'}
+        </TableCell>
       </TableRow>
     ))}
   </TableBody>
