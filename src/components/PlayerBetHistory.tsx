@@ -275,7 +275,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
           {bet.bet_type === 'combo'
             ? bet.bet_selections?.map((sel: any) => (
                 <div key={sel.id} className="text-sm mb-1 text-muted-foreground">
-                  {sel.market}: {sel.selection} @ {sel.odds}
+                  {getMatchName(sel.market_bets)}: {getMatchName(sel.selection)} @ {sel.odds}
                 </div>
               ))
             : `${bet.market_bet || ''}: ${bet.bet_selection || ''} @ ${bet.odds || ''}`}
