@@ -1,6 +1,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Copy, ChevronDown, ChevronUp } from 'lucide-react';
@@ -37,6 +39,7 @@ const AdminLiga: React.FC = () => {
 
   const [confirmingReset, setConfirmingReset] = React.useState(false);
   const [isEditFormOpen, setIsEditFormOpen] = React.useState(false);
+  const [editLeagueName, setEditLeagueName] = React.useState('');
 
   React.useEffect(() => {
     const fetchWeek = async () => {
@@ -84,6 +87,13 @@ const AdminLiga: React.FC = () => {
 
     fetchWeek();
   }, []);
+
+  // Pre-fill edit form when league data is loaded
+  React.useEffect(() => {
+    if (leagueData?.name) {
+      setEditLeagueName(leagueData.name);
+    }
+  }, [leagueData]);
 
   const handleResetWeek = async () => {
     if (!leagueId) return;
@@ -222,9 +232,16 @@ const AdminLiga: React.FC = () => {
                         </Button>
                       </CollapsibleTrigger>
                       <CollapsibleContent className="mt-4">
-                        <div className="p-4 border rounded-lg bg-muted/50">
-                          {/* Empty form placeholder for now */}
-                          <p className="text-sm text-muted-foreground">Edit form will be implemented here</p>
+                        <div className="p-4 border rounded-lg bg-muted/50 space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="league-name">League Name</Label>
+                            <Input
+                              id="league-name"
+                              value={editLeagueName}
+                              onChange={(e) => setEditLeagueName(e.target.value)}
+                              placeholder="Enter league name"
+                            />
+                          </div>
                         </div>
                       </CollapsibleContent>
                     </Collapsible>
