@@ -158,31 +158,10 @@ const AdminLiga: React.FC = () => {
                       </CollapsibleTrigger>
                       <CollapsibleContent className="mt-3 p-4 border rounded-lg bg-muted/50 space-y-4">
                         <div className="space-y-2"><Label>League Name</Label><Input value={editLeagueName} onChange={e => setEditLeagueName(e.target.value)} /></div>
-                        {// <div className="space-y-2"><Label>Weekly Budget</Label><Input type="number" min={500} max={10000} value={editBudget} onChange={e => setEditBudget(Number(e.target.value))} /></div>
-                        
-                        
-                        <div className="space-y-2">
-  <Label>Weekly Budget: {editBudget}</Label>
-  <input
-    type="range"
-    min={500}
-    max={10000}
-    step={50}
-    value={editBudget}
-    onChange={(e) => setEditBudget(Number(e.target.value))}
-    className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-500"
-  />
-</div>
-
-                        
+                        <div className="space-y-2"><Label>Weekly Budget</Label><Input type="number" min={500} max={10000} value={editBudget} onChange={e => setEditBudget(Number(e.target.value))} /></div>
                         <div className="space-y-2"><Label>Min Bet</Label><Input type="number" min={1} max={editBudget} value={editMinBet} onChange={e => setEditMinBet(Number(e.target.value))} /></div>
                         <div className="space-y-2"><Label>Max Bet</Label><Input type="number" min={editMinBet} max={editBudget} value={editMaxBet} onChange={e => setEditMaxBet(Number(e.target.value))} /></div>
-                        <div className="space-y-2"><Label>Budget Reset Frequency</Label>
-                          <select value={editResetBudget} onChange={e => setEditResetBudget(e.target.value)}>
-                            <option value="daily">Daily</option>
-                            <option value="weekly">Weekly</option>
-                          </select>
-                        </div>
+                        <div className="space-y-2"><Label>Weekly Budget</Label><Input type="number" min={500} max={10000} value={editBudget} onChange={e => setEditBudget(Number(e.target.value))} /></div>
                         <div className="flex justify-end"><Button onClick={handleUpdateLeague} disabled={isUpdatingLeague}>{isUpdatingLeague ? 'Actualizando...' : 'Actualizar'}</Button></div>
                       </CollapsibleContent>
                     </Collapsible>
