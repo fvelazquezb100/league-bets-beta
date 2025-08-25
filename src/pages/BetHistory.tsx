@@ -114,15 +114,9 @@ export const BetHistory = () => {
     }
   };
 
-  // Actualizamos para mostrar el market y selection en líneas separadas
-  const formatBetDisplay = (market: string, selection: string, odds: number) => {
-    return (
-      <div>
-        <div className="font-semibold">{market}</div>
-        <div>{selection} @ {odds.toFixed(2)}</div>
-      </div>
-    );
-  };
+const formatBetDisplay = (market: string, selection: string, odds: number): string => {
+  return `${market}: ${selection} @ ${odds.toFixed(2)}`;
+};
 
   return (
     <div className="space-y-6">
@@ -226,6 +220,7 @@ export const BetHistory = () => {
                           <Badge variant={getStatusVariant(bet.status)}>{getStatusText(bet.status)}</Badge>
                         </TableCell>
                         <TableCell>
+                          {/* Botón actualizado para combinadas */}
                           {bet.bet_type === 'combo' && bet.bet_selections?.length
                             ? bet.bet_selections.every((sel: any) => sel.status === 'pending') && (
                                 <Button
@@ -258,13 +253,15 @@ export const BetHistory = () => {
                             {selection.match_description}
                           </TableCell>
                           <TableCell>
-                            <div>
-                              {formatBetDisplay(
-                                selection.market,
-                                selection.selection,
-                                parseFloat(selection.odds || 0)
-                              )}
-                              <Badge variant={getStatusVariant(selection.status)} className="text-xs mt-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm">
+                                {formatBetDisplay(
+                                  selection.market,
+                                  selection.selection,
+                                  parseFloat(selection.odds || 0)
+                                )}
+                              </span>
+                              <Badge variant={getStatusVariant(selection.status)} className="text-xs">
                                 {getStatusText(selection.status)}
                               </Badge>
                             </div>
@@ -280,18 +277,7 @@ export const BetHistory = () => {
                     return (
                       <TableRow key={bet.id}>
                         <TableCell className="font-medium">{bet.match_description}</TableCell>
-                        <TableCell>
-                          <div>
-                            {formatBetDisplay(
-                              bet.market || '', 
-                              bet.bet_selection, 
-                              parseFloat(bet.odds || 0)
-                            )}
-                            <Badge variant={getStatusVariant(bet.status)} className="text-xs mt-1">
-                              {getStatusText(bet.status)}
-                            </Badge>
-                          </div>
-                        </TableCell>
+                        <TableCell>{bet.bet_selection}</TableCell>
                         <TableCell>{parseFloat(bet.stake || 0).toFixed(0)} pts</TableCell>
                         <TableCell>{parseFloat(bet.payout || 0).toFixed(0)} pts</TableCell>
                         <TableCell>
