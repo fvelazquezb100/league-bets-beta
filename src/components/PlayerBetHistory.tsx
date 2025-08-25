@@ -239,39 +239,60 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
             </p>
           ) : (
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Apuesta</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Semana</TableHead>
-                  {/* Columna "Acción" eliminada */}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {bets.map((bet) => (
-                  <TableRow key={bet.id}>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{formatBetDisplay(bet)}</TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusVariant(bet.status)}>
-                        {getStatusText(bet.status)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{bet.week || '-'}</TableCell>
-                    <TableCell>
-                      {canCancelBet(bet) && (
-                        <button className="btn btn-destructive btn-sm">Cancelar</button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+  <TableHeader>
+    <TableRow>
+      <TableHead>Tipo</TableHead>
+      <TableHead>Partido</TableHead>
+      <TableHead>Apuesta</TableHead>
+      <TableHead>Estado</TableHead>
+      <TableHead>Semana</TableHead>
+    </TableRow>
+  </TableHeader>
+  <TableBody>
+    {bets.map((bet) => (
+      <TableRow key={bet.id}>
+        {/* Tipo */}
+        <TableCell>
+          <Badge variant="outline">
+            {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
+          </Badge>
+        </TableCell>
+
+        {/* Partido */}
+        <TableCell>
+          {bet.bet_type === 'combo'
+            ? bet.bet_selections?.map((sel: any) => (
+                <div key={sel.id} className="text-sm mb-1">
+                  {getMatchName(sel.match_description)}
+                </div>
+              ))
+            : getMatchName(bet.bet_selections?.[0]?.match_description)}
+        </TableCell>
+
+        {/* Apuesta */}
+        <TableCell>
+          {bet.bet_type === 'combo'
+            ? bet.bet_selections?.map((sel: any) => (
+                <div key={sel.id} className="text-sm mb-1 text-muted-foreground">
+                  {sel.market}: {sel.selection} @ {sel.odds}
+                </div>
+              ))
+            : `${bet.bet_selections?.[0]?.market || ''}: ${bet.bet_selections?.[0]?.selection || ''} @ ${bet.bet_selections?.[0]?.odds || ''}`}
+        </TableCell>
+
+        {/* Estado */}
+        <TableCell>
+          <Badge variant={getStatusVariant(bet.status)}>
+            {getStatusText(bet.status)}
+          </Badge>
+        </TableCell>
+
+        {/* Semana */}
+        <TableCell className="text-muted-foreground">{bet.week || '-'}</TableCell>
+      </TableRow>
+    ))}
+  </TableBody>
+</Table>
           )}
         </CardContent>
       </Card>
