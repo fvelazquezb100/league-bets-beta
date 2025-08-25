@@ -30,7 +30,7 @@ export const Clasificacion = () => {
     // Fetch all profiles in the same league
     const { data: profilesData, error } = await supabase
       .from('profiles')
-      .select('id, username, total_points, league_id')
+      .select('id, username, total_points, league_id, last_week_points')
       .eq('league_id', currentProfile.league_id)
       .order('total_points', { ascending: false });
 
@@ -96,7 +96,9 @@ export const Clasificacion = () => {
                   <TableCell className="font-medium">{index + 1}</TableCell>
                   <TableCell>{profile.username || 'Usuario'}</TableCell>
                   <TableCell>{(Math.ceil(Number(profile.total_points ?? 0) * 10) / 10).toFixed(1)}</TableCell>
-                  <TableCell className="text-muted-foreground">-</TableCell>
+                  <TableCell>
+  {(Number(profile.last_week_points ?? 0)).toFixed(2)}
+</TableCell>
                 </TableRow>
               ))}
             </TableBody>
