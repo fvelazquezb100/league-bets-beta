@@ -33,6 +33,11 @@ const navigationItems = [
     href: '/settings',
     icon: Settings,
   },
+    {
+    name: 'Tu Liga',
+    href: '/Admin-Liga',
+    icon: Settings,
+  },
 ];
 
 export const Navigation = () => {

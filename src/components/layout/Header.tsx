@@ -34,7 +34,7 @@ const navigationItems = [
   },
     {
     name: 'Tu Liga',
-    href: '/Adminliga',
+    href: '/admin-liga',
     icon: Award,
   },
 
