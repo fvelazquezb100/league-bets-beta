@@ -33,7 +33,7 @@ const navigationItems = [
     icon: Settings,
   },
     {
-    name: 'Ajustes',
+    name: 'Tu Liga',
     href: '/Adminliga',
     icon: Award,
   },
@@ -178,7 +178,7 @@ export const Header = () => {
                       })}
                       
                       {/* Admin Liga */}
-                      {profile?.role === 'admin_league' && (
+                      {(
                         <Link
                           to="/admin-liga"
                           onClick={() => setIsOpen(false)}
