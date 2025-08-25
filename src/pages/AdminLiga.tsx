@@ -170,7 +170,18 @@ const AdminLiga: React.FC = () => {
     className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-500"
   />
 </div>
-                        <div className="space-y-2"><Label>Min Bet</Label><Input type="number" min={1} max={editBudget} value={editMinBet} onChange={e => setEditMinBet(Number(e.target.value))} /></div>
+                        <div className="space-y-2">
+  <Label>Min Bet: {editMinBet}</Label>
+  <input
+    type="range"
+    min={1}
+    max={editMaxBet}
+    step={1}
+    value={editMinBet}
+    onChange={e => setEditMinBet(Number(e.target.value))}
+    className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-green-500"
+  />
+</div>
                         <div className="space-y-2"><Label>Max Bet</Label><Input type="number" min={editMinBet} max={editBudget} value={editMaxBet} onChange={e => setEditMaxBet(Number(e.target.value))} /></div>
                         <div className="space-y-2"><Label>Budget Reset Frequency</Label>
                           <select value={editResetBudget} onChange={e => setEditResetBudget(e.target.value)}>
