@@ -245,7 +245,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                   <TableHead>Apuesta</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Semana</TableHead>
-                  <TableHead>Acción</TableHead>
+                  {/* Columna "Acción" eliminada */}
                 </TableRow>
               </TableHeader>
               <TableBody>
