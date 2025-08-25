@@ -17,7 +17,6 @@ interface Bet {
   odds: number;
   fixtureId?: number;
   kickoff?: string;
-  market_bets?: string;
 }
 
 interface BetSlipProps {
@@ -204,7 +203,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
             user_id: user.id,
             stake: stakeAmount,
             odds: totalOdds,
-            market: selectedBets[0].market_bets,
+            market_bets: selectedBets[0].market,
             payout: parseFloat(potentialWinnings),
             match_description: selectedBets[0].matchDescription,
             bet_selection: `${selectedBets[0].selection} @ ${selectedBets[0].odds}`,
