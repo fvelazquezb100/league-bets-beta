@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Copy } from 'lucide-react';
+import { Copy, ChevronDown, ChevronUp } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 type ProfileRow = {
   league_id: number;
@@ -35,6 +36,7 @@ const AdminLiga: React.FC = () => {
   const [userRole, setUserRole] = React.useState<string | null>(null);
 
   const [confirmingReset, setConfirmingReset] = React.useState(false);
+  const [isEditFormOpen, setIsEditFormOpen] = React.useState(false);
 
   React.useEffect(() => {
     const fetchWeek = async () => {
@@ -179,33 +181,55 @@ const AdminLiga: React.FC = () => {
             {loadingWeek ? (
               <p className="text-sm text-muted-foreground">Cargando datos de la liga…</p>
             ) : leagueData ? (
-              <div className="text-sm" style={{ lineHeight: 2 }}>
-                <p>
-                  <span className="font-semibold mr-3">Nombre:</span> {leagueData.name} ({leagueData.type})
-                </p>
-                <p className="flex items-center justify-start">
-                  <span className="font-semibold mr-3">Código de unión:</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="p-0"
-                    onClick={() => handleCopyCode(leagueData.join_code)}
-                  >
-                    {leagueData.join_code} <Copy size={16} />
-                  </Button>
-                </p>
-                <p>
-                  <span className="font-semibold mr-3">Presupuesto:</span> {leagueData.budget} ({leagueData.reset_budget})
-                </p>
-                <p>
-                  <span className="font-semibold mr-3">Apuesta mínima:</span> {leagueData.min_bet}
-                </p>
-                <p>
-                  <span className="font-semibold mr-3">Apuesta máxima:</span> {leagueData.max_bet}
-                </p>
-                <p>
-                  <span className="font-semibold mr-3">Semana de la liga:</span> {leagueData.week}
-                </p>
+              <div>
+                <div className="text-sm" style={{ lineHeight: 2 }}>
+                  <p>
+                    <span className="font-semibold mr-3">Nombre:</span> {leagueData.name} ({leagueData.type})
+                  </p>
+                  <p className="flex items-center justify-start">
+                    <span className="font-semibold mr-3">Código de unión:</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="p-0"
+                      onClick={() => handleCopyCode(leagueData.join_code)}
+                    >
+                      {leagueData.join_code} <Copy size={16} />
+                    </Button>
+                  </p>
+                  <p>
+                    <span className="font-semibold mr-3">Presupuesto:</span> {leagueData.budget} ({leagueData.reset_budget})
+                  </p>
+                  <p>
+                    <span className="font-semibold mr-3">Apuesta mínima:</span> {leagueData.min_bet}
+                  </p>
+                  <p>
+                    <span className="font-semibold mr-3">Apuesta máxima:</span> {leagueData.max_bet}
+                  </p>
+                  <p>
+                    <span className="font-semibold mr-3">Semana de la liga:</span> {leagueData.week}
+                  </p>
+                </div>
+                
+                {/* Edit League Values button - only for admin_league */}
+                {userRole === 'admin_league' && (
+                  <div className="mt-6">
+                    <Collapsible open={isEditFormOpen} onOpenChange={setIsEditFormOpen}>
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm" className="p-0 flex items-center gap-2">
+                          Edit League Values
+                          {isEditFormOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="mt-4">
+                        <div className="p-4 border rounded-lg bg-muted/50">
+                          {/* Empty form placeholder for now */}
+                          <p className="text-sm text-muted-foreground">Edit form will be implemented here</p>
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </div>
+                )}
               </div>
             ) : (
               <p className="text-sm text-red-600">No se pudo cargar la información de la liga.</p>
