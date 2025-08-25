@@ -112,64 +112,16 @@ export const Navigation = () => {
         </div>
       </nav>
 
-      {/* Mobile Navigation */}
-      <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetTrigger asChild>
-          <Button variant="outline" size="sm" className="md:hidden">
-            <Menu className="h-4 w-4" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="right" className="w-80">
-          <div className="flex flex-col h-full">
-            {/* User Info */}
-            <div className="pb-4 mb-4 border-b">
-              {profile && (
-                <div className="mt-2 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    <span>{profile.username || user?.email}</span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <DollarSign className="h-4 w-4" />
-                    <span>{profile.weekly_budget} pts</span>
-                  </div>
-                  {league && (
-                    <div className="flex items-center gap-2 mt-1">
-                      <Trophy className="h-4 w-4" />
-                      <span>{league.name}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
 
-            {/* Navigation Links */}
-            <div className="flex-1">
-              <nav className="space-y-2">
-                {navigationItems.map(item => renderLink(item.name, item.href, item.icon))}
-                {/* Tu Liga visible para todos */}
-                {renderLink('Tu Liga', '/admin-liga', Award)}
-                {isSuperAdmin && renderLink('SuperAdmin', '/superadmin', Shield)}
-              </nav>
-            </div>
 
-            {/* Logout */}
-            <div className="pt-4 mt-4 border-t">
-              <Button
-                onClick={() => {
-                  signOut();
-                  setIsOpen(false);
-                }}
-                variant="outline"
-                className="w-full gap-2"
-              >
-                <LogOut className="h-4 w-4" />
-                Cerrar Sesión
-              </Button>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
+
+
+
+
+
+
+
+      
     </>
   );
 };
