@@ -7,6 +7,7 @@ import { Copy } from 'lucide-react';
 
 type ProfileRow = {
   league_id: number;
+  role: string;
 };
 
 type LeagueRow = {
@@ -31,8 +32,8 @@ const AdminLiga: React.FC = () => {
   const [resettingWeek, setResettingWeek] = React.useState(false);
   const [leagueId, setLeagueId] = React.useState<number | null>(null);
   const [leagueData, setLeagueData] = React.useState<LeagueRow | null>(null);
+  const [userRole, setUserRole] = React.useState<string | null>(null);
 
-  // Nuevo estado para confirmación
   const [confirmingReset, setConfirmingReset] = React.useState(false);
 
   React.useEffect(() => {
@@ -45,7 +46,7 @@ const AdminLiga: React.FC = () => {
 
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('league_id')
+          .select('league_id, role')
           .eq('id', user.id)
           .single();
 
@@ -54,6 +55,7 @@ const AdminLiga: React.FC = () => {
 
         const profile = profileData as ProfileRow;
         setLeagueId(profile.league_id);
+        setUserRole(profile.role); // <- guardamos el rol
 
         const { data: leagueData, error: leagueError } = await supabase
           .from('leagues')
@@ -86,21 +88,18 @@ const AdminLiga: React.FC = () => {
     try {
       setResettingWeek(true);
 
-      // Reset de la semana
       const { error: leagueError } = await supabase
         .from('leagues')
         .update({ week: 1 })
         .eq('id', leagueId);
       if (leagueError) throw leagueError;
 
-      // Reset de puntos de los usuarios
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ total_points: 0 })
         .eq('league_id', leagueId);
       if (profileError) throw profileError;
 
-      // Reset de apuestas (columna week)
       const { error: betsError } = await supabase
         .from('bets')
         .update({ week: '0' })
@@ -214,22 +213,24 @@ const AdminLiga: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Reseteo de la Liga */}
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>Reseteo de la Liga</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm">
-              AVISO: Esta opción reseteará tu Liga. Todos los puntos serán 0
-            </p>
-          </CardContent>
-          <CardFooter>
-            <Button onClick={() => setConfirmingReset(true)} disabled={resettingWeek}>
-              {resettingWeek ? 'Reseteando…' : 'Resetear la Liga'}
-            </Button>
-          </CardFooter>
-        </Card>
+        {/* Reseteo de la Liga - solo si role === "admin_league" */}
+        {userRole === 'admin_league' && (
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle>Reseteo de la Liga</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm">
+                AVISO: Esta opción reseteará tu Liga. Todos los puntos serán 0
+              </p>
+            </CardContent>
+            <CardFooter>
+              <Button onClick={() => setConfirmingReset(true)} disabled={resettingWeek}>
+                {resettingWeek ? 'Reseteando…' : 'Resetear la Liga'}
+              </Button>
+            </CardFooter>
+          </Card>
+        )}
       </div>
 
       {/* Modal de confirmación */}
