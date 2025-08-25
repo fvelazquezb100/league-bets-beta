@@ -126,7 +126,7 @@ export const Header = () => {
               <LogOut className="h-4 w-4" />
               Cerrar Sesión
             </Button>
-
+/*
             {/* Mobile: Hamburger menu */}
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
@@ -209,6 +209,7 @@ export const Header = () => {
                 </div>
               </SheetContent>
             </Sheet>
+            */
           </div>
         </div>
       </div>
