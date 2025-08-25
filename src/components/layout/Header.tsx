@@ -138,7 +138,7 @@ export const Header = () => {
                 <div className="flex flex-col h-full">
                   {/* Header */}
                   <div className="pb-4 mb-4 border-b">
-                    <h2 className="text-lg font-semibold">Navegación</h2>
+                    <h2 className="text-lg font-semibold">Tu Liga</h2>
                     {profile && (
                       <div className="mt-2 text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">
