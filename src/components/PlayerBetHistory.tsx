@@ -238,61 +238,113 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
               No se encontraron apuestas visibles para este jugador.
             </p>
           ) : (
-     <Table>
+   <Table>
   <TableHeader>
     <TableRow>
-      <TableHead>Tipo</TableHead>
       <TableHead>Partido</TableHead>
       <TableHead>Apuesta</TableHead>
-      <TableHead>Estado</TableHead>
-      <TableHead>Semana</TableHead>
+      <TableHead>Importe</TableHead>
+      <TableHead>Ganancia</TableHead>
+      <TableHead>Resultado</TableHead>
+      <TableHead>Acciones</TableHead>
     </TableRow>
   </TableHeader>
   <TableBody>
-    {bets.map((bet) => (
-      <TableRow key={bet.id}>
-        {/* Tipo */}
-        <TableCell>
-          <Badge variant="outline">
-            {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
-          </Badge>
-        </TableCell>
-
-        {/* Partido */}
-        <TableCell>
-          {bet.bet_type === 'combo'
-            ? bet.bet_selections?.map((sel: any) => (
-                <div key={sel.id} className="text-sm mb-1">
-                  {getMatchName(sel.match_description)}
+    {bets.length > 0 ? (
+      bets.map((bet) => {
+        if (bet.bet_type === 'combo' && bet.bet_selections?.length) {
+          // fila principal de combinada
+          return [
+            <TableRow key={bet.id} className="bg-muted/30">
+              <TableCell className="font-medium">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs">COMBO</Badge>
+                  <span className="text-sm">Apuesta Combinada</span>
                 </div>
-              ))
-            : getMatchName(bet.match_description)}
-        </TableCell>
-
-        {/* Apuesta */}
-        <TableCell>
-          {bet.bet_type === 'combo'
-            ? bet.bet_selections?.map((sel: any) => (
-                <div key={sel.id} className="text-sm mb-1 text-muted-foreground">
-                  {sel.market}: {sel.selection} @ {sel.odds}
-                </div>
-              ))
-            : `${bet.market_bet || ''}: ${bet.bet_selection || ''} @ ${bet.odds || ''}`}
-        </TableCell>
-
-        {/* Estado */}
-        <TableCell>
-          <Badge variant={getStatusVariant(bet.status)}>
-            {getStatusText(bet.status)}
-          </Badge>
-        </TableCell>
-
-        {/* Semana */}
-        <TableCell className="text-muted-foreground">
-          {bet.week || '-'}
+              </TableCell>
+              <TableCell></TableCell>
+              <TableCell>{parseFloat(bet.stake || 0).toFixed(0)} pts</TableCell>
+              <TableCell>{parseFloat(bet.payout || 0).toFixed(0)} pts</TableCell>
+              <TableCell>
+                <Badge variant={getStatusVariant(bet.status)}>{getStatusText(bet.status)}</Badge>
+              </TableCell>
+              <TableCell>
+                {bet.bet_selections.every((sel: any) => sel.status === 'pending') && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleCancel(bet.id)}
+                    disabled={cancelingId === bet.id}
+                  >
+                    {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
+                  </Button>
+                )}
+              </TableCell>
+            </TableRow>,
+            // filas hijas con selecciones traducidas
+            ...bet.bet_selections.map((selection: any) => (
+              <TableRow key={`${bet.id}-${selection.id}`} className="bg-muted/10 border-l-2 border-muted">
+                <TableCell className="font-medium pl-8">{selection.match_description}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">
+                      {`${getBettingTranslation(selection.market)}: ${getBettingTranslation(selection.selection)} @ ${parseFloat(selection.odds || 0).toFixed(2)}`}
+                    </span>
+                    <Badge variant={getStatusVariant(selection.status)} className="text-xs">
+                      {getStatusText(selection.status)}
+                    </Badge>
+                  </div>
+                </TableCell>
+                <TableCell></TableCell>
+                <TableCell></TableCell>
+                <TableCell></TableCell>
+                <TableCell></TableCell>
+              </TableRow>
+            ))
+          ];
+        } else {
+          // apuestas simples traducidas
+          return (
+            <TableRow key={bet.id}>
+              <TableCell className="font-medium">{bet.match_description}</TableCell>
+              <TableCell>
+                <>
+                  {bet.market_bet ? getBettingTranslation(bet.market_bet) + ': ' : ''}
+                  {(() => {
+                    const selection = getBettingTranslation(bet.bet_selection || '');
+                    const odds = parseFloat(bet.odds || 0).toFixed(2);
+                    return `${selection} @ ${odds}`;
+                  })()}
+                </>
+              </TableCell>
+              <TableCell>{parseFloat(bet.stake || 0).toFixed(0)} pts</TableCell>
+              <TableCell>{parseFloat(bet.payout || 0).toFixed(0)} pts</TableCell>
+              <TableCell>
+                <Badge variant={getStatusVariant(bet.status)}>{getStatusText(bet.status)}</Badge>
+              </TableCell>
+              <TableCell>
+                {bet.status === 'pending' && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleCancel(bet.id)}
+                    disabled={cancelingId === bet.id}
+                  >
+                    {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
+                  </Button>
+                )}
+              </TableCell>
+            </TableRow>
+          );
+        }
+      })
+    ) : (
+      <TableRow>
+        <TableCell colSpan={6} className="text-center text-muted-foreground">
+          No tienes apuestas todavía. ¡Ve a la sección de apuestas para empezar!
         </TableCell>
       </TableRow>
-    ))}
+    )}
   </TableBody>
 </Table>
           )}
