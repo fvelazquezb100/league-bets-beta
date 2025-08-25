@@ -97,7 +97,7 @@ export const Clasificacion = () => {
                   <TableCell>{profile.username || 'Usuario'}</TableCell>
                   <TableCell>{(Math.ceil(Number(profile.total_points ?? 0) * 10) / 10).toFixed(1)}</TableCell>
                   <TableCell>
-  {(Number(profile.last_week_points ?? 0)).toFixed(2)}
+  {(Number(profile.last_week_points ?? 0)).toFixed(1)}
 </TableCell>
                 </TableRow>
               ))}
