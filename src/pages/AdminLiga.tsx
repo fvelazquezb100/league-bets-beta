@@ -40,6 +40,7 @@ const AdminLiga: React.FC = () => {
   const [confirmingReset, setConfirmingReset] = React.useState(false);
   const [isEditFormOpen, setIsEditFormOpen] = React.useState(false);
   const [editLeagueName, setEditLeagueName] = React.useState('');
+  const [isUpdatingLeague, setIsUpdatingLeague] = React.useState(false);
 
   React.useEffect(() => {
     const fetchWeek = async () => {
@@ -175,6 +176,60 @@ const AdminLiga: React.FC = () => {
     });
   };
 
+  const handleUpdateLeague = async () => {
+    if (!leagueId || !leagueData) return;
+
+    try {
+      setIsUpdatingLeague(true);
+
+      // Track changes
+      const updates: { name?: string } = {};
+      let hasChanges = false;
+
+      // Check if name changed
+      if (editLeagueName !== leagueData.name) {
+        updates.name = editLeagueName;
+        hasChanges = true;
+      }
+
+      if (!hasChanges) {
+        toast({
+          title: 'Sin cambios',
+          description: 'No se detectaron cambios para actualizar.',
+        });
+        return;
+      }
+
+      // Send update to Supabase
+      const { error } = await supabase
+        .from('leagues')
+        .update(updates)
+        .eq('id', leagueId);
+
+      if (error) throw error;
+
+      // Update local state
+      setLeagueData({ ...leagueData, ...updates });
+      if (updates.name) {
+        setLeagueName(updates.name);
+      }
+
+      toast({
+        title: 'Liga actualizada',
+        description: 'Los cambios se guardaron correctamente.',
+      });
+
+    } catch (e: any) {
+      toast({
+        title: 'Error',
+        description: e?.message ?? 'No se pudo actualizar la liga.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUpdatingLeague(false);
+    }
+  };
+
   return (
     <div>
       <header className="mb-8">
@@ -241,6 +296,15 @@ const AdminLiga: React.FC = () => {
                               onChange={(e) => setEditLeagueName(e.target.value)}
                               placeholder="Enter league name"
                             />
+                          </div>
+                          <div className="flex justify-end">
+                            <Button
+                              onClick={handleUpdateLeague}
+                              disabled={isUpdatingLeague}
+                              size="sm"
+                            >
+                              {isUpdatingLeague ? 'Actualizando...' : 'Actualizar'}
+                            </Button>
                           </div>
                         </div>
                       </CollapsibleContent>
