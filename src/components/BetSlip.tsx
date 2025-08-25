@@ -17,6 +17,7 @@ interface Bet {
   odds: number;
   fixtureId?: number;
   kickoff?: string;
+  market_bets?: string;
 }
 
 interface BetSlipProps {
