@@ -256,8 +256,8 @@ const formatBetDisplay = (market: string, selection: string, odds: number): stri
                             <div className="flex items-center gap-2">
                               <span className="text-sm">
                                 {formatBetDisplay(
-                                  selection.market,
-                                  selection.selection,
+                                  getBettingTranslation(selection.market),
+                                  getBettingTranslation(selection.selection),
                                   parseFloat(selection.odds || 0)
                                 )}
                               </span>
