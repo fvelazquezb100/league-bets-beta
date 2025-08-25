@@ -8,22 +8,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Copy, ChevronDown, ChevronUp } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
-type ProfileRow = {
-  league_id: number;
-  role: string;
-};
-
-type LeagueRow = {
-  id: number;
-  name: string;
-  week: number;
-  budget: number;
-  min_bet: number;
-  max_bet: number;
-  type: string;
-  reset_budget: string;
-  join_code: string;
-};
+type ProfileRow = { league_id: number; role: string; };
+type LeagueRow = { id: number; name: string; week: number; budget: number; min_bet: number; max_bet: number; type: string; reset_budget: string; join_code: string; };
 
 const AdminLiga: React.FC = () => {
   const { toast } = useToast();
@@ -39,15 +25,19 @@ const AdminLiga: React.FC = () => {
 
   const [confirmingReset, setConfirmingReset] = React.useState(false);
   const [isEditFormOpen, setIsEditFormOpen] = React.useState(false);
+  const [isUpdatingLeague, setIsUpdatingLeague] = React.useState(false);
+
+  // Form state
   const [editLeagueName, setEditLeagueName] = React.useState('');
   const [editBudget, setEditBudget] = React.useState(1000);
-  const [isUpdatingLeague, setIsUpdatingLeague] = React.useState(false);
+  const [editMinBet, setEditMinBet] = React.useState(1);
+  const [editMaxBet, setEditMaxBet] = React.useState(1000);
+  const [editResetBudget, setEditResetBudget] = React.useState('weekly');
 
   React.useEffect(() => {
     const fetchWeek = async () => {
       try {
         setLoadingWeek(true);
-
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Usuario no autenticado');
 
@@ -56,188 +46,75 @@ const AdminLiga: React.FC = () => {
           .select('league_id, role')
           .eq('id', user.id)
           .single();
-
         if (profileError) throw profileError;
-        if (!profileData) throw new Error('Perfil no encontrado');
 
-        const profile = profileData as ProfileRow;
-        setLeagueId(profile.league_id);
-        setUserRole(profile.role); // <- guardamos el rol
+        setLeagueId(profileData.league_id);
+        setUserRole(profileData.role);
 
         const { data: leagueData, error: leagueError } = await supabase
           .from('leagues')
           .select('id, name, week, budget, min_bet, max_bet, type, reset_budget, join_code')
-          .eq('id', profile.league_id)
+          .eq('id', profileData.league_id)
           .maybeSingle();
-
         if (leagueError) throw leagueError;
-        if (!leagueData) throw new Error('Liga no encontrada');
 
-        const validLeagueData = leagueData as unknown as LeagueRow;
-        setLeagueData(validLeagueData);
-        setLeagueName(validLeagueData.name);
-        setCurrentWeek(validLeagueData.week);
+        setLeagueData(leagueData as LeagueRow);
+        if (leagueData) {
+          setEditLeagueName(leagueData.name);
+          setEditBudget(leagueData.budget);
+          setEditMinBet(leagueData.min_bet);
+          setEditMaxBet(leagueData.max_bet);
+          setEditResetBudget(leagueData.reset_budget);
+        }
       } catch (e: any) {
         console.error(e);
-        setCurrentWeek(null);
-        setLeagueName(null);
-        setLeagueData(null);
       } finally {
         setLoadingWeek(false);
       }
     };
-
     fetchWeek();
   }, []);
 
-  // Pre-fill edit form when league data is loaded
-  React.useEffect(() => {
-    if (leagueData?.name) {
-      setEditLeagueName(leagueData.name);
-    }
-    if (leagueData?.budget) {
-      setEditBudget(leagueData.budget);
-    }
-  }, [leagueData]);
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    toast({ title: 'Copiado', description: 'Código de unión copiado al portapapeles.' });
+  };
+
+  const handleUpdateLeague = async () => {
+    if (!leagueId || !leagueData) return;
+    try {
+      setIsUpdatingLeague(true);
+      const updates: Partial<LeagueRow> = {};
+      let hasChanges = false;
+
+      if (editLeagueName !== leagueData.name) { updates.name = editLeagueName; hasChanges = true; }
+      if (editBudget !== leagueData.budget) { updates.budget = editBudget; hasChanges = true; }
+      if (editMinBet !== leagueData.min_bet) { updates.min_bet = editMinBet; hasChanges = true; }
+      if (editMaxBet !== leagueData.max_bet) { updates.max_bet = editMaxBet; hasChanges = true; }
+      if (editResetBudget !== leagueData.reset_budget) { updates.reset_budget = editResetBudget; hasChanges = true; }
+
+      if (!hasChanges) { toast({ title: 'Sin cambios', description: 'No se detectaron cambios para actualizar.' }); return; }
+
+      const { error } = await supabase.from('leagues').update(updates).eq('id', leagueId);
+      if (error) throw error;
+
+      setLeagueData({ ...leagueData, ...updates });
+      toast({ title: 'Liga actualizada', description: 'Los cambios se guardaron correctamente.' });
+    } catch (e: any) {
+      toast({ title: 'Error', description: e?.message ?? 'No se pudo actualizar la liga.', variant: 'destructive' });
+    } finally { setIsUpdatingLeague(false); }
+  };
 
   const handleResetWeek = async () => {
     if (!leagueId) return;
     try {
       setResettingWeek(true);
-
-      const { error: leagueError } = await supabase
-        .from('leagues')
-        .update({ week: 1 })
-        .eq('id', leagueId);
-      if (leagueError) throw leagueError;
-
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ total_points: 0 })
-        .eq('league_id', leagueId);
-      if (profileError) throw profileError;
-
-      const { error: betsError } = await supabase
-        .from('bets')
-        .update({ week: '0' })
-        .in(
-          'user_id',
-          (await supabase.from('profiles').select('id').eq('league_id', leagueId)).data?.map(u => u.id) || []
-        );
-      if (betsError) throw betsError;
-
-      toast({
-        title: 'Liga reseteada',
-        description: `La semana, los puntos y las apuestas de ${leagueName} fueron reiniciados correctamente.`,
-      });
-
-      setCurrentWeek(1);
-      if (leagueData) setLeagueData({ ...leagueData, week: 1 });
+      await supabase.from('leagues').update({ week: 1 }).eq('id', leagueId);
+      await supabase.from('profiles').update({ total_points: 0 }).eq('league_id', leagueId);
+      toast({ title: 'Liga reseteada', description: 'La semana y los puntos fueron reiniciados.' });
     } catch (e: any) {
-      toast({
-        title: 'Error',
-        description: e?.message ?? 'No se pudo resetear la liga.',
-        variant: 'destructive',
-      });
-    } finally {
-      setResettingWeek(false);
-      setConfirmingReset(false);
-    }
-  };
-
-  const handleResetBudgets = async () => {
-    if (!leagueId) return;
-    try {
-      setResettingBudgets(true);
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({ weekly_budget: 1000 })
-        .eq('league_id', leagueId);
-
-      if (error) throw error;
-
-      toast({
-        title: 'Presupuestos reiniciados',
-        description: `Todos los usuarios de la liga ${leagueName} tienen ahora presupuesto 1000.`,
-      });
-    } catch (e: any) {
-      toast({
-        title: 'Error',
-        description: e?.message ?? 'No se pudo reiniciar los presupuestos.',
-        variant: 'destructive',
-      });
-    } finally {
-      setResettingBudgets(false);
-    }
-  };
-
-  const handleCopyCode = (code: string) => {
-    navigator.clipboard.writeText(code);
-    toast({
-      title: 'Copiado',
-      description: 'Código de unión copiado al portapapeles.',
-    });
-  };
-
-  const handleUpdateLeague = async () => {
-    if (!leagueId || !leagueData) return;
-
-    try {
-      setIsUpdatingLeague(true);
-
-      // Track changes
-      const updates: { name?: string; budget?: number } = {};
-      let hasChanges = false;
-
-      // Check if name changed
-      if (editLeagueName !== leagueData.name) {
-        updates.name = editLeagueName;
-        hasChanges = true;
-      }
-
-      // Check if budget changed
-      if (editBudget !== leagueData.budget) {
-        updates.budget = editBudget;
-        hasChanges = true;
-      }
-
-      if (!hasChanges) {
-        toast({
-          title: 'Sin cambios',
-          description: 'No se detectaron cambios para actualizar.',
-        });
-        return;
-      }
-
-      // Send update to Supabase
-      const { error } = await supabase
-        .from('leagues')
-        .update(updates)
-        .eq('id', leagueId);
-
-      if (error) throw error;
-
-      // Update local state
-      setLeagueData({ ...leagueData, ...updates });
-      if (updates.name) {
-        setLeagueName(updates.name);
-      }
-
-      toast({
-        title: 'Liga actualizada',
-        description: 'Los cambios se guardaron correctamente.',
-      });
-
-    } catch (e: any) {
-      toast({
-        title: 'Error',
-        description: e?.message ?? 'No se pudo actualizar la liga.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsUpdatingLeague(false);
-    }
+      toast({ title: 'Error', description: e?.message ?? 'No se pudo resetear la liga.', variant: 'destructive' });
+    } finally { setResettingWeek(false); setConfirmingReset(false); }
   };
 
   return (
@@ -247,128 +124,64 @@ const AdminLiga: React.FC = () => {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-        {/* Información de la Liga */}
         <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>Información de la Liga</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Información de la Liga</CardTitle></CardHeader>
           <CardContent>
-            {loadingWeek ? (
-              <p className="text-sm text-muted-foreground">Cargando datos de la liga…</p>
-            ) : leagueData ? (
+            {loadingWeek ? <p>Cargando datos de la liga…</p> : leagueData ? (
               <div>
-                <div className="text-sm" style={{ lineHeight: 2 }}>
-                  <p>
-                    <span className="font-semibold mr-3">Nombre:</span> {leagueData.name} ({leagueData.type})
-                  </p>
-                  <p className="flex items-center justify-start">
-                    <span className="font-semibold mr-3">Código de unión:</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="p-0"
-                      onClick={() => handleCopyCode(leagueData.join_code)}
-                    >
-                      {leagueData.join_code} <Copy size={16} />
-                    </Button>
-                  </p>
-                  <p>
-                    <span className="font-semibold mr-3">Presupuesto:</span> {leagueData.budget} ({leagueData.reset_budget})
-                  </p>
-                  <p>
-                    <span className="font-semibold mr-3">Apuesta mínima:</span> {leagueData.min_bet}
-                  </p>
-                  <p>
-                    <span className="font-semibold mr-3">Apuesta máxima:</span> {leagueData.max_bet}
-                  </p>
-                  <p>
-                    <span className="font-semibold mr-3">Semana de la liga:</span> {leagueData.week}
-                  </p>
+                <div className="text-sm space-y-1">
+                  <p><span className="font-semibold mr-2">Nombre:</span>{leagueData.name} ({leagueData.type})</p>
+                  <p className="flex items-center gap-2"><span className="font-semibold">Código:</span><Button variant="ghost" size="sm" onClick={() => handleCopyCode(leagueData.join_code)}>{leagueData.join_code} <Copy size={16} /></Button></p>
+                  <p><span className="font-semibold mr-2">Presupuesto:</span>{leagueData.budget} ({leagueData.reset_budget})</p>
+                  <p><span className="font-semibold mr-2">Apuesta mínima:</span>{leagueData.min_bet}</p>
+                  <p><span className="font-semibold mr-2">Apuesta máxima:</span>{leagueData.max_bet}</p>
+                  <p><span className="font-semibold mr-2">Semana:</span>{leagueData.week}</p>
                 </div>
-                
-                {/* Edit League Values button - only for admin_league */}
+
                 {userRole === 'admin_league' && (
-                  <div className="mt-6">
+                  <div className="mt-4">
                     <Collapsible open={isEditFormOpen} onOpenChange={setIsEditFormOpen}>
                       <CollapsibleTrigger asChild>
-                        <Button variant="ghost" size="sm" className="p-0 flex items-center gap-2">
-                          Edit League Values
-                          {isEditFormOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                          Edit League Values {isEditFormOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                         </Button>
                       </CollapsibleTrigger>
-                      <CollapsibleContent className="mt-4">
-                        <div className="p-4 border rounded-lg bg-muted/50 space-y-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="league-name">League Name</Label>
-                            <Input
-                              id="league-name"
-                              value={editLeagueName}
-                              onChange={(e) => setEditLeagueName(e.target.value)}
-                              placeholder="Enter league name"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="weekly-budget">Weekly Budget</Label>
-                            <Input
-                              id="weekly-budget"
-                              type="number"
-                              min={500}
-                              max={10000}
-                              value={editBudget}
-                              onChange={(e) => setEditBudget(Number(e.target.value))}
-                              placeholder="Weekly budget amount"
-                            />
-                          </div>
-                          <div className="flex justify-end">
-                            <Button
-                              onClick={handleUpdateLeague}
-                              disabled={isUpdatingLeague}
-                              size="sm"
-                            >
-                              {isUpdatingLeague ? 'Actualizando...' : 'Actualizar'}
-                            </Button>
-                          </div>
+                      <CollapsibleContent className="mt-3 p-4 border rounded-lg bg-muted/50 space-y-4">
+                        <div className="space-y-2"><Label>League Name</Label><Input value={editLeagueName} onChange={e => setEditLeagueName(e.target.value)} /></div>
+                        <div className="space-y-2"><Label>Weekly Budget</Label><Input type="number" min={500} max={10000} value={editBudget} onChange={e => setEditBudget(Number(e.target.value))} /></div>
+                        <div className="space-y-2"><Label>Min Bet</Label><Input type="number" min={1} max={editBudget} value={editMinBet} onChange={e => setEditMinBet(Number(e.target.value))} /></div>
+                        <div className="space-y-2"><Label>Max Bet</Label><Input type="number" min={editMinBet} max={editBudget} value={editMaxBet} onChange={e => setEditMaxBet(Number(e.target.value))} /></div>
+                        <div className="space-y-2"><Label>Budget Reset Frequency</Label>
+                          <select value={editResetBudget} onChange={e => setEditResetBudget(e.target.value)}>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                          </select>
                         </div>
+                        <div className="flex justify-end"><Button onClick={handleUpdateLeague} disabled={isUpdatingLeague}>{isUpdatingLeague ? 'Actualizando...' : 'Actualizar'}</Button></div>
                       </CollapsibleContent>
                     </Collapsible>
                   </div>
                 )}
               </div>
-            ) : (
-              <p className="text-sm text-red-600">No se pudo cargar la información de la liga.</p>
-            )}
+            ) : <p className="text-red-600">No se pudo cargar la información de la liga.</p>}
           </CardContent>
         </Card>
 
-        {/* Reseteo de la Liga - solo si role === "admin_league" */}
         {userRole === 'admin_league' && (
           <Card className="md:col-span-2">
-            <CardHeader>
-              <CardTitle>Reseteo de la Liga</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm">
-                AVISO: Esta opción reseteará tu Liga. Todos los puntos serán 0
-              </p>
-            </CardContent>
-            <CardFooter>
-              <Button onClick={() => setConfirmingReset(true)} disabled={resettingWeek}>
-                {resettingWeek ? 'Reseteando…' : 'Resetear la Liga'}
-              </Button>
-            </CardFooter>
+            <CardHeader><CardTitle>Reseteo de la Liga</CardTitle></CardHeader>
+            <CardContent><p>Esta opción reseteará tu Liga. Todos los puntos serán 0</p></CardContent>
+            <CardFooter><Button onClick={() => setConfirmingReset(true)} disabled={resettingWeek}>{resettingWeek ? 'Reseteando…' : 'Resetear la Liga'}</Button></CardFooter>
           </Card>
         )}
       </div>
 
-      {/* Modal de confirmación */}
       {confirmingReset && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center space-y-4">
             <p className="text-lg font-semibold">¿Estás seguro que quieres resetear la liga?</p>
             <div className="flex justify-between gap-4">
-              <Button variant="destructive" onClick={handleResetWeek}>
-                Sí, resetear
-              </Button>
+              <Button variant="destructive" onClick={handleResetWeek}>Sí, resetear</Button>
               <Button onClick={() => setConfirmingReset(false)}>Cancelar</Button>
             </div>
           </div>
