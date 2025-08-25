@@ -114,9 +114,9 @@ export const BetHistory = () => {
     }
   };
 
-  const formatBetDisplay = (market: string, selection: string, odds: number): string => {
-    return `${selection} @ ${odds.toFixed(2)}`;
-  };
+const formatBetDisplay = (market: string, selection: string, odds: number): string => {
+  return `${market}: ${selection} @ ${odds.toFixed(2)}`;
+};
 
   return (
     <div className="space-y-6">
