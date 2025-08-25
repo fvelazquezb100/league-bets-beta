@@ -153,13 +153,13 @@ const AdminLiga: React.FC = () => {
                     <Collapsible open={isEditFormOpen} onOpenChange={setIsEditFormOpen}>
                       <CollapsibleTrigger asChild>
                         <Button variant="ghost" size="sm" className="flex items-center gap-2">
-                          Edit League Values {isEditFormOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                          Editar Liga {isEditFormOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                         </Button>
                       </CollapsibleTrigger>
                       <CollapsibleContent className="mt-3 p-4 border rounded-lg bg-muted/50 space-y-4">
                         <div className="space-y-2"><Label>League Name</Label><Input value={editLeagueName} onChange={e => setEditLeagueName(e.target.value)} /></div>
                         <div className="space-y-2">
-  <Label>Weekly Budget: {editBudget}</Label>
+  <Label>Presupuesto: {editBudget}</Label>
   <input
     type="range"
     min={500}
@@ -171,7 +171,7 @@ const AdminLiga: React.FC = () => {
   />
 </div>
                         <div className="space-y-2">
-  <Label>Min Bet: {editMinBet}</Label>
+  <Label>Apuesta Minima: {editMinBet}</Label>
   <input
     type="range"
     min={1}
@@ -182,8 +182,20 @@ const AdminLiga: React.FC = () => {
     className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-green-500"
   />
 </div>
-                        <div className="space-y-2"><Label>Max Bet</Label><Input type="number" min={editMinBet} max={editBudget} value={editMaxBet} onChange={e => setEditMaxBet(Number(e.target.value))} /></div>
-                        <div className="space-y-2"><Label>Budget Reset Frequency</Label>
+                        <div className="space-y-2">
+  <Label>Apuesta Maxima: {editMaxBet}</Label>
+  <input
+    type="range"
+    min={editMinBet}
+    max={editBudget}
+    step={1}
+    value={editMaxBet}
+    onChange={e => setEditMaxBet(Number(e.target.value))}
+    className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-500"
+  />
+</div>
+                        
+                        <div className="space-y-2"><Label>Frecuencia reseteo presupuesto</Label>
                           <select value={editResetBudget} onChange={e => setEditResetBudget(e.target.value)}>
                             <option value="daily">Daily</option>
                             <option value="weekly">Weekly</option>
