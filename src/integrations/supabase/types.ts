@@ -14,6 +14,99 @@ export type Database = {
   }
   public: {
     Tables: {
+      backup_bet_selections: {
+        Row: {
+          bet_id: number | null
+          created_at: string | null
+          fixture_id: number | null
+          id: number | null
+          market: string | null
+          match_description: string | null
+          odds: number | null
+          selection: string | null
+          status: string | null
+        }
+        Insert: {
+          bet_id?: number | null
+          created_at?: string | null
+          fixture_id?: number | null
+          id?: number | null
+          market?: string | null
+          match_description?: string | null
+          odds?: number | null
+          selection?: string | null
+          status?: string | null
+        }
+        Update: {
+          bet_id?: number | null
+          created_at?: string | null
+          fixture_id?: number | null
+          id?: number | null
+          market?: string | null
+          match_description?: string | null
+          odds?: number | null
+          selection?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      backup_bets: {
+        Row: {
+          bet_selection: string | null
+          bet_type: string | null
+          fixture_id: number | null
+          id: number | null
+          match_description: string | null
+          odds: number | null
+          payout: number | null
+          stake: number | null
+          status: string | null
+          user_id: string | null
+          week: string | null
+        }
+        Insert: {
+          bet_selection?: string | null
+          bet_type?: string | null
+          fixture_id?: number | null
+          id?: number | null
+          match_description?: string | null
+          odds?: number | null
+          payout?: number | null
+          stake?: number | null
+          status?: string | null
+          user_id?: string | null
+          week?: string | null
+        }
+        Update: {
+          bet_selection?: string | null
+          bet_type?: string | null
+          fixture_id?: number | null
+          id?: number | null
+          match_description?: string | null
+          odds?: number | null
+          payout?: number | null
+          stake?: number | null
+          status?: string | null
+          user_id?: string | null
+          week?: string | null
+        }
+        Relationships: []
+      }
+      backup_profiles_points: {
+        Row: {
+          id: string | null
+          total_points: number | null
+        }
+        Insert: {
+          id?: string | null
+          total_points?: number | null
+        }
+        Update: {
+          id?: string | null
+          total_points?: number | null
+        }
+        Relationships: []
+      }
       bet_selections: {
         Row: {
           bet_id: number
@@ -110,26 +203,38 @@ export type Database = {
       }
       leagues: {
         Row: {
+          budget: number | null
           created_at: string
           id: number
           join_code: string | null
+          max_bet: number | null
+          min_bet: number | null
           name: string | null
+          reset_budget: string | null
           type: Database["public"]["Enums"]["league_type"]
           week: number
         }
         Insert: {
+          budget?: number | null
           created_at?: string
           id?: number
           join_code?: string | null
+          max_bet?: number | null
+          min_bet?: number | null
           name?: string | null
+          reset_budget?: string | null
           type?: Database["public"]["Enums"]["league_type"]
           week?: number
         }
         Update: {
+          budget?: number | null
           created_at?: string
           id?: number
           join_code?: string | null
+          max_bet?: number | null
+          min_bet?: number | null
           name?: string | null
+          reset_budget?: string | null
           type?: Database["public"]["Enums"]["league_type"]
           week?: number
         }
@@ -218,24 +323,6 @@ export type Database = {
           },
         ]
       }
-      week_counter: {
-        Row: {
-          current_week: number
-          id: number
-          updated_at: string
-        }
-        Insert: {
-          current_week?: number
-          id?: number
-          updated_at?: string
-        }
-        Update: {
-          current_week?: number
-          id?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
       weekly_performance: {
         Row: {
           created_at: string
@@ -322,6 +409,12 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_stuck_combo_bets: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: number
+        }[]
+      }
       has_admin_privileges: {
         Args: { user_id?: string }
         Returns: boolean
@@ -338,7 +431,7 @@ export type Database = {
         Args: { selections: Json; stake_amount: number }
         Returns: number
       }
-      reset_all_weekly_budgets: {
+      reset_weekly_budgets: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }

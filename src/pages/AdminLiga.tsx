@@ -9,7 +9,17 @@ import { Copy, ChevronDown, ChevronUp } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 type ProfileRow = { league_id: number; role: string; };
-type LeagueRow = { id: number; name: string; week: number; budget: number; min_bet: number; max_bet: number; type: string; reset_budget: string; join_code: string; };
+type LeagueRow = { 
+  id: number; 
+  name: string; 
+  week: number; 
+  budget: number; 
+  min_bet: number; 
+  max_bet: number; 
+  type: 'free' | 'premium'; 
+  reset_budget: string; 
+  join_code: string; 
+};
 
 const AdminLiga: React.FC = () => {
   const { toast } = useToast();
@@ -84,7 +94,7 @@ const AdminLiga: React.FC = () => {
     if (!leagueId || !leagueData) return;
     try {
       setIsUpdatingLeague(true);
-      const updates: Partial<LeagueRow> = {};
+      const updates: any = {};
       let hasChanges = false;
 
       if (editLeagueName !== leagueData.name) { updates.name = editLeagueName; hasChanges = true; }
