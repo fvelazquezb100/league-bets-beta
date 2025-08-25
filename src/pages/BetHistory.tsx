@@ -114,9 +114,9 @@ export const BetHistory = () => {
     }
   };
 
-const formatBetDisplay = (market: string, selection: string, odds: number): string => {
-  return `${market}: ${selection} @ ${odds.toFixed(2)}`;
-};
+  const formatBetDisplay = (market: string, selection: string, odds: number): string => {
+    return `${selection} @ ${odds.toFixed(2)}`;
+  };
 
   return (
     <div className="space-y-6">
@@ -220,7 +220,6 @@ const formatBetDisplay = (market: string, selection: string, odds: number): stri
                           <Badge variant={getStatusVariant(bet.status)}>{getStatusText(bet.status)}</Badge>
                         </TableCell>
                         <TableCell>
-                          {/* Botón actualizado para combinadas */}
                           {bet.bet_type === 'combo' && bet.bet_selections?.length
                             ? bet.bet_selections.every((sel: any) => sel.status === 'pending') && (
                                 <Button
@@ -256,8 +255,8 @@ const formatBetDisplay = (market: string, selection: string, odds: number): stri
                             <div className="flex items-center gap-2">
                               <span className="text-sm">
                                 {formatBetDisplay(
-                                  getBettingTranslation(selection.market),
-                                  getBettingTranslation(selection.selection),
+                                  selection.market,
+                                  selection.selection,
                                   parseFloat(selection.odds || 0)
                                 )}
                               </span>
@@ -277,7 +276,21 @@ const formatBetDisplay = (market: string, selection: string, odds: number): stri
                     return (
                       <TableRow key={bet.id}>
                         <TableCell className="font-medium">{bet.match_description}</TableCell>
-                        <TableCell>{bet.bet_selection}</TableCell>
+                        <TableCell>
+                          {bet.bet_type === 'single' ? (
+                            <>
+                              {bet.market_bets ? getBettingTranslation(bet.market_bets) + ': ' : ''}
+                              {(() => {
+                                const parts = bet.bet_selection?.split(' @ ') || [];
+                                const selection = getBettingTranslation(parts[0] || '');
+                                const odds = parts[1] ? parseFloat(parts[1]).toFixed(2) : parseFloat(bet.odds || 0).toFixed(2);
+                                return `${selection} @ ${odds}`;
+                              })()}
+                            </>
+                          ) : (
+                            bet.bet_selection
+                          )}
+                        </TableCell>
                         <TableCell>{parseFloat(bet.stake || 0).toFixed(0)} pts</TableCell>
                         <TableCell>{parseFloat(bet.payout || 0).toFixed(0)} pts</TableCell>
                         <TableCell>
