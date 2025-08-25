@@ -32,7 +32,6 @@ const navigationItems = [
     href: '/settings',
     icon: Settings,
   },
-
 ];
 
 export const Header = () => {
@@ -105,7 +104,6 @@ export const Header = () => {
                     <Trophy className="h-4 w-4" />
                     <span className="font-medium">Liga:</span>
                     <span>{league.name}</span>
-                         
                   </div>
                 )}
               </div>
@@ -172,17 +170,15 @@ export const Header = () => {
                         );
                       })}
                       
-                      {/* Admin Liga */}
-                      {profile?.role === 'admin_league' && (
-                        <Link
-                          to="/admin-liga"
-                          onClick={() => setIsOpen(false)}
-                          className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-muted transition-colors"
-                        >
-                          <Award className="h-4 w-4" />
-                          Tu Liga
-                        </Link>
-                      )}
+                      {/* Admin Liga (ahora visible para todos) */}
+                      <Link
+                        to="/admin-liga"
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-muted transition-colors"
+                      >
+                        <Award className="h-4 w-4" />
+                        Tu Liga
+                      </Link>
 
                       {/* SuperAdmin */}
                       {profile?.global_role === 'superadmin' && (
