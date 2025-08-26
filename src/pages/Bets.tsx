@@ -252,6 +252,92 @@ const Bets = () => {
     });
   };
 
+  // Calculate next Monday at 23:59
+  const getNextMondayEndOfDay = () => {
+    const now = new Date();
+    const nextMonday = new Date(now);
+    const daysUntilMonday = (1 + 7 - now.getDay()) % 7; // 0 = Sunday, 1 = Monday
+    nextMonday.setDate(now.getDate() + (daysUntilMonday === 0 ? 7 : daysUntilMonday));
+    nextMonday.setHours(23, 59, 59, 999);
+    return nextMonday;
+  };
+
+  // Filter matches by date
+  const nextMondayEndOfDay = getNextMondayEndOfDay();
+  const upcomingMatches = matches.filter(match => new Date(match.fixture.date) <= nextMondayEndOfDay);
+  const futureMatches = matches.filter(match => new Date(match.fixture.date) > nextMondayEndOfDay);
+
+  const renderMatchesSection = (matchesToRender: MatchData[], sectionKey: string) => {
+    if (matchesToRender.length === 0) {
+      return (
+        <div className="text-center p-8 bg-card rounded-lg shadow">
+          <p className="text-muted-foreground">No hay partidos disponibles en esta sección.</p>
+        </div>
+      );
+    }
+
+    return (
+      <Accordion type="single" collapsible className="w-full space-y-4">
+        {matchesToRender.map((match) => {
+          const kickoff = new Date(match.fixture.date);
+          const freezeTime = new Date(kickoff.getTime() - 15 * 60 * 1000);
+          const isFrozen = new Date() >= freezeTime;
+
+          return (
+            <AccordionItem value={`${sectionKey}-match-${match.fixture.id}`} key={match.fixture.id} className="border rounded-lg p-4 bg-card shadow-sm">
+              <AccordionTrigger>
+                <div className="text-left w-full">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-lg text-foreground">{match.teams?.home?.name ?? 'Local'} vs {match.teams?.away?.name ?? 'Visitante'}</p>
+                      <p className="text-sm text-muted-foreground">{new Date(match.fixture.date).toLocaleString()}</p>
+                    </div>
+                    {getBetsForFixture(match.fixture.id).length > 0 && (
+                      <Badge variant="secondary" className="ml-2">
+                        {getBetsForFixture(match.fixture.id).length} apuesta{getBetsForFixture(match.fixture.id).length > 1 ? 's' : ''}
+                      </Badge>
+                    )}
+                  </div>
+                  {getBetPreview(match.fixture.id) && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Tus apuestas: {getBetPreview(match.fixture.id)}
+                    </p>
+                  )}
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-6 pt-4">
+                  {getBetTypesSorted().map(betType => {
+                    const market = findMarket(match, betType.apiName);
+                    if (!market) return null;
+
+                    return (
+                      <BetMarketSection
+                        key={betType.apiName}
+                        match={match}
+                        betType={betType}
+                        market={market}
+                        isFrozen={isFrozen}
+                        hasUserBetOnMarket={hasUserBetOnMarket}
+                        handleAddToSlip={handleAddToSlip}
+                      />
+                    );
+                  })}
+                  
+                  {getBetTypesSorted().every(betType => !findMarket(match, betType.apiName)) && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <p>No hay mercados de apuestas disponibles para este partido.</p>
+                    </div>
+                  )}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )
+        })}
+      </Accordion>
+    );
+  };
+
   const renderContent = () => {
     if (loading) {
       return (
@@ -276,79 +362,39 @@ const Bets = () => {
       );
     }
 
-    if (matches.length > 0) {
+    if (matches.length === 0) {
       return (
-        <Accordion type="single" collapsible className="w-full space-y-4">
-          {matches.map((match) => {
-            const kickoff = new Date(match.fixture.date);
-            const freezeTime = new Date(kickoff.getTime() - 15 * 60 * 1000);
-            const isFrozen = new Date() >= freezeTime;
-
-            return (
-              <AccordionItem value={`match-${match.fixture.id}`} key={match.fixture.id} className="border rounded-lg p-4 bg-card shadow-sm">
-                <AccordionTrigger>
-                  <div className="text-left w-full">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-bold text-lg text-foreground">{match.teams?.home?.name ?? 'Local'} vs {match.teams?.away?.name ?? 'Visitante'}</p>
-                        <p className="text-sm text-muted-foreground">{new Date(match.fixture.date).toLocaleString()}</p>
-                      </div>
-                      {getBetsForFixture(match.fixture.id).length > 0 && (
-                        <Badge variant="secondary" className="ml-2">
-                          {getBetsForFixture(match.fixture.id).length} apuesta{getBetsForFixture(match.fixture.id).length > 1 ? 's' : ''}
-                        </Badge>
-                      )}
-                    </div>
-                    {getBetPreview(match.fixture.id) && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Tus apuestas: {getBetPreview(match.fixture.id)}
-                      </p>
-                    )}
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-6 pt-4">
-                    {getBetTypesSorted().map(betType => {
-                      const market = findMarket(match, betType.apiName);
-                      if (!market) return null;
-
-                      return (
-                        <BetMarketSection
-                          key={betType.apiName}
-                          match={match}
-                          betType={betType}
-                          market={market}
-                          isFrozen={isFrozen}
-                          hasUserBetOnMarket={hasUserBetOnMarket}
-                          handleAddToSlip={handleAddToSlip}
-                        />
-                      );
-                    })}
-                    
-                    {getBetTypesSorted().every(betType => !findMarket(match, betType.apiName)) && (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <p>No hay mercados de apuestas disponibles para este partido.</p>
-                      </div>
-                    )}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            )
-          })}
-        </Accordion>
+        <div className="flex-grow text-center p-8 bg-card rounded-lg shadow">
+          <p className="text-muted-foreground">No hay partidos con cuotas disponibles en este momento.</p>
+        </div>
       );
     }
 
     return (
-      <div className="flex-grow text-center p-8 bg-card rounded-lg shadow">
-        <p className="text-muted-foreground">No hay partidos con cuotas disponibles en este momento.</p>
+      <div className="flex-grow space-y-8">
+        {/* Main section: matches up to next Monday 23:59 */}
+        <div>
+          <h2 className="text-2xl font-semibold mb-4 text-foreground">La Liga - Cuotas en Vivo</h2>
+          {renderMatchesSection(upcomingMatches, 'upcoming')}
+        </div>
+
+        {/* Future matches section: matches after next Monday 23:59 */}
+        {futureMatches.length > 0 && (
+          <>
+            <div className="border-t border-border my-8"></div>
+            <div>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">La Liga - Próximos Encuentros</h2>
+              {renderMatchesSection(futureMatches, 'future')}
+            </div>
+          </>
+        )}
       </div>
     );
   };
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-4">La Liga - Cuotas en Vivo</h1>
+      <h1 className="text-3xl font-bold mb-6">La Liga - Apuestas</h1>
       
       {/* Desktop Layout */}
       {!isMobile ? (
