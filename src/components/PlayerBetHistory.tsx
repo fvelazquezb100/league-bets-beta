@@ -278,7 +278,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                   {sel.market}: {getBettingTranslation(sel.selection)} @ {sel.odds}
                 </div>
               ))
-            : `${bet.market_bet || ''}: ${getBettingTranslation(bet.bet_selection) || ''} @ ${bet.odds || ''}`}
+            : `${bet.market_bets || ''}: ${getBettingTranslation(bet.bet_selection) || ''} @ ${bet.odds || ''}`}
         </TableCell>
 
         {/* Estado */}
