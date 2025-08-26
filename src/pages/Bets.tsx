@@ -246,7 +246,7 @@ const Bets = () => {
         return bet.bet_selections.some(sel => 
           sel.fixture_id === fixtureId &&
           getBettingTranslation(sel.market) === getBettingTranslation(marketName) &&
-          getBettingTranslation(sel.selection) === getBettingTranslation(selection)
+          sel.selection === selection
         );
       }
       if (bet.bet_type === 'single' && bet.fixture_id === fixtureId && bet.bet_selection) {
