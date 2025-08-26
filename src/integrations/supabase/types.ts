@@ -157,6 +157,7 @@ export type Database = {
           bet_type: string | null
           fixture_id: number | null
           id: number
+          market_bets: string | null
           match_description: string | null
           odds: number | null
           payout: number | null
@@ -170,6 +171,7 @@ export type Database = {
           bet_type?: string | null
           fixture_id?: number | null
           id?: number
+          market_bets?: string | null
           match_description?: string | null
           odds?: number | null
           payout?: number | null
@@ -183,6 +185,7 @@ export type Database = {
           bet_type?: string | null
           fixture_id?: number | null
           id?: number
+          market_bets?: string | null
           match_description?: string | null
           odds?: number | null
           payout?: number | null
@@ -289,6 +292,7 @@ export type Database = {
         Row: {
           global_role: string | null
           id: string
+          last_week_points: number | null
           league_id: number | null
           role: string
           total_points: number | null
@@ -298,6 +302,7 @@ export type Database = {
         Insert: {
           global_role?: string | null
           id?: string
+          last_week_points?: number | null
           league_id?: number | null
           role?: string
           total_points?: number | null
@@ -307,6 +312,7 @@ export type Database = {
         Update: {
           global_role?: string | null
           id?: string
+          last_week_points?: number | null
           league_id?: number | null
           role?: string
           total_points?: number | null
@@ -447,6 +453,10 @@ export type Database = {
       }
       update_combo_bet_status: {
         Args: { bet_id_to_check: number }
+        Returns: undefined
+      }
+      update_last_week_points: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
       update_league_points: {
