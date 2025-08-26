@@ -12,7 +12,6 @@ import BetMarketSection from '@/components/BetMarketSection';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { ShoppingCart } from 'lucide-react';
-import { getBettingTranslation } from '@/utils/bettingTranslations'; // 👈 añadido
 
 // --- Type Definitions for API-Football Odds Data ---
 export interface Team {
@@ -136,7 +135,7 @@ const Bets = () => {
         if (user) {
           const { data: betsData, error: betsError } = await supabase
             .from('bets')
-            .select(`
+            .select(
               id,
               stake,
               status,
@@ -150,7 +149,7 @@ const Bets = () => {
                 odds,
                 fixture_id
               )
-            `)
+            )
             .eq('user_id', user.id)
             .eq('status', 'pending');
 
@@ -172,8 +171,8 @@ const Bets = () => {
 
   const handleAddToSlip = (match: MatchData, marketName: string, selection: BetValue) => {
     const bet = {
-      id: `${match.fixture.id}-${marketName}-${selection.value}`,
-      matchDescription: `${match.teams?.home?.name ?? 'Local'} vs ${match.teams?.away?.name ?? 'Visitante'}`,
+      id: ${match.fixture.id}-${marketName}-${selection.value},
+      matchDescription: ${match.teams?.home?.name ?? 'Local'} vs ${match.teams?.away?.name ?? 'Visitante'},
       market: marketName,
       selection: selection.value,
       odds: parseFloat(selection.odd),
@@ -202,7 +201,7 @@ const Bets = () => {
     setSelectedBets(prev => [...prev, bet]);
     toast({
       title: 'Selección añadida',
-      description: `${selection.value} @ ${selection.odd}`,
+      description: ${selection.value} @ ${selection.odd},
     });
   };
 
@@ -228,13 +227,11 @@ const Bets = () => {
 
     return bets.map(bet => {
       if (bet.bet_type === 'combo') {
-        return `Combinada €${bet.stake?.toFixed(0)}`;
+        return Combinada €${bet.stake?.toFixed(0)};
       } else {
         const selection = bet.bet_selections?.[0];
-        const market = selection 
-          ? `${getBettingTranslation(selection.market)}: ${getBettingTranslation(selection.selection)}`
-          : 'Apuesta';
-        return `${market} €${bet.stake?.toFixed(0)}`;
+        const market = selection ? ${selection.market}: ${selection.selection} : 'Apuesta';
+        return ${market} €${bet.stake?.toFixed(0)};
       }
     }).join(', ');
   };
@@ -244,19 +241,14 @@ const Bets = () => {
     return bets.some(bet => {
       if (bet.bet_selections && bet.bet_selections.length > 0) {
         return bet.bet_selections.some(sel => 
-          sel.fixture_id === fixtureId &&
-          getBettingTranslation(sel.market) === getBettingTranslation(marketName) &&
-          sel.selection === selection
+          sel.fixture_id === fixtureId && sel.market === marketName && sel.selection === selection
         );
       }
       if (bet.bet_type === 'single' && bet.fixture_id === fixtureId && bet.bet_selection) {
         const parts = bet.bet_selection.split(' @ ');
         if (parts.length >= 1) {
-          const betSelection = getBettingTranslation(parts[0].trim());
-          return (
-            betSelection === getBettingTranslation(selection) &&
-            getBettingTranslation(marketName) === getBettingTranslation(bet.bet_type)
-          );
+          const betSelection = parts[0].trim();
+          return betSelection === selection && marketName === bet.bet_type;
         }
       }
       return false;
@@ -295,7 +287,7 @@ const Bets = () => {
           const isFrozen = new Date() >= freezeTime;
 
           return (
-            <AccordionItem value={`${sectionKey}-match-${match.fixture.id}`} key={match.fixture.id} className="border rounded-lg p-4 bg-card shadow-sm">
+            <AccordionItem value={${sectionKey}-match-${match.fixture.id}} key={match.fixture.id} className="border rounded-lg p-4 bg-card shadow-sm">
               <AccordionTrigger>
                 <div className="text-left w-full">
                   <div className="flex items-center justify-between">
