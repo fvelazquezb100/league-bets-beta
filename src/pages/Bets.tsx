@@ -10,6 +10,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getBetTypesSorted } from '@/utils/betTypes';
 import BetMarketSection from '@/components/BetMarketSection';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
+import { ShoppingCart } from 'lucide-react';
 
 // --- Type Definitions for API-Football Odds Data ---
 export interface Team {
@@ -77,6 +79,7 @@ const Bets = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedBets, setSelectedBets] = useState<any[]>([]);
   const [userBets, setUserBets] = useState<UserBet[]>([]);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -411,20 +414,39 @@ const Bets = () => {
           </div>
         </div>
       ) : (
-        /* Mobile Layout */
+        /* Mobile Layout with Drawer */
         <div className="flex flex-col gap-8">
           <div>
             {renderContent()}
           </div>
 
+          {/* Mobile Bet Slip Drawer */}
           {selectedBets.length > 0 && (
-            <div className="border-t pt-4">
-              <BetSlip 
-                selectedBets={selectedBets} 
-                onRemoveBet={(betId) => setSelectedBets(prev => prev.filter(bet => bet.id !== betId))}
-                onClearAll={() => setSelectedBets([])}
-              />
-            </div>
+            <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+              <DrawerTrigger asChild>
+                <Button 
+                  className="fixed bottom-4 right-4 rounded-full h-14 w-14 shadow-lg hover:scale-105 transition-transform"
+                  size="lg"
+                >
+                  <div className="flex flex-col items-center">
+                    <ShoppingCart className="h-5 w-5" />
+                    <span className="text-xs font-bold">{selectedBets.length}</span>
+                  </div>
+                </Button>
+              </DrawerTrigger>
+              <DrawerContent className="max-h-[80vh]">
+                <div className="p-4 overflow-y-auto">
+                  <BetSlip 
+                    selectedBets={selectedBets} 
+                    onRemoveBet={(betId) => setSelectedBets(prev => prev.filter(bet => bet.id !== betId))}
+                    onClearAll={() => {
+                      setSelectedBets([]);
+                      setIsDrawerOpen(false);
+                    }}
+                  />
+                </div>
+              </DrawerContent>
+            </Drawer>
           )}
         </div>
       )}
