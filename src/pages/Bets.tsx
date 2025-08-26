@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getBetTypesSorted } from '@/utils/betTypes';
 import BetMarketSection from '@/components/BetMarketSection';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { ShoppingCart } from 'lucide-react';
 import { getBettingTranslation } from '@/utils/bettingTranslations';
 
@@ -58,7 +59,7 @@ export interface CachedOddsData {
 }
 
 interface UserBet {
-  id: string;
+  id: number;
   stake: number;
   status: string;
   bet_type: string;
@@ -80,6 +81,7 @@ const Bets = () => {
   const [selectedBets, setSelectedBets] = useState<any[]>([]);
   const [userBets, setUserBets] = useState<UserBet[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [drawerShouldRender, setDrawerShouldRender] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -169,6 +171,20 @@ const Bets = () => {
     fetchOddsAndBets();
   }, [user]);
 
+  // Manage drawer render state to prevent unmounting during transitions
+  useEffect(() => {
+    if (selectedBets.length > 0) {
+      setDrawerShouldRender(true);
+    } else if (selectedBets.length === 0 && drawerShouldRender) {
+      // Delay hiding the drawer to allow for smooth transition
+      const timer = setTimeout(() => {
+        setDrawerShouldRender(false);
+        setIsDrawerOpen(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedBets.length, drawerShouldRender]);
+
   const handleAddToSlip = (match: MatchData, marketName: string, selection: BetValue) => {
     const bet = {
       id: `${match.fixture.id}-${marketName}-${selection.value}`,
@@ -255,15 +271,17 @@ const Bets = () => {
     });
   };
 
+  // Calculate next Monday at 23:59
   const getNextMondayEndOfDay = () => {
     const now = new Date();
     const nextMonday = new Date(now);
-    const daysUntilMonday = (1 + 7 - now.getDay()) % 7;
+    const daysUntilMonday = (1 + 7 - now.getDay()) % 7; // 0 = Sunday, 1 = Monday
     nextMonday.setDate(now.getDate() + (daysUntilMonday === 0 ? 7 : daysUntilMonday));
     nextMonday.setHours(23, 59, 59, 999);
     return nextMonday;
   };
 
+  // Filter matches by date
   const nextMondayEndOfDay = getNextMondayEndOfDay();
   const upcomingMatches = matches.filter(match => new Date(match.fixture.date) <= nextMondayEndOfDay);
   const futureMatches = matches.filter(match => new Date(match.fixture.date) > nextMondayEndOfDay);
@@ -373,11 +391,13 @@ const Bets = () => {
 
     return (
       <div className="flex-grow space-y-8">
+        {/* Main section: matches up to next Monday 23:59 */}
         <div>
           <h2 className="text-2xl font-semibold mb-4 text-foreground">La Liga - Cuotas en Vivo</h2>
           {renderMatchesSection(upcomingMatches, 'upcoming')}
         </div>
 
+        {/* Future matches section: matches after next Monday 23:59 */}
         {futureMatches.length > 0 && (
           <>
             <div className="border-t border-border my-8"></div>
@@ -410,53 +430,41 @@ const Bets = () => {
           </div>
         </div>
       ) : (
-        /* Mobile Layout with Bottom Sheet */
+          /* Mobile Layout with Drawer */
         <div className="flex flex-col gap-8">
-          <div>{renderContent()}</div>
+          <div>
+            {renderContent()}
+          </div>
 
-          {selectedBets.length > 0 && (
-            <div className="fixed bottom-0 left-0 w-full z-50">
-              {/* Collapsed Bar */}
-              <div
-                className="bg-primary text-white p-3 flex justify-between items-center cursor-pointer rounded-t-lg shadow-lg"
-                onClick={() => setIsDrawerOpen(prev => !prev)}
-              >
-                <div className="flex flex-col">
-                  <span className="text-sm font-semibold">{selectedBets.length} selección{selectedBets.length > 1 ? 'es' : ''}</span>
-                  <span className="text-xs">Cuota total: {selectedBets.reduce((acc, b) => acc * b.odds, 1).toFixed(2)}</span>
-                </div>
-                <div className={`transform transition-transform duration-300 ${isDrawerOpen ? 'rotate-180' : ''}`}>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
-
-              {/* Expanded Panel */}
-              <div
-                className={`bg-white max-h-[70vh] overflow-y-auto transition-all duration-300 shadow-lg ${
-                  isDrawerOpen ? 'h-[70vh] opacity-100' : 'h-0 opacity-0'
-                }`}
-              >
-                <div className="p-4">
-                  <BetSlip
-                    selectedBets={selectedBets}
+          {/* Mobile Bet Slip Drawer */}
+          {drawerShouldRender && (
+            <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+              <DrawerTrigger asChild>
+                <Button 
+                  className="fixed bottom-4 right-4 rounded-full h-14 w-14 shadow-lg hover:scale-105 transition-transform"
+                  size="lg"
+                  style={{ display: selectedBets.length > 0 ? 'flex' : 'none' }}
+                >
+                  <div className="flex flex-col items-center">
+                    <ShoppingCart className="h-5 w-5" />
+                    <span className="text-xs font-bold">{selectedBets.length}</span>
+                  </div>
+                </Button>
+              </DrawerTrigger>
+              <DrawerContent className="max-h-[80vh]">
+                <div className="p-4 overflow-y-auto">
+                  <BetSlip 
+                    selectedBets={selectedBets} 
                     onRemoveBet={(betId) => setSelectedBets(prev => prev.filter(bet => bet.id !== betId))}
                     onClearAll={() => {
                       setSelectedBets([]);
-                      setIsDrawerOpen(false);
+                      // Close drawer after a short delay to allow for smooth transition
+                      setTimeout(() => setIsDrawerOpen(false), 100);
                     }}
                   />
                 </div>
-              </div>
-            </div>
+              </DrawerContent>
+            </Drawer>
           )}
         </div>
       )}
