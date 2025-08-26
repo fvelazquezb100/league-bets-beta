@@ -270,27 +270,16 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
             : getMatchName(bet.match_description)}
         </TableCell>
 
-{/* Apuesta */}
-<TableCell>
-  {bet.bet_type === 'combo' ? (
-    bet.bet_selections?.map((sel: any) => (
-      <div key={sel.id} className="text-sm mb-1 text-muted-foreground">
-        {sel.market}: {getBettingTranslation(sel.selection) || sel.selection} @ {sel.odds}
-      </div>
-    ))
-  ) : (
-    (() => {
-      // Normalizamos la selección
-      const selectionText = bet.bet_selection?.trim() || '';
-      const translatedSelection = getBettingTranslation(selectionText) || selectionText;
-
-      // Odds
-      const odds = bet.odds ? parseFloat(bet.odds).toFixed(2) : '';
-
-      return `${bet.market_bet || ''}: ${translatedSelection} @ ${odds}`;
-    })()
-  )}
-</TableCell>
+        {/* Apuesta */}
+        <TableCell>
+          {bet.bet_type === 'combo'
+            ? bet.bet_selections?.map((sel: any) => (
+                <div key={sel.id} className="text-sm mb-1 text-muted-foreground">
+                  {sel.market}: {getBettingTranslation(sel.selection)} @ {sel.odds}
+                </div>
+              ))
+            : `${bet.market_bets || ''}: ${getBettingTranslation(bet.bet_selection) || ''} @ ${bet.odds || ''}`}
+        </TableCell>
 
         {/* Estado */}
         <TableCell>
