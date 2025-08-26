@@ -81,6 +81,7 @@ const Bets = () => {
   const [selectedBets, setSelectedBets] = useState<any[]>([]);
   const [userBets, setUserBets] = useState<UserBet[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [drawerShouldRender, setDrawerShouldRender] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -169,6 +170,20 @@ const Bets = () => {
 
     fetchOddsAndBets();
   }, [user]);
+
+  // Manage drawer render state to prevent unmounting during transitions
+  useEffect(() => {
+    if (selectedBets.length > 0) {
+      setDrawerShouldRender(true);
+    } else if (selectedBets.length === 0 && drawerShouldRender) {
+      // Delay hiding the drawer to allow for smooth transition
+      const timer = setTimeout(() => {
+        setDrawerShouldRender(false);
+        setIsDrawerOpen(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedBets.length, drawerShouldRender]);
 
   const handleAddToSlip = (match: MatchData, marketName: string, selection: BetValue) => {
     const bet = {
@@ -415,19 +430,20 @@ const Bets = () => {
           </div>
         </div>
       ) : (
-        /* Mobile Layout with Drawer */
+          /* Mobile Layout with Drawer */
         <div className="flex flex-col gap-8">
           <div>
             {renderContent()}
           </div>
 
           {/* Mobile Bet Slip Drawer */}
-          {selectedBets.length > 0 && (
+          {drawerShouldRender && (
             <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
               <DrawerTrigger asChild>
                 <Button 
                   className="fixed bottom-4 right-4 rounded-full h-14 w-14 shadow-lg hover:scale-105 transition-transform"
                   size="lg"
+                  style={{ display: selectedBets.length > 0 ? 'flex' : 'none' }}
                 >
                   <div className="flex flex-col items-center">
                     <ShoppingCart className="h-5 w-5" />
@@ -442,7 +458,8 @@ const Bets = () => {
                     onRemoveBet={(betId) => setSelectedBets(prev => prev.filter(bet => bet.id !== betId))}
                     onClearAll={() => {
                       setSelectedBets([]);
-                      setIsDrawerOpen(false);
+                      // Close drawer after a short delay to allow for smooth transition
+                      setTimeout(() => setIsDrawerOpen(false), 100);
                     }}
                   />
                 </div>
