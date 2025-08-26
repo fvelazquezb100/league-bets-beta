@@ -248,7 +248,7 @@ const Bets = () => {
         const parts = bet.bet_selection.split(' @ ');
         if (parts.length >= 1) {
           const betSelection = parts[0].trim();
-          return betSelection === selection;
+          return betSelection === selection && marketName === bet.bet_type;
         }
       }
       return false;
