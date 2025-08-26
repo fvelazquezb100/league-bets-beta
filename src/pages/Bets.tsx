@@ -136,19 +136,7 @@ const Bets = () => {
           const { data: betsData, error: betsError } = await supabase
             .from('bets')
             .select(
-              id,
-              stake,
-              status,
-              bet_type,
-              match_description,
-              fixture_id,
-              bet_selection,
-              bet_selections (
-                market,
-                selection,
-                odds,
-                fixture_id
-              )
+              'id, stake, status, bet_type, match_description, fixture_id, bet_selection, bet_selections ( market, selection, odds, fixture_id )'
             )
             .eq('user_id', user.id)
             .eq('status', 'pending');
@@ -171,8 +159,8 @@ const Bets = () => {
 
   const handleAddToSlip = (match: MatchData, marketName: string, selection: BetValue) => {
     const bet = {
-      id: ${match.fixture.id}-${marketName}-${selection.value},
-      matchDescription: ${match.teams?.home?.name ?? 'Local'} vs ${match.teams?.away?.name ?? 'Visitante'},
+      id: `${match.fixture.id}-${marketName}-${selection.value}`,
+      matchDescription: `${match.teams?.home?.name ?? 'Local'} vs ${match.teams?.away?.name ?? 'Visitante'}`,
       market: marketName,
       selection: selection.value,
       odds: parseFloat(selection.odd),
@@ -201,7 +189,7 @@ const Bets = () => {
     setSelectedBets(prev => [...prev, bet]);
     toast({
       title: 'Selección añadida',
-      description: ${selection.value} @ ${selection.odd},
+      description: `${selection.value} @ ${selection.odd}`,
     });
   };
 
@@ -227,11 +215,11 @@ const Bets = () => {
 
     return bets.map(bet => {
       if (bet.bet_type === 'combo') {
-        return Combinada €${bet.stake?.toFixed(0)};
+        return `Combinada €${bet.stake?.toFixed(0)}`;
       } else {
         const selection = bet.bet_selections?.[0];
-        const market = selection ? ${selection.market}: ${selection.selection} : 'Apuesta';
-        return ${market} €${bet.stake?.toFixed(0)};
+        const market = selection ? `${selection.market}: ${selection.selection}` : 'Apuesta';
+        return `${market} €${bet.stake?.toFixed(0)}`;
       }
     }).join(', ');
   };
@@ -287,7 +275,7 @@ const Bets = () => {
           const isFrozen = new Date() >= freezeTime;
 
           return (
-            <AccordionItem value={${sectionKey}-match-${match.fixture.id}} key={match.fixture.id} className="border rounded-lg p-4 bg-card shadow-sm">
+            <AccordionItem value={`${sectionKey}-match-${match.fixture.id}`} key={match.fixture.id} className="border rounded-lg p-4 bg-card shadow-sm">
               <AccordionTrigger>
                 <div className="text-left w-full">
                   <div className="flex items-center justify-between">
