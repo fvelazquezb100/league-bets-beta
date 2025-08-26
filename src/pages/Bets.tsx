@@ -66,6 +66,7 @@ interface UserBet {
   match_description?: string;
   fixture_id?: number;
   bet_selection?: string;
+  market_bets?: string;
   bet_selections?: {
     market: string;
     selection: string;
@@ -145,6 +146,7 @@ const Bets = () => {
               match_description,
               fixture_id,
               bet_selection,
+              market_bets,
               bet_selections (
                 market,
                 selection,
@@ -260,11 +262,11 @@ const Bets = () => {
           sel.fixture_id === fixtureId && sel.market === marketName && sel.selection === selection
         );
       }
-      if (bet.bet_type === 'single' && bet.fixture_id === fixtureId && bet.bet_selection) {
+      if (bet.bet_type === 'single' && bet.fixture_id === fixtureId && bet.bet_selection && bet.market_bets) {
         const parts = bet.bet_selection.split(' @ ');
         if (parts.length >= 1) {
           const betSelection = parts[0].trim();
-          return betSelection === selection;
+          return bet.market_bets === marketName && betSelection === selection;
         }
       }
       return false;
