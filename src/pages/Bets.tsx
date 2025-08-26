@@ -12,7 +12,7 @@ import BetMarketSection from '@/components/BetMarketSection';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { ShoppingCart } from 'lucide-react';
-import { getBettingTranslation } from '@/locales/betting'; // 👈 añadido
+import { getBettingTranslation } from '@/utils/bettingTranslations';
 
 // --- Type Definitions for API-Football Odds Data ---
 export interface Team {
