@@ -135,9 +135,21 @@ const Bets = () => {
         if (user) {
           const { data: betsData, error: betsError } = await supabase
             .from('bets')
-            .select(
-              'id, stake, status, bet_type, match_description, fixture_id, bet_selection, bet_selections ( market, selection, odds, fixture_id )'
-            )
+            .select(`
+              id,
+              stake,
+              status,
+              bet_type,
+              match_description,
+              fixture_id,
+              bet_selection,
+              bet_selections (
+                market,
+                selection,
+                odds,
+                fixture_id
+              )
+            `)
             .eq('user_id', user.id)
             .eq('status', 'pending');
 
