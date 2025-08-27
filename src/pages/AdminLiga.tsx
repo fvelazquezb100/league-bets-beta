@@ -115,18 +115,52 @@ const AdminLiga: React.FC = () => {
     } finally { setIsUpdatingLeague(false); }
   };
 
-  const handleResetWeek = async () => {
-    if (!leagueId) return;
-    try {
-      setResettingWeek(true);
-      await supabase.from('leagues').update({ week: 1 }).eq('id', leagueId);
-      await supabase.from('profiles').update({ total_points: 0 }).eq('league_id', leagueId);
-      toast({ title: 'Liga reseteada', description: 'La semana y los puntos fueron reiniciados.' });
-    } catch (e: any) {
-      toast({ title: 'Error', description: e?.message ?? 'No se pudo resetear la liga.', variant: 'destructive' });
-    } finally { setResettingWeek(false); setConfirmingReset(false); }
-  };
+const handleResetLeague = async () => {
+  if (!leagueId) return;
+  try {
+    setResettingWeek(true);
 
+    // 1️⃣ Obtener usuario con más y menos puntos antes de resetear
+    const { data: users, error: usersError } = await supabase
+      .from('profiles')
+      .select('id, total_points')
+      .eq('league_id', leagueId)
+      .order('total_points', { ascending: false }); // descendente
+
+    if (usersError) throw usersError;
+
+    const championId = users?.[0]?.id ?? null;
+    const lastId = users?.[users.length - 1]?.id ?? null;
+
+    // 2️⃣ Incrementar temporada y resetear semana
+    const { error: leagueError } = await supabase
+      .from('leagues')
+      .update({
+        week: 1,
+        season: supabase.raw('season + 1'),  // incrementa en 1
+        previous_champion: championId,
+        previous_last: lastId,
+      })
+      .eq('id', leagueId);
+
+    if (leagueError) throw leagueError;
+
+    // 3️⃣ Resetear puntos de los usuarios
+    const { error: resetPointsError } = await supabase
+      .from('profiles')
+      .update({ total_points: 0 })
+      .eq('league_id', leagueId);
+
+    if (resetPointsError) throw resetPointsError;
+
+    toast({ title: 'Liga reseteada', description: 'Semana, temporada y puntos actualizados correctamente.' });
+  } catch (e: any) {
+    toast({ title: 'Error', description: e?.message ?? 'No se pudo resetear la liga.', variant: 'destructive' });
+  } finally {
+    setResettingWeek(false);
+    setConfirmingReset(false);
+  }
+};
   return (
     <div>
       <header className="mb-8">
@@ -225,7 +259,7 @@ const AdminLiga: React.FC = () => {
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center space-y-4">
             <p className="text-lg font-semibold">¿Estás seguro que quieres resetear la liga?</p>
             <div className="flex justify-between gap-4">
-              <Button variant="destructive" onClick={handleResetWeek}>Sí, resetear</Button>
+              <Button variant="destructive" onClick={handleResetLeague}>Sí, resetear</Button>
               <Button onClick={() => setConfirmingReset(false)}>Cancelar</Button>
             </div>
           </div>
