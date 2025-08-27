@@ -9,6 +9,7 @@ import { PlayerBetHistory } from '@/components/PlayerBetHistory';
 export const Clasificacion = () => {
   const { user } = useAuth();
   const [profiles, setProfiles] = useState<any[]>([]);
+  const [previousChampionId, setPreviousChampionId] = useState<number | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<{ id: string; name: string } | null>(null);
   const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
 
@@ -39,6 +40,16 @@ export const Clasificacion = () => {
     } else {
       setProfiles(profilesData ?? []);
     }
+
+    // Fetch previous_champion from league
+    const { data: leagueData, error: leagueError } = await supabase
+      .from('leagues')
+      .select('previous_champion')
+      .eq('id', currentProfile.league_id)
+      .maybeSingle();
+
+    if (leagueError) console.error('Error fetching league data:', leagueError);
+    else setPreviousChampionId(leagueData?.previous_champion ?? null);
   };
 
   useEffect(() => {
@@ -50,9 +61,8 @@ export const Clasificacion = () => {
   }, []);
 
   const handlePlayerClick = (profile: any) => {
-    // Don't open modal for current user - they have their own bet history page
     if (profile.id === user?.id) return;
-    
+
     setSelectedPlayer({
       id: profile.id,
       name: profile.username || 'Usuario'
@@ -64,6 +74,24 @@ export const Clasificacion = () => {
     setIsPlayerModalOpen(false);
     setSelectedPlayer(null);
   };
+
+  const GoldBallIcon = () => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="gold"
+      stroke="goldenrod"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="inline ml-1"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 2 L12 22 M2 12 L22 12 M4.93 4.93 L19.07 19.07 M19.07 4.93 L4.93 19.07" />
+    </svg>
+  );
 
   return (
     <div className="space-y-8">
@@ -94,11 +122,12 @@ export const Clasificacion = () => {
                   onClick={() => handlePlayerClick(profile)}
                 >
                   <TableCell className="font-medium">{index + 1}</TableCell>
-                  <TableCell>{profile.username || 'Usuario'}</TableCell>
-                  <TableCell>{(Math.ceil(Number(profile.total_points ?? 0) * 10) / 10).toFixed(1)}</TableCell>
                   <TableCell>
-  {(Number(profile.last_week_points ?? 0)).toFixed(1)}
-</TableCell>
+                    {profile.username || 'Usuario'}
+                    {profile.id === previousChampionId && <GoldBallIcon />}
+                  </TableCell>
+                  <TableCell>{(Math.ceil(Number(profile.total_points ?? 0) * 10) / 10).toFixed(1)}</TableCell>
+                  <TableCell>{(Number(profile.last_week_points ?? 0)).toFixed(1)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
