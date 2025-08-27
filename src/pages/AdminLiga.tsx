@@ -115,29 +115,41 @@ const AdminLiga: React.FC = () => {
     } finally { setIsUpdatingLeague(false); }
   };
 
-const handleResetLeague = async () => {
+const handleResetWeek = async () => {
   if (!leagueId) return;
+
   try {
     setResettingWeek(true);
 
-    // 1️⃣ Obtener usuario con más y menos puntos antes de resetear
+    // 1️⃣ Obtener el usuario con más y menos puntos en esta liga
     const { data: users, error: usersError } = await supabase
       .from('profiles')
       .select('id, total_points')
       .eq('league_id', leagueId)
-      .order('total_points', { ascending: false }); // descendente
+      .order('total_points', { ascending: false });
 
     if (usersError) throw usersError;
+    if (!users || users.length === 0) throw new Error('No hay usuarios en la liga.');
 
-    const championId = users?.[0]?.id ?? null;
-    const lastId = users?.[users.length - 1]?.id ?? null;
+    const championId = users[0].id; // más puntos
+    const lastId = users[users.length - 1].id; // menos puntos
 
-    // 2️⃣ Incrementar temporada y resetear semana
+    // 2️⃣ Obtener la temporada actual
+    const { data: league, error: leagueFetchError } = await supabase
+      .from('leagues')
+      .select('season')
+      .eq('id', leagueId)
+      .single();
+
+    if (leagueFetchError) throw leagueFetchError;
+    const currentSeason = league?.season ?? 1;
+
+    // 3️⃣ Actualizar la liga: semana, temporada, previous_champion y previous_last
     const { error: leagueError } = await supabase
       .from('leagues')
       .update({
         week: 1,
-        season: supabase.raw('season + 1'),  // incrementa en 1
+        season: currentSeason + 1,
         previous_champion: championId,
         previous_last: lastId,
       })
@@ -145,22 +157,30 @@ const handleResetLeague = async () => {
 
     if (leagueError) throw leagueError;
 
-    // 3️⃣ Resetear puntos de los usuarios
-    const { error: resetPointsError } = await supabase
+    // 4️⃣ Resetear puntos de todos los usuarios de la liga
+    const { error: profilesError } = await supabase
       .from('profiles')
       .update({ total_points: 0 })
       .eq('league_id', leagueId);
 
-    if (resetPointsError) throw resetPointsError;
+    if (profilesError) throw profilesError;
 
-    toast({ title: 'Liga reseteada', description: 'Semana, temporada y puntos actualizados correctamente.' });
+    toast({
+      title: 'Liga reseteada',
+      description: 'Semana, temporada y puntos reiniciados. Campeón y último actualizados.',
+    });
   } catch (e: any) {
-    toast({ title: 'Error', description: e?.message ?? 'No se pudo resetear la liga.', variant: 'destructive' });
+    toast({
+      title: 'Error',
+      description: e?.message ?? 'No se pudo resetear la liga.',
+      variant: 'destructive',
+    });
   } finally {
     setResettingWeek(false);
     setConfirmingReset(false);
   }
 };
+
   return (
     <div>
       <header className="mb-8">
@@ -259,7 +279,7 @@ const handleResetLeague = async () => {
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center space-y-4">
             <p className="text-lg font-semibold">¿Estás seguro que quieres resetear la liga?</p>
             <div className="flex justify-between gap-4">
-              <Button variant="destructive" onClick={handleResetLeague}>Sí, resetear</Button>
+              <Button variant="destructive" onClick={handleResetWeek}>Sí, resetear</Button>
               <Button onClick={() => setConfirmingReset(false)}>Cancelar</Button>
             </div>
           </div>
