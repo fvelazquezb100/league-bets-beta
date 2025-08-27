@@ -72,14 +72,6 @@ export const BetHistory = () => {
     }
   };
 
-  // 🔹 Nueva función: chequear si la apuesta es cancelable (falta más de 15 min)
-  const isCancelable = (startDate?: string | null) => {
-    if (!startDate) return false;
-    const start = new Date(startDate).getTime();
-    const diffMinutes = (start - Date.now()) / (1000 * 60);
-    return diffMinutes > 15;
-  };
-
   const wonBets = bets.filter((bet) => bet.status === 'won');
   const lostBets = bets.filter((bet) => bet.status === 'lost');
   const pendingBets = bets.filter((bet) => bet.status === 'pending').length;
@@ -222,8 +214,7 @@ export const BetHistory = () => {
                         </TableCell>
                         <TableCell>
                           {bet.bet_type === 'combo' && bet.bet_selections?.length
-                            ? bet.bet_selections.every((sel: any) => sel.status === 'pending') &&
-                              isCancelable(bet.fixture_start) && ( // 🔹 restricción aplicada
+                            ? bet.bet_selections.every((sel: any) => sel.status === 'pending') && (
                                 <Button
                                   variant="destructive"
                                   size="sm"
@@ -233,8 +224,7 @@ export const BetHistory = () => {
                                   {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
                                 </Button>
                               )
-                            : bet.status === 'pending' &&
-                              isCancelable(bet.fixture_start) && ( // 🔹 restricción aplicada
+                            : bet.status === 'pending' && (
                                 <Button
                                   variant="destructive"
                                   size="sm"
@@ -295,7 +285,7 @@ export const BetHistory = () => {
                           <Badge variant={getStatusVariant(bet.status)}>{getStatusText(bet.status)}</Badge>
                         </TableCell>
                         <TableCell>
-                          {bet.status === 'pending' && isCancelable(bet.fixture_start) && ( // 🔹 restricción aplicada
+                          {bet.status === 'pending' && (
                             <Button
                               variant="destructive"
                               size="sm"
