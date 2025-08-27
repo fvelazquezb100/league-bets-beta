@@ -224,8 +224,12 @@ serve(async (req) => {
 
   try {
     // Validate internal secret from secure wrapper (no JWT needed since function is public)
+    // Prefer header (works even if body is stripped), fallback to body
+    const headerSecret = req.headers.get('x-internal-secret')
+      || (req.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim() || undefined);
     const body = await req.json().catch(() => ({} as any));
-    const internalSecret = body?.internal_secret;
+    const bodySecret = body?.internal_secret;
+    const internalSecret = headerSecret || bodySecret;
     const expectedSecret = Deno.env.get("INTERNAL_EDGE_SECRET");
     
     if (!expectedSecret) {

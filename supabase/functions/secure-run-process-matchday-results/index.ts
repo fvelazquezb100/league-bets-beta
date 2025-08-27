@@ -88,7 +88,10 @@ serve(async (req) => {
     const { data, error } = await supabaseAdmin.functions.invoke("process-matchday-results", {
       body: bodyWithSecret,
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'x-internal-secret': INTERNAL_EDGE_SECRET,
+        // Also include as Bearer for redundancy in case body is stripped
+        'Authorization': `Bearer ${INTERNAL_EDGE_SECRET}`
       }
     });
 
