@@ -72,6 +72,14 @@ export const BetHistory = () => {
     }
   };
 
+  // 🔹 Nueva función: chequear si la apuesta es cancelable (falta más de 15 min)
+  const isCancelable = (startDate?: string | null) => {
+    if (!startDate) return false;
+    const start = new Date(startDate).getTime();
+    const diffMinutes = (start - Date.now()) / (1000 * 60);
+    return diffMinutes > 15;
+  };
+
   const wonBets = bets.filter((bet) => bet.status === 'won');
   const lostBets = bets.filter((bet) => bet.status === 'lost');
   const pendingBets = bets.filter((bet) => bet.status === 'pending').length;
@@ -114,9 +122,9 @@ export const BetHistory = () => {
     }
   };
 
-const formatBetDisplay = (market: string, selection: string, odds: number): string => {
-  return `${market}: ${selection} @ ${odds.toFixed(2)}`;
-};
+  const formatBetDisplay = (market: string, selection: string, odds: number): string => {
+    return `${market}: ${selection} @ ${odds.toFixed(2)}`;
+  };
 
   return (
     <div className="space-y-6">
@@ -198,18 +206,11 @@ const formatBetDisplay = (market: string, selection: string, odds: number): stri
               {bets.length > 0 ? (
                 bets.map((bet) => {
                   if (bet.bet_type === 'combo' && bet.bet_selections?.length) {
-                    const totalComboOdds = bet.bet_selections.reduce(
-                      (total: number, selection: any) => total * (parseFloat(selection.odds) || 1),
-                      1
-                    );
-
                     return [
                       <TableRow key={bet.id} className="bg-muted/30">
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs">
-                              COMBO
-                            </Badge>
+                            <Badge variant="outline" className="text-xs">COMBO</Badge>
                             <span className="text-sm">Apuesta Combinada</span>
                           </div>
                         </TableCell>
@@ -220,9 +221,9 @@ const formatBetDisplay = (market: string, selection: string, odds: number): stri
                           <Badge variant={getStatusVariant(bet.status)}>{getStatusText(bet.status)}</Badge>
                         </TableCell>
                         <TableCell>
-                          {/* Botón actualizado para combinadas */}
                           {bet.bet_type === 'combo' && bet.bet_selections?.length
-                            ? bet.bet_selections.every((sel: any) => sel.status === 'pending') && (
+                            ? bet.bet_selections.every((sel: any) => sel.status === 'pending') &&
+                              isCancelable(bet.fixture_start) && ( // 🔹 restricción aplicada
                                 <Button
                                   variant="destructive"
                                   size="sm"
@@ -232,7 +233,8 @@ const formatBetDisplay = (market: string, selection: string, odds: number): stri
                                   {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
                                 </Button>
                               )
-                            : bet.status === 'pending' && (
+                            : bet.status === 'pending' &&
+                              isCancelable(bet.fixture_start) && ( // 🔹 restricción aplicada
                                 <Button
                                   variant="destructive"
                                   size="sm"
@@ -245,13 +247,8 @@ const formatBetDisplay = (market: string, selection: string, odds: number): stri
                         </TableCell>
                       </TableRow>,
                       ...bet.bet_selections.map((selection: any) => (
-                        <TableRow
-                          key={`${bet.id}-${selection.id}`}
-                          className="bg-muted/10 border-l-2 border-muted"
-                        >
-                          <TableCell className="font-medium pl-8">
-                            {selection.match_description}
-                          </TableCell>
+                        <TableRow key={`${bet.id}-${selection.id}`} className="bg-muted/10 border-l-2 border-muted">
+                          <TableCell className="font-medium pl-8">{selection.match_description}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <span className="text-sm">
@@ -278,27 +275,27 @@ const formatBetDisplay = (market: string, selection: string, odds: number): stri
                       <TableRow key={bet.id}>
                         <TableCell className="font-medium">{bet.match_description}</TableCell>
                         <TableCell>
-  {bet.bet_type === 'single' ? (
-    <>
-      {bet.market_bets ? getBettingTranslation(bet.market_bets) + ': ' : ''}
-      {(() => {
-        const parts = bet.bet_selection?.split(' @ ') || [];
-        const selection = getBettingTranslation(parts[0] || '');
-        const odds = parts[1] ? parseFloat(parts[1]).toFixed(2) : parseFloat(bet.odds || 0).toFixed(2);
-        return `${selection} @ ${odds}`;
-      })()}
-    </>
-  ) : (
-    bet.bet_selection
-  )}
-</TableCell>
+                          {bet.bet_type === 'single' ? (
+                            <>
+                              {bet.market_bets ? getBettingTranslation(bet.market_bets) + ': ' : ''}
+                              {(() => {
+                                const parts = bet.bet_selection?.split(' @ ') || [];
+                                const selection = getBettingTranslation(parts[0] || '');
+                                const odds = parts[1] ? parseFloat(parts[1]).toFixed(2) : parseFloat(bet.odds || 0).toFixed(2);
+                                return `${selection} @ ${odds}`;
+                              })()}
+                            </>
+                          ) : (
+                            bet.bet_selection
+                          )}
+                        </TableCell>
                         <TableCell>{parseFloat(bet.stake || 0).toFixed(0)} pts</TableCell>
                         <TableCell>{parseFloat(bet.payout || 0).toFixed(0)} pts</TableCell>
                         <TableCell>
                           <Badge variant={getStatusVariant(bet.status)}>{getStatusText(bet.status)}</Badge>
                         </TableCell>
                         <TableCell>
-                          {bet.status === 'pending' ? (
+                          {bet.status === 'pending' && isCancelable(bet.fixture_start) && ( // 🔹 restricción aplicada
                             <Button
                               variant="destructive"
                               size="sm"
@@ -307,7 +304,7 @@ const formatBetDisplay = (market: string, selection: string, odds: number): stri
                             >
                               {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
                             </Button>
-                          ) : null}
+                          )}
                         </TableCell>
                       </TableRow>
                     );
