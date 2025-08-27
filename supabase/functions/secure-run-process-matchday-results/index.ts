@@ -74,11 +74,20 @@ serve(async (req) => {
     console.log("Invoking process-matchday-results function");
     const invokeStartTime = Date.now();
     
+    const INTERNAL_SECRET = Deno.env.get("INTERNAL_FUNCTION_SECRET");
+    if (!INTERNAL_SECRET) {
+      const errorResponse = { error: "Missing INTERNAL_FUNCTION_SECRET", keyInfo };
+      console.error("ERROR: Missing internal function secret");
+      return new Response(JSON.stringify(errorResponse), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { data, error } = await supabaseAdmin.functions.invoke("process-matchday-results", {
-      body: parsedBody,
+      body: { ...parsedBody, internal_secret: INTERNAL_SECRET },
       headers: {
-        'Authorization': `Bearer ${SERVICE_ROLE_KEY}`,
-        'apikey': SERVICE_ROLE_KEY,
+        'x-internal-secret': INTERNAL_SECRET,
         'Content-Type': 'application/json'
       }
     });
