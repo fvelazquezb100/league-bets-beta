@@ -265,12 +265,25 @@ serve(async (req) => {
 
     console.log('Internal secret authentication validated successfully');
 
-    const body = await req.json().catch(() => ({} as any));
-    const jobName: string | undefined = body?.job_name;
-    console.log('Request body:', { jobName, trigger: body?.trigger, timestamp: body?.timestamp });
+    const jobName: string | undefined = parsedBody?.jobName;
+    console.log('Request body:', { jobName, trigger: parsedBody?.trigger, timestamp: parsedBody?.timestamp });
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "https://jhsjszflscbpcfzuurwq.supabase.co";
+    const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const API_FOOTBALL_KEY = Deno.env.get("API_FOOTBALL_KEY");
+
+    console.log('SERVICE_ROLE_KEY present:', !!SERVICE_ROLE_KEY);
+    
+    if (!SERVICE_ROLE_KEY) {
+      console.error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
+      return new Response(JSON.stringify({ 
+        error: 'Server configuration error: Missing service role key',
+        code: 'MISSING_SERVICE_KEY'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (!API_FOOTBALL_KEY) {
       console.error('Missing API_FOOTBALL_KEY environment variable');
@@ -284,7 +297,12 @@ serve(async (req) => {
     }
 
     console.log('Creating Supabase client with service role key');
-    const sb = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+    const sb = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
 
     // 1) Fetch recently finished fixtures for this league
     const baseUrl = "https://v3.football.api-sports.io";

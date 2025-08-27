@@ -98,7 +98,19 @@ serve(async (req) => {
     if (error) {
       console.error("Function invocation error:", error);
       console.error("Error details:", JSON.stringify(error, null, 2));
-      throw error;
+      
+      // Try to get more detailed error information from the response
+      let detailedError = String(error);
+      try {
+        if (error.context && error.context.json) {
+          const errorBody = await error.context.json();
+          detailedError = errorBody.error || errorBody.message || String(error);
+        }
+      } catch (e) {
+        console.log("Could not parse error response body");
+      }
+      
+      throw new Error(detailedError);
     }
 
     console.log("Function invocation successful");
