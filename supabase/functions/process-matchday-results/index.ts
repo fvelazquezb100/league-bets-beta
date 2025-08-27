@@ -223,35 +223,35 @@ serve(async (req) => {
   }
 
   try {
-    // 1. Validate Authorization header
-    const authHeader = req.headers.get('Authorization');
-    console.log('Authorization header present:', !!authHeader);
+    // Validate internal secret from secure wrapper (no JWT needed since function is public)
+    const body = await req.json().catch(() => ({} as any));
+    const internalSecret = body?.internal_secret;
+    const expectedSecret = Deno.env.get("INTERNAL_EDGE_SECRET");
     
-    if (!authHeader) {
-      console.error('Missing Authorization header');
+    if (!expectedSecret) {
+      console.error('Missing INTERNAL_EDGE_SECRET environment variable');
       return new Response(JSON.stringify({ 
-        error: 'Unauthorized: Missing Authorization header',
-        code: 'MISSING_AUTH'
+        error: 'Server configuration error: Missing internal secret',
+        code: 'MISSING_INTERNAL_SECRET'
       }), {
-        status: 401,
+        status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // 2. Extract and validate JWT token
-    const token = authHeader.replace('Bearer ', '');
-    if (!token || !token.startsWith('eyJ')) {
-      console.error('Invalid token format');
+    if (internalSecret !== expectedSecret) {
+      console.error('Invalid internal secret');
       return new Response(JSON.stringify({ 
-        error: 'Unauthorized: Invalid token format',
-        code: 'INVALID_TOKEN_FORMAT'
+        error: 'Unauthorized: Invalid internal secret',
+        code: 'INVALID_INTERNAL_SECRET'
       }), {
-        status: 401,
+        status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // 3. Verify this is a service_role token by checking environment
+    console.log('Internal secret validation successful');
+
     const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!SERVICE_ROLE_KEY) {
       console.error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
@@ -264,21 +264,6 @@ serve(async (req) => {
       });
     }
 
-    // 4. Verify the token matches our service role key
-    if (token !== SERVICE_ROLE_KEY) {
-      console.error('Token does not match service role key');
-      return new Response(JSON.stringify({ 
-        error: 'Unauthorized: Invalid service role token',
-        code: 'INVALID_SERVICE_TOKEN'
-      }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    console.log('Service role authentication validated successfully');
-
-    const body = await req.json().catch(() => ({} as any));
     const jobName: string | undefined = body?.job_name;
     console.log('Request body:', { jobName, trigger: body?.trigger, timestamp: body?.timestamp });
 
