@@ -142,7 +142,7 @@ const handleResetWeek = async () => {
       .single();
 
     if (leagueFetchError) throw leagueFetchError;
-    const currentSeason = league?.season ?? 1;
+    const currentSeason = league?.league_season ?? 1;
 
     // 3️⃣ Actualizar la liga: semana, temporada, previous_champion y previous_last
     const { error: leagueError } = await supabase
