@@ -367,7 +367,7 @@ serve(async (req) => {
     // 2) Load pending bets for these fixtures
     const { data: bets, error: betsErr } = await sb
       .from("bets")
-      .select("id,user_id,stake,odds,fixture_id,status,bet_selection,bet_type")
+      .select("id,user_id,stake,odds,fixture_id,status,bet_selection,bet_type,market_bets")
       .in("fixture_id", finishedIds);
     if (betsErr) throw betsErr;
 
@@ -384,7 +384,7 @@ serve(async (req) => {
     const selectionsToUpdate: any[] = [];
     const affectedComboBets = new Set<number>();
 
-    // Process single bets (existing logic)
+    // Process single bets (fixed logic to parse bet_selection properly)
     for (const b of bets ?? []) {
       if (!b || !b.fixture_id) continue;
       const currentStatus = (b.status ?? "pending").toLowerCase();
@@ -396,7 +396,32 @@ serve(async (req) => {
       const fr = resultsMap.get(Number(b.fixture_id));
       if (!fr) continue;
 
-      const isWin = evaluateBet(b, fr);
+      // Parse bet_selection to extract clean selection text
+      // Format is typically "Under 2.5 @ 1.7" so we want just "Under 2.5"
+      let cleanSelection = b.bet_selection;
+      if (cleanSelection && cleanSelection.includes(' @ ')) {
+        const parts = cleanSelection.split(' @ ');
+        cleanSelection = parts[0].trim();
+      }
+
+      console.log(`Processing single bet ${b.id}:`, {
+        original_bet_selection: b.bet_selection,
+        cleaned_selection: cleanSelection,
+        market_bets: b.market_bets,
+        fixture_id: b.fixture_id,
+        match_result: fr
+      });
+
+      // Create a proper bet object for evaluation with clean selection
+      const betForEvaluation = {
+        bet_selection: cleanSelection,
+        fixture_id: b.fixture_id,
+        market_bets: b.market_bets
+      };
+
+      const isWin = evaluateBet(betForEvaluation, fr);
+
+      console.log(`Single bet ${b.id} evaluation result: ${isWin ? 'WON' : 'LOST'}`);
 
       const stake = Number(b.stake ?? 0);
       const odds = Number(b.odds ?? 0);
