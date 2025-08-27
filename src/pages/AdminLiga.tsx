@@ -137,7 +137,7 @@ const handleResetWeek = async () => {
     // 2️⃣ Obtener la temporada actual
     const { data: league, error: leagueFetchError } = await supabase
       .from('leagues')
-      .select('season')
+      .select('league_season')
       .eq('id', leagueId)
       .single();
 
