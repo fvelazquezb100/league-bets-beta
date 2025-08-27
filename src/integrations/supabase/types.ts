@@ -210,9 +210,12 @@ export type Database = {
           created_at: string
           id: number
           join_code: string | null
+          league_season: number | null
           max_bet: number | null
           min_bet: number | null
           name: string | null
+          previous_champion: string | null
+          previous_last: string | null
           reset_budget: string | null
           type: Database["public"]["Enums"]["league_type"]
           week: number
@@ -222,9 +225,12 @@ export type Database = {
           created_at?: string
           id?: number
           join_code?: string | null
+          league_season?: number | null
           max_bet?: number | null
           min_bet?: number | null
           name?: string | null
+          previous_champion?: string | null
+          previous_last?: string | null
           reset_budget?: string | null
           type?: Database["public"]["Enums"]["league_type"]
           week?: number
@@ -234,9 +240,12 @@ export type Database = {
           created_at?: string
           id?: number
           join_code?: string | null
+          league_season?: number | null
           max_bet?: number | null
           min_bet?: number | null
           name?: string | null
+          previous_champion?: string | null
+          previous_last?: string | null
           reset_budget?: string | null
           type?: Database["public"]["Enums"]["league_type"]
           week?: number
@@ -436,6 +445,10 @@ export type Database = {
       place_combo_bet: {
         Args: { selections: Json; stake_amount: number }
         Returns: number
+      }
+      recalc_total_points: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       reset_weekly_budgets: {
         Args: Record<PropertyKey, never>
