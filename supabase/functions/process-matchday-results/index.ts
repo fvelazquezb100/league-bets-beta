@@ -223,39 +223,35 @@ serve(async (req) => {
   }
 
   try {
-    // Validate internal secret from secure wrapper (no JWT needed since function is public)
-    // Prefer header (works even if body is stripped), fallback to body
-    const headerSecret = req.headers.get('x-internal-secret')
-      || (req.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim() || undefined);
-    const body = await req.json().catch(() => ({} as any));
-    const bodySecret = body?.internal_secret;
-    const internalSecret = headerSecret || bodySecret;
-    const expectedSecret = Deno.env.get("INTERNAL_EDGE_SECRET");
+    // 1. Validate Authorization header
+    const authHeader = req.headers.get('Authorization');
+    console.log('Authorization header present:', !!authHeader);
     
-    if (!expectedSecret) {
-      console.error('Missing INTERNAL_EDGE_SECRET environment variable');
+    if (!authHeader) {
+      console.error('Missing Authorization header');
       return new Response(JSON.stringify({ 
-        error: 'Server configuration error: Missing internal secret',
-        code: 'MISSING_INTERNAL_SECRET'
+        error: 'Unauthorized: Missing Authorization header',
+        code: 'MISSING_AUTH'
       }), {
-        status: 500,
+        status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    if (internalSecret !== expectedSecret) {
-      console.error('Invalid internal secret');
+    // 2. Extract and validate JWT token
+    const token = authHeader.replace('Bearer ', '');
+    if (!token || !token.startsWith('eyJ')) {
+      console.error('Invalid token format');
       return new Response(JSON.stringify({ 
-        error: 'Unauthorized: Invalid internal secret',
-        code: 'INVALID_INTERNAL_SECRET'
+        error: 'Unauthorized: Invalid token format',
+        code: 'INVALID_TOKEN_FORMAT'
       }), {
-        status: 403,
+        status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    console.log('Internal secret validation successful');
-
+    // 3. Verify this is a service_role token by checking environment
     const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!SERVICE_ROLE_KEY) {
       console.error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
@@ -268,6 +264,21 @@ serve(async (req) => {
       });
     }
 
+    // 4. Verify the token matches our service role key
+    if (token !== SERVICE_ROLE_KEY) {
+      console.error('Token does not match service role key');
+      return new Response(JSON.stringify({ 
+        error: 'Unauthorized: Invalid service role token',
+        code: 'INVALID_SERVICE_TOKEN'
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log('Service role authentication validated successfully');
+
+    const body = await req.json().catch(() => ({} as any));
     const jobName: string | undefined = body?.job_name;
     console.log('Request body:', { jobName, trigger: body?.trigger, timestamp: body?.timestamp });
 

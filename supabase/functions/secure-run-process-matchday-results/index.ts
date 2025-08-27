@@ -74,24 +74,12 @@ serve(async (req) => {
     console.log("Invoking process-matchday-results function");
     const invokeStartTime = Date.now();
     
-    // Add internal secret to request body for authentication
-    const INTERNAL_EDGE_SECRET = Deno.env.get("INTERNAL_EDGE_SECRET");
-    if (!INTERNAL_EDGE_SECRET) {
-      throw new Error("INTERNAL_EDGE_SECRET environment variable is not set");
-    }
-
-    const bodyWithSecret = {
-      ...parsedBody,
-      internal_secret: INTERNAL_EDGE_SECRET
-    };
-
     const { data, error } = await supabaseAdmin.functions.invoke("process-matchday-results", {
-      body: bodyWithSecret,
+      body: parsedBody,
       headers: {
-        'Content-Type': 'application/json',
-        'x-internal-secret': INTERNAL_EDGE_SECRET,
-        // Also include as Bearer for redundancy in case body is stripped
-        'Authorization': `Bearer ${INTERNAL_EDGE_SECRET}`
+        'Authorization': `Bearer ${SERVICE_ROLE_KEY}`,
+        'apikey': SERVICE_ROLE_KEY,
+        'Content-Type': 'application/json'
       }
     });
 
