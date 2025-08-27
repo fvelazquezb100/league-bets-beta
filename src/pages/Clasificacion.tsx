@@ -5,18 +5,19 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import { PlayerBetHistory } from '@/components/PlayerBetHistory';
+import { Award } from 'lucide-react'; // Icono para el previous champion
 
 export const Clasificacion = () => {
   const { user } = useAuth();
   const [profiles, setProfiles] = useState<any[]>([]);
-  const [previousChampionId, setPreviousChampionId] = useState<number | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<{ id: string; name: string } | null>(null);
   const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
+  const [previousChampionId, setPreviousChampionId] = useState<number | null>(null);
 
   const fetchLeagueProfiles = async () => {
     if (!user) return;
 
-    // Fetch current user's profile to get league_id
+    // Obtener el perfil del usuario para saber la liga
     const { data: currentProfile } = await supabase
       .from('profiles')
       .select('league_id')
@@ -28,11 +29,24 @@ export const Clasificacion = () => {
       return;
     }
 
-    // Fetch all profiles in the same league
+    const leagueId = currentProfile.league_id;
+
+    // Obtener el previous_champion de la liga
+    const { data: leagueData } = await supabase
+      .from('leagues')
+      .select('previous_champion')
+      .eq('id', leagueId)
+      .maybeSingle();
+
+    if (leagueData?.previous_champion) {
+      setPreviousChampionId(Number(leagueData.previous_champion));
+    }
+
+    // Obtener todos los perfiles de la liga ordenados por puntos
     const { data: profilesData, error } = await supabase
       .from('profiles')
       .select('id, username, total_points, league_id, last_week_points')
-      .eq('league_id', currentProfile.league_id)
+      .eq('league_id', leagueId)
       .order('total_points', { ascending: false });
 
     if (error) {
@@ -40,16 +54,6 @@ export const Clasificacion = () => {
     } else {
       setProfiles(profilesData ?? []);
     }
-
-    // Fetch previous_champion from league
-    const { data: leagueData, error: leagueError } = await supabase
-      .from('leagues')
-      .select('previous_champion')
-      .eq('id', currentProfile.league_id)
-      .maybeSingle();
-
-    if (leagueError) console.error('Error fetching league data:', leagueError);
-    else setPreviousChampionId(leagueData?.previous_champion ?? null);
   };
 
   useEffect(() => {
@@ -61,11 +65,12 @@ export const Clasificacion = () => {
   }, []);
 
   const handlePlayerClick = (profile: any) => {
+    // No abrir modal para el usuario actual
     if (profile.id === user?.id) return;
 
     setSelectedPlayer({
       id: profile.id,
-      name: profile.username || 'Usuario'
+      name: profile.username || 'Usuario',
     });
     setIsPlayerModalOpen(true);
   };
@@ -74,24 +79,6 @@ export const Clasificacion = () => {
     setIsPlayerModalOpen(false);
     setSelectedPlayer(null);
   };
-
-  const GoldBallIcon = () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="gold"
-      stroke="goldenrod"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="inline ml-1"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 2 L12 22 M2 12 L22 12 M4.93 4.93 L19.07 19.07 M19.07 4.93 L4.93 19.07" />
-    </svg>
-  );
 
   return (
     <div className="space-y-8">
@@ -102,7 +89,6 @@ export const Clasificacion = () => {
         <p className="text-muted-foreground">Posiciones actuales de todos los jugadores de la liga</p>
       </div>
 
-      {/* League Standings Table */}
       <Card className="shadow-lg">
         <CardContent>
           <Table>
@@ -116,15 +102,15 @@ export const Clasificacion = () => {
             </TableHeader>
             <TableBody>
               {profiles.map((profile, index) => (
-                <TableRow 
-                  key={profile.id} 
+                <TableRow
+                  key={profile.id}
                   className={`${profile.id === user?.id ? 'bg-muted/50' : ''} ${profile.id !== user?.id ? 'cursor-pointer hover:bg-muted/30 transition-colors' : ''}`}
                   onClick={() => handlePlayerClick(profile)}
                 >
                   <TableCell className="font-medium">{index + 1}</TableCell>
-                  <TableCell>
+                  <TableCell className="flex items-center gap-2">
                     {profile.username || 'Usuario'}
-                    {profile.id === previousChampionId && <GoldBallIcon />}
+                    {previousChampionId === profile.id && <Award className="w-4 h-4 text-yellow-500" />}
                   </TableCell>
                   <TableCell>{(Math.ceil(Number(profile.total_points ?? 0) * 10) / 10).toFixed(1)}</TableCell>
                   <TableCell>{(Number(profile.last_week_points ?? 0)).toFixed(1)}</TableCell>
@@ -135,15 +121,14 @@ export const Clasificacion = () => {
         </CardContent>
       </Card>
 
-      {/* Player Bet History Modal */}
       <Dialog open={isPlayerModalOpen} onOpenChange={setIsPlayerModalOpen}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Historial de Apuestas</DialogTitle>
           </DialogHeader>
           {selectedPlayer && (
-            <PlayerBetHistory 
-              playerId={selectedPlayer.id} 
+            <PlayerBetHistory
+              playerId={selectedPlayer.id}
               playerName={selectedPlayer.name}
             />
           )}
