@@ -201,6 +201,7 @@ const handleResetWeek = async () => {
                   <p><span className="font-semibold mr-2">Apuesta mínima:</span>{leagueData.min_bet}</p>
                   <p><span className="font-semibold mr-2">Apuesta máxima:</span>{leagueData.max_bet}</p>
                   <p><span className="font-semibold mr-2">Semana:</span>{leagueData.week}</p>
+                  <p><span className="font-semibold mr-2">Temporada:</span>{leagueData.league_season}</p>
                 </div>
 
                 {userRole === 'admin_league' && (
