@@ -5,19 +5,19 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import { PlayerBetHistory } from '@/components/PlayerBetHistory';
-import { Award } from 'lucide-react'; // Icono para el previous champion
+import { Award } from 'lucide-react'; // Icono para previous champion
 
 export const Clasificacion = () => {
   const { user } = useAuth();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [selectedPlayer, setSelectedPlayer] = useState<{ id: string; name: string } | null>(null);
   const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
-  const [previousChampionId, setPreviousChampionId] = useState<number | null>(null);
+  const [previousChampionName, setPreviousChampionName] = useState<string | null>(null);
 
   const fetchLeagueProfiles = async () => {
     if (!user) return;
 
-    // Obtener el perfil del usuario para saber la liga
+    // Obtener perfil del usuario para saber la liga
     const { data: currentProfile } = await supabase
       .from('profiles')
       .select('league_id')
@@ -31,7 +31,7 @@ export const Clasificacion = () => {
 
     const leagueId = currentProfile.league_id;
 
-    // Obtener el previous_champion de la liga
+    // Obtener previous_champion de la liga
     const { data: leagueData } = await supabase
       .from('leagues')
       .select('previous_champion')
@@ -39,10 +39,10 @@ export const Clasificacion = () => {
       .maybeSingle();
 
     if (leagueData?.previous_champion) {
-      setPreviousChampionId(Number(leagueData.previous_champion));
+      setPreviousChampionName(leagueData.previous_champion);
     }
 
-    // Obtener todos los perfiles de la liga ordenados por puntos
+    // Obtener perfiles de la liga ordenados por puntos
     const { data: profilesData, error } = await supabase
       .from('profiles')
       .select('id, username, total_points, league_id, last_week_points')
@@ -65,7 +65,6 @@ export const Clasificacion = () => {
   }, []);
 
   const handlePlayerClick = (profile: any) => {
-    // No abrir modal para el usuario actual
     if (profile.id === user?.id) return;
 
     setSelectedPlayer({
@@ -110,7 +109,9 @@ export const Clasificacion = () => {
                   <TableCell className="font-medium">{index + 1}</TableCell>
                   <TableCell className="flex items-center gap-2">
                     {profile.username || 'Usuario'}
-                    {previousChampionId === profile.id && <Award className="w-4 h-4 text-yellow-500" />}
+                    {previousChampionName === profile.username && (
+                      <Award className="w-4 h-4 text-yellow-500" />
+                    )}
                   </TableCell>
                   <TableCell>{(Math.ceil(Number(profile.total_points ?? 0) * 10) / 10).toFixed(1)}</TableCell>
                   <TableCell>{(Number(profile.last_week_points ?? 0)).toFixed(1)}</TableCell>
