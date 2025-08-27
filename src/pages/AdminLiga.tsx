@@ -134,14 +134,22 @@ const handleResetWeek = async () => {
     const championId = users[0].id; // más puntos
     const lastId = users[users.length - 1].id; // menos puntos
 
-    // 2️⃣ Use default season value since league_season column doesn't exist yet
-    const currentSeason = 1;
+    // 2️⃣ Obtener la temporada actual
+    const { data: league, error: leagueFetchError } = await supabase
+      .from('leagues')
+      .select('league_season')
+      .eq('id', leagueId)
+      .single();
 
-    // 3️⃣ Actualizar la liga: semana, previous_champion y previous_last
+    if (leagueFetchError) throw leagueFetchError;
+    const currentSeason = league?.league_season ?? 1;
+
+    // 3️⃣ Actualizar la liga: semana, temporada, previous_champion y previous_last
     const { error: leagueError } = await supabase
       .from('leagues')
       .update({
         week: 1,
+        league_season: currentSeason + 1,
         previous_champion: championId,
         previous_last: lastId,
       })
