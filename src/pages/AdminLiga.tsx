@@ -64,7 +64,7 @@ const AdminLiga: React.FC = () => {
 
         const { data: leagueData, error: leagueError } = await supabase
           .from('leagues')
-          .select('id, name, week, budget, min_bet, max_bet, type, reset_budget, join_code')
+          .select('id, name, week, budget, min_bet, max_bet, type, league_season, reset_budget, join_code')
           .eq('id', profileData.league_id)
           .maybeSingle();
         if (leagueError) throw leagueError;
