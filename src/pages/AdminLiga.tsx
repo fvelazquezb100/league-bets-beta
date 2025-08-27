@@ -149,7 +149,7 @@ const handleResetWeek = async () => {
       .from('leagues')
       .update({
         week: 1,
-        season: currentSeason + 1,
+        league_season: currentSeason + 1,
         previous_champion: championId,
         previous_last: lastId,
       })
