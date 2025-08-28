@@ -20,16 +20,17 @@ export const BetHistory = () => {
     const fetchBets = async () => {
       if (!user) return;
 
-      const { data, error } = await supabase
+      // Traemos las apuestas y los resultados de los partidos
+      const { data: betsData, error: betsError } = await supabase
         .from('bets')
-        .select('*, bet_selections(*)')
+        .select('*, bet_selections(*), match_results(result)')
         .eq('user_id', user.id)
         .order('id', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching bets:', error);
-      } else if (data) {
-        setBets(data);
+      if (betsError) {
+        console.error('Error fetching bets:', betsError);
+      } else if (betsData) {
+        setBets(betsData);
       }
     };
 
@@ -238,7 +239,10 @@ export const BetHistory = () => {
                       </TableRow>,
                       ...bet.bet_selections.map((selection: any) => (
                         <TableRow key={`${bet.id}-${selection.id}`} className="bg-muted/10 border-l-2 border-muted">
-                          <TableCell className="font-medium pl-8">{selection.match_description}</TableCell>
+                          <TableCell className="font-medium pl-8">
+                            {selection.match_description}
+                            {selection.match_results?.result ? ` (${selection.match_results.result})` : ''}
+                          </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <span className="text-sm">
@@ -255,7 +259,9 @@ export const BetHistory = () => {
                           </TableCell>
                           <TableCell></TableCell>
                           <TableCell></TableCell>
-                          <TableCell></TableCell>
+                          <TableCell>
+                            {selection.match_results?.result ? selection.match_results.result : ''}
+                          </TableCell>
                           <TableCell></TableCell>
                         </TableRow>
                       )),
@@ -263,7 +269,10 @@ export const BetHistory = () => {
                   } else {
                     return (
                       <TableRow key={bet.id}>
-                        <TableCell className="font-medium">{bet.match_description}</TableCell>
+                        <TableCell className="font-medium">
+                          {bet.match_description}
+                          {bet.match_results?.result ? ` (${bet.match_results.result})` : ''}
+                        </TableCell>
                         <TableCell>
                           {bet.bet_type === 'single' ? (
                             <>
