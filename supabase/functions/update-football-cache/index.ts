@@ -1,22 +1,79 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-console.log(`Function "update-football-cache" is starting.`);
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 // Helper function to add a delay between API calls to respect rate limits
 const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders })
+  }
+
   try {
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    console.log('Protected function called');
+    
+    // Get internal secret for authentication
+    const INTERNAL_SECRET = Deno.env.get('INTERNAL_FUNCTION_SECRET');
+    const authHeaderSecret = req.headers.get('x-internal-secret');
+    
+    let requestBody;
+    try {
+      requestBody = await req.json();
+    } catch {
+      requestBody = {};
+    }
+    const bodySecret = requestBody?.internal_secret;
+    
+    console.log('Internal secret from body present:', !!bodySecret);
+    console.log('Internal secret from header present:', !!authHeaderSecret);
+    
+    // Validate internal secret
+    if (!INTERNAL_SECRET || (authHeaderSecret !== INTERNAL_SECRET && bodySecret !== INTERNAL_SECRET)) {
+      console.log('Internal secret authentication failed');
+      return new Response(JSON.stringify({ 
+        error: 'Unauthorized - Invalid internal secret',
+        bodySecretPresent: !!bodySecret,
+        headerSecretPresent: !!authHeaderSecret,
+        internalSecretConfigured: !!INTERNAL_SECRET
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
+    console.log('Internal secret authentication validated successfully');
+    
+    // Validate environment variables
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const API_KEY = Deno.env.get('API_FOOTBALL_KEY');
+    
+    console.log('SERVICE_ROLE_KEY present:', !!SERVICE_ROLE_KEY);
+    
+    if (!SUPABASE_URL || !SERVICE_ROLE_KEY || !API_KEY) {
+      return new Response(JSON.stringify({ 
+        error: 'Missing required environment variables',
+        missing: {
+          SUPABASE_URL: !SUPABASE_URL,
+          SERVICE_ROLE_KEY: !SERVICE_ROLE_KEY,
+          API_FOOTBALL_KEY: !API_KEY
+        }
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
+    console.log('Creating Supabase client with service role key');
+    
+    // Initialize Supabase client
+    const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
     console.log("Supabase admin client initialized.");
 
-    const apiKey = Deno.env.get('API_FOOTBALL_KEY');
-    if (!apiKey) {
-      throw new Error('API_FOOTBALL_KEY is not set in Edge Function secrets.');
-    }
     console.log('API Key found. Starting two-step odds fetch...');
 
     // --- STEP 1: Fetch the NEXT 10 upcoming fixture IDs ---
@@ -27,7 +84,7 @@ Deno.serve(async (req) => {
     
     const fixturesResponse = await fetch(fixturesUrl, {
       headers: {
-        'x-apisports-key': apiKey,
+        'x-apisports-key': API_KEY,
       },
     });
 
@@ -45,7 +102,7 @@ Deno.serve(async (req) => {
     if (fixtureIDs.length === 0) {
       console.log('No upcoming fixtures found. Cache will not be updated.');
        return new Response(JSON.stringify({ message: 'No upcoming fixtures to fetch odds for.' }), {
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       });
     }
@@ -57,7 +114,7 @@ Deno.serve(async (req) => {
       console.log(`Fetching odds from: ${oddsUrl}`);
       const oddsResponse = await fetch(oddsUrl, {
         headers: {
-          'x-apisports-key': apiKey,
+          'x-apisports-key': API_KEY,
         },
       });
 
@@ -121,9 +178,9 @@ Deno.serve(async (req) => {
         const cronExpr = `${dynamicRunTime.getUTCMinutes()} ${dynamicRunTime.getUTCHours()} ${dynamicRunTime.getUTCDate()} ${dynamicRunTime.getUTCMonth() + 1} *`;
         const jobName = `process-matchday-results-${Math.floor(dynamicRunTime.getTime() / 1000)}`;
 
-        const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? 'https://jhsjszflscbpcfzuurwq.supabase.co';
+        const SUPABASE_URL_FOR_SCHEDULE = Deno.env.get('SUPABASE_URL') ?? 'https://jhsjszflscbpcfzuurwq.supabase.co';
         const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
-        const scheduleUrl = `${SUPABASE_URL}/functions/v1/secure-run-process-matchday-results`;
+        const scheduleUrl = `${SUPABASE_URL_FOR_SCHEDULE}/functions/v1/secure-run-process-matchday-results`;
         const authHeader = ANON_KEY ? `Bearer ${ANON_KEY}` : '';
 
         console.log(`Scheduling secure-run-process-matchday-results at ${dynamicRunTime.toISOString()} (cron: "${cronExpr}") with job name ${jobName}`);
@@ -148,15 +205,19 @@ Deno.serve(async (req) => {
       console.warn('Dynamic scheduling encountered an issue (continuing):', (e as Error).message);
     }
 
-    return new Response(JSON.stringify({ message: 'Cache updated successfully!', fixtures_found: fixtureIDs.length, odds_fetched: allOddsData.length }), {
-      headers: { 'Content-Type': 'application/json' },
+    return new Response(JSON.stringify({ 
+      message: 'Cache updated successfully!', 
+      fixtures_found: fixtureIDs.length, 
+      odds_fetched: allOddsData.length 
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
 
   } catch (error) {
     console.error('CRITICAL ERROR in Edge Function:', error.message);
     return new Response(JSON.stringify({ error: error.message }), {
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
     });
   }
