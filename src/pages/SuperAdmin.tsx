@@ -36,12 +36,27 @@ const SuperAdmin: React.FC = () => {
   const handleForceUpdateOdds = async () => {
     try {
       setUpdatingOdds(true);
-      const { error } = await supabase.functions.invoke('secure-run-update-football-cache', { body: {} });
-      if (error) throw error;
+      const { data, error } = await supabase.functions.invoke('secure-run-update-football-cache', {
+        body: { trigger: 'admin', timestamp: new Date().toISOString() }
+      });
+      
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
+      
+      if (data?.error) {
+        console.error('Function returned error:', data.error);
+        throw new Error(data.error);
+      }
+      
+      console.log('Update odds response:', data);
       toast({ title: 'Actualización forzada', description: 'Se inició la actualización de cuotas.' });
       await refetch();
     } catch (e: any) {
-      toast({ title: 'Error', description: e?.message ?? 'No se pudo actualizar las cuotas.', variant: 'destructive' });
+      console.error('Error updating odds cache:', e);
+      const message = e?.message || 'No se pudo actualizar las cuotas.';
+      toast({ title: 'Error', description: message, variant: 'destructive' });
     } finally {
       setUpdatingOdds(false);
     }

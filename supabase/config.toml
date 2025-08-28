@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.update-football-cache]
 verify_jwt = false
+
+[functions.secure-run-update-football-cache]
+verify_jwt = false
