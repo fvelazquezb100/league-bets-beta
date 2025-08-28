@@ -13,6 +13,7 @@ export const BetHistory = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [bets, setBets] = useState<any[]>([]);
+  const [matchResults, setMatchResults] = useState<Record<number, string>>({});
   const [now, setNow] = useState<Date>(new Date());
   const [cancelingId, setCancelingId] = useState<number | null>(null);
 
@@ -20,18 +21,48 @@ export const BetHistory = () => {
     const fetchBets = async () => {
       if (!user) return;
 
-      // Traemos las apuestas y los resultados de los partidos
+      // 1️⃣ Traemos todas las apuestas del usuario
       const { data: betsData, error: betsError } = await supabase
         .from('bets')
-        .select('*, bet_selections(*), match_results(result)')
+        .select('*, bet_selections(*)')
         .eq('user_id', user.id)
         .order('id', { ascending: false });
 
       if (betsError) {
         console.error('Error fetching bets:', betsError);
-      } else if (betsData) {
-        setBets(betsData);
+        return;
       }
+
+      if (!betsData) return;
+
+      setBets(betsData);
+
+      // 2️⃣ Obtenemos todos los fixture_id únicos para traer los resultados
+      const fixtureIds = new Set<number>();
+      betsData.forEach((b) => {
+        if (b.fixture_id) fixtureIds.add(b.fixture_id);
+        if (b.bet_selections) {
+          b.bet_selections.forEach((s: any) => fixtureIds.add(s.fixture_id));
+        }
+      });
+
+      // 3️⃣ Traemos los resultados de match_results
+      const { data: resultsData, error: resultsError } = await supabase
+        .from('match_results')
+        .select('fixture_id,result')
+        .in('fixture_id', Array.from(fixtureIds));
+
+      if (resultsError) {
+        console.error('Error fetching match results:', resultsError);
+        return;
+      }
+
+      // 4️⃣ Creamos un diccionario fixture_id => result
+      const resultsMap: Record<number, string> = {};
+      resultsData?.forEach((r: any) => {
+        resultsMap[r.fixture_id] = r.result;
+      });
+      setMatchResults(resultsMap);
     };
 
     fetchBets();
@@ -241,7 +272,7 @@ export const BetHistory = () => {
                         <TableRow key={`${bet.id}-${selection.id}`} className="bg-muted/10 border-l-2 border-muted">
                           <TableCell className="font-medium pl-8">
                             {selection.match_description}
-                            {selection.match_results?.result ? ` (${selection.match_results.result})` : ''}
+                            {matchResults[selection.fixture_id] ? ` (${matchResults[selection.fixture_id]})` : ''}
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
@@ -260,7 +291,7 @@ export const BetHistory = () => {
                           <TableCell></TableCell>
                           <TableCell></TableCell>
                           <TableCell>
-                            {selection.match_results?.result ? selection.match_results.result : ''}
+                            {matchResults[selection.fixture_id] || ''}
                           </TableCell>
                           <TableCell></TableCell>
                         </TableRow>
@@ -271,7 +302,7 @@ export const BetHistory = () => {
                       <TableRow key={bet.id}>
                         <TableCell className="font-medium">
                           {bet.match_description}
-                          {bet.match_results?.result ? ` (${bet.match_results.result})` : ''}
+                          {matchResults[bet.fixture_id] ? ` (${matchResults[bet.fixture_id]})` : ''}
                         </TableCell>
                         <TableCell>
                           {bet.bet_type === 'single' ? (
