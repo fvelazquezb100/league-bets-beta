@@ -15,12 +15,12 @@ export const BetHistory = () => {
   const [bets, setBets] = useState<any[]>([]);
   const [now, setNow] = useState<Date>(new Date());
   const [cancelingId, setCancelingId] = useState<number | null>(null);
-  const [matchResults, setMatchResults] = useState<Record<number, string>>({});
 
   useEffect(() => {
-    const fetchBets = async () => {
+    const fetchBetsWithResults = async () => {
       if (!user) return;
 
+      // Traemos apuestas
       const { data: betsData, error: betsError } = await supabase
         .from('bets')
         .select('*, bet_selections(*)')
@@ -31,48 +31,55 @@ export const BetHistory = () => {
         console.error('Error fetching bets:', betsError);
         return;
       }
+      if (!betsData) return;
 
-      if (betsData) {
-        setBets(betsData);
-
-        // Get all unique fixture_ids from bets and bet_selections
-        const fixtureIds = new Set<number>();
-        betsData.forEach((bet) => {
-          if (bet.fixture_id) {
-            fixtureIds.add(bet.fixture_id);
-          }
-          if (bet.bet_selections) {
-            bet.bet_selections.forEach((selection: any) => {
-              if (selection.fixture_id) {
-                fixtureIds.add(selection.fixture_id);
-              }
-            });
-          }
-        });
-
-        // Fetch match results for these fixture_ids
-        if (fixtureIds.size > 0) {
-          try {
-            const { data: resultsData } = await (supabase as any)
-              .from('match_results')
-              .select('fixture_id, match_result')
-              .in('fixture_id', Array.from(fixtureIds));
-            
-            if (resultsData) {
-              const resultsMap: Record<number, string> = {};
-              resultsData.forEach((result: any) => {
-                resultsMap[result.fixture_id] = result.match_result;
-              });
-              setMatchResults(resultsMap);
-            }
-          } catch (error) {
-            console.error('Error fetching match results:', error);
-          }
+      // Recogemos fixture_ids de apuestas y selecciones (forzando números)
+      const fixtureIds = new Set<number>();
+      betsData.forEach((bet: any) => {
+        if (bet.fixture_id) fixtureIds.add(Number(bet.fixture_id));
+        if (bet.bet_selections?.length) {
+          bet.bet_selections.forEach((sel: any) => {
+            if (sel.fixture_id) fixtureIds.add(Number(sel.fixture_id));
+          });
         }
+      });
+
+      if (fixtureIds.size === 0) {
+        setBets(betsData);
+        return;
       }
+
+      // Traemos resultados correspondientes
+      const { data: resultsData, error: resultsError } = await supabase
+        .from('match_results')
+        .select('fixture_id, match_result')
+        .in('fixture_id', Array.from(fixtureIds));
+
+      if (resultsError) {
+        console.error('Error fetching match results:', resultsError);
+        return;
+      }
+
+      // Creamos mapa fixture_id => match_result
+      const resultsMap: Record<number, string> = {};
+      resultsData?.forEach((res: any) => {
+        resultsMap[Number(res.fixture_id)] = res.match_result;
+      });
+
+      // Combinamos resultados con apuestas y selecciones, usando '—' si no hay resultado
+      const betsWithResults = betsData.map((bet: any) => ({
+        ...bet,
+        match_result: resultsMap[Number(bet.fixture_id)] || '—',
+        bet_selections: bet.bet_selections?.map((sel: any) => ({
+          ...sel,
+          match_result: resultsMap[Number(sel.fixture_id)] || '—',
+        })),
+      }));
+
+      setBets(betsWithResults);
     };
 
-    fetchBets();
+    fetchBetsWithResults();
   }, [user]);
 
   useEffect(() => {
@@ -155,12 +162,6 @@ export const BetHistory = () => {
 
   const formatBetDisplay = (market: string, selection: string, odds: number): string => {
     return `${market}: ${selection} @ ${odds.toFixed(2)}`;
-  };
-
-  const getMatchResultDisplay = (matchDescription: string | null, fixtureId: number | null): string => {
-    const matchName = matchDescription || 'Partido';
-    const result = fixtureId ? matchResults[fixtureId] : null;
-    return result ? `${matchName} — ${result}` : `${matchName} — —`;
   };
 
   return (
@@ -249,6 +250,7 @@ export const BetHistory = () => {
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="text-xs">COMBO</Badge>
                             <span className="text-sm">Apuesta Combinada</span>
+                            <span className="ml-2 text-sm text-muted-foreground">({bet.match_result})</span>
                           </div>
                         </TableCell>
                         <TableCell></TableCell>
@@ -282,10 +284,11 @@ export const BetHistory = () => {
                         </TableCell>
                       </TableRow>,
                       ...bet.bet_selections.map((selection: any) => (
-                         <TableRow key={`${bet.id}-${selection.id}`} className="bg-muted/10 border-l-2 border-muted">
-                           <TableCell className="font-medium pl-8">
-                             {getMatchResultDisplay(selection.match_description, selection.fixture_id)}
-                           </TableCell>
+                        <TableRow key={`${bet.id}-${selection.id}`} className="bg-muted/10 border-l-2 border-muted">
+                          <TableCell className="font-medium pl-8">
+                            {selection.match_description}
+                            <span className="ml-2 text-sm text-muted-foreground">({selection.match_result})</span>
+                          </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <span className="text-sm">
@@ -309,10 +312,11 @@ export const BetHistory = () => {
                     ];
                   } else {
                     return (
-                       <TableRow key={bet.id}>
-                         <TableCell className="font-medium">
-                           {getMatchResultDisplay(bet.match_description, bet.fixture_id)}
-                         </TableCell>
+                      <TableRow key={bet.id}>
+                        <TableCell className="font-medium">
+                          {bet.match_description}
+                          <span className="ml-2 text-sm text-muted-foreground">({bet.match_result})</span>
+                        </TableCell>
                         <TableCell>
                           {bet.bet_type === 'single' ? (
                             <>
