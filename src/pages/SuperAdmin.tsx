@@ -9,7 +9,7 @@ import { NewsManagement } from '@/components/NewsManagement'; // Tarjeta de noti
 const SuperAdmin: React.FC = () => {
   const { toast } = useToast();
 
-  //v1 añadido card para calculo manual de todos los puntos
+  //añadido card para hacer calculo manual de puntos
   
   // Caché de cuotas
   const {
@@ -42,23 +42,14 @@ const SuperAdmin: React.FC = () => {
         body: { trigger: 'admin', timestamp: new Date().toISOString() }
       });
       
-      if (error) {
-        console.error('Edge function error:', error);
-        throw error;
-      }
-      
-      if (data?.error) {
-        console.error('Function returned error:', data.error);
-        throw new Error(data.error);
-      }
-      
-      console.log('Update odds response:', data);
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
       toast({ title: 'Actualización forzada', description: 'Se inició la actualización de cuotas.' });
       await refetch();
     } catch (e: any) {
       console.error('Error updating odds cache:', e);
-      const message = e?.message || 'No se pudo actualizar las cuotas.';
-      toast({ title: 'Error', description: message, variant: 'destructive' });
+      toast({ title: 'Error', description: e?.message ?? 'No se pudo actualizar las cuotas.', variant: 'destructive' });
     } finally {
       setUpdatingOdds(false);
     }
@@ -149,15 +140,11 @@ const SuperAdmin: React.FC = () => {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* 👇 Tarjeta de Noticias integrada en estilo Card */}
+        {/* Tarjeta de Noticias */}
+        <CardContent className="md:col-span-2">
+          <NewsManagement />
+        </CardContent>
 
-
-          <CardContent className="md:col-span-2">
-            <NewsManagement />
-          </CardContent>
-
-  
-      
         {/* Caché de cuotas */}
         <Card>
           <CardHeader>
@@ -188,6 +175,41 @@ const SuperAdmin: React.FC = () => {
           <CardFooter>
             <Button onClick={handleForceProcessResults} disabled={processingResults}>
               {processingResults ? 'Procesando…' : 'Forzar procesamiento de resultados'}
+            </Button>
+          </CardFooter>
+        </Card>
+
+        {/* Recalcular Total Points */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recalcular Puntos Totales</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Ejecuta manualmente el cálculo total de puntos de todos los usuarios, según sus apuestas ganadas.
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                const confirm = window.confirm(
+                  '¿Estás seguro? Esto recalculará los puntos totales de todos los usuarios según sus apuestas ganadas.'
+                );
+                if (!confirm) return;
+
+                try {
+                  const { data, error } = await supabase.functions.invoke('recalc_total_points');
+                  if (error) throw error;
+                  toast({ title: 'Cálculo completado', description: 'Los puntos totales se han recalculado correctamente.' });
+                  console.log('Recalc total points result:', data);
+                } catch (e: any) {
+                  console.error('Error recalculando puntos totales:', e);
+                  toast({ title: 'Error', description: e?.message ?? 'No se pudo recalcular los puntos.', variant: 'destructive' });
+                }
+              }}
+            >
+              Recalcular Puntos
             </Button>
           </CardFooter>
         </Card>
