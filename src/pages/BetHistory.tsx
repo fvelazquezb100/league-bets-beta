@@ -115,7 +115,7 @@ export const BetHistory = () => {
   };
 
   const formatBetDisplay = (market: string, selection: string, odds: number): string => {
-    return ${market}: ${selection} @ ${odds.toFixed(2)};
+    return `${market}: ${selection} @ ${odds.toFixed(2)}`;
   };
 
   return (
@@ -237,7 +237,7 @@ export const BetHistory = () => {
                         </TableCell>
                       </TableRow>,
                       ...bet.bet_selections.map((selection: any) => (
-                        <TableRow key={${bet.id}-${selection.id}} className="bg-muted/10 border-l-2 border-muted">
+                        <TableRow key={`${bet.id}-${selection.id}`} className="bg-muted/10 border-l-2 border-muted">
                           <TableCell className="font-medium pl-8">{selection.match_description}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
@@ -272,7 +272,7 @@ export const BetHistory = () => {
                                 const parts = bet.bet_selection?.split(' @ ') || [];
                                 const selection = getBettingTranslation(parts[0] || '');
                                 const odds = parts[1] ? parseFloat(parts[1]).toFixed(2) : parseFloat(bet.odds || 0).toFixed(2);
-                                return ${selection} @ ${odds};
+                                return `${selection} @ ${odds}`;
                               })()}
                             </>
                           ) : (
