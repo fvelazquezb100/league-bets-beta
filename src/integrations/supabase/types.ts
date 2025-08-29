@@ -270,6 +270,54 @@ export type Database = {
         }
         Relationships: []
       }
+      match_results: {
+        Row: {
+          away_goals: number
+          away_team: string
+          finished_at: string
+          fixture_id: number
+          halftime_away: number
+          halftime_home: number
+          home_goals: number
+          home_team: string
+          league_id: number
+          match_name: string
+          match_result: string | null
+          outcome: string
+          season: number
+        }
+        Insert: {
+          away_goals: number
+          away_team: string
+          finished_at: string
+          fixture_id: number
+          halftime_away: number
+          halftime_home: number
+          home_goals: number
+          home_team: string
+          league_id: number
+          match_name: string
+          match_result?: string | null
+          outcome: string
+          season: number
+        }
+        Update: {
+          away_goals?: number
+          away_team?: string
+          finished_at?: string
+          fixture_id?: number
+          halftime_away?: number
+          halftime_home?: number
+          home_goals?: number
+          home_team?: string
+          league_id?: number
+          match_name?: string
+          match_result?: string | null
+          outcome?: string
+          season?: number
+        }
+        Relationships: []
+      }
       news: {
         Row: {
           content: string
