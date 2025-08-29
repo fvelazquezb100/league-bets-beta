@@ -13,7 +13,6 @@ export const BetHistory = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [bets, setBets] = useState<any[]>([]);
-  const [matchResults, setMatchResults] = useState<Record<number, string>>({});
   const [now, setNow] = useState<Date>(new Date());
   const [cancelingId, setCancelingId] = useState<number | null>(null);
 
@@ -21,44 +20,16 @@ export const BetHistory = () => {
     const fetchBets = async () => {
       if (!user) return;
 
-      // Traer apuestas
-      const { data: betsData, error: betsError } = await supabase
+      const { data, error } = await supabase
         .from('bets')
         .select('*, bet_selections(*)')
         .eq('user_id', user.id)
         .order('id', { ascending: false });
 
-      if (betsError) {
-        console.error('Error fetching bets:', betsError);
-        return;
-      }
-
-      setBets(betsData || []);
-
-      // Traer resultados de los partidos que aparecen en las apuestas
-      const fixtureIds = [
-        ...new Set([
-          ...(betsData?.map((b: any) => b.fixture_id) || []),
-          ...(betsData?.flatMap((b: any) => b.bet_selections?.map((s: any) => s.fixture_id) || []) || []),
-        ]),
-      ];
-
-      if (fixtureIds.length > 0) {
-        const { data: resultsData, error: resultsError } = await supabase
-          .from('match_results')
-          .select('fixture_id,result')
-          .in('fixture_id', fixtureIds);
-
-        if (resultsError) {
-          console.error('Error fetching match results:', resultsError);
-          return;
-        }
-
-        const resultsMap: Record<number, string> = {};
-        resultsData?.forEach((r: any) => {
-          resultsMap[r.fixture_id] = r.result;
-        });
-        setMatchResults(resultsMap);
+      if (error) {
+        console.error('Error fetching bets:', error);
+      } else if (data) {
+        setBets(data);
       }
     };
 
@@ -144,7 +115,7 @@ export const BetHistory = () => {
   };
 
   const formatBetDisplay = (market: string, selection: string, odds: number): string => {
-    return `${market}: ${selection} @ ${odds.toFixed(2)}`;
+    return ${market}: ${selection} @ ${odds.toFixed(2)};
   };
 
   return (
@@ -266,11 +237,8 @@ export const BetHistory = () => {
                         </TableCell>
                       </TableRow>,
                       ...bet.bet_selections.map((selection: any) => (
-                        <TableRow key={`${bet.id}-${selection.id}`} className="bg-muted/10 border-l-2 border-muted">
-                          <TableCell className="font-medium pl-8">
-                            {selection.match_description}
-                            {matchResults[selection.fixture_id] ? ` (${matchResults[selection.fixture_id]})` : ''}
-                          </TableCell>
+                        <TableRow key={${bet.id}-${selection.id}} className="bg-muted/10 border-l-2 border-muted">
+                          <TableCell className="font-medium pl-8">{selection.match_description}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <span className="text-sm">
@@ -295,10 +263,7 @@ export const BetHistory = () => {
                   } else {
                     return (
                       <TableRow key={bet.id}>
-                        <TableCell className="font-medium">
-                          {bet.match_description}
-                          {matchResults[bet.fixture_id] ? ` (${matchResults[bet.fixture_id]})` : ''}
-                        </TableCell>
+                        <TableCell className="font-medium">{bet.match_description}</TableCell>
                         <TableCell>
                           {bet.bet_type === 'single' ? (
                             <>
@@ -307,7 +272,7 @@ export const BetHistory = () => {
                                 const parts = bet.bet_selection?.split(' @ ') || [];
                                 const selection = getBettingTranslation(parts[0] || '');
                                 const odds = parts[1] ? parseFloat(parts[1]).toFixed(2) : parseFloat(bet.odds || 0).toFixed(2);
-                                return `${selection} @ ${odds}`;
+                                return ${selection} @ ${odds};
                               })()}
                             </>
                           ) : (
