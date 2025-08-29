@@ -9,6 +9,8 @@ import { NewsManagement } from '@/components/NewsManagement'; // Tarjeta de noti
 const SuperAdmin: React.FC = () => {
   const { toast } = useToast();
 
+  //v1 añadido card para calculo manual de todos los puntos
+  
   // Caché de cuotas
   const {
     data: lastUpdated,
