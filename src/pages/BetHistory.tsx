@@ -17,8 +17,6 @@ export const BetHistory = () => {
   const [cancelingId, setCancelingId] = useState<number | null>(null);
   const [matchResults, setMatchResults] = useState<Record<number, string>>({});
 
-  // cambiar como se ve el partido y resultado
-  
   useEffect(() => {
     const fetchBets = async () => {
       if (!user) return;
@@ -159,10 +157,18 @@ export const BetHistory = () => {
     return `${market}: ${selection} @ ${odds.toFixed(2)}`;
   };
 
-  const getMatchResultDisplay = (matchDescription: string | null, fixtureId: number | null): string => {
+  // ✅ versión buena: partido arriba, resultado debajo
+  const getMatchResultDisplay = (matchDescription: string | null, fixtureId: number | null) => {
     const matchName = matchDescription || 'Partido';
     const result = fixtureId ? matchResults[fixtureId] : null;
-    return result ? `${matchName} — ${result}` : `${matchName} — —`;
+    return (
+      <div>
+        <div>{matchName}</div>
+        {result && (
+          <div className="text-xs text-muted-foreground">{result}</div>
+        )}
+      </div>
+    );
   };
 
   return (
