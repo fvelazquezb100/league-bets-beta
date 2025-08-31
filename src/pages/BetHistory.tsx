@@ -17,6 +17,8 @@ export const BetHistory = () => {
   const [cancelingId, setCancelingId] = useState<number | null>(null);
   const [matchResults, setMatchResults] = useState<Record<number, string>>({});
 
+  // cambiar como se ve el partido y resultado
+  
   useEffect(() => {
     const fetchBets = async () => {
       if (!user) return;
