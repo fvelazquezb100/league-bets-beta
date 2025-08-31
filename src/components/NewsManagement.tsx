@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Trash2, Edit2, Eye, EyeOff } from 'lucide-react';
+import { Trash2, Edit2, Eye, EyeOff, Snowflake } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface NewsItem {
@@ -15,6 +15,7 @@ interface NewsItem {
   content: string;
   created_at: string;
   is_active: boolean;
+  is_frozen: boolean;
 }
 
 export const NewsManagement = () => {
@@ -33,6 +34,7 @@ export const NewsManagement = () => {
       const { data, error } = await supabase
         .from('news')
         .select('*')
+        .order('is_frozen', { ascending: false })
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -121,6 +123,26 @@ export const NewsManagement = () => {
     } catch (error: any) {
       console.error('Error updating news:', error);
       toast({ title: 'Error', description: error.message || 'No se pudo actualizar la noticia', variant: 'destructive' });
+    }
+  };
+
+  const handleToggleFreeze = async (newsId: number, currentFrozen: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('news')
+        .update({ is_frozen: !currentFrozen })
+        .eq('id', newsId);
+
+      if (error) throw error;
+
+      toast({ 
+        title: 'Éxito', 
+        description: `Noticia ${!currentFrozen ? 'congelada' : 'descongelada'} correctamente` 
+      });
+      fetchNews();
+    } catch (error: any) {
+      console.error('Error toggling freeze status:', error);
+      toast({ title: 'Error', description: error.message || 'No se pudo cambiar el estado de congelado', variant: 'destructive' });
     }
   };
 
@@ -219,7 +241,7 @@ export const NewsManagement = () => {
           ) : (
             <div className="space-y-3">
               {news.map((item) => (
-                <div key={item.id} className="p-4 border rounded-lg">
+                <div key={item.id} className={`p-4 border rounded-lg ${item.is_frozen ? 'border-yellow-400 bg-yellow-50/50' : ''}`}>
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1">
                       <h4 className="font-medium">{item.title}</h4>
@@ -229,6 +251,14 @@ export const NewsManagement = () => {
                       </p>
                     </div>
                     <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleToggleFreeze(item.id, item.is_frozen)}
+                        title={item.is_frozen ? 'Descongelar noticia' : 'Congelar noticia'}
+                      >
+                        <Snowflake className={`h-4 w-4 ${item.is_frozen ? 'text-blue-500' : ''}`} />
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"

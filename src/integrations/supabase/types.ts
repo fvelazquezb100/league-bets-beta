@@ -325,6 +325,7 @@ export type Database = {
           created_by: string
           id: number
           is_active: boolean
+          is_frozen: boolean
           title: string
         }
         Insert: {
@@ -333,6 +334,7 @@ export type Database = {
           created_by: string
           id?: number
           is_active?: boolean
+          is_frozen?: boolean
           title: string
         }
         Update: {
@@ -341,6 +343,7 @@ export type Database = {
           created_by?: string
           id?: number
           is_active?: boolean
+          is_frozen?: boolean
           title?: string
         }
         Relationships: []

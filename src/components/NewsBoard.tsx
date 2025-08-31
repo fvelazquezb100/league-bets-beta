@@ -8,6 +8,7 @@ interface NewsItem {
   title: string;
   content: string;
   created_at: string;
+  is_frozen: boolean;
 }
 
 export const NewsBoard = () => {
@@ -18,8 +19,9 @@ export const NewsBoard = () => {
     try {
       const { data, error } = await supabase
         .from('news')
-        .select('id, title, content, created_at')
+        .select('id, title, content, created_at, is_frozen')
         .eq('is_active', true)
+        .order('is_frozen', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(10);
 
@@ -64,7 +66,7 @@ export const NewsBoard = () => {
           </div>
         ) : (
           news.map((item) => (
-            <div key={item.id} className="p-4 rounded-lg bg-muted/50">
+            <div key={item.id} className={`p-4 rounded-lg bg-muted/50 ${item.is_frozen ? 'border-2 border-yellow-400 bg-yellow-50/50' : ''}`}>
               <h3 className="font-semibold text-foreground mb-2">{item.title}</h3>
               <p className="text-sm text-foreground/80 mb-2 whitespace-pre-wrap">{item.content}</p>
               <p className="text-xs text-muted-foreground">
