@@ -1,4 +1,4 @@
-project_id = "lflxrkkzudsecvdfdxwl"
+project_id = "sbfgxxdpppgtgiclmctc"
 
 [functions.secure-run-process-matchday-results]
 verify_jwt = false
