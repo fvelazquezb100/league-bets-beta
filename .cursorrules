@@ -1,0 +1,32 @@
+# Cursor Rules for League Bets Beta
+
+## Migration Management Rules
+
+### CRITICAL: Database Migration Guidelines
+1. **ALWAYS ask the user before pushing any migration** - Never run `supabase db push` without explicit user permission
+2. **ALWAYS use `supabase migration new` command** to create new migrations - Never manually create migration files with custom dates
+3. **NEVER create migration files with dates that come before existing migrations** - This breaks the migration order and can cause serious database issues
+4. **Check existing migration dates** before creating new ones to ensure proper chronological order
+
+### Example of CORRECT workflow:
+```bash
+# 1. Create new migration with proper date
+npx supabase migration new fix_bet_id_sequence
+
+# 2. Edit the generated migration file
+# 3. Ask user for permission before pushing
+# 4. Only push after user confirms
+```
+
+### Example of INCORRECT workflow:
+```bash
+# ❌ DON'T DO THIS - manually creating migration files
+# ❌ DON'T DO THIS - using dates that come before existing migrations
+# ❌ DON'T DO THIS - pushing without user permission
+```
+
+## General Development Guidelines
+- Always test changes locally before suggesting deployment
+- Explain technical solutions in simple terms for non-technical users
+- Use semantic search to understand the codebase before making changes
+- Create todo lists for complex multi-step tasks

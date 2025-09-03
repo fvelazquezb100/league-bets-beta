@@ -196,36 +196,18 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
 
       // Place bet based on type (single or combo)
       if (selectedBets.length === 1) {
-        // Single bet - use existing logic
-        const { error: betError } = await supabase
-          .from('bets')
-          .insert({
-            user_id: user.id,
-            stake: stakeAmount,
-            odds: totalOdds,
-            market_bets: selectedBets[0].market,
-            payout: parseFloat(potentialWinnings),
-            match_description: selectedBets[0].matchDescription,
-            bet_selection: `${selectedBets[0].selection} @ ${selectedBets[0].odds}`,
-            fixture_id: selectedBets[0].fixtureId,
-            bet_type: 'single',
-            status: 'pending',
-          });
+        // Single bet - use new RPC function with proper ID sequencing
+        const { data: betId, error: betError } = await supabase.rpc('place_single_bet', {
+          stake_amount: stakeAmount,
+          odds_value: totalOdds,
+          market_bets: selectedBets[0].market,
+          match_description: selectedBets[0].matchDescription,
+          bet_selection: `${selectedBets[0].selection} @ ${selectedBets[0].odds}`,
+          fixture_id_param: selectedBets[0].fixtureId
+        });
 
         if (betError) {
           throw betError;
-        }
-
-        // Update user's weekly budget
-        const { error: budgetError } = await supabase
-          .from('profiles')
-          .update({ 
-            weekly_budget: profile.weekly_budget - stakeAmount 
-          })
-          .eq('id', user.id);
-
-        if (budgetError) {
-          throw budgetError;
         }
       } else {
         // Combo bet - use RPC function
