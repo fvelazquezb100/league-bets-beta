@@ -1,0 +1,20 @@
+{
+  "startTime": "2025-09-03T14:30:49.891Z",
+  "endTime": "2025-09-03T14:30:49.903Z",
+  "status": "completed_with_errors",
+  "errors": [
+    "Migration failed: ENOENT: no such file or directory, open 'C:\\Users\\fvela\\jambol\\league-bets-beta\\migration-data-<timestamp>\\migration-data.json'"
+  ],
+  "warnings": [],
+  "stats": {
+    "usersCreated": 0,
+    "usersSkipped": 0,
+    "profilesCreated": 0,
+    "leaguesCreated": 0,
+    "betsCreated": 0,
+    "betSelectionsCreated": 0,
+    "weeklyPerformanceCreated": 0,
+    "newsCreated": 0,
+    "matchResultsCreated": 0
+  }
+}
