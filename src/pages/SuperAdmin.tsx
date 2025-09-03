@@ -58,7 +58,7 @@ const SuperAdmin: React.FC = () => {
   const handleForceProcessResults = async () => {
     try {
       setProcessingResults(true);
-      const url = `https://jhsjszflscbpcfzuurwq.supabase.co/functions/v1/secure-run-process-matchday-results`;
+      const url = `https://lflxrkkzudsecvdfdxwl.supabase.co/functions/v1/secure-run-process-matchday-results`;
       const body = JSON.stringify({ trigger: 'admin', timestamp: new Date().toISOString() });
       const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
       if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
@@ -76,7 +76,7 @@ const SuperAdmin: React.FC = () => {
     try {
       setTestingAuth(true);
       setAuthTestResults(null);
-      const baseUrl = 'https://jhsjszflscbpcfzuurwq.supabase.co';
+      const baseUrl = 'https://lflxrkkzudsecvdfdxwl.supabase.co';
       const testBody = JSON.stringify({ trigger: 'auth-test', timestamp: new Date().toISOString() });
       const results = { publicWrapper: null as any, protectedFunction: null as any };
 

@@ -268,7 +268,7 @@ serve(async (req) => {
     const jobName: string | undefined = parsedBody?.jobName;
     console.log('Request body:', { jobName, trigger: parsedBody?.trigger, timestamp: parsedBody?.timestamp });
 
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "https://jhsjszflscbpcfzuurwq.supabase.co";
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "https://lflxrkkzudsecvdfdxwl.supabase.co";
     const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const API_FOOTBALL_KEY = Deno.env.get("API_FOOTBALL_KEY");
 

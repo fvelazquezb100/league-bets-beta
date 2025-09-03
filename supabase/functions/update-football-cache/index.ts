@@ -179,7 +179,7 @@ Deno.serve(async (req) => {
         const cronExpr = `${dynamicRunTime.getUTCMinutes()} ${dynamicRunTime.getUTCHours()} ${dynamicRunTime.getUTCDate()} ${dynamicRunTime.getUTCMonth() + 1} *`;
         const jobName = `process-matchday-results-${Math.floor(dynamicRunTime.getTime() / 1000)}`;
 
-        const SUPABASE_URL_FOR_SCHEDULE = Deno.env.get('SUPABASE_URL') ?? 'https://jhsjszflscbpcfzuurwq.supabase.co';
+        const SUPABASE_URL_FOR_SCHEDULE = Deno.env.get('SUPABASE_URL') ?? 'https://lflxrkkzudsecvdfdxwl.supabase.co';
         const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
         const scheduleUrl = `${SUPABASE_URL_FOR_SCHEDULE}/functions/v1/secure-run-process-matchday-results`;
         const authHeader = ANON_KEY ? `Bearer ${ANON_KEY}` : '';

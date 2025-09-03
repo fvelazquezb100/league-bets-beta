@@ -1,0 +1,222 @@
+[
+  {
+    "id": "98e4b703-3761-40e0-9f33-0b7f8eff78b0",
+    "username": "Jambo",
+    "weekly_budget": 1000,
+    "total_points": 2054,
+    "league_id": 1,
+    "role": "user",
+    "global_role": "user",
+    "last_week_points": 1535
+  },
+  {
+    "id": "1b4a6b27-14cf-4c4a-aaf3-c8989aab1c0e",
+    "username": "Tole",
+    "weekly_budget": 1000,
+    "total_points": 2309.1237931397077,
+    "league_id": 1,
+    "role": "user",
+    "global_role": "user",
+    "last_week_points": 812.6327931397079
+  },
+  {
+    "id": "d028e774-a458-42a9-aed3-caf8ace086b4",
+    "username": "dzskn_1907",
+    "weekly_budget": 1000,
+    "total_points": 0,
+    "league_id": 3,
+    "role": "user",
+    "global_role": "user",
+    "last_week_points": 0
+  },
+  {
+    "id": "9bdaf860-4177-4555-b8fb-3e9712f9fc8e",
+    "username": "user_9bdaf860",
+    "weekly_budget": 1000,
+    "total_points": 0,
+    "league_id": 3,
+    "role": "user",
+    "global_role": "user",
+    "last_week_points": 0
+  },
+  {
+    "id": "a11369bb-cf71-41b3-adb5-5ac079fb2767",
+    "username": "xsbax_8602",
+    "weekly_budget": 1000,
+    "total_points": 0,
+    "league_id": 3,
+    "role": "user",
+    "global_role": "user",
+    "last_week_points": 0
+  },
+  {
+    "id": "be298de0-4e7d-41a8-a027-67115125763d",
+    "username": "j4bgl_4392",
+    "weekly_budget": 1000,
+    "total_points": 0,
+    "league_id": 3,
+    "role": "user",
+    "global_role": "user",
+    "last_week_points": 0
+  },
+  {
+    "id": "d4881c42-263c-43ec-a158-882889ad5566",
+    "username": "Yorch",
+    "weekly_budget": 1000,
+    "total_points": 0,
+    "league_id": 6,
+    "role": "user",
+    "global_role": "user",
+    "last_week_points": 0
+  },
+  {
+    "id": "fbc16f24-e4e0-4c28-8dda-ed27c41e66f3",
+    "username": "s6o60_3748",
+    "weekly_budget": 1000,
+    "total_points": 0,
+    "league_id": 4,
+    "role": "user",
+    "global_role": "user",
+    "last_week_points": 0
+  },
+  {
+    "id": "ef56e50b-d48f-4a08-9875-4d60d2f3b7f1",
+    "username": "pipinho",
+    "weekly_budget": 1000,
+    "total_points": 1518.5,
+    "league_id": 1,
+    "role": "user",
+    "global_role": "user",
+    "last_week_points": 222.00000000000003
+  },
+  {
+    "id": "ffa695f2-8f30-4a17-9757-7c88921ff6de",
+    "username": "torrijaja",
+    "weekly_budget": 500,
+    "total_points": 18474.5,
+    "league_id": 7,
+    "role": "admin_league",
+    "global_role": "superadmin",
+    "last_week_points": 1924.5
+  },
+  {
+    "id": "8478fa4b-314a-4d4f-95a6-c9f6ca1ace24",
+    "username": "Velae",
+    "weekly_budget": 500,
+    "total_points": 210.6,
+    "league_id": 7,
+    "role": "admin_league",
+    "global_role": "superadmin",
+    "last_week_points": 0
+  },
+  {
+    "id": "e7c2dda7-b925-422b-ad82-a3250ac1a157",
+    "username": "juande",
+    "weekly_budget": 0,
+    "total_points": 3132.475,
+    "league_id": 1,
+    "role": "user",
+    "global_role": "user",
+    "last_week_points": 940.445
+  },
+  {
+    "id": "4c60c727-19df-4410-9b11-0b0bc1058243",
+    "username": "arturorvr",
+    "weekly_budget": 1000,
+    "total_points": 935,
+    "league_id": 1,
+    "role": "user",
+    "global_role": "user",
+    "last_week_points": 0
+  },
+  {
+    "id": "23209578-356e-4cd8-9c5d-4e684078a690",
+    "username": "Caft87",
+    "weekly_budget": 1000,
+    "total_points": 1187.5,
+    "league_id": 6,
+    "role": "user",
+    "global_role": "user",
+    "last_week_points": 0
+  },
+  {
+    "id": "bec0f26e-9e27-4a79-93c2-3808d01810ef",
+    "username": "Mayestic",
+    "weekly_budget": 1000,
+    "total_points": 2351.03,
+    "league_id": 1,
+    "role": "admin_league",
+    "global_role": "superadmin",
+    "last_week_points": 964.25
+  },
+  {
+    "id": "e8de9046-4958-4049-b21c-65bc66f55b3e",
+    "username": "Ferro",
+    "weekly_budget": 1000,
+    "total_points": 2733,
+    "league_id": 1,
+    "role": "admin_league",
+    "global_role": "superadmin",
+    "last_week_points": 0
+  },
+  {
+    "id": "051ea588-ea79-421f-82e5-fe2468ca66dd",
+    "username": "Van",
+    "weekly_budget": 1000,
+    "total_points": 3337.07329,
+    "league_id": 1,
+    "role": "user",
+    "global_role": "user",
+    "last_week_points": 1473.5552
+  },
+  {
+    "id": "a37e71d0-a60d-4efa-a4b0-e2ec448cd199",
+    "username": "Vela",
+    "weekly_budget": 1000,
+    "total_points": 2083.38,
+    "league_id": 1,
+    "role": "admin_league",
+    "global_role": "superadmin",
+    "last_week_points": 714.42
+  },
+  {
+    "id": "0f9e9c98-99b9-48e6-b401-feae9e05ab45",
+    "username": "velavelae",
+    "weekly_budget": 1000,
+    "total_points": 1280.67,
+    "league_id": 6,
+    "role": "user",
+    "global_role": "user",
+    "last_week_points": 206.25
+  },
+  {
+    "id": "cfd1a74b-4e4d-4997-b355-fede319ea598",
+    "username": "Jerb",
+    "weekly_budget": 1000,
+    "total_points": 2097.6,
+    "league_id": 1,
+    "role": "user",
+    "global_role": "user",
+    "last_week_points": 0
+  },
+  {
+    "id": "01d6b7fe-584e-462e-af37-c87f1b72fd5d",
+    "username": "Morodo",
+    "weekly_budget": 1000,
+    "total_points": 1728.5,
+    "league_id": 1,
+    "role": "user",
+    "global_role": "user",
+    "last_week_points": 0
+  },
+  {
+    "id": "4ff1b23c-cc4f-4f7d-9697-3e73b618d6aa",
+    "username": "Torri",
+    "weekly_budget": 1000,
+    "total_points": 2290.4136,
+    "league_id": 1,
+    "role": "admin_league",
+    "global_role": "superadmin",
+    "last_week_points": 682
+  }
+]
