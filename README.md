@@ -1,73 +1,146 @@
-# Welcome to your Lovable project
+# League Bets Beta
 
-## Project info
+## Project Overview
 
-**URL**: https://lovable.dev/projects/ee6890d0-605b-4023-aff0-bc5ad5cee3d2
+This is a League Bets application built with React, TypeScript, and Supabase, featuring a staging/production environment setup using Supabase Branching 2.0.
 
-## How can I edit this code?
+## Development Workflow
 
-There are several ways of editing your application.
+### 🏗️ Environment Strategy
+- **Development**: Local development with staging database
+- **Staging**: `staging2` branch → Staging Supabase project (`sbfgxxdpppgtgiclmctc`)
+- **Production**: `main` branch → Production Supabase project (`lflxrkkzudsecvdfdxwl`)
 
-**Use Lovable**
+### �� Workflow Process
+1. **Work on staging**: All development happens on the `staging2` branch
+2. **Test on staging**: Use staging Supabase project for testing
+3. **Deploy to production**: Merge `staging2` → `main` and deploy
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/ee6890d0-605b-4023-aff0-bc5ad5cee3d2) and start prompting.
+### 🗄️ Supabase Configuration
+- **No Docker**: We operate directly with remote Supabase instances
+- **Environment Variables**: All project references use environment variables
+- **Branching 2.0**: Using Supabase's new branching feature for staging
 
-Changes made via Lovable will be committed automatically to this repo.
+## Project Setup
 
-**Use your preferred IDE**
+### Prerequisites
+- Node.js & npm installed
+- Supabase CLI installed
+- Access to both staging and production Supabase projects
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+### Installation
+```bash
+# Clone the repository
 git clone <YOUR_GIT_URL>
+cd league-bets-beta
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Install dependencies
+npm install
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+# Set up environment variables (see Environment Configuration below)
 ```
 
-**Edit a file directly in GitHub**
+## Environment Configuration
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Staging Environment (`.env`)
+```env
+VITE_SUPABASE_URL=https://sbfgxxdpppgtgiclmctc.supabase.co
+VITE_SUPABASE_ANON_KEY=[staging_anon_key]
+```
 
-**Use GitHub Codespaces**
+### Production Environment (`.env.production`)
+```env
+VITE_SUPABASE_URL=https://lflxrkkzudsecvdfdxwl.supabase.co
+VITE_SUPABASE_ANON_KEY=[production_anon_key]
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Available Scripts
 
-## What technologies are used for this project?
+### Development
+```bash
+npm run dev              # Local development (staging environment)
+npm run dev:staging      # Explicit staging mode
+```
 
-This project is built with:
+### Building
+```bash
+npm run build            # Build for current environment
+npm run build:staging    # Build for staging
+npm run build:production # Build for production
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Supabase Operations
 
-## How can I deploy this project?
+#### Staging Operations
+```bash
+npm run supabase:staging:push     # Push schema changes to staging
+npm run supabase:staging:deploy   # Deploy functions to staging
+npm run supabase:staging:migrate  # Run migrations on staging
+```
 
-Simply open [Lovable](https://lovable.dev/projects/ee6890d0-605b-4023-aff0-bc5ad5cee3d2) and click on Share -> Publish.
+#### Production Operations
+```bash
+npm run supabase:prod:push        # Push schema changes to production
+npm run supabase:prod:deploy      # Deploy functions to production
+npm run supabase:prod:migrate     # Run migrations on production
+```
 
-## Can I connect a custom domain to my Lovable project?
+### Migration Scripts
+```bash
+npm run extract    # Extract data from old project
+npm run import     # Import data to new project
+npm run validate   # Validate migration
+npm run rollback   # Rollback migration
+npm run migrate    # Full migration process
+```
 
-Yes, you can!
+## Supabase Project IDs
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+- **Production**: `lflxrkkzudsecvdfdxwl`
+- **Staging**: `sbfgxxdpppgtgiclmctc`
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## Development Guidelines
+
+### Database Changes
+1. **Always test on staging first**
+2. **Use environment-specific scripts** (never hardcode project IDs)
+3. **Create migrations using**: `npx supabase migration new [name]`
+4. **Ask before pushing migrations** (per project rules)
+
+### Code Changes
+1. **Work on `staging2` branch**
+2. **Use environment variables** for all Supabase URLs
+3. **Test thoroughly on staging** before merging to main
+4. **Never hardcode project IDs** in committed files
+
+### Deployment Process
+1. **Develop and test on `staging2` branch**
+2. **Merge `staging2` → `main`**
+3. **Deploy to production** using production scripts
+4. **Update Vercel environment variables** as needed
+
+## Technologies Used
+
+- **Frontend**: Vite, TypeScript, React, shadcn-ui, Tailwind CSS
+- **Backend**: Supabase (PostgreSQL, Edge Functions, Auth)
+- **Deployment**: Vercel
+- **Database**: Supabase Branching 2.0
+
+## Important Notes
+
+- **No Docker**: We work directly with remote Supabase instances
+- **Environment Safety**: All configurations use environment variables
+- **Migration Safety**: Always ask before pushing database changes
+- **Staging First**: All development happens on staging before production
+
+## Troubleshooting
+
+### Common Issues
+1. **Wrong project ID**: Check your `.env` file matches your current branch
+2. **Migration errors**: Ensure you're using the correct project-ref flag
+3. **Function deployment**: Use environment-specific deploy scripts
+
+### Getting Help
+- Check environment variables are set correctly
+- Verify you're on the right Git branch
+- Use the appropriate npm scripts for your environment

@@ -5,9 +5,19 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:staging": "vite --mode staging",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview",
+    "build:staging": "tsc -b && vite build --mode staging",
+    "build:production": "tsc -b && vite build --mode production",
+    
+    "supabase:staging:push": "supabase db push --project-ref sbfgxxdpppgtgiclmctc",
+    "supabase:staging:deploy": "supabase functions deploy --project-ref sbfgxxdpppgtgiclmctc",
+    "supabase:staging:migrate": "supabase migration up --project-ref sbfgxxdpppgtgiclmctc",
+    
+    "supabase:prod:push": "supabase db push --project-ref lflxrkkzudsecvdfdxwl",
+    "supabase:prod:deploy": "supabase functions deploy --project-ref lflxrkkzudsecvdfdxwl",
+    "supabase:prod:migrate": "supabase migration up --project-ref lflxrkkzudsecvdfdxwl",
+    
     "extract": "node migration-extract-old-project.js",
     "import": "node migration-import-new-project.js",
     "validate": "node migration-validate.js",
