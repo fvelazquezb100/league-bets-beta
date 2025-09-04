@@ -225,10 +225,48 @@ const Bets = () => {
 
   const findMarket = (match: MatchData, marketName: string) => {
     if (!match.bookmakers || match.bookmakers.length === 0) return undefined;
+    
+    // Debug: Log available markets for first match
+    if (match.fixture.id === matches[0]?.fixture.id) {
+      console.log('Available markets for', match.teams?.home?.name, 'vs', match.teams?.away?.name);
+      match.bookmakers.forEach(bookmaker => {
+        bookmaker.bets.forEach(bet => {
+          console.log('- Market:', bet.name, 'Values:', bet.values.map(v => v.value).join(', '));
+        });
+      });
+    }
+    
+    // Try exact match first
     for (const bookmaker of match.bookmakers) {
       const market = bookmaker.bets.find(bet => bet.name === marketName);
       if (market) return market;
     }
+    
+    // Try flexible matching for common market variations
+    const marketVariations: Record<string, string[]> = {
+      'Both Teams To Score': ['Both Teams To Score', 'Both Teams Score', 'BTTS', 'Both Teams To Score (Yes/No)'],
+      'Correct Score': ['Correct Score', 'Exact Score', 'Score', 'Correct Score (0-0)'],
+      'Match Winner': ['Match Winner', '1X2', 'Full Time Result', 'Match Result'],
+      'Goals Over/Under': ['Goals Over/Under', 'Over/Under Goals', 'Total Goals', 'Goals O/U'],
+      'Double Chance': ['Double Chance', '1X2 Double Chance', 'Double Chance (1X)'],
+      'First Half Winner': ['First Half Winner', '1st Half Winner', 'Half Time Winner', 'HT Winner'],
+      'Second Half Winner': ['Second Half Winner', '2nd Half Winner', 'Second Half Result'],
+      'HT/FT Double': ['HT/FT Double', 'Half Time/Full Time', 'HT/FT', 'Half Time Full Time'],
+      'Result/Total Goals': ['Result/Total Goals', 'Result & Total Goals', 'Match Result & Total Goals'],
+      'Result/Both Teams Score': ['Result/Both Teams Score', 'Result & Both Teams Score', 'Match Result & BTTS']
+    };
+    
+    const variations = marketVariations[marketName] || [];
+    for (const variation of variations) {
+      for (const bookmaker of match.bookmakers) {
+        const market = bookmaker.bets.find(bet => bet.name === variation);
+        if (market) {
+          console.log(`Found market "${marketName}" as "${variation}"`);
+          return market;
+        }
+      }
+    }
+    
     return undefined;
   };
 
