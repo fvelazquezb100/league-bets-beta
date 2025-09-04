@@ -43,9 +43,9 @@ const WinnerSelector = ({ match, isFrozen, handleAddToSlip }: WinnerSelectorProp
             
             // Customize display based on selection
             if (value.value.toLowerCase().includes('home') || value.value === '1') {
-              displayValue = match.teams?.home?.name || 'Local';
+              displayValue = 'Local'; // Always use "Local" for mobile optimization
             } else if (value.value.toLowerCase().includes('away') || value.value === '2') {
-              displayValue = match.teams?.away?.name || 'Visitante';
+              displayValue = 'Visitante'; // Always use "Visitante" for mobile optimization
             } else if (value.value.toLowerCase().includes('draw') || value.value === 'X') {
               displayValue = 'Empate';
             }
@@ -71,8 +71,8 @@ const WinnerSelector = ({ match, isFrozen, handleAddToSlip }: WinnerSelectorProp
   };
 
   return (
-    <div className="border-t-2 border-border pt-8 mt-8 first:border-t-0 first:pt-0 first:mt-0">
-      <h4 className="font-semibold mb-6 text-foreground text-lg">Ganador</h4>
+    <div className="border-t-2 border-border pt-3 sm:pt-8 mt-3 sm:mt-8 first:border-t-0 first:pt-0 first:mt-0">
+      <h4 className="font-semibold mb-3 sm:mb-6 text-foreground text-base sm:text-lg">Ganador</h4>
       <div className="space-y-2">
         {renderWinnerRow('Ganador del Partido', matchWinnerMarket, 'Ganador del Partido')}
         {renderWinnerRow('Ganador del 1er Tiempo', firstHalfMarket, 'Ganador del 1er Tiempo')}

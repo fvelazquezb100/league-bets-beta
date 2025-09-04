@@ -109,6 +109,10 @@ const BetMarketSection = ({
         {market.values.map(value => {
           const hasUserBet = hasUserBetOnMarket(match.fixture.id, betType.displayName, value.value);
           
+          // Special handling for "Doble Oportunidad" in mobile
+          const isDoubleChance = betType.displayName === 'Doble Oportunidad';
+          const displayText = getBettingTranslation(value.value);
+          
           return (
             <Button 
               key={value.value} 
@@ -119,9 +123,26 @@ const BetMarketSection = ({
               disabled={isFrozen} 
               onClick={() => handleAddToSlip(match, betType.displayName, value)}
             >
-              <span className="text-xs sm:text-sm">{getBettingTranslation(value.value)}</span>
-              <span className="font-bold text-sm sm:text-base">{value.odd}</span>
-              {hasUserBet && <span className="text-xs">✓ Apostado</span>}
+              {isDoubleChance ? (
+                <div className="flex flex-col items-center">
+                  <span className="text-xs sm:text-sm leading-tight">
+                    {displayText.includes('/') ? displayText.split('/').map((part, index) => (
+                      <span key={index}>
+                        {part.trim()}
+                        {index === 0 && <br />}
+                      </span>
+                    )) : displayText}
+                  </span>
+                  <span className="font-bold text-sm sm:text-base">{value.odd}</span>
+                  {hasUserBet && <span className="text-xs">✓ Apostado</span>}
+                </div>
+              ) : (
+                <>
+                  <span className="text-xs sm:text-sm">{displayText}</span>
+                  <span className="font-bold text-sm sm:text-base">{value.odd}</span>
+                  {hasUserBet && <span className="text-xs">✓ Apostado</span>}
+                </>
+              )}
             </Button>
           );
         })}
