@@ -8,19 +8,35 @@ export interface BetTypeConfig {
 
 // Configuration for all supported bet types
 export const BET_TYPES: Record<string, BetTypeConfig> = {
-  // Main bet types (existing)
+  // 1. Ganador (unified)
   MATCH_WINNER: {
     apiName: 'Match Winner',
     displayName: 'Ganador del Partido',
     category: 'main',
     order: 1
   },
-  GOALS_OVER_UNDER: {
-    apiName: 'Goals Over/Under',
-    displayName: 'Goles Más/Menos de',
-    category: 'main', 
+  FIRST_HALF_WINNER: {
+    apiName: 'First Half Winner',
+    displayName: 'Ganador del 1er Tiempo',
+    category: 'halftime',
+    order: 1
+  },
+  SECOND_HALF_WINNER: {
+    apiName: 'Second Half Winner', 
+    displayName: 'Ganador del 2do Tiempo',
+    category: 'halftime',
+    order: 1
+  },
+  
+  // 2. Doble Oportunidad
+  DOUBLE_CHANCE: {
+    apiName: 'Double Chance',
+    displayName: 'Doble Oportunidad',
+    category: 'combination',
     order: 2
   },
+  
+  // 3. Ambos Equipos Marcan
   BOTH_TEAMS_SCORE: {
     apiName: 'Both Teams To Score',
     displayName: 'Ambos Equipos Marcan',
@@ -28,52 +44,44 @@ export const BET_TYPES: Record<string, BetTypeConfig> = {
     order: 3
   },
   
-  // Half-time bet types (new)
-  FIRST_HALF_WINNER: {
-    apiName: 'First Half Winner',
-    displayName: 'Ganador del 1er Tiempo',
-    category: 'halftime',
-    order: 4
-  },
-  SECOND_HALF_WINNER: {
-    apiName: 'Second Half Winner', 
-    displayName: 'Ganador del 2do Tiempo',
-    category: 'halftime',
-    order: 5
-  },
-  
-  // Correct Score bets (new)
+  // 4. Resultado Exacto
   CORRECT_SCORE: {
     apiName: 'Correct Score',
     displayName: 'Resultado Exacto',
     category: 'score',
-    order: 6
+    order: 4
   },
   
-  // Combination bets (new)
-  DOUBLE_CHANCE: {
-    apiName: 'Double Chance',
-    displayName: 'Doble Oportunidad',
-    category: 'combination',
-    order: 7
+  // 5. Goles Más/Menos de
+  GOALS_OVER_UNDER: {
+    apiName: 'Goals Over/Under',
+    displayName: 'Goles Más/Menos de',
+    category: 'main', 
+    order: 5
   },
+  
+  // 6. Medio Tiempo/Final
   HT_FT_DOUBLE: {
     apiName: 'HT/FT Double',
     displayName: 'Medio Tiempo/Final',
     category: 'combination', 
-    order: 8
+    order: 6
   },
+  
+  // 7. Resultado/Total Goles
   RESULT_TOTAL_GOALS: {
     apiName: 'Result/Total Goals',
     displayName: 'Resultado/Total Goles',
     category: 'combination',
-    order: 9
+    order: 7
   },
+  
+  // Hidden markets (not in the main list)
   RESULT_BOTH_TEAMS_SCORE: {
     apiName: 'Result/Both Teams Score',
     displayName: 'Resultado/Ambos Marcan',
     category: 'combination',
-    order: 10
+    order: 99 // Hidden
   }
 };
 

@@ -77,30 +77,55 @@ Deno.serve(async (req) => {
 
     console.log('API Key found. Starting two-step odds fetch...');
 
-    // --- STEP 1: Fetch the NEXT 10 upcoming fixture IDs ---
-    const leagueId = 140; // La Liga
+    // --- STEP 1: Fetch the NEXT 10 upcoming fixture IDs for all leagues ---
+    const leagueIds = [140, 141, 2, 3]; // La Liga, Segunda División, Champions League, Europa League
     const currentYear = new Date().getFullYear();
-    const fixturesUrl = `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${currentYear}&next=10`;
-    console.log(`Fetching fixtures from: ${fixturesUrl}`);
     
-    const fixturesResponse = await fetch(fixturesUrl, {
-      headers: {
-        'x-apisports-key': API_KEY,
-      },
-    });
+    let allFixtureIDs: number[] = [];
+    let allTeamsByFixture = new Map<number, any>();
+    let allFixturesData: any[] = [];
+    
+    for (const leagueId of leagueIds) {
+      const leagueName = leagueId === 140 ? 'La Liga' : 
+                        leagueId === 141 ? 'Segunda División' :
+                        leagueId === 2 ? 'Champions League' : 'Europa League';
+      const fixturesUrl = `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${currentYear}&next=10`;
+      console.log(`Fetching fixtures from ${leagueName}: ${fixturesUrl}`);
+      
+      const fixturesResponse = await fetch(fixturesUrl, {
+        headers: {
+          'x-apisports-key': API_KEY,
+        },
+      });
 
-    if (!fixturesResponse.ok) {
-      throw new Error(`Failed to fetch fixtures: ${await fixturesResponse.text()}`);
+      if (!fixturesResponse.ok) {
+        console.warn(`Failed to fetch fixtures for league ${leagueId}: ${await fixturesResponse.text()}`);
+        continue; // Skip this league and continue with others
+      }
+
+      const fixturesData = await fixturesResponse.json();
+      const fixtureIDs: number[] = fixturesData.response.map((item: any) => item.fixture.id);
+      
+      // Store teams info and league info for this league
+      fixturesData.response.forEach((item: any) => {
+        if (item?.fixture?.id && item?.teams) {
+          allTeamsByFixture.set(item.fixture.id, {
+            ...item.teams,
+            league_id: leagueId,
+            league_name: leagueName
+          });
+        }
+      });
+      
+      allFixtureIDs.push(...fixtureIDs);
+      allFixturesData.push(...fixturesData.response);
+      
+      console.log(`Found ${fixtureIDs.length} upcoming fixtures for ${leagueName}.`);
+      await delay(200); // Small delay between league requests
     }
-
-    const fixturesData = await fixturesResponse.json();
-    const fixtureIDs: number[] = fixturesData.response.map((item: any) => item.fixture.id);
-    const teamsByFixture = new Map<number, any>();
-    fixturesData.response.forEach((item: any) => {
-      if (item?.fixture?.id && item?.teams) teamsByFixture.set(item.fixture.id, item.teams);
-    });
-    console.log(`Found ${fixtureIDs.length} upcoming fixtures.`);
-    if (fixtureIDs.length === 0) {
+    
+    console.log(`Total fixtures found across all leagues: ${allFixtureIDs.length}`);
+    if (allFixtureIDs.length === 0) {
       console.log('No upcoming fixtures found. Cache will not be updated.');
        return new Response(JSON.stringify({ message: 'No upcoming fixtures to fetch odds for.' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -110,7 +135,7 @@ Deno.serve(async (req) => {
 
     // --- STEP 2: Fetch odds for each of those fixture IDs ---
     const allOddsData = [];
-    for (const fixtureId of fixtureIDs) {
+    for (const fixtureId of allFixtureIDs) {
       const oddsUrl = `https://v3.football.api-sports.io/odds?fixture=${fixtureId}`;
       console.log(`Fetching odds from: ${oddsUrl}`);
       const oddsResponse = await fetch(oddsUrl, {
@@ -135,7 +160,7 @@ Deno.serve(async (req) => {
     // --- STEP 3: Upsert the cache ---
     const mergedOdds = allOddsData.map((entry: any) => {
       const fxId = entry?.fixture?.id;
-      const teams = fxId ? teamsByFixture.get(fxId) : null;
+      const teams = fxId ? allTeamsByFixture.get(fxId) : null;
       return teams ? { ...entry, teams } : entry;
     });
     const finalCacheObject = { response: mergedOdds };
@@ -156,8 +181,8 @@ Deno.serve(async (req) => {
     // --- STEP 4: Dynamically schedule results processing 5 hours after the latest fixture ends ---
     try {
       // Extract latest fixture kickoff time from the fetched fixtures
-      const fixtureTimes: number[] = Array.isArray(fixturesData?.response)
-        ? fixturesData.response
+      const fixtureTimes: number[] = Array.isArray(allFixturesData)
+        ? allFixturesData
             .map((item: any) => {
               const iso = item?.fixture?.date;
               const t = iso ? Date.parse(iso) : NaN;
@@ -208,7 +233,8 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({ 
       message: 'Cache updated successfully!', 
-      fixtures_found: fixtureIDs.length, 
+      leagues_processed: leagueIds.length,
+      fixtures_found: allFixtureIDs.length, 
       odds_fetched: allOddsData.length 
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
