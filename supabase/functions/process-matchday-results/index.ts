@@ -61,7 +61,14 @@ function evaluateBet(
     console.log(`Evaluating bet:`, {
       market: marketLower,
       selection: selectionLower,
-      matchResult: { hg, ag, outcome: fr.outcome, halftime: fr.halftime_outcome }
+      matchResult: { 
+        hg, 
+        ag, 
+        outcome: fr.outcome, 
+        halftime: fr.halftime_outcome,
+        halftime_home: fr.halftime_home,
+        halftime_away: fr.halftime_away
+      }
     });
 
     // Match Winner / Ganador del Partido
@@ -82,13 +89,16 @@ function evaluateBet(
     // Double Chance / Doble Oportunidad
     if (marketLower.includes("doble") || marketLower.includes("double") || 
         marketLower.includes("double chance")) {
-      if (selectionLower.includes("1x") || selectionLower.includes("local o empate")) {
+      if (selectionLower.includes("1x") || selectionLower.includes("local o empate") || 
+          selectionLower.includes("home/draw") || selectionLower.includes("local/empate")) {
         return fr.outcome === "home" || fr.outcome === "draw";
       }
-      if (selectionLower.includes("x2") || selectionLower.includes("empate o visitante")) {
+      if (selectionLower.includes("x2") || selectionLower.includes("empate o visitante") ||
+          selectionLower.includes("draw/away") || selectionLower.includes("empate/visitante")) {
         return fr.outcome === "draw" || fr.outcome === "away";
       }
-      if (selectionLower.includes("12") || selectionLower.includes("local o visitante")) {
+      if (selectionLower.includes("12") || selectionLower.includes("local o visitante") ||
+          selectionLower.includes("home/away") || selectionLower.includes("local/visitante")) {
         return fr.outcome === "home" || fr.outcome === "away";
       }
     }
@@ -110,17 +120,47 @@ function evaluateBet(
     if (marketLower.includes("primer") || marketLower.includes("first") || 
         marketLower.includes("1ª") || marketLower.includes("first half") ||
         marketLower.includes("1st")) {
-      if (fr.halftime_outcome) {
+      
+      console.log(`First half bet evaluation:`, {
+        market: marketLower,
+        selection: selectionLower,
+        halftime_outcome: fr.halftime_outcome,
+        halftime_home: fr.halftime_home,
+        halftime_away: fr.halftime_away,
+        fullMatchResult: fr
+      });
+      
+      // Calculate halftime outcome from goals if not available
+      let halftimeOutcome = fr.halftime_outcome;
+      if (!halftimeOutcome && fr.halftime_home !== undefined && fr.halftime_away !== undefined) {
+        if (fr.halftime_home > fr.halftime_away) {
+          halftimeOutcome = "home";
+        } else if (fr.halftime_home < fr.halftime_away) {
+          halftimeOutcome = "away";
+        } else {
+          halftimeOutcome = "draw";
+        }
+        console.log(`Calculated halftime outcome from goals: ${halftimeOutcome} (${fr.halftime_home}-${fr.halftime_away})`);
+      }
+      
+      if (halftimeOutcome) {
         if (selectionLower.includes("home") || selectionLower.includes("local")) {
-          return fr.halftime_outcome === "home";
+          const result = halftimeOutcome === "home";
+          console.log(`First half home bet: ${result} (${halftimeOutcome} === "home")`);
+          return result;
         }
         if (selectionLower.includes("away") || selectionLower.includes("visitante")) {
-          return fr.halftime_outcome === "away";
+          const result = halftimeOutcome === "away";
+          console.log(`First half away bet: ${result} (${halftimeOutcome} === "away")`);
+          return result;
         }
         if (selectionLower.includes("draw") || selectionLower.includes("empate")) {
-          return fr.halftime_outcome === "draw";
+          const result = halftimeOutcome === "draw";
+          console.log(`First half draw bet: ${result} (${halftimeOutcome} === "draw")`);
+          return result;
         }
       }
+      console.log(`No halftime data available for first half bet`);
       return false; // No halftime data available
     }
 
@@ -132,16 +172,30 @@ function evaluateBet(
         const secondHalfHome = hg - fr.halftime_home;
         const secondHalfAway = ag - fr.halftime_away;
         
+        console.log(`Second half calculation:`, {
+          fullTime: { hg, ag },
+          halftime: { home: fr.halftime_home, away: fr.halftime_away },
+          secondHalf: { home: secondHalfHome, away: secondHalfAway },
+          selection: selectionLower
+        });
+        
         if (selectionLower.includes("home") || selectionLower.includes("local")) {
-          return secondHalfHome > secondHalfAway;
+          const result = secondHalfHome > secondHalfAway;
+          console.log(`Second half home bet: ${result} (${secondHalfHome} > ${secondHalfAway})`);
+          return result;
         }
         if (selectionLower.includes("away") || selectionLower.includes("visitante")) {
-          return secondHalfHome < secondHalfAway;
+          const result = secondHalfHome < secondHalfAway;
+          console.log(`Second half away bet: ${result} (${secondHalfHome} < ${secondHalfAway})`);
+          return result;
         }
         if (selectionLower.includes("draw") || selectionLower.includes("empate")) {
-          return secondHalfHome === secondHalfAway;
+          const result = secondHalfHome === secondHalfAway;
+          console.log(`Second half draw bet: ${result} (${secondHalfHome} === ${secondHalfAway})`);
+          return result;
         }
       }
+      console.log(`No halftime data available for second half bet`);
       return false;
     }
 
