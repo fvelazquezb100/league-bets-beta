@@ -98,8 +98,8 @@ const BetMarketSection = ({
   const optimalColumns = getOptimalColumns(market.values.length);
 
   return (
-    <div className="border-t-2 border-border pt-4 sm:pt-8 mt-4 sm:mt-8 first:border-t-0 first:pt-0 first:mt-0">
-      <h4 className="font-semibold mb-4 sm:mb-6 text-foreground text-base sm:text-lg">{betType.displayName}</h4>
+    <div className="border-t-2 border-border pt-3 sm:pt-8 mt-3 sm:mt-8 first:border-t-0 first:pt-0 first:mt-0">
+      <h4 className="font-semibold mb-3 sm:mb-6 text-foreground text-base sm:text-lg">{betType.displayName}</h4>
       <div 
         className="grid gap-2"
         style={{

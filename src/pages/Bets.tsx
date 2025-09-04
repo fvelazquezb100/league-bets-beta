@@ -414,7 +414,7 @@ const Bets = () => {
             <AccordionItem 
               value={`${sectionKey}-match-${match.fixture.id}`} 
               key={match.fixture.id} 
-              className="border rounded-lg p-2 sm:p-4 bg-card shadow-sm w-full max-w-none"
+              className="border rounded-lg p-1 sm:p-4 bg-card shadow-sm w-full max-w-none"
               id={`accordion-${sectionKey}-${match.fixture.id}`}
             >
               <AccordionTrigger>
@@ -438,7 +438,7 @@ const Bets = () => {
                 </div>
               </AccordionTrigger>
               <AccordionContent>
-                <div className="space-y-4 sm:space-y-6 pt-2 sm:pt-4">
+                <div className="space-y-3 sm:space-y-6 pt-1 sm:pt-4">
                   {/* Check if match is in the future (outside current week) */}
                   {(() => {
                     const matchDate = new Date(match.fixture.date);
@@ -547,7 +547,7 @@ const Bets = () => {
   const renderContent = () => {
     return (
       <Tabs value={selectedLeague} onValueChange={(value) => setSelectedLeague(value as 'primera' | 'segunda' | 'champions' | 'europa')} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6 gap-1">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6 gap-2 h-auto">
           <TabsTrigger 
             value="primera" 
             className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-black data-[state=active]:ring-offset-2"
@@ -567,7 +567,7 @@ const Bets = () => {
               }}
             />
             {/* Texto por encima */}
-            <span className="relative z-10 text-black font-semibold text-xs sm:text-sm">La Liga - Primera</span>
+            <span className="relative z-10 text-black font-semibold text-xs sm:text-sm leading-tight">La Liga - Primera</span>
           </TabsTrigger>
           <TabsTrigger 
             value="segunda"
@@ -588,7 +588,7 @@ const Bets = () => {
               }}
             />
             {/* Texto por encima */}
-            <span className="relative z-10 text-black font-semibold text-xs sm:text-sm">La Liga - Segunda</span>
+            <span className="relative z-10 text-black font-semibold text-xs sm:text-sm leading-tight">La Liga - Segunda</span>
           </TabsTrigger>
           <TabsTrigger 
             value="champions"
@@ -609,7 +609,7 @@ const Bets = () => {
               }}
             />
             {/* Texto por encima */}
-            <span className="relative z-10 text-black font-semibold text-xs sm:text-sm">Champions League</span>
+            <span className="relative z-10 text-black font-semibold text-xs sm:text-sm leading-tight">Champions League</span>
           </TabsTrigger>
           <TabsTrigger 
             value="europa"
@@ -630,7 +630,7 @@ const Bets = () => {
               }}
             />
             {/* Texto por encima */}
-            <span className="relative z-10 text-black font-semibold text-xs sm:text-sm">Europa League</span>
+            <span className="relative z-10 text-black font-semibold text-xs sm:text-sm leading-tight">Europa League</span>
           </TabsTrigger>
         </TabsList>
         <TabsContent value="primera" className="mt-0">
@@ -650,7 +650,7 @@ const Bets = () => {
   };
 
   return (
-    <div className="container mx-auto p-2 sm:p-4">
+    <div className="w-full px-2 sm:container sm:mx-auto sm:p-4">
       <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Apuestas</h1>
       
       {/* Desktop Layout */}
@@ -669,7 +669,7 @@ const Bets = () => {
         </div>
       ) : (
           /* Mobile Layout with Drawer */
-        <div className="flex flex-col gap-4 sm:gap-8">
+        <div className="flex flex-col gap-4 sm:gap-8 w-full">
           <div className="w-full overflow-hidden">
             {renderContent()}
           </div>
