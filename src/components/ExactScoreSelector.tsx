@@ -74,12 +74,12 @@ const ExactScoreSelector = ({ match, isFrozen, handleAddToSlip }: ExactScoreSele
   };
 
   return (
-    <div className="border-t-2 border-border pt-8 mt-8 first:border-t-0 first:pt-0 first:mt-0">
-      <h4 className="font-semibold mb-6 text-foreground text-lg">Resultado Exacto</h4>
-      <div className="grid grid-cols-3 gap-4 items-center">
+    <div className="border-t-2 border-border pt-4 sm:pt-8 mt-4 sm:mt-8 first:border-t-0 first:pt-0 first:mt-0">
+      <h4 className="font-semibold mb-4 sm:mb-6 text-foreground text-base sm:text-lg">Resultado Exacto</h4>
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 items-center">
         {/* Home Team Goals Selector */}
         <div className="flex flex-col items-center gap-2">
-          <span className="text-xs text-muted-foreground font-medium">
+          <span className="text-xs text-muted-foreground font-medium text-center">
             {match.teams?.home?.name || 'Local'}
           </span>
           <div className="flex items-center gap-2">
@@ -114,7 +114,7 @@ const ExactScoreSelector = ({ match, isFrozen, handleAddToSlip }: ExactScoreSele
 
         {/* Away Team Goals Selector */}
         <div className="flex flex-col items-center gap-2">
-          <span className="text-xs text-muted-foreground font-medium">
+          <span className="text-xs text-muted-foreground font-medium text-center">
             {match.teams?.away?.name || 'Visitante'}
           </span>
           <div className="flex items-center gap-2">

@@ -85,20 +85,21 @@ const BetMarketSection = ({
     );
   }
 
-  // Calculate optimal number of columns based on number of options
+  // Calculate optimal number of columns based on number of options and screen size
   const getOptimalColumns = (count: number) => {
+    // For mobile, use fewer columns
     if (count <= 2) return 2;
     if (count <= 3) return 3;
-    if (count <= 4) return 4;
-    if (count <= 6) return 3; // 2 rows of 3
-    return 4; // Default to 4 columns for more options
+    if (count <= 4) return 2; // 2 columns on mobile for better touch targets
+    if (count <= 6) return 2; // 2 columns on mobile
+    return 2; // Default to 2 columns on mobile for better usability
   };
 
   const optimalColumns = getOptimalColumns(market.values.length);
 
   return (
-    <div className="border-t-2 border-border pt-8 mt-8 first:border-t-0 first:pt-0 first:mt-0">
-      <h4 className="font-semibold mb-6 text-foreground text-lg">{betType.displayName}</h4>
+    <div className="border-t-2 border-border pt-4 sm:pt-8 mt-4 sm:mt-8 first:border-t-0 first:pt-0 first:mt-0">
+      <h4 className="font-semibold mb-4 sm:mb-6 text-foreground text-base sm:text-lg">{betType.displayName}</h4>
       <div 
         className="grid gap-2"
         style={{
@@ -112,14 +113,14 @@ const BetMarketSection = ({
             <Button 
               key={value.value} 
               variant={hasUserBet ? "default" : "outline"} 
-              className={`flex flex-col h-auto transition-all duration-200 hover:scale-[1.02] ${
+              className={`flex flex-col h-auto min-h-[60px] sm:min-h-[80px] transition-all duration-200 hover:scale-[1.02] ${
                 hasUserBet ? 'opacity-75 bg-primary text-primary-foreground' : 'hover:bg-accent hover:text-accent-foreground'
               }`} 
               disabled={isFrozen} 
               onClick={() => handleAddToSlip(match, betType.displayName, value)}
             >
-              <span className="text-sm">{getBettingTranslation(value.value)}</span>
-              <span className="font-bold text-base">{value.odd}</span>
+              <span className="text-xs sm:text-sm">{getBettingTranslation(value.value)}</span>
+              <span className="font-bold text-sm sm:text-base">{value.odd}</span>
               {hasUserBet && <span className="text-xs">✓ Apostado</span>}
             </Button>
           );
