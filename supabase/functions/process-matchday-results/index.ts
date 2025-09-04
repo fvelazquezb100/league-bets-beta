@@ -72,42 +72,35 @@ function evaluateBet(
     });
 
     // Match Winner / Ganador del Partido
-    if (marketLower.includes("ganador") || marketLower.includes("winner") || 
-        marketLower.includes("resultado") || marketLower.includes("1x2") ||
-        marketLower.includes("match winner")) {
-      if (selectionLower.includes("home") || selectionLower.includes("local") || selectionLower.includes("1")) {
+    if (marketLower === "ganador del partido") {
+      if (selectionLower.includes("home") || selectionLower.includes("local")) {
         return fr.outcome === "home";
       }
-      if (selectionLower.includes("away") || selectionLower.includes("visitante") || selectionLower.includes("2")) {
+      if (selectionLower.includes("away") || selectionLower.includes("visitante")) {
         return fr.outcome === "away";
       }
-      if (selectionLower.includes("draw") || selectionLower.includes("empate") || selectionLower.includes("x")) {
+      if (selectionLower.includes("draw") || selectionLower.includes("empate")) {
         return fr.outcome === "draw";
       }
     }
 
     // Double Chance / Doble Oportunidad
-    if (marketLower.includes("doble") || marketLower.includes("double") || 
-        marketLower.includes("double chance")) {
-      if (selectionLower.includes("1x") || selectionLower.includes("local o empate") || 
-          selectionLower.includes("home/draw") || selectionLower.includes("local/empate")) {
+    if (marketLower === "doble oportunidad") {
+      if (selectionLower.includes("home/draw") || selectionLower.includes("local/empate")) {
         return fr.outcome === "home" || fr.outcome === "draw";
       }
-      if (selectionLower.includes("x2") || selectionLower.includes("empate o visitante") ||
-          selectionLower.includes("draw/away") || selectionLower.includes("empate/visitante")) {
+      if (selectionLower.includes("draw/away") || selectionLower.includes("empate/visitante")) {
         return fr.outcome === "draw" || fr.outcome === "away";
       }
-      if (selectionLower.includes("12") || selectionLower.includes("local o visitante") ||
-          selectionLower.includes("home/away") || selectionLower.includes("local/visitante")) {
+      if (selectionLower.includes("home/away") || selectionLower.includes("local/visitante")) {
         return fr.outcome === "home" || fr.outcome === "away";
       }
     }
 
     // Correct Score / Resultado Exacto
-    if (marketLower.includes("exacto") || marketLower.includes("correct") || 
-        marketLower.includes("score") || marketLower.includes("correct score")) {
-      if (selectionLower.includes("-") && /\d+-\d+/.test(selectionLower)) {
-        const scoreMatch = selectionLower.match(/(\d+)-(\d+)/);
+    if (marketLower === "resultado exacto") {
+      if (selectionLower.includes(":") && /\d+:\d+/.test(selectionLower)) {
+        const scoreMatch = selectionLower.match(/(\d+):(\d+)/);
         if (scoreMatch) {
           const expectedHome = parseInt(scoreMatch[1]);
           const expectedAway = parseInt(scoreMatch[2]);
@@ -116,10 +109,8 @@ function evaluateBet(
       }
     }
 
-    // First Half Winner / Ganador Primer Tiempo
-    if (marketLower.includes("primer") || marketLower.includes("first") || 
-        marketLower.includes("1ª") || marketLower.includes("first half") ||
-        marketLower.includes("1st")) {
+    // First Half Winner / Ganador del 1er Tiempo
+    if (marketLower === "ganador del 1er tiempo") {
       
       console.log(`First half bet evaluation:`, {
         market: marketLower,
@@ -164,10 +155,8 @@ function evaluateBet(
       return false; // No halftime data available
     }
 
-    // Second Half Winner / Ganador Segundo Tiempo
-    if (marketLower.includes("segundo") || marketLower.includes("second") || 
-        marketLower.includes("2ª") || marketLower.includes("second half") ||
-        marketLower.includes("2nd")) {
+    // Second Half Winner / Ganador del 2do Tiempo
+    if (marketLower === "ganador del 2do tiempo") {
       if (fr.halftime_home !== undefined && fr.halftime_away !== undefined) {
         const secondHalfHome = hg - fr.halftime_home;
         const secondHalfAway = ag - fr.halftime_away;
@@ -200,9 +189,7 @@ function evaluateBet(
     }
 
     // HT/FT Double / Medio Tiempo/Final
-    if (marketLower.includes("medio") || marketLower.includes("ht") || 
-        marketLower.includes("ft") || marketLower.includes("ht/ft") ||
-        marketLower.includes("descanso") || marketLower.includes("final")) {
+    if (marketLower === "medio tiempo/final") {
       if (selectionLower.includes("/") && fr.halftime_outcome) {
         const parts = selectionLower.split("/");
         if (parts.length === 2) {
@@ -236,11 +223,8 @@ function evaluateBet(
       return false;
     }
 
-    // Goals Over/Under / Goles Más/Menos
-    if (marketLower.includes("goles") || marketLower.includes("goals") || 
-        marketLower.includes("más") || marketLower.includes("menos") ||
-        marketLower.includes("over") || marketLower.includes("under") ||
-        marketLower.includes("goals over/under") || marketLower.includes("over/under")) {
+    // Goals Over/Under / Goles Más/Menos de
+    if (marketLower === "goles más/menos de") {
       
       let threshold: number | null = null;
       let over = selectionLower.includes("over") || selectionLower.includes("más");
@@ -266,10 +250,8 @@ function evaluateBet(
       if (under) return total < threshold;
     }
 
-    // Both Teams To Score (BTTS) / Ambos Marcan
-    if (marketLower.includes("ambos") || marketLower.includes("both") || 
-        marketLower.includes("marcan") || marketLower.includes("btts") ||
-        marketLower.includes("both teams") || marketLower.includes("teams score")) {
+    // Both Teams To Score (BTTS) / Ambos Equipos Marcan
+    if (marketLower === "ambos equipos marcan") {
       const yes = selectionLower.includes("yes") || selectionLower.includes("sí") || selectionLower.includes("si");
       const no = selectionLower.includes("no");
       const bothScored = hg > 0 && ag > 0;
@@ -279,8 +261,7 @@ function evaluateBet(
     }
 
     // Result/Total Goals / Resultado/Total Goles
-    if (marketLower.includes("result/total") || marketLower.includes("resultado/total") ||
-        marketLower.includes("result & total") || marketLower.includes("resultado & total")) {
+    if (marketLower === "resultado/total goles") {
       if (selectionLower.includes("/")) {
         const parts = selectionLower.split("/");
         if (parts.length === 2) {
@@ -321,8 +302,7 @@ function evaluateBet(
     }
 
     // Result/Both Teams Score / Resultado/Ambos Marcan
-    if (marketLower.includes("result/both") || marketLower.includes("resultado/ambos") ||
-        marketLower.includes("result & both") || marketLower.includes("resultado & ambos")) {
+    if (marketLower === "resultado/ambos marcan") {
       if (selectionLower.includes("/")) {
         const parts = selectionLower.split("/");
         if (parts.length === 2) {
