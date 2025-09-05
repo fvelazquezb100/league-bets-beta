@@ -13,6 +13,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { ShoppingCart } from 'lucide-react';
 import { getBettingTranslation } from '@/utils/bettingTranslations';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // --- Type Definitions for API-Football Odds Data ---
 export interface Team {
@@ -29,6 +30,8 @@ export interface Fixture {
 export interface Teams {
   home: Team;
   away: Team;
+  league_id?: number;
+  league_name?: string;
 }
 
 export interface BetValue {
@@ -83,6 +86,8 @@ const Bets = () => {
   const [userBets, setUserBets] = useState<UserBet[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [drawerShouldRender, setDrawerShouldRender] = useState(false);
+  const [selectedLeague, setSelectedLeague] = useState<'primera' | 'segunda' | 'champions' | 'europa'>('primera');
+  const [openAccordion, setOpenAccordion] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -188,6 +193,19 @@ const Bets = () => {
   }, [selectedBets.length, drawerShouldRender]);
 
   const handleAddToSlip = (match: MatchData, marketName: string, selection: BetValue) => {
+    // Check if match is in the future (outside current week) - BLOCK ALL FUTURE MATCHES
+    const matchDate = new Date(match.fixture.date);
+    const nextMondayEndOfDay = getNextMondayEndOfDay();
+    
+    if (matchDate > nextMondayEndOfDay) {
+      toast({
+        title: 'Apuesta no disponible',
+        description: 'Solo se pueden apostar partidos de la semana actual. Las apuestas para este partido no están disponibles aún.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const bet = {
       id: `${match.fixture.id}-${marketName}-${selection.value}`,
       matchDescription: `${match.teams?.home?.name ?? 'Local'} vs ${match.teams?.away?.name ?? 'Visitante'}`,
@@ -225,10 +243,48 @@ const Bets = () => {
 
   const findMarket = (match: MatchData, marketName: string) => {
     if (!match.bookmakers || match.bookmakers.length === 0) return undefined;
+    
+    // Debug: Log available markets for first match
+    if (match.fixture.id === matches[0]?.fixture.id) {
+      console.log('Available markets for', match.teams?.home?.name, 'vs', match.teams?.away?.name);
+      match.bookmakers.forEach(bookmaker => {
+        bookmaker.bets.forEach(bet => {
+          console.log('- Market:', bet.name, 'Values:', bet.values.map(v => v.value).join(', '));
+        });
+      });
+    }
+    
+    // Try exact match first
     for (const bookmaker of match.bookmakers) {
       const market = bookmaker.bets.find(bet => bet.name === marketName);
       if (market) return market;
     }
+    
+    // Try flexible matching for common market variations
+    const marketVariations: Record<string, string[]> = {
+      'Both Teams To Score': ['Both Teams To Score', 'Both Teams Score', 'BTTS', 'Both Teams To Score (Yes/No)'],
+      'Correct Score': ['Correct Score', 'Exact Score', 'Score', 'Correct Score (0-0)'],
+      'Match Winner': ['Match Winner', '1X2', 'Full Time Result', 'Match Result'],
+      'Goals Over/Under': ['Goals Over/Under', 'Over/Under Goals', 'Total Goals', 'Goals O/U'],
+      'Double Chance': ['Double Chance', '1X2 Double Chance', 'Double Chance (1X)'],
+      'First Half Winner': ['First Half Winner', '1st Half Winner', 'Half Time Winner', 'HT Winner'],
+      'Second Half Winner': ['Second Half Winner', '2nd Half Winner', 'Second Half Result'],
+      'HT/FT Double': ['HT/FT Double', 'Half Time/Full Time', 'HT/FT', 'Half Time Full Time'],
+      'Result/Total Goals': ['Result/Total Goals', 'Result & Total Goals', 'Match Result & Total Goals'],
+      'Result/Both Teams Score': ['Result/Both Teams Score', 'Result & Both Teams Score', 'Match Result & BTTS']
+    };
+    
+    const variations = marketVariations[marketName] || [];
+    for (const variation of variations) {
+      for (const bookmaker of match.bookmakers) {
+        const market = bookmaker.bets.find(bet => bet.name === variation);
+        if (market) {
+          console.log(`Found market "${marketName}" as "${variation}"`);
+          return market;
+        }
+      }
+    }
+    
     return undefined;
   };
 
@@ -245,11 +301,15 @@ const Bets = () => {
 
     return bets.map(bet => {
       if (bet.bet_type === 'combo') {
-        return `Combinada €${bet.stake?.toFixed(0)}`;
+        return 'Combinada';
       } else {
+        // For single bets, use market_bets field
+        if (bet.market_bets) {
+          return bet.market_bets;
+        }
+        // For combo bets with selections, use the market from bet_selections
         const selection = bet.bet_selections?.[0];
-        const market = selection ? `${selection.market}: ${selection.selection}` : 'Apuesta';
-        return `${market} €${bet.stake?.toFixed(0)}`;
+        return selection ? selection.market : 'Apuesta';
       }
     }).join(', ');
   };
@@ -283,10 +343,50 @@ const Bets = () => {
     return nextMonday;
   };
 
-  // Filter matches by date
+  // Filter matches by league
+  const getMatchesByLeague = (leagueType: 'primera' | 'segunda' | 'champions' | 'europa') => {
+    const leagueIds = {
+      'primera': 140,
+      'segunda': 141,
+      'champions': 2, // Champions League
+      'europa': 3     // Europa League
+    };
+    const leagueId = leagueIds[leagueType];
+    return matches.filter(match => match.teams?.league_id === leagueId);
+  };
+
+  const handleAccordionChange = (value: string) => {
+    setOpenAccordion(value);
+    
+    // Scroll to keep the title visible when opening an accordion
+    if (value) {
+      setTimeout(() => {
+        // Find the accordion item by its value
+        const accordionItem = document.querySelector(`[data-state="open"]`);
+        if (accordionItem) {
+          // Get the trigger element (title area)
+          const triggerElement = accordionItem.querySelector('[data-radix-accordion-trigger]');
+          if (triggerElement) {
+            // Calculate offset to account for any fixed headers
+            const headerOffset = 80; // Adjust this value based on your header height
+            const elementPosition = triggerElement.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'smooth'
+            });
+          }
+        }
+      }, 150); // Slightly longer delay to ensure accordion is fully opened
+    }
+  };
+
+  // Filter matches by date and league
   const nextMondayEndOfDay = getNextMondayEndOfDay();
-  const upcomingMatches = matches.filter(match => new Date(match.fixture.date) <= nextMondayEndOfDay);
-  const futureMatches = matches.filter(match => new Date(match.fixture.date) > nextMondayEndOfDay);
+  const leagueMatches = getMatchesByLeague(selectedLeague);
+  const upcomingMatches = leagueMatches.filter(match => new Date(match.fixture.date) <= nextMondayEndOfDay);
+  const futureMatches = leagueMatches.filter(match => new Date(match.fixture.date) > nextMondayEndOfDay);
 
   const renderMatchesSection = (matchesToRender: MatchData[], sectionKey: string) => {
     if (matchesToRender.length === 0) {
@@ -298,20 +398,31 @@ const Bets = () => {
     }
 
     return (
-      <Accordion type="single" collapsible className="w-full space-y-4">
+      <Accordion 
+        type="single" 
+        collapsible 
+        className="w-full space-y-4"
+        value={openAccordion || undefined}
+        onValueChange={handleAccordionChange}
+      >
         {matchesToRender.map((match) => {
           const kickoff = new Date(match.fixture.date);
           const freezeTime = new Date(kickoff.getTime() - 15 * 60 * 1000);
           const isFrozen = new Date() >= freezeTime;
 
           return (
-            <AccordionItem value={`${sectionKey}-match-${match.fixture.id}`} key={match.fixture.id} className="border rounded-lg p-4 bg-card shadow-sm">
+            <AccordionItem 
+              value={`${sectionKey}-match-${match.fixture.id}`} 
+              key={match.fixture.id} 
+              className="border rounded-lg p-1 sm:p-4 bg-card shadow-sm w-full max-w-none"
+              id={`accordion-${sectionKey}-${match.fixture.id}`}
+            >
               <AccordionTrigger>
                 <div className="text-left w-full">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-bold text-lg text-foreground">{match.teams?.home?.name ?? 'Local'} vs {match.teams?.away?.name ?? 'Visitante'}</p>
-                      <p className="text-sm text-muted-foreground">{new Date(match.fixture.date).toLocaleString()}</p>
+                      <p className="font-bold text-sm sm:text-lg text-foreground">{match.teams?.home?.name ?? 'Local'} vs {match.teams?.away?.name ?? 'Visitante'}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">{new Date(match.fixture.date).toLocaleString()}</p>
                     </div>
                     {getBetsForFixture(match.fixture.id).length > 0 && (
                       <Badge variant="secondary" className="ml-2">
@@ -327,29 +438,49 @@ const Bets = () => {
                 </div>
               </AccordionTrigger>
               <AccordionContent>
-                <div className="space-y-6 pt-4">
-                  {getBetTypesSorted().map(betType => {
-                    const market = findMarket(match, betType.apiName);
-                    if (!market) return null;
-
+                <div className="space-y-3 sm:space-y-6 pt-1 sm:pt-4">
+                  {/* Check if match is in the future (outside current week) */}
+                  {(() => {
+                    const matchDate = new Date(match.fixture.date);
+                    const nextMondayEndOfDay = getNextMondayEndOfDay();
+                    
+                    if (matchDate > nextMondayEndOfDay) {
+                      return (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <p className="text-lg font-medium mb-2">Apuesta no disponible</p>
+                          <p>Solo se pueden apostar partidos de la semana actual.</p>
+                        </div>
+                      );
+                    }
+                    
+                    // Show normal betting options for current week matches
                     return (
-                      <BetMarketSection
-                        key={betType.apiName}
-                        match={match}
-                        betType={betType}
-                        market={market}
-                        isFrozen={isFrozen}
-                        hasUserBetOnMarket={hasUserBetOnMarket}
-                        handleAddToSlip={handleAddToSlip}
-                      />
+                      <>
+                        {getBetTypesSorted().map(betType => {
+                          const market = findMarket(match, betType.apiName);
+                          if (!market) return null;
+
+                          return (
+                            <BetMarketSection
+                              key={betType.apiName}
+                              match={match}
+                              betType={betType}
+                              market={market}
+                              isFrozen={isFrozen}
+                              hasUserBetOnMarket={hasUserBetOnMarket}
+                              handleAddToSlip={handleAddToSlip}
+                            />
+                          );
+                        })}
+                        
+                        {getBetTypesSorted().every(betType => !findMarket(match, betType.apiName)) && (
+                          <div className="text-center py-8 text-muted-foreground">
+                            <p>No hay mercados de apuestas disponibles para este partido.</p>
+                          </div>
+                        )}
+                      </>
                     );
-                  })}
-                  
-                  {getBetTypesSorted().every(betType => !findMarket(match, betType.apiName)) && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <p>No hay mercados de apuestas disponibles para este partido.</p>
-                    </div>
-                  )}
+                  })()}
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -359,7 +490,7 @@ const Bets = () => {
     );
   };
 
-  const renderContent = () => {
+  const renderLeagueContent = () => {
     if (loading) {
       return (
         <div className="flex-grow space-y-4">
@@ -383,10 +514,10 @@ const Bets = () => {
       );
     }
 
-    if (matches.length === 0) {
+    if (leagueMatches.length === 0) {
       return (
         <div className="flex-grow text-center p-8 bg-card rounded-lg shadow">
-          <p className="text-muted-foreground">No hay partidos con cuotas disponibles en este momento.</p>
+          <p className="text-muted-foreground">No hay partidos con cuotas disponibles en esta liga en este momento.</p>
         </div>
       );
     }
@@ -395,7 +526,7 @@ const Bets = () => {
       <div className="flex-grow space-y-8">
         {/* Main section: matches up to next Monday 23:59 */}
         <div>
-          <h2 className="text-2xl font-semibold mb-4 text-foreground">La Liga - Cuotas en Vivo</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-foreground">Cuotas en Vivo</h2>
           {renderMatchesSection(upcomingMatches, 'upcoming')}
         </div>
 
@@ -404,7 +535,7 @@ const Bets = () => {
           <>
             <div className="border-t border-border my-8"></div>
             <div>
-              <h2 className="text-2xl font-semibold mb-4 text-foreground">La Liga - Próximos Encuentros</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">Próximos Encuentros</h2>
               {renderMatchesSection(futureMatches, 'future')}
             </div>
           </>
@@ -413,9 +544,114 @@ const Bets = () => {
     );
   };
 
+  const renderContent = () => {
+    return (
+      <Tabs value={selectedLeague} onValueChange={(value) => setSelectedLeague(value as 'primera' | 'segunda' | 'champions' | 'europa')} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6 gap-2 h-auto">
+          <TabsTrigger 
+            value="primera" 
+            className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-black data-[state=active]:ring-offset-2"
+          >
+            {/* Franjas de fondo */}
+            <div 
+              className="absolute inset-0"
+              style={{
+                background: `
+                  linear-gradient(45deg, 
+                    #C60B1E 0%, #C60B1E 33%, 
+                    #FFC400 33%, #FFC400 66%, 
+                    #C60B1E 66%, #C60B1E 100%
+                  )
+                `,
+                opacity: '0.15'
+              }}
+            />
+            {/* Texto por encima */}
+            <span className="relative z-10 text-black font-semibold text-xs sm:text-sm leading-tight">La Liga - Primera</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="segunda"
+            className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-black data-[state=active]:ring-offset-2"
+          >
+            {/* Franjas de fondo */}
+            <div 
+              className="absolute inset-0"
+              style={{
+                background: `
+                  linear-gradient(45deg, 
+                    #C60B1E 0%, #C60B1E 33%, 
+                    #FFC400 33%, #FFC400 66%, 
+                    #C60B1E 66%, #C60B1E 100%
+                  )
+                `,
+                opacity: '0.15'
+              }}
+            />
+            {/* Texto por encima */}
+            <span className="relative z-10 text-black font-semibold text-xs sm:text-sm leading-tight">La Liga - Segunda</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="champions"
+            className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-black data-[state=active]:ring-offset-2"
+          >
+            {/* Franjas de fondo azul-azul-blanco */}
+            <div 
+              className="absolute inset-0"
+              style={{
+                background: `
+                  linear-gradient(45deg, 
+                    #1e40af 0%, #1e40af 33%, 
+                    #1e40af 33%, #1e40af 66%, 
+                    #ffffff 66%, #ffffff 100%
+                  )
+                `,
+                opacity: '0.4'
+              }}
+            />
+            {/* Texto por encima */}
+            <span className="relative z-10 text-black font-semibold text-xs sm:text-sm leading-tight">Champions League</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="europa"
+            className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-black data-[state=active]:ring-offset-2"
+          >
+            {/* Franjas de fondo azul-azul-verde */}
+            <div 
+              className="absolute inset-0"
+              style={{
+                background: `
+                  linear-gradient(45deg, 
+                    #1e40af 0%, #1e40af 33%, 
+                    #1e40af 33%, #1e40af 66%, 
+                    #10b981 66%, #10b981 100%
+                  )
+                `,
+                opacity: '0.4'
+              }}
+            />
+            {/* Texto por encima */}
+            <span className="relative z-10 text-black font-semibold text-xs sm:text-sm leading-tight">Europa League</span>
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="primera" className="mt-0">
+          {renderLeagueContent()}
+        </TabsContent>
+        <TabsContent value="segunda" className="mt-0">
+          {renderLeagueContent()}
+        </TabsContent>
+        <TabsContent value="champions" className="mt-0">
+          {renderLeagueContent()}
+        </TabsContent>
+        <TabsContent value="europa" className="mt-0">
+          {renderLeagueContent()}
+        </TabsContent>
+      </Tabs>
+    );
+  };
+
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">La Liga - Apuestas</h1>
+    <div className="w-full px-2 sm:container sm:mx-auto sm:p-4">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Apuestas</h1>
       
       {/* Desktop Layout */}
       {!isMobile ? (
@@ -433,8 +669,8 @@ const Bets = () => {
         </div>
       ) : (
           /* Mobile Layout with Drawer */
-        <div className="flex flex-col gap-8">
-          <div>
+        <div className="flex flex-col gap-4 sm:gap-8 w-full">
+          <div className="w-full overflow-hidden">
             {renderContent()}
           </div>
 

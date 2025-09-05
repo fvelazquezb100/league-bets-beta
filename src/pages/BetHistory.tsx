@@ -16,6 +16,7 @@ export const BetHistory = () => {
   const [now, setNow] = useState<Date>(new Date());
   const [cancelingId, setCancelingId] = useState<number | null>(null);
   const [matchResults, setMatchResults] = useState<Record<number, string>>({});
+  const [matchKickoffs, setMatchKickoffs] = useState<Record<number, Date>>({});
 
   useEffect(() => {
     const fetchBets = async () => {
@@ -50,9 +51,10 @@ export const BetHistory = () => {
           }
         });
 
-        // Fetch match results for these fixture_ids
+        // Fetch match results and kickoff times for these fixture_ids
         if (fixtureIds.size > 0) {
           try {
+            // Fetch match results
             const { data: resultsData } = await (supabase as any)
               .from('match_results')
               .select('fixture_id, match_result')
@@ -65,8 +67,28 @@ export const BetHistory = () => {
               });
               setMatchResults(resultsMap);
             }
+
+            // Fetch kickoff times from match_odds_cache
+            const { data: cacheData } = await supabase
+              .from('match_odds_cache')
+              .select('data')
+              .eq('id', 1)
+              .single();
+
+            if (cacheData?.data) {
+              const data = cacheData.data as any;
+              if (data.response) {
+                const kickoffsMap: Record<number, Date> = {};
+                data.response.forEach((match: any) => {
+                  if (match.fixture?.id && match.fixture?.date) {
+                    kickoffsMap[match.fixture.id] = new Date(match.fixture.date);
+                  }
+                });
+                setMatchKickoffs(kickoffsMap);
+              }
+            }
           } catch (error) {
-            console.error('Error fetching match results:', error);
+            console.error('Error fetching match data:', error);
           }
         }
       }
@@ -126,6 +148,42 @@ export const BetHistory = () => {
   const totalSettledStake = wonBetsStake + lostBetsStake;
   const successPercentage =
     totalSettledStake > 0 ? Math.round((wonBetsStake / totalSettledStake) * 100) : 0;
+
+  // Function to check if a bet can be cancelled (15 minutes before kickoff)
+  const canCancelBet = (bet: any): boolean => {
+    if (bet.status !== 'pending') return false;
+    
+    // For single bets
+    if (bet.bet_type === 'single' && bet.fixture_id) {
+      const kickoff = matchKickoffs[bet.fixture_id];
+      if (kickoff) {
+        const cutoffTime = new Date(kickoff.getTime() - 15 * 60 * 1000); // 15 minutes before
+        return now < cutoffTime;
+      }
+    }
+    
+    // For combo bets
+    if (bet.bet_type === 'combo' && bet.bet_selections) {
+      // Find the earliest kickoff time among all selections
+      let earliestKickoff: Date | null = null;
+      
+      bet.bet_selections.forEach((selection: any) => {
+        if (selection.fixture_id) {
+          const kickoff = matchKickoffs[selection.fixture_id];
+          if (kickoff && (!earliestKickoff || kickoff < earliestKickoff)) {
+            earliestKickoff = kickoff;
+          }
+        }
+      });
+      
+      if (earliestKickoff) {
+        const cutoffTime = new Date(earliestKickoff.getTime() - 15 * 60 * 1000); // 15 minutes before
+        return now < cutoffTime;
+      }
+    }
+    
+    return false; // Default to false if we can't determine kickoff time
+  };
 
   const getStatusText = (status: string) => {
     switch (status) {
@@ -267,7 +325,7 @@ export const BetHistory = () => {
                         </TableCell>
                         <TableCell>
                           {bet.bet_type === 'combo' && bet.bet_selections?.length
-                            ? bet.bet_selections.every((sel: any) => sel.status === 'pending') && (
+                            ? bet.bet_selections.every((sel: any) => sel.status === 'pending') && canCancelBet(bet) && (
                                 <Button
                                   variant="destructive"
                                   size="sm"
@@ -277,7 +335,7 @@ export const BetHistory = () => {
                                   {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
                                 </Button>
                               )
-                            : bet.status === 'pending' && (
+                            : bet.status === 'pending' && canCancelBet(bet) && (
                                 <Button
                                   variant="destructive"
                                   size="sm"
@@ -342,7 +400,7 @@ export const BetHistory = () => {
                           <Badge variant={getStatusVariant(bet.status)}>{getStatusText(bet.status)}</Badge>
                         </TableCell>
                         <TableCell>
-                          {bet.status === 'pending' && (
+                          {bet.status === 'pending' && canCancelBet(bet) && (
                             <Button
                               variant="destructive"
                               size="sm"

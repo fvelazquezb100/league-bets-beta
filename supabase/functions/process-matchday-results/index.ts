@@ -1,4 +1,6 @@
+// @ts-ignore - Deno imports
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// @ts-ignore - Deno imports
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -23,7 +25,7 @@ function outcomeFromFixture(fx: any): "home" | "away" | "draw" | null {
 }
 
 function evaluateBet(
-  b: any,
+  bet: any,
   fr: { 
     home_goals: number; 
     away_goals: number; 
@@ -34,99 +36,308 @@ function evaluateBet(
   } | undefined,
 ): boolean {
   try {
-    if (!b || !fr) return false;
+    if (!bet || !fr) return false;
 
-    const sel = String(b.bet_selection || "").toLowerCase().trim();
+    // Extract market and selection from bet object
+    // For bets table: use market_bets and bet_selection
+    // For bet_selections table: use market and selection
+    const market = bet.market || bet.market_bets || "";
+    const selection = bet.selection || bet.bet_selection || "";
+    
+    // Clean selection text (remove odds if present)
+    let cleanSelection = selection;
+    if (cleanSelection && cleanSelection.includes(' @ ')) {
+      const parts = cleanSelection.split(' @ ');
+      cleanSelection = parts[0].trim();
+    }
+
+    const marketLower = market.toLowerCase().trim();
+    const selectionLower = cleanSelection.toLowerCase().trim();
+    
     const hg = Number(fr.home_goals ?? 0);
     const ag = Number(fr.away_goals ?? 0);
     const total = hg + ag;
 
-    // Double Chance bets
-    if (sel.includes("1x") || sel.includes("local o empate")) {
-      return fr.outcome === "home" || fr.outcome === "draw";
-    }
-    if (sel.includes("x2") || sel.includes("empate o visitante")) {
-      return fr.outcome === "draw" || fr.outcome === "away";
-    }
-    if (sel.includes("12") || sel.includes("local o visitante")) {
-      return fr.outcome === "home" || fr.outcome === "away";
-    }
+    console.log(`Evaluating bet:`, {
+      market: marketLower,
+      selection: selectionLower,
+      matchResult: { 
+        hg, 
+        ag, 
+        outcome: fr.outcome, 
+        halftime: fr.halftime_outcome,
+        halftime_home: fr.halftime_home,
+        halftime_away: fr.halftime_away
+      }
+    });
 
-    // Correct Score bets
-    if (sel.includes("-") && /\d+-\d+/.test(sel)) {
-      const scoreMatch = sel.match(/(\d+)-(\d+)/);
-      if (scoreMatch) {
-        const expectedHome = parseInt(scoreMatch[1]);
-        const expectedAway = parseInt(scoreMatch[2]);
-        return hg === expectedHome && ag === expectedAway;
+    // Match Winner / Ganador del Partido
+    if (marketLower === "ganador del partido") {
+      if (selectionLower.includes("home") || selectionLower.includes("local")) {
+        return fr.outcome === "home";
+      }
+      if (selectionLower.includes("away") || selectionLower.includes("visitante")) {
+        return fr.outcome === "away";
+      }
+      if (selectionLower.includes("draw") || selectionLower.includes("empate")) {
+        return fr.outcome === "draw";
       }
     }
 
-    // First Half Winner bets (if halftime data available)
-    if ((sel.includes("1st") || sel.includes("first") || sel.includes("1ª")) && sel.includes("half")) {
-      if (fr.halftime_outcome) {
-        if (sel.includes("home") || sel.includes("local")) return fr.halftime_outcome === "home";
-        if (sel.includes("away") || sel.includes("visitante")) return fr.halftime_outcome === "away";
-        if (sel.includes("draw") || sel.includes("empate")) return fr.halftime_outcome === "draw";
+    // Double Chance / Doble Oportunidad
+    if (marketLower === "doble oportunidad") {
+      if (selectionLower.includes("home/draw") || selectionLower.includes("local/empate")) {
+        return fr.outcome === "home" || fr.outcome === "draw";
       }
-      // If no halftime data, cannot evaluate - return false for now
-      return false;
+      if (selectionLower.includes("draw/away") || selectionLower.includes("empate/visitante")) {
+        return fr.outcome === "draw" || fr.outcome === "away";
+      }
+      if (selectionLower.includes("home/away") || selectionLower.includes("local/visitante")) {
+        return fr.outcome === "home" || fr.outcome === "away";
+      }
     }
 
-    // Second Half Winner bets (requires calculation from full-time and halftime)
-    if ((sel.includes("2nd") || sel.includes("second") || sel.includes("2ª")) && sel.includes("half")) {
+    // Correct Score / Resultado Exacto
+    if (marketLower === "resultado exacto") {
+      if (selectionLower.includes(":") && /\d+:\d+/.test(selectionLower)) {
+        const scoreMatch = selectionLower.match(/(\d+):(\d+)/);
+        if (scoreMatch) {
+          const expectedHome = parseInt(scoreMatch[1]);
+          const expectedAway = parseInt(scoreMatch[2]);
+          return hg === expectedHome && ag === expectedAway;
+        }
+      }
+    }
+
+    // First Half Winner / Ganador del 1er Tiempo
+    if (marketLower === "ganador del 1er tiempo") {
+      
+      console.log(`First half bet evaluation:`, {
+        market: marketLower,
+        selection: selectionLower,
+        halftime_outcome: fr.halftime_outcome,
+        halftime_home: fr.halftime_home,
+        halftime_away: fr.halftime_away,
+        fullMatchResult: fr
+      });
+      
+      // Calculate halftime outcome from goals if not available
+      let halftimeOutcome = fr.halftime_outcome;
+      if (!halftimeOutcome && fr.halftime_home !== undefined && fr.halftime_away !== undefined) {
+        if (fr.halftime_home > fr.halftime_away) {
+          halftimeOutcome = "home";
+        } else if (fr.halftime_home < fr.halftime_away) {
+          halftimeOutcome = "away";
+        } else {
+          halftimeOutcome = "draw";
+        }
+        console.log(`Calculated halftime outcome from goals: ${halftimeOutcome} (${fr.halftime_home}-${fr.halftime_away})`);
+      }
+      
+      if (halftimeOutcome) {
+        if (selectionLower.includes("home") || selectionLower.includes("local")) {
+          const result = halftimeOutcome === "home";
+          console.log(`First half home bet: ${result} (${halftimeOutcome} === "home")`);
+          return result;
+        }
+        if (selectionLower.includes("away") || selectionLower.includes("visitante")) {
+          const result = halftimeOutcome === "away";
+          console.log(`First half away bet: ${result} (${halftimeOutcome} === "away")`);
+          return result;
+        }
+        if (selectionLower.includes("draw") || selectionLower.includes("empate")) {
+          const result = halftimeOutcome === "draw";
+          console.log(`First half draw bet: ${result} (${halftimeOutcome} === "draw")`);
+          return result;
+        }
+      }
+      console.log(`No halftime data available for first half bet`);
+      return false; // No halftime data available
+    }
+
+    // Second Half Winner / Ganador del 2do Tiempo
+    if (marketLower === "ganador del 2do tiempo") {
       if (fr.halftime_home !== undefined && fr.halftime_away !== undefined) {
         const secondHalfHome = hg - fr.halftime_home;
         const secondHalfAway = ag - fr.halftime_away;
         
-        if (sel.includes("home") || sel.includes("local")) {
-          return secondHalfHome > secondHalfAway;
+        console.log(`Second half calculation:`, {
+          fullTime: { hg, ag },
+          halftime: { home: fr.halftime_home, away: fr.halftime_away },
+          secondHalf: { home: secondHalfHome, away: secondHalfAway },
+          selection: selectionLower
+        });
+        
+        if (selectionLower.includes("home") || selectionLower.includes("local")) {
+          const result = secondHalfHome > secondHalfAway;
+          console.log(`Second half home bet: ${result} (${secondHalfHome} > ${secondHalfAway})`);
+          return result;
         }
-        if (sel.includes("away") || sel.includes("visitante")) {
-          return secondHalfHome < secondHalfAway;
+        if (selectionLower.includes("away") || selectionLower.includes("visitante")) {
+          const result = secondHalfHome < secondHalfAway;
+          console.log(`Second half away bet: ${result} (${secondHalfHome} < ${secondHalfAway})`);
+          return result;
         }
-        if (sel.includes("draw") || sel.includes("empate")) {
-          return secondHalfHome === secondHalfAway;
+        if (selectionLower.includes("draw") || selectionLower.includes("empate")) {
+          const result = secondHalfHome === secondHalfAway;
+          console.log(`Second half draw bet: ${result} (${secondHalfHome} === ${secondHalfAway})`);
+          return result;
+        }
+      }
+      console.log(`No halftime data available for second half bet`);
+      return false;
+    }
+
+    // HT/FT Double / Medio Tiempo/Final
+    if (marketLower === "medio tiempo/final") {
+      if (selectionLower.includes("/") && fr.halftime_outcome) {
+        const parts = selectionLower.split("/");
+        if (parts.length === 2) {
+          const htPart = parts[0].trim();
+          const ftPart = parts[1].trim();
+          
+          let htCorrect = false;
+          let ftCorrect = false;
+          
+          // Check halftime outcome
+          if (htPart.includes("home") || htPart.includes("local") || htPart.includes("1")) {
+            htCorrect = fr.halftime_outcome === "home";
+          } else if (htPart.includes("away") || htPart.includes("visitante") || htPart.includes("2")) {
+            htCorrect = fr.halftime_outcome === "away";
+          } else if (htPart.includes("draw") || htPart.includes("empate") || htPart.includes("x")) {
+            htCorrect = fr.halftime_outcome === "draw";
+          }
+          
+          // Check full-time outcome
+          if (ftPart.includes("home") || ftPart.includes("local") || ftPart.includes("1")) {
+            ftCorrect = fr.outcome === "home";
+          } else if (ftPart.includes("away") || ftPart.includes("visitante") || ftPart.includes("2")) {
+            ftCorrect = fr.outcome === "away";
+          } else if (ftPart.includes("draw") || ftPart.includes("empate") || ftPart.includes("x")) {
+            ftCorrect = fr.outcome === "draw";
+          }
+          
+          return htCorrect && ftCorrect;
         }
       }
       return false;
     }
 
-    // HT/FT Double bets
-    if (sel.includes("/")) {
-      const parts = sel.split("/");
-      if (parts.length === 2 && fr.halftime_outcome) {
-        const htPart = parts[0].trim();
-        const ftPart = parts[1].trim();
-        
-        let htCorrect = false;
-        let ftCorrect = false;
-        
-        // Check halftime outcome
-        if (htPart.includes("home") || htPart.includes("local")) {
-          htCorrect = fr.halftime_outcome === "home";
-        } else if (htPart.includes("away") || htPart.includes("visitante")) {
-          htCorrect = fr.halftime_outcome === "away";
-        } else if (htPart.includes("draw") || htPart.includes("empate")) {
-          htCorrect = fr.halftime_outcome === "draw";
+    // Goals Over/Under / Goles Más/Menos de
+    if (marketLower === "goles más/menos de") {
+      
+      let threshold: number | null = null;
+      let over = selectionLower.includes("over") || selectionLower.includes("más");
+      let under = selectionLower.includes("under") || selectionLower.includes("menos");
+
+      // Extract threshold from selection
+      const m1 = selectionLower.match(/(over|under|más|menos)\s*(?:de\s*)?([0-9]+(?:\.[0-9]+)?)/);
+      if (m1) {
+        threshold = parseFloat(m1[2]);
+        over = m1[1] === "over" || m1[1] === "más";
+        under = m1[1] === "under" || m1[1] === "menos";
+      } else {
+        const m2 = selectionLower.match(/\b([ou])\s*([0-9]+(?:\.[0-9]+)?)/);
+        if (m2) {
+          threshold = parseFloat(m2[2]);
+          over = m2[1] === "o";
+          under = m2[1] === "u";
         }
-        
-        // Check full-time outcome
-        if (ftPart.includes("home") || ftPart.includes("local")) {
-          ftCorrect = fr.outcome === "home";
-        } else if (ftPart.includes("away") || ftPart.includes("visitante")) {
-          ftCorrect = fr.outcome === "away";
-        } else if (ftPart.includes("draw") || ftPart.includes("empate")) {
-          ftCorrect = fr.outcome === "draw";
-        }
-        
-        return htCorrect && ftCorrect;
       }
+
+      if (threshold == null) return false;
+      if (over) return total > threshold;
+      if (under) return total < threshold;
     }
 
-    // Result + Over/Under combinations
-    if (sel.includes("&") || sel.includes("and")) {
-      const parts = sel.split(/[&]|and/).map(p => p.trim());
+    // Both Teams To Score (BTTS) / Ambos Equipos Marcan
+    if (marketLower === "ambos equipos marcan") {
+      const yes = selectionLower.includes("yes") || selectionLower.includes("sí") || selectionLower.includes("si");
+      const no = selectionLower.includes("no");
+      const bothScored = hg > 0 && ag > 0;
+      if (yes) return bothScored;
+      if (no) return !bothScored;
+      return false;
+    }
+
+    // Result/Total Goals / Resultado/Total Goles
+    if (marketLower === "resultado/total goles") {
+      if (selectionLower.includes("/")) {
+        const parts = selectionLower.split("/");
+        if (parts.length === 2) {
+          const resultPart = parts[0].trim();
+          const overUnderPart = parts[1].trim();
+          
+          let resultCorrect = false;
+          let overUnderCorrect = false;
+          
+          // Check result part
+          if (resultPart.includes("home") || resultPart.includes("local")) {
+            resultCorrect = fr.outcome === "home";
+          } else if (resultPart.includes("away") || resultPart.includes("visitante")) {
+            resultCorrect = fr.outcome === "away";
+          } else if (resultPart.includes("draw") || resultPart.includes("empate")) {
+            resultCorrect = fr.outcome === "draw";
+          }
+          
+          // Check over/under part
+          if (overUnderPart.includes("over") || overUnderPart.includes("más")) {
+            const thresholdMatch = overUnderPart.match(/([0-9]+(?:\.[0-9]+)?)/);
+            if (thresholdMatch) {
+              const threshold = parseFloat(thresholdMatch[1]);
+              overUnderCorrect = total > threshold;
+            }
+          } else if (overUnderPart.includes("under") || overUnderPart.includes("menos")) {
+            const thresholdMatch = overUnderPart.match(/([0-9]+(?:\.[0-9]+)?)/);
+            if (thresholdMatch) {
+              const threshold = parseFloat(thresholdMatch[1]);
+              overUnderCorrect = total < threshold;
+            }
+          }
+          
+          return resultCorrect && overUnderCorrect;
+        }
+      }
+      return false;
+    }
+
+    // Result/Both Teams Score / Resultado/Ambos Marcan
+    if (marketLower === "resultado/ambos marcan") {
+      if (selectionLower.includes("/")) {
+        const parts = selectionLower.split("/");
+        if (parts.length === 2) {
+          const resultPart = parts[0].trim();
+          const bttsPart = parts[1].trim();
+          
+          let resultCorrect = false;
+          let bttsCorrect = false;
+          
+          // Check result part
+          if (resultPart.includes("home") || resultPart.includes("local")) {
+            resultCorrect = fr.outcome === "home";
+          } else if (resultPart.includes("away") || resultPart.includes("visitante")) {
+            resultCorrect = fr.outcome === "away";
+          } else if (resultPart.includes("draw") || resultPart.includes("empate")) {
+            resultCorrect = fr.outcome === "draw";
+          }
+          
+          // Check both teams score part
+          const bothScored = hg > 0 && ag > 0;
+          if (bttsPart.includes("yes") || bttsPart.includes("sí") || bttsPart.includes("si")) {
+            bttsCorrect = bothScored;
+          } else if (bttsPart.includes("no")) {
+            bttsCorrect = !bothScored;
+          }
+          
+          return resultCorrect && bttsCorrect;
+        }
+      }
+      return false;
+    }
+
+    // Result + Over/Under combinations (legacy format with & or and)
+    if (selectionLower.includes("&") || selectionLower.includes("and")) {
+      const parts = selectionLower.split(/[&]|and/).map(p => p.trim());
       if (parts.length === 2) {
         const resultPart = parts[0];
         const overUnderPart = parts[1];
@@ -156,60 +367,16 @@ function evaluateBet(
             const threshold = parseFloat(thresholdMatch[1]);
             overUnderCorrect = total < threshold;
           }
-        } else if (overUnderPart.includes("yes") || overUnderPart.includes("sí")) {
-          overUnderCorrect = hg > 0 && ag > 0;
-        } else if (overUnderPart.includes("no")) {
-          overUnderCorrect = !(hg > 0 && ag > 0);
         }
         
         return resultCorrect && overUnderCorrect;
       }
     }
 
-    // Both Teams To Score (BTTS)
-    if ((sel.includes("both") && sel.includes("score")) || sel.includes("btts") || 
-        sel.includes("ambos") || sel.includes("marcan")) {
-      const yes = sel.includes("yes") || sel.includes("sí");
-      const no = sel.includes("no");
-      const bothScored = hg > 0 && ag > 0;
-      if (yes) return bothScored;
-      if (no) return !bothScored;
-      return false;
-    }
-
-    // Goals Over/Under
-    if (sel.includes("over") || sel.includes("under") || sel.includes("más") || 
-        sel.includes("menos") || /\b[ou]\s*\d/.test(sel)) {
-      let threshold: number | null = null;
-      let over = sel.includes("over") || sel.includes("más");
-      let under = sel.includes("under") || sel.includes("menos");
-
-      const m1 = sel.match(/(over|under|más|menos)\s*(?:de\s*)?([0-9]+(?:\.[0-9]+)?)/);
-      if (m1) {
-        threshold = parseFloat(m1[2]);
-        over = m1[1] === "over" || m1[1] === "más";
-        under = m1[1] === "under" || m1[1] === "menos";
-      } else {
-        const m2 = sel.match(/\b([ou])\s*([0-9]+(?:\.[0-9]+)?)/);
-        if (m2) {
-          threshold = parseFloat(m2[2]);
-          over = m2[1] === "o";
-          under = m2[1] === "u";
-        }
-      }
-
-      if (threshold == null) return false;
-      if (over) return total > threshold;
-      if (under) return total < threshold;
-    }
-
-    // Match Winner (1X2)
-    if (sel.includes("home") || sel.includes("local")) return fr.outcome === "home";
-    if (sel.includes("away") || sel.includes("visitante")) return fr.outcome === "away";
-    if (sel.includes("draw") || sel.includes("empate") || sel.includes("x")) return fr.outcome === "draw";
-
+    console.log(`No matching market found for: ${marketLower} - ${selectionLower}`);
     return false;
-  } catch {
+  } catch (error) {
+    console.error("Error in evaluateBet:", error);
     return false;
   }
 }
@@ -240,6 +407,7 @@ serve(async (req) => {
     console.log('Internal secret from header present:', !!secretFromHeader);
     console.log('Internal secret from body present:', !!secretFromBody);
     
+    // @ts-ignore - Deno global
     const INTERNAL_SECRET = Deno.env.get("INTERNAL_FUNCTION_SECRET");
     if (!INTERNAL_SECRET) {
       console.error('Missing INTERNAL_FUNCTION_SECRET environment variable');
@@ -268,8 +436,11 @@ serve(async (req) => {
     const jobName: string | undefined = parsedBody?.jobName;
     console.log('Request body:', { jobName, trigger: parsedBody?.trigger, timestamp: parsedBody?.timestamp });
 
+    // @ts-ignore - Deno global
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "https://lflxrkkzudsecvdfdxwl.supabase.co";
+    // @ts-ignore - Deno global
     const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    // @ts-ignore - Deno global
     const API_FOOTBALL_KEY = Deno.env.get("API_FOOTBALL_KEY");
 
     console.log('SERVICE_ROLE_KEY present:', !!SERVICE_ROLE_KEY);
@@ -369,6 +540,49 @@ serve(async (req) => {
       });
     }
 
+    // 1.5) Insert/update match results in match_results table
+    console.log('Inserting/updating match results...');
+    let matchResultsInserted = 0;
+    for (const fx of finished) {
+      const id = fx?.fixture?.id;
+      const hg = fx?.goals?.home ?? fx?.score?.fulltime?.home ?? null;
+      const ag = fx?.goals?.away ?? fx?.score?.fulltime?.away ?? null;
+      const oc = outcomeFromFixture(fx);
+      
+      if (id && hg !== null && ag !== null && oc && fx?.teams?.home?.name && fx?.teams?.away?.name) {
+        const htHome = fx?.score?.halftime?.home ?? null;
+        const htAway = fx?.score?.halftime?.away ?? null;
+        
+        const { error: insertError } = await sb
+          .from('match_results')
+          .upsert({
+            fixture_id: id,
+            match_name: `${fx.teams.home.name} vs ${fx.teams.away.name}`,
+            home_team: fx.teams.home.name,
+            away_team: fx.teams.away.name,
+            league_id: leagueId,
+            season: fx.league?.season || new Date().getFullYear(),
+            home_goals: Number(hg),
+            away_goals: Number(ag),
+            halftime_home: htHome !== null ? Number(htHome) : 0,
+            halftime_away: htAway !== null ? Number(htAway) : 0,
+            outcome: oc,
+            finished_at: fx.fixture?.date || new Date().toISOString(),
+            match_result: `${hg}-${ag}`
+          }, {
+            onConflict: 'fixture_id'
+          });
+        
+        if (insertError) {
+          console.error(`Error upserting match result for fixture ${id}:`, insertError);
+        } else {
+          matchResultsInserted++;
+          console.log(`✅ Upserted match result: ${fx.teams.home.name} vs ${fx.teams.away.name} (${hg}-${ag})`);
+        }
+      }
+    }
+    console.log(`Match results processing completed: ${matchResultsInserted} results inserted/updated`);
+
     // 2) Load pending bets for these fixtures
     const { data: bets, error: betsErr } = await sb
       .from("bets")
@@ -420,8 +634,8 @@ serve(async (req) => {
       // Create a proper bet object for evaluation with clean selection
       const betForEvaluation = {
         bet_selection: cleanSelection,
-        fixture_id: b.fixture_id,
-        market_bets: b.market_bets
+        market_bets: b.market_bets,
+        fixture_id: b.fixture_id
       };
 
       const isWin = evaluateBet(betForEvaluation, fr);
@@ -446,13 +660,22 @@ serve(async (req) => {
       const fr = resultsMap.get(Number(bs.fixture_id));
       if (!fr) continue;
 
-      // Create a mock bet object to use evaluateBet function
-      const mockBet = {
-        bet_selection: bs.selection,
+      // Create a proper bet object for evaluation with market and selection
+      const betForEvaluation = {
+        selection: bs.selection,
+        market: bs.market,
         fixture_id: bs.fixture_id
       };
 
-      const isWin = evaluateBet(mockBet, fr);
+      console.log(`Processing bet selection ${bs.id}:`, {
+        market: bs.market,
+        selection: bs.selection,
+        fixture_id: bs.fixture_id,
+        match_result: fr
+      });
+
+      const isWin = evaluateBet(betForEvaluation, fr);
+      console.log(`Bet selection ${bs.id} evaluation result: ${isWin ? 'WON' : 'LOST'}`);
       const newStatus = isWin ? "won" : "lost";
 
       selectionsToUpdate.push({ 
@@ -505,6 +728,7 @@ serve(async (req) => {
       singleBets: toUpdate.length,
       selections: selectionsToUpdate.length,
       comboBets: affectedComboBets.size,
+      matchResults: matchResultsInserted,
       processingTimeMs: processingTime
     });
     
@@ -514,8 +738,9 @@ serve(async (req) => {
       singleBets: toUpdate.length,
       selections: selectionsToUpdate.length,
       comboBets: affectedComboBets.size,
+      matchResults: matchResultsInserted,
       timing: { totalMs: processingTime },
-      message: `Successfully processed ${totalUpdated} bet updates`
+      message: `Successfully processed ${totalUpdated} bet updates and ${matchResultsInserted} match results`
     }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

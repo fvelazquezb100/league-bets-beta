@@ -1,0 +1,138 @@
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import type { MatchData, BetValue } from '@/pages/Bets';
+
+interface HalfTimeFullTimeSelectorProps {
+  match: MatchData;
+  isFrozen: boolean;
+  handleAddToSlip: (match: MatchData, marketName: string, selection: BetValue) => void;
+}
+
+const HalfTimeFullTimeSelector = ({ match, isFrozen, handleAddToSlip }: HalfTimeFullTimeSelectorProps) => {
+  const [halfTimeResult, setHalfTimeResult] = useState<string>('');
+  const [fullTimeResult, setFullTimeResult] = useState<string>('');
+  const [currentOdds, setCurrentOdds] = useState('0.00');
+
+  const results = [
+    { value: 'Home', label: match.teams?.home?.name || 'Local', short: 'L' },
+    { value: 'Draw', label: 'Empate', short: 'E' },
+    { value: 'Away', label: match.teams?.away?.name || 'Visitante', short: 'V' }
+  ];
+
+  useEffect(() => {
+    const findOdds = () => {
+      const market = match.bookmakers?.[0]?.bets.find(
+        (bet) => bet.name === 'HT/FT Double'
+      );
+      if (!market || !halfTimeResult || !fullTimeResult) return '0.00';
+
+      // Try different possible formats for the selection
+      const possibleSelections = [
+        `${halfTimeResult}/${fullTimeResult}`,
+        `${halfTimeResult} / ${fullTimeResult}`,
+        `${halfTimeResult}-${fullTimeResult}`,
+        `${halfTimeResult} - ${fullTimeResult}`
+      ];
+
+      for (const selection of possibleSelections) {
+        const value = market.values.find(v => v.value === selection);
+        if (value) return value.odd;
+      }
+
+      return '0.00';
+    };
+    setCurrentOdds(findOdds());
+  }, [halfTimeResult, fullTimeResult, match.bookmakers]);
+
+  const handleAddBet = () => {
+    if (currentOdds === '0.00' || !halfTimeResult || !fullTimeResult) return;
+
+    const betValue: BetValue = {
+      value: `${halfTimeResult}/${fullTimeResult}`,
+      odd: currentOdds,
+    };
+    
+    handleAddToSlip(match, 'Medio Tiempo/Final', betValue);
+  };
+
+  const getResultShort = (result: string) => {
+    return results.find(r => r.value === result)?.short || result;
+  };
+
+  const getResultLabel = (result: string) => {
+    return results.find(r => r.value === result)?.label || result;
+  };
+
+  return (
+    <div className="border-t-2 border-border pt-8 mt-8 first:border-t-0 first:pt-0 first:mt-0">
+      <h4 className="font-semibold mb-6 text-foreground text-lg">Medio Tiempo/Final</h4>
+      
+      <div className="space-y-4">
+        {/* Medio Tiempo Selector */}
+        <div>
+          <p className="text-sm font-medium text-muted-foreground mb-2">Resultado al Medio Tiempo</p>
+          <div className="grid grid-cols-3 gap-2">
+            {results.map((result) => (
+              <Button
+                key={`ht-${result.value}`}
+                variant={halfTimeResult === result.value ? "default" : "outline"}
+                size="sm"
+                onClick={() => setHalfTimeResult(result.value)}
+                disabled={isFrozen}
+                className={`h-10 transition-all duration-200 ${
+                  halfTimeResult === result.value 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'hover:bg-green-500 hover:text-white hover:border-green-500'
+                }`}
+              >
+                <span className="text-xs">{result.label}</span>
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Full Time Selector */}
+        <div>
+          <p className="text-sm font-medium text-muted-foreground mb-2">Resultado Final</p>
+          <div className="grid grid-cols-3 gap-2">
+            {results.map((result) => (
+              <Button
+                key={`ft-${result.value}`}
+                variant={fullTimeResult === result.value ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFullTimeResult(result.value)}
+                disabled={isFrozen}
+                className={`h-10 transition-all duration-200 ${
+                  fullTimeResult === result.value 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'hover:bg-green-500 hover:text-white hover:border-green-500'
+                }`}
+              >
+                <span className="text-xs">{result.label}</span>
+              </Button>
+            ))}
+          </div>
+        </div>
+
+
+        {/* Add Bet Button */}
+        <Button
+          onClick={handleAddBet}
+          disabled={isFrozen || currentOdds === '0.00' || !halfTimeResult || !fullTimeResult}
+          variant="outline"
+          className={`w-full h-12 transition-all duration-200 hover:scale-[1.02] ${
+            currentOdds === '0.00' || !halfTimeResult || !fullTimeResult
+              ? 'opacity-50 cursor-not-allowed' 
+              : 'hover:bg-green-500 hover:text-white hover:border-green-500'
+          }`}
+        >
+          <span className="text-lg font-bold">
+            {currentOdds === '0.00' ? 'Selecciona ambas opciones' : `${currentOdds}`}
+          </span>
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export default HalfTimeFullTimeSelector;

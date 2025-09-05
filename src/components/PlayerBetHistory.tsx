@@ -194,21 +194,37 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                     {/* Apuesta */}
                     <TableCell>
                       {bet.bet_type === 'combo' ? (
-                        bet.bet_selections?.map((sel: any) => (
-                          <div key={sel.id} className="text-sm mb-1 text-muted-foreground">
-                            {sel.market}: {getBettingTranslation(sel.selection) || sel.selection} @ {sel.odds}
-                          </div>
-                        ))
+                        <>
+                          {bet.bet_selections?.map((sel: any, index: number) => (
+                            <div key={sel.id} className={`text-sm ${index < (bet.bet_selections?.length || 0) - 1 ? 'mb-5' : 'mb-2'} text-muted-foreground`}>
+                              {sel.market}: {getBettingTranslation(sel.selection) || sel.selection} @ {sel.odds}
+                            </div>
+                          ))}
+                          <div className="text-xs text-muted-foreground">&nbsp;</div>
+                        </>
                       ) : (
-                        <div className="text-sm text-muted-foreground">
-                          {(() => {
-                            const market = bet.market_bets || '';
-                            const selectionText = bet.bet_selection?.trim() || '';
-                            const translatedSelection = getBettingTranslation(selectionText) || selectionText;
-                            const odds = bet.odds ? parseFloat(bet.odds).toFixed(2) : '';
-                            return `${market}: ${translatedSelection} @ ${odds}`;
-                          })()}
-                        </div>
+                        <>
+                          <div className="text-sm text-muted-foreground">
+                            {(() => {
+                              const market = bet.market_bets || '';
+                              const selectionText = bet.bet_selection?.trim() || '';
+                              
+                              // Check if selectionText already contains odds (has @ symbol)
+                              if (selectionText.includes(' @ ')) {
+                                const parts = selectionText.split(' @ ');
+                                const selection = getBettingTranslation(parts[0] || '') || parts[0] || '';
+                                const odds = parts[1] ? parseFloat(parts[1]).toFixed(2) : '';
+                                return `${market}: ${selection} @ ${odds}`;
+                              } else {
+                                // If no odds in selectionText, use bet.odds
+                                const translatedSelection = getBettingTranslation(selectionText) || selectionText;
+                                const odds = bet.odds ? parseFloat(bet.odds).toFixed(2) : '';
+                                return `${market}: ${translatedSelection} @ ${odds}`;
+                              }
+                            })()}
+                          </div>
+                          <div className="text-xs text-muted-foreground">&nbsp;</div>
+                        </>
                       )}
                     </TableCell>
 
