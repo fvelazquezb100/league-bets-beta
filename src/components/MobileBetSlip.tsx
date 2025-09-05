@@ -200,6 +200,13 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll }: MobileBetSlipP
           match_description: bet.matchDescription
         }));
 
+        // Debug logging
+        console.log('🔍 DEBUG - Combo bet data:');
+        console.log('Selected bets:', selectedBets);
+        console.log('Mapped selections:', selections);
+        console.log('Stake amount:', stakeAmount);
+        console.log('Total odds:', totalOdds);
+
         const { data: betId, error: comboError } = await supabase.rpc('place_combo_bet', {
           stake_amount: stakeAmount,
           selections: selections
@@ -224,6 +231,10 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll }: MobileBetSlipP
       setIsExpanded(false);
 
     } catch (error) {
+      console.error('🚨 DEBUG - Full error object:', error);
+      console.error('🔍 DEBUG - Error details:', error.details);
+      console.error('🔍 DEBUG - Error message:', error.message);
+      console.error('🔍 DEBUG - Error code:', error.code);
       console.error('Error placing bet:', error);
       toast({
         title: 'Error',
