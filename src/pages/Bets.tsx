@@ -3,6 +3,7 @@ import { supabase } from '../integrations/supabase/client';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import BetSlip from '@/components/BetSlip';
+import MobileBetSlip from '@/components/MobileBetSlip';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -10,8 +11,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getBetTypesSorted } from '@/utils/betTypes';
 import BetMarketSection from '@/components/BetMarketSection';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
-import { ShoppingCart } from 'lucide-react';
 import { getBettingTranslation } from '@/utils/bettingTranslations';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -84,10 +83,8 @@ const Bets = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedBets, setSelectedBets] = useState<any[]>([]);
   const [userBets, setUserBets] = useState<UserBet[]>([]);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [drawerShouldRender, setDrawerShouldRender] = useState(false);
   const [selectedLeague, setSelectedLeague] = useState<'primera' | 'segunda' | 'champions' | 'europa'>('primera');
-  const [openAccordion, setOpenAccordion] = useState<string | null>(null);
+  const [openAccordions, setOpenAccordions] = useState<string[]>([]);
   const { toast } = useToast();
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -178,19 +175,6 @@ const Bets = () => {
     fetchOddsAndBets();
   }, [user]);
 
-  // Manage drawer render state to prevent unmounting during transitions
-  useEffect(() => {
-    if (selectedBets.length > 0) {
-      setDrawerShouldRender(true);
-    } else if (selectedBets.length === 0 && drawerShouldRender) {
-      // Delay hiding the drawer to allow for smooth transition
-      const timer = setTimeout(() => {
-        setDrawerShouldRender(false);
-        setIsDrawerOpen(false);
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [selectedBets.length, drawerShouldRender]);
 
   const handleAddToSlip = (match: MatchData, marketName: string, selection: BetValue) => {
     // Check if match is in the future (outside current week) - BLOCK ALL FUTURE MATCHES
@@ -355,13 +339,13 @@ const Bets = () => {
     return matches.filter(match => match.teams?.league_id === leagueId);
   };
 
-  const handleAccordionChange = (value: string) => {
-    setOpenAccordion(value);
+  const handleAccordionChange = (value: string[]) => {
+    setOpenAccordions(value);
     
     // Scroll to keep the title visible when opening an accordion
-    if (value) {
+    if (value.length > 0) {
       setTimeout(() => {
-        // Find the accordion item by its value
+        // Find the most recently opened accordion item
         const accordionItem = document.querySelector(`[data-state="open"]`);
         if (accordionItem) {
           // Get the trigger element (title area)
@@ -399,10 +383,9 @@ const Bets = () => {
 
     return (
       <Accordion 
-        type="single" 
-        collapsible 
+        type="multiple" 
         className="w-full space-y-4"
-        value={openAccordion || undefined}
+        value={openAccordions}
         onValueChange={handleAccordionChange}
       >
         {matchesToRender.map((match) => {
@@ -674,36 +657,12 @@ const Bets = () => {
             {renderContent()}
           </div>
 
-          {/* Mobile Bet Slip Drawer */}
-          {drawerShouldRender && (
-            <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-              <DrawerTrigger asChild>
-                <Button 
-                  className="fixed bottom-4 right-4 rounded-full h-14 w-14 shadow-lg hover:scale-105 transition-transform"
-                  size="lg"
-                  style={{ display: selectedBets.length > 0 ? 'flex' : 'none' }}
-                >
-                  <div className="flex flex-col items-center">
-                    <ShoppingCart className="h-5 w-5" />
-                    <span className="text-xs font-bold">{selectedBets.length}</span>
-                  </div>
-                </Button>
-              </DrawerTrigger>
-              <DrawerContent className="max-h-[80vh]">
-                <div className="p-4 overflow-y-auto">
-                  <BetSlip 
-                    selectedBets={selectedBets} 
-                    onRemoveBet={(betId) => setSelectedBets(prev => prev.filter(bet => bet.id !== betId))}
-                    onClearAll={() => {
-                      setSelectedBets([]);
-                      // Close drawer after a short delay to allow for smooth transition
-                      setTimeout(() => setIsDrawerOpen(false), 100);
-                    }}
-                  />
-                </div>
-              </DrawerContent>
-            </Drawer>
-          )}
+          {/* Mobile Bet Slip - Fixed Bottom Bar */}
+          <MobileBetSlip 
+            selectedBets={selectedBets} 
+            onRemoveBet={(betId) => setSelectedBets(prev => prev.filter(bet => bet.id !== betId))}
+            onClearAll={() => setSelectedBets([])}
+          />
         </div>
       )}
     </div>
