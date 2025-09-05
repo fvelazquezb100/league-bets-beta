@@ -1,12 +1,12 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Copy, ChevronDown, ChevronUp } from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Copy, Settings } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 type ProfileRow = { league_id: number; role: string; };
 type LeagueRow = { 
@@ -44,6 +44,7 @@ const AdminLiga: React.FC = () => {
   const [editMinBet, setEditMinBet] = React.useState(1);
   const [editMaxBet, setEditMaxBet] = React.useState(1000);
   const [editResetBudget, setEditResetBudget] = React.useState('weekly');
+  const budgetRef = useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     const fetchWeek = async () => {
@@ -110,6 +111,7 @@ const AdminLiga: React.FC = () => {
       if (error) throw error;
 
       setLeagueData({ ...leagueData, ...updates });
+      setIsEditFormOpen(false);
       toast({ title: 'Liga actualizada', description: 'Los cambios se guardaron correctamente.' });
     } catch (e: any) {
       toast({ title: 'Error', description: e?.message ?? 'No se pudo actualizar la liga.', variant: 'destructive' });
@@ -206,60 +208,98 @@ const handleResetWeek = async () => {
 
                 {userRole === 'admin_league' && (
                   <div className="mt-4">
-                    <Collapsible open={isEditFormOpen} onOpenChange={setIsEditFormOpen}>
-                      <CollapsibleTrigger asChild>
-                        <Button variant="ghost" size="sm" className="flex items-center gap-2">
-                          Editar Liga {isEditFormOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    <Dialog open={isEditFormOpen} onOpenChange={setIsEditFormOpen}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="flex items-center gap-2">
+                          <Settings size={16} />
+                          Editar Liga
                         </Button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="mt-3 p-4 border rounded-lg bg-muted/50 space-y-4">
-                        <div className="space-y-2"><Label>League Name</Label><Input value={editLeagueName} onChange={e => setEditLeagueName(e.target.value)} /></div>
-                        <div className="space-y-2">
-  <Label>Presupuesto: {editBudget}</Label>
-  <input
-    type="range"
-    min={500}
-    max={10000}
-    step={50}
-    value={editBudget}
-    onChange={e => setEditBudget(Number(e.target.value))}
-    className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-500"
-  />
-</div>
-                        <div className="space-y-2">
-  <Label>Apuesta Minima: {editMinBet}</Label>
-  <input
-    type="range"
-    min={1}
-    max={editMaxBet}
-    step={1}
-    value={editMinBet}
-    onChange={e => setEditMinBet(Number(e.target.value))}
-    className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-green-500"
-  />
-</div>
-                        <div className="space-y-2">
-  <Label>Apuesta Maxima: {editMaxBet}</Label>
-  <input
-    type="range"
-    min={editMinBet}
-    max={editBudget}
-    step={1}
-    value={editMaxBet}
-    onChange={e => setEditMaxBet(Number(e.target.value))}
-    className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-500"
-  />
-</div>
-                        
-                        <div className="space-y-2"><Label>Frecuencia reseteo presupuesto</Label>
-                          <select value={editResetBudget} onChange={e => setEditResetBudget(e.target.value)}>
-                            <option value="daily">Daily</option>
-                            <option value="weekly">Weekly</option>
-                          </select>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Editar Configuración de la Liga</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="league-name">Nombre de la Liga</Label>
+                            <Input 
+                              id="league-name"
+                              value={editLeagueName} 
+                              onChange={e => setEditLeagueName(e.target.value)}
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label>Presupuesto: {editBudget}</Label>
+                            <input
+                              ref={budgetRef}
+                              type="range"
+                              min={500}
+                              max={10000}
+                              step={50}
+                              value={editBudget}
+                              onChange={e => setEditBudget(Number(e.target.value))}
+                              className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                              autoFocus
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label>Apuesta Mínima: {editMinBet}</Label>
+                            <input
+                              type="range"
+                              min={1}
+                              max={editMaxBet}
+                              step={1}
+                              value={editMinBet}
+                              onChange={e => setEditMinBet(Number(e.target.value))}
+                              className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-green-500"
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label>Apuesta Máxima: {editMaxBet}</Label>
+                            <input
+                              type="range"
+                              min={editMinBet}
+                              max={editBudget}
+                              step={1}
+                              value={editMaxBet}
+                              onChange={e => setEditMaxBet(Number(e.target.value))}
+                              className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor="reset-budget">Frecuencia de reseteo de presupuesto</Label>
+                            <select 
+                              id="reset-budget"
+                              value={editResetBudget} 
+                              onChange={e => setEditResetBudget(e.target.value)}
+                              className="w-full p-2 border border-gray-300 rounded-md"
+                            >
+                              <option value="daily">Diario</option>
+                              <option value="weekly">Semanal</option>
+                            </select>
+                          </div>
+                          
+                          <div className="flex justify-end gap-2 pt-4">
+                            <Button 
+                              variant="outline" 
+                              onClick={() => setIsEditFormOpen(false)}
+                            >
+                              Cancelar
+                            </Button>
+                            <Button 
+                              onClick={handleUpdateLeague} 
+                              disabled={isUpdatingLeague}
+                            >
+                              {isUpdatingLeague ? 'Actualizando...' : 'Actualizar'}
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex justify-end"><Button onClick={handleUpdateLeague} disabled={isUpdatingLeague}>{isUpdatingLeague ? 'Actualizando...' : 'Actualizar'}</Button></div>
-                      </CollapsibleContent>
-                    </Collapsible>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 )}
               </div>
