@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
@@ -83,8 +83,9 @@ const Bets = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedBets, setSelectedBets] = useState<any[]>([]);
   const [userBets, setUserBets] = useState<UserBet[]>([]);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [drawerShouldRender, setDrawerShouldRender] = useState(false);
   const [selectedLeague, setSelectedLeague] = useState<'primera' | 'segunda' | 'champions' | 'europa'>('primera');
-  const [openAccordions, setOpenAccordions] = useState<string[]>([]);
   const { toast } = useToast();
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -317,6 +318,18 @@ const Bets = () => {
     });
   };
 
+  // Get matches by league
+  const getMatchesByLeague = (league: string) => {
+    const leagueMap: Record<string, number> = {
+      'primera': 140,
+      'segunda': 141,
+      'champions': 2,
+      'europa': 3
+    };
+    const leagueId = leagueMap[league];
+    return matches.filter(match => match.teams?.league_id === leagueId);
+  };
+
   // Calculate next Monday at 23:59
   const getNextMondayEndOfDay = () => {
     const now = new Date();
@@ -327,46 +340,7 @@ const Bets = () => {
     return nextMonday;
   };
 
-  // Filter matches by league
-  const getMatchesByLeague = (leagueType: 'primera' | 'segunda' | 'champions' | 'europa') => {
-    const leagueIds = {
-      'primera': 140,
-      'segunda': 141,
-      'champions': 2, // Champions League
-      'europa': 3     // Europa League
-    };
-    const leagueId = leagueIds[leagueType];
-    return matches.filter(match => match.teams?.league_id === leagueId);
-  };
-
-  const handleAccordionChange = (value: string[]) => {
-    setOpenAccordions(value);
-    
-    // Scroll to keep the title visible when opening an accordion
-    if (value.length > 0) {
-      setTimeout(() => {
-        // Find the most recently opened accordion item
-        const accordionItem = document.querySelector(`[data-state="open"]`);
-        if (accordionItem) {
-          // Get the trigger element (title area)
-          const triggerElement = accordionItem.querySelector('[data-radix-accordion-trigger]');
-          if (triggerElement) {
-            // Calculate offset to account for any fixed headers
-            const headerOffset = 80; // Adjust this value based on your header height
-            const elementPosition = triggerElement.getBoundingClientRect().top;
-            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-
-            window.scrollTo({
-              top: offsetPosition,
-              behavior: 'smooth'
-            });
-          }
-        }
-      }, 150); // Slightly longer delay to ensure accordion is fully opened
-    }
-  };
-
-  // Filter matches by date and league
+  // Filter matches by date
   const nextMondayEndOfDay = getNextMondayEndOfDay();
   const leagueMatches = getMatchesByLeague(selectedLeague);
   const upcomingMatches = leagueMatches.filter(match => new Date(match.fixture.date) <= nextMondayEndOfDay);
@@ -382,12 +356,7 @@ const Bets = () => {
     }
 
     return (
-      <Accordion 
-        type="multiple" 
-        className="w-full space-y-4"
-        value={openAccordions}
-        onValueChange={handleAccordionChange}
-      >
+      <Accordion type="single" collapsible className="w-full space-y-4">
         {matchesToRender.map((match) => {
           const kickoff = new Date(match.fixture.date);
           const freezeTime = new Date(kickoff.getTime() - 15 * 60 * 1000);
