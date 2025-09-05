@@ -133,30 +133,30 @@ const SuperAdmin: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-6 py-8">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold">SuperAdmin</h1>
-        <p className="text-muted-foreground">Herramientas de administración global del sistema.</p>
+    <div className="w-full px-2 sm:px-6 py-4 sm:py-8">
+      <header className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold">SuperAdmin</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">Herramientas de administración global del sistema.</p>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {/* Tarjeta de Noticias */}
-        <CardContent className="md:col-span-2">
+        <div className="md:col-span-2 w-full -mx-2 sm:mx-0">
           <NewsManagement />
-        </CardContent>
+        </div>
 
         {/* Caché de cuotas */}
         <Card>
           <CardHeader>
-            <CardTitle>Caché de Cuotas</CardTitle>
+            <CardTitle className="text-base sm:text-lg">Caché de Cuotas</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="text-sm text-muted-foreground">
+          <CardContent className="space-y-2 p-3 sm:p-6">
+            <div className="text-xs sm:text-sm text-muted-foreground">
               Última actualización: {loadingLastUpdated ? 'Cargando…' : lastUpdated ? new Date(lastUpdated).toLocaleString() : 'No disponible'}
             </div>
           </CardContent>
-          <CardFooter>
-            <Button onClick={handleForceUpdateOdds} disabled={updatingOdds}>
+          <CardFooter className="p-3 sm:p-6">
+            <Button onClick={handleForceUpdateOdds} disabled={updatingOdds} className="text-xs sm:text-sm">
               {updatingOdds ? 'Actualizando…' : 'Forzar actualización de cuotas'}
             </Button>
           </CardFooter>
@@ -165,15 +165,15 @@ const SuperAdmin: React.FC = () => {
         {/* Procesamiento de resultados */}
         <Card>
           <CardHeader>
-            <CardTitle>Procesamiento de Resultados</CardTitle>
+            <CardTitle className="text-base sm:text-lg">Procesamiento de Resultados</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
+          <CardContent className="p-3 sm:p-6">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Ejecuta manualmente el procesamiento de resultados de la última jornada.
             </p>
           </CardContent>
-          <CardFooter>
-            <Button onClick={handleForceProcessResults} disabled={processingResults}>
+          <CardFooter className="p-3 sm:p-6">
+            <Button onClick={handleForceProcessResults} disabled={processingResults} className="text-xs sm:text-sm">
               {processingResults ? 'Procesando…' : 'Forzar procesamiento de resultados'}
             </Button>
           </CardFooter>
@@ -182,16 +182,17 @@ const SuperAdmin: React.FC = () => {
         {/* Recalcular Total Points */}
         <Card>
           <CardHeader>
-            <CardTitle>Recalcular Puntos Totales</CardTitle>
+            <CardTitle className="text-base sm:text-lg">Recalcular Puntos Totales</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
+          <CardContent className="p-3 sm:p-6">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Ejecuta manualmente el cálculo total de puntos de todos los usuarios, según sus apuestas ganadas.
             </p>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="p-3 sm:p-6">
             <Button
-              variant="destructive"
+              variant="default"
+              className="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm"
               onClick={async () => {
                 const confirm = window.confirm(
                   '¿Estás seguro? Esto recalculará los puntos totales de todos los usuarios según sus apuestas ganadas.'
@@ -215,32 +216,32 @@ const SuperAdmin: React.FC = () => {
         </Card>
 
         {/* Test de autenticación */}
-        <Card className="md:col-span-2">
+        <Card>
           <CardHeader>
-            <CardTitle>Test de Autenticación de Edge Functions</CardTitle>
+            <CardTitle className="text-base sm:text-lg">Test de Autenticación de Edge Functions</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
+          <CardContent className="space-y-4 p-3 sm:p-6">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Prueba la configuración de autenticación de las Edge Functions para diagnosticar problemas.
             </p>
             {authTestResults && (
               <div className="space-y-4">
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Public Wrapper (secure-run-process-matchday-results):</h4>
-                  <div className="text-sm">
+                <div className="border rounded-lg p-3 sm:p-4">
+                  <h4 className="font-medium mb-2 text-sm sm:text-base">Public Wrapper (secure-run-process-matchday-results):</h4>
+                  <div className="text-xs sm:text-sm">
                     <div>Status: {authTestResults.publicWrapper?.status} {authTestResults.publicWrapper?.statusText}</div>
                     <div>Success: {authTestResults.publicWrapper?.success ? '✅' : '❌'}</div>
-                    <div className="mt-2 font-mono text-xs bg-muted p-2 rounded">
+                    <div className="mt-2 font-mono text-xs bg-muted p-2 rounded overflow-x-auto">
                       {JSON.stringify(authTestResults.publicWrapper?.data, null, 2)}
                     </div>
                   </div>
                 </div>
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Protected Function (process-matchday-results):</h4>
-                  <div className="text-sm">
+                <div className="border rounded-lg p-3 sm:p-4">
+                  <h4 className="font-medium mb-2 text-sm sm:text-base">Protected Function (process-matchday-results):</h4>
+                  <div className="text-xs sm:text-sm">
                     <div>Status: {authTestResults.protectedFunction?.status} {authTestResults.protectedFunction?.statusText}</div>
                     <div>Success: {authTestResults.protectedFunction?.success ? '✅' : '❌'}</div>
-                    <div className="mt-2 font-mono text-xs bg-muted p-2 rounded">
+                    <div className="mt-2 font-mono text-xs bg-muted p-2 rounded overflow-x-auto">
                       {JSON.stringify(authTestResults.protectedFunction?.data, null, 2)}
                     </div>
                   </div>
@@ -248,8 +249,8 @@ const SuperAdmin: React.FC = () => {
               </div>
             )}
           </CardContent>
-          <CardFooter>
-            <Button onClick={testEdgeFunctionAuth} disabled={testingAuth}>
+          <CardFooter className="p-3 sm:p-6">
+            <Button onClick={testEdgeFunctionAuth} disabled={testingAuth} className="text-xs sm:text-sm">
               {testingAuth ? 'Probando autenticación…' : 'Test Edge Function Auth'}
             </Button>
           </CardFooter>

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Trophy, Calendar } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Trophy, Calendar, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -117,6 +117,15 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
     }
   };
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'won': return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'lost': return <XCircle className="w-4 h-4 text-red-500" />;
+      case 'pending': return <Clock className="w-4 h-4 text-yellow-500" />;
+      default: return <Clock className="w-4 h-4 text-gray-500" />;
+    }
+  };
+
   const getMatchName = (matchDescription?: string) => {
     if (matchDescription) return matchDescription;
     return 'Partido no disponible';
@@ -151,98 +160,185 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
               No se encontraron apuestas visibles para este jugador.
             </p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Partido</TableHead>
-                  <TableHead>Apuesta</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Semana</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden sm:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Partido</TableHead>
+                      <TableHead>Apuesta</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Semana</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {bets.map((bet) => (
+                      <TableRow key={bet.id}>
+                        {/* Tipo */}
+                        <TableCell>
+                          <Badge variant="outline">
+                            {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
+                          </Badge>
+                        </TableCell>
+
+                        {/* Partido con resultado en línea abajo */}
+                        <TableCell>
+                          {bet.bet_type === 'combo'
+                            ? bet.bet_selections?.map((sel: any) => (
+                                <div key={sel.id} className="text-sm mb-1">
+                                  {getMatchName(sel.match_description)}
+                                  {sel.match_result && (
+                                    <div className="text-xs text-muted-foreground">{sel.match_result}</div>
+                                  )}
+                                </div>
+                              ))
+                            : <>
+                                {getMatchName(bet.match_description)}
+                                {bet.match_result && (
+                                  <div className="text-xs text-muted-foreground">{bet.match_result}</div>
+                                )}
+                              </>
+                          }
+                        </TableCell>
+
+                        {/* Apuesta */}
+                        <TableCell>
+                          {bet.bet_type === 'combo' ? (
+                            <>
+                              {bet.bet_selections?.map((sel: any, index: number) => (
+                                <div key={sel.id} className={`text-sm ${index < (bet.bet_selections?.length || 0) - 1 ? 'mb-5' : 'mb-2'} text-muted-foreground`}>
+                                  {sel.market}: {getBettingTranslation(sel.selection) || sel.selection} @ {sel.odds}
+                                </div>
+                              ))}
+                              <div className="text-xs text-muted-foreground">&nbsp;</div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="text-sm text-muted-foreground">
+                                {(() => {
+                                  const market = bet.market_bets || '';
+                                  const selectionText = bet.bet_selection?.trim() || '';
+                                  
+                                  // Check if selectionText already contains odds (has @ symbol)
+                                  if (selectionText.includes(' @ ')) {
+                                    const parts = selectionText.split(' @ ');
+                                    const selection = getBettingTranslation(parts[0] || '') || parts[0] || '';
+                                    const odds = parts[1] ? parseFloat(parts[1]).toFixed(2) : '';
+                                    return `${market}: ${selection} @ ${odds}`;
+                                  } else {
+                                    // If no odds in selectionText, use bet.odds
+                                    const translatedSelection = getBettingTranslation(selectionText) || selectionText;
+                                    const odds = bet.odds ? parseFloat(bet.odds).toFixed(2) : '';
+                                    return `${market}: ${translatedSelection} @ ${odds}`;
+                                  }
+                                })()}
+                              </div>
+                              <div className="text-xs text-muted-foreground">&nbsp;</div>
+                            </>
+                          )}
+                        </TableCell>
+
+                        {/* Estado */}
+                        <TableCell>
+                          <Badge variant={getStatusVariant(bet.status)}>
+                            {getStatusText(bet.status)}
+                          </Badge>
+                        </TableCell>
+
+                        {/* Semana */}
+                        <TableCell className="text-muted-foreground">
+                          {bet.week || '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="block sm:hidden space-y-4">
                 {bets.map((bet) => (
-                  <TableRow key={bet.id}>
-                    {/* Tipo */}
-                    <TableCell>
-                      <Badge variant="outline">
-                        {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
-                      </Badge>
-                    </TableCell>
+                  <Card key={bet.id} className="p-4">
+                    <div className="space-y-3">
+                      {/* Header: Semana + Tipo + Estado */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-foreground">
+                            Semana {bet.week || '-'}
+                          </span>
+                          <Badge variant="outline" className="text-xs">
+                            {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
+                          </Badge>
+                          {getStatusIcon(bet.status)}
+                        </div>
+                      </div>
 
-                    {/* Partido con resultado en línea abajo */}
-                    <TableCell>
-                      {bet.bet_type === 'combo'
-                        ? bet.bet_selections?.map((sel: any) => (
-                            <div key={sel.id} className="text-sm mb-1">
-                              {getMatchName(sel.match_description)}
-                              {sel.match_result && (
-                                <div className="text-xs text-muted-foreground">{sel.match_result}</div>
-                              )}
-                            </div>
-                          ))
-                        : <>
-                            {getMatchName(bet.match_description)}
-                            {bet.match_result && (
-                              <div className="text-xs text-muted-foreground">{bet.match_result}</div>
-                            )}
-                          </>
-                      }
-                    </TableCell>
-
-                    {/* Apuesta */}
-                    <TableCell>
-                      {bet.bet_type === 'combo' ? (
-                        <>
-                          {bet.bet_selections?.map((sel: any, index: number) => (
-                            <div key={sel.id} className={`text-sm ${index < (bet.bet_selections?.length || 0) - 1 ? 'mb-5' : 'mb-2'} text-muted-foreground`}>
-                              {sel.market}: {getBettingTranslation(sel.selection) || sel.selection} @ {sel.odds}
-                            </div>
-                          ))}
-                          <div className="text-xs text-muted-foreground">&nbsp;</div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="text-sm text-muted-foreground">
-                            {(() => {
-                              const market = bet.market_bets || '';
-                              const selectionText = bet.bet_selection?.trim() || '';
-                              
-                              // Check if selectionText already contains odds (has @ symbol)
-                              if (selectionText.includes(' @ ')) {
-                                const parts = selectionText.split(' @ ');
-                                const selection = getBettingTranslation(parts[0] || '') || parts[0] || '';
-                                const odds = parts[1] ? parseFloat(parts[1]).toFixed(2) : '';
-                                return `${market}: ${selection} @ ${odds}`;
-                              } else {
-                                // If no odds in selectionText, use bet.odds
-                                const translatedSelection = getBettingTranslation(selectionText) || selectionText;
-                                const odds = bet.odds ? parseFloat(bet.odds).toFixed(2) : '';
-                                return `${market}: ${translatedSelection} @ ${odds}`;
-                              }
-                            })()}
-                          </div>
-                          <div className="text-xs text-muted-foreground">&nbsp;</div>
-                        </>
-                      )}
-                    </TableCell>
-
-                    {/* Estado */}
-                    <TableCell>
-                      <Badge variant={getStatusVariant(bet.status)}>
-                        {getStatusText(bet.status)}
-                      </Badge>
-                    </TableCell>
-
-                    {/* Semana */}
-                    <TableCell className="text-muted-foreground">
-                      {bet.week || '-'}
-                    </TableCell>
-                  </TableRow>
+                      {/* Partido y Apuesta */}
+                      <div className="space-y-3">
+                        {bet.bet_type === 'combo'
+                          ? bet.bet_selections?.map((sel: any) => (
+                              <div key={sel.id} className="space-y-1">
+                                {/* Partido con resultado en la misma línea */}
+                                <div className="flex items-center justify-between">
+                                  <div className="text-sm font-medium">
+                                    {getMatchName(sel.match_description)}
+                                  </div>
+                                  {sel.match_result && (
+                                    <div className="text-xs text-muted-foreground">
+                                      ({sel.match_result})
+                                    </div>
+                                  )}
+                                </div>
+                                {/* Apuesta justo debajo */}
+                                <div className="text-sm font-medium text-foreground border-l-2 border-muted pl-2">
+                                  {sel.market}: {getBettingTranslation(sel.selection) || sel.selection} @ {sel.odds}
+                                </div>
+                              </div>
+                            ))
+                          : (
+                              <div className="space-y-1">
+                                {/* Partido con resultado en la misma línea */}
+                                <div className="flex items-center justify-between">
+                                  <div className="text-sm font-medium">
+                                    {getMatchName(bet.match_description)}
+                                  </div>
+                                  {bet.match_result && (
+                                    <div className="text-xs text-muted-foreground">
+                                      ({bet.match_result})
+                                    </div>
+                                  )}
+                                </div>
+                                {/* Apuesta justo debajo */}
+                                <div className="text-sm font-medium text-foreground border-l-2 border-muted pl-2">
+                                  {(() => {
+                                    const market = bet.market_bets || '';
+                                    const selectionText = bet.bet_selection?.trim() || '';
+                                    
+                                    // Check if selectionText already contains odds (has @ symbol)
+                                    if (selectionText.includes(' @ ')) {
+                                      const parts = selectionText.split(' @ ');
+                                      const selection = getBettingTranslation(parts[0] || '') || parts[0] || '';
+                                      const odds = parts[1] ? parseFloat(parts[1]).toFixed(2) : '';
+                                      return `${market}: ${selection} @ ${odds}`;
+                                    } else {
+                                      // If no odds in selectionText, use bet.odds
+                                      const translatedSelection = getBettingTranslation(selectionText) || selectionText;
+                                      const odds = bet.odds ? parseFloat(bet.odds).toFixed(2) : '';
+                                      return `${market}: ${translatedSelection} @ ${odds}`;
+                                    }
+                                  })()}
+                                </div>
+                              </div>
+                            )
+                        }
+                      </div>
+                    </div>
+                  </Card>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

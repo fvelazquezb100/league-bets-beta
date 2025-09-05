@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Trash2, Edit2, Eye, EyeOff, Snowflake } from 'lucide-react';
+import { Trash2, Edit2, Eye, EyeOff, Snowflake, Plus, List } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface NewsItem {
@@ -24,6 +24,9 @@ export const NewsManagement = () => {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [editingNews, setEditingNews] = useState<NewsItem | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isViewAllModalOpen, setIsViewAllModalOpen] = useState(false);
   
   // Form state
   const [title, setTitle] = useState('');
@@ -58,6 +61,8 @@ export const NewsManagement = () => {
     setTitle('');
     setContent('');
     setEditingNews(null);
+    setIsCreateModalOpen(false);
+    setIsEditModalOpen(false);
   };
 
   const handleCreate = async () => {
@@ -101,6 +106,7 @@ export const NewsManagement = () => {
     setEditingNews(newsItem);
     setTitle(newsItem.title);
     setContent(newsItem.content);
+    setIsEditModalOpen(true);
   };
 
   const handleUpdate = async () => {
@@ -191,56 +197,181 @@ export const NewsManagement = () => {
         <CardTitle>Gestión de Noticias</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Create/Edit Form */}
-        <div className="space-y-4 p-4 border rounded-lg">
-          <h3 className="font-semibold">{editingNews ? 'Editar Noticia' : 'Crear Nueva Noticia'}</h3>
-          
-          <div className="space-y-2">
-            <Label htmlFor="title">Título</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Título de la noticia"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="content">Contenido</Label>
-            <Textarea
-              id="content"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Contenido de la noticia"
-              rows={4}
-            />
-          </div>
-          
-          <div className="flex gap-2">
-            {editingNews ? (
-              <>
-                <Button onClick={handleUpdate}>Actualizar Noticia</Button>
-                <Button variant="outline" onClick={resetForm}>Cancelar</Button>
-              </>
-            ) : (
-              <Button onClick={handleCreate} disabled={creating}>
-                {creating ? 'Creando...' : 'Crear Noticia'}
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2">
+                <Plus size={16} />
+                Crear Nueva Noticia
               </Button>
-            )}
-          </div>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Crear Nueva Noticia</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="modal-title">Título</Label>
+                  <Input
+                    id="modal-title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Título de la noticia"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="modal-content">Contenido</Label>
+                  <Textarea
+                    id="modal-content"
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder="Contenido de la noticia"
+                    rows={4}
+                  />
+                </div>
+                
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleCreate} disabled={creating}>
+                    {creating ? 'Creando...' : 'Crear Noticia'}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+          
+          <Dialog open={isViewAllModalOpen} onOpenChange={setIsViewAllModalOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <List size={16} />
+                Ver Todas las Noticias
+              </Button>
+            </DialogTrigger>
+          </Dialog>
         </div>
 
-        {/* News List */}
+        {/* Edit Modal */}
+        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Editar Noticia</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-title">Título</Label>
+                <Input
+                  id="edit-title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Título de la noticia"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="edit-content">Contenido</Label>
+                <Textarea
+                  id="edit-content"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="Contenido de la noticia"
+                  rows={4}
+                />
+              </div>
+              
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleUpdate}>
+                  Actualizar Noticia
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* View All Modal */}
+        <Dialog open={isViewAllModalOpen} onOpenChange={setIsViewAllModalOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Todas las Noticias</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {loading ? (
+                <p>Cargando noticias...</p>
+              ) : news.length === 0 ? (
+                <p className="text-muted-foreground">No hay noticias creadas</p>
+              ) : (
+                <div className="space-y-4">
+                  {news.map((item) => (
+                    <div key={item.id} className={`p-4 border rounded-lg ${item.is_frozen ? 'border-yellow-400 bg-yellow-50/50' : ''}`}>
+                      <div className="flex justify-between items-start gap-4">
+                        <div className="flex-1">
+                          <h4 className="font-medium">{item.title}</h4>
+                          <p className="text-sm text-muted-foreground mt-1">{item.content}</p>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            {new Date(item.created_at).toLocaleString('es-ES')}
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleToggleFreeze(item.id, item.is_frozen)}
+                            title={item.is_frozen ? 'Descongelar noticia' : 'Congelar noticia'}
+                            className="w-full sm:w-auto"
+                          >
+                            <Snowflake className={`h-4 w-4 ${item.is_frozen ? 'text-blue-500' : ''}`} />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleToggleActive(item.id, item.is_active)}
+                            className="w-full sm:w-auto"
+                          >
+                            {item.is_active ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEdit(item)}
+                            className="w-full sm:w-auto"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDelete(item.id)}
+                            className="w-full sm:w-auto"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* News List - Only Frozen */}
         <div className="space-y-4">
-          <h3 className="font-semibold">Noticias Existentes</h3>
+          <h3 className="font-semibold">Noticias Congeladas</h3>
           
           {loading ? (
             <p>Cargando noticias...</p>
-          ) : news.length === 0 ? (
-            <p className="text-muted-foreground">No hay noticias creadas</p>
+          ) : news.filter(item => item.is_frozen).length === 0 ? (
+            <p className="text-muted-foreground">No hay noticias congeladas</p>
           ) : (
             <div className="space-y-3">
-              {news.map((item) => (
+              {news.filter(item => item.is_frozen).map((item) => (
                 <div key={item.id} className={`p-4 border rounded-lg ${item.is_frozen ? 'border-yellow-400 bg-yellow-50/50' : ''}`}>
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1">
@@ -250,7 +381,7 @@ export const NewsManagement = () => {
                         {new Date(item.created_at).toLocaleString('es-ES')}
                       </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div>
                       <Button
                         size="sm"
                         variant="outline"
@@ -258,27 +389,6 @@ export const NewsManagement = () => {
                         title={item.is_frozen ? 'Descongelar noticia' : 'Congelar noticia'}
                       >
                         <Snowflake className={`h-4 w-4 ${item.is_frozen ? 'text-blue-500' : ''}`} />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleToggleActive(item.id, item.is_active)}
-                      >
-                        {item.is_active ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleEdit(item)}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleDelete(item.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>

@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import BetSlip from '@/components/BetSlip';
+import MobileBetSlip from '@/components/MobileBetSlip';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -10,8 +11,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getBetTypesSorted } from '@/utils/betTypes';
 import BetMarketSection from '@/components/BetMarketSection';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
-import { ShoppingCart } from 'lucide-react';
 import { getBettingTranslation } from '@/utils/bettingTranslations';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -87,7 +86,6 @@ const Bets = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [drawerShouldRender, setDrawerShouldRender] = useState(false);
   const [selectedLeague, setSelectedLeague] = useState<'primera' | 'segunda' | 'champions' | 'europa'>('primera');
-  const [openAccordion, setOpenAccordion] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -178,19 +176,6 @@ const Bets = () => {
     fetchOddsAndBets();
   }, [user]);
 
-  // Manage drawer render state to prevent unmounting during transitions
-  useEffect(() => {
-    if (selectedBets.length > 0) {
-      setDrawerShouldRender(true);
-    } else if (selectedBets.length === 0 && drawerShouldRender) {
-      // Delay hiding the drawer to allow for smooth transition
-      const timer = setTimeout(() => {
-        setDrawerShouldRender(false);
-        setIsDrawerOpen(false);
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [selectedBets.length, drawerShouldRender]);
 
   const handleAddToSlip = (match: MatchData, marketName: string, selection: BetValue) => {
     // Check if match is in the future (outside current week) - BLOCK ALL FUTURE MATCHES
@@ -333,6 +318,18 @@ const Bets = () => {
     });
   };
 
+  // Get matches by league
+  const getMatchesByLeague = (league: string) => {
+    const leagueMap: Record<string, number> = {
+      'primera': 140,
+      'segunda': 141,
+      'champions': 2,
+      'europa': 3
+    };
+    const leagueId = leagueMap[league];
+    return matches.filter(match => match.teams?.league_id === leagueId);
+  };
+
   // Calculate next Monday at 23:59
   const getNextMondayEndOfDay = () => {
     const now = new Date();
@@ -343,46 +340,7 @@ const Bets = () => {
     return nextMonday;
   };
 
-  // Filter matches by league
-  const getMatchesByLeague = (leagueType: 'primera' | 'segunda' | 'champions' | 'europa') => {
-    const leagueIds = {
-      'primera': 140,
-      'segunda': 141,
-      'champions': 2, // Champions League
-      'europa': 3     // Europa League
-    };
-    const leagueId = leagueIds[leagueType];
-    return matches.filter(match => match.teams?.league_id === leagueId);
-  };
-
-  const handleAccordionChange = (value: string) => {
-    setOpenAccordion(value);
-    
-    // Scroll to keep the title visible when opening an accordion
-    if (value) {
-      setTimeout(() => {
-        // Find the accordion item by its value
-        const accordionItem = document.querySelector(`[data-state="open"]`);
-        if (accordionItem) {
-          // Get the trigger element (title area)
-          const triggerElement = accordionItem.querySelector('[data-radix-accordion-trigger]');
-          if (triggerElement) {
-            // Calculate offset to account for any fixed headers
-            const headerOffset = 80; // Adjust this value based on your header height
-            const elementPosition = triggerElement.getBoundingClientRect().top;
-            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-
-            window.scrollTo({
-              top: offsetPosition,
-              behavior: 'smooth'
-            });
-          }
-        }
-      }, 150); // Slightly longer delay to ensure accordion is fully opened
-    }
-  };
-
-  // Filter matches by date and league
+  // Filter matches by date
   const nextMondayEndOfDay = getNextMondayEndOfDay();
   const leagueMatches = getMatchesByLeague(selectedLeague);
   const upcomingMatches = leagueMatches.filter(match => new Date(match.fixture.date) <= nextMondayEndOfDay);
@@ -398,13 +356,7 @@ const Bets = () => {
     }
 
     return (
-      <Accordion 
-        type="single" 
-        collapsible 
-        className="w-full space-y-4"
-        value={openAccordion || undefined}
-        onValueChange={handleAccordionChange}
-      >
+      <Accordion type="single" collapsible className="w-full space-y-4">
         {matchesToRender.map((match) => {
           const kickoff = new Date(match.fixture.date);
           const freezeTime = new Date(kickoff.getTime() - 15 * 60 * 1000);
@@ -674,36 +626,12 @@ const Bets = () => {
             {renderContent()}
           </div>
 
-          {/* Mobile Bet Slip Drawer */}
-          {drawerShouldRender && (
-            <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-              <DrawerTrigger asChild>
-                <Button 
-                  className="fixed bottom-4 right-4 rounded-full h-14 w-14 shadow-lg hover:scale-105 transition-transform"
-                  size="lg"
-                  style={{ display: selectedBets.length > 0 ? 'flex' : 'none' }}
-                >
-                  <div className="flex flex-col items-center">
-                    <ShoppingCart className="h-5 w-5" />
-                    <span className="text-xs font-bold">{selectedBets.length}</span>
-                  </div>
-                </Button>
-              </DrawerTrigger>
-              <DrawerContent className="max-h-[80vh]">
-                <div className="p-4 overflow-y-auto">
-                  <BetSlip 
-                    selectedBets={selectedBets} 
-                    onRemoveBet={(betId) => setSelectedBets(prev => prev.filter(bet => bet.id !== betId))}
-                    onClearAll={() => {
-                      setSelectedBets([]);
-                      // Close drawer after a short delay to allow for smooth transition
-                      setTimeout(() => setIsDrawerOpen(false), 100);
-                    }}
-                  />
-                </div>
-              </DrawerContent>
-            </Drawer>
-          )}
+          {/* Mobile Bet Slip - Fixed Bottom Bar */}
+          <MobileBetSlip 
+            selectedBets={selectedBets} 
+            onRemoveBet={(betId) => setSelectedBets(prev => prev.filter(bet => bet.id !== betId))}
+            onClearAll={() => setSelectedBets([])}
+          />
         </div>
       )}
     </div>
