@@ -84,24 +84,25 @@ export const Clasificacion = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="w-full px-2 sm:px-4 space-y-6 sm:space-y-8">
       <div className="text-center">
-        <h1 className="text-4xl font-bold text-foreground mb-4">
-          Clasificación de la Liga
+        <h1 className="text-2xl sm:text-4xl font-bold text-foreground mb-2 sm:mb-4">
+          Clasificación de la Liga Jambo
         </h1>
-        <p className="text-muted-foreground">Posiciones actuales de todos los jugadores de la liga</p>
+        <p className="text-sm sm:text-base text-muted-foreground">Posiciones actuales de todos los jugadores de la liga</p>
       </div>
 
       {/* League Standings Table */}
-      <Card className="shadow-lg">
-        <CardContent>
-          <Table>
+      <Card className="shadow-lg w-full -mx-2 sm:mx-0">
+        <CardContent className="p-2 sm:p-6">
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Pos.</TableHead>
-                <TableHead>Jugador</TableHead>
-                <TableHead>Puntos Totales</TableHead>
-                <TableHead>Última Jornada</TableHead>
+                <TableHead className="text-xs sm:text-sm">Pos.</TableHead>
+                <TableHead className="text-xs sm:text-sm">Jugador</TableHead>
+                <TableHead className="text-xs sm:text-sm">Puntos Totales</TableHead>
+                <TableHead className="text-xs sm:text-sm">Última Jornada</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -111,26 +112,27 @@ export const Clasificacion = () => {
                   className={`${profile.id === user?.id ? 'bg-muted/50' : ''} ${profile.id !== user?.id ? 'cursor-pointer hover:bg-muted/30 transition-colors' : ''}`}
                   onClick={() => handlePlayerClick(profile)}
                 >
-                  <TableCell className="font-medium">{index + 1}</TableCell>
-                  <TableCell className="flex items-center gap-2">
-                    {profile.username || 'Usuario'}
-                    {previousChampionName === profile.username && <Award className="w-4 h-4 text-yellow-500" />}
-                    {previousLastName === profile.username && <ArrowDown className="w-4 h-4 text-red-500" />}
+                  <TableCell className="font-medium text-xs sm:text-sm">{index + 1}</TableCell>
+                  <TableCell className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                    <span className="truncate">{profile.username || 'Usuario'}</span>
+                    {previousChampionName === profile.username && <Award className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 flex-shrink-0" />}
+                    {previousLastName === profile.username && <ArrowDown className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 flex-shrink-0" />}
                   </TableCell>
-                  <TableCell>{(Math.ceil(Number(profile.total_points ?? 0) * 10) / 10).toFixed(1)}</TableCell>
-                  <TableCell>{(Number(profile.last_week_points ?? 0)).toFixed(1)}</TableCell>
+                  <TableCell className="text-xs sm:text-sm">{(Math.ceil(Number(profile.total_points ?? 0) * 10) / 10).toFixed(1)}</TableCell>
+                  <TableCell className="text-xs sm:text-sm">{(Number(profile.last_week_points ?? 0)).toFixed(1)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 
       {/* Player Bet History Modal */}
       <Dialog open={isPlayerModalOpen} onOpenChange={setIsPlayerModalOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
           <DialogHeader>
-            <DialogTitle>Historial de Apuestas</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl">Historial de Apuestas</DialogTitle>
           </DialogHeader>
           {selectedPlayer && (
             <PlayerBetHistory 
