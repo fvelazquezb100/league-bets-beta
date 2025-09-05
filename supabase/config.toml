@@ -1,4 +1,12 @@
+# Default project (staging)
 project_id = "sbfgxxdpppgtgiclmctc"
+
+# Remote configurations for different environments
+[remotes.staging]
+project_id = "sbfgxxdpppgtgiclmctc"
+
+[remotes.production]  
+project_id = "lflxrkkzudsecvdfdxwl"
 
 [functions.secure-run-process-matchday-results]
 verify_jwt = false
