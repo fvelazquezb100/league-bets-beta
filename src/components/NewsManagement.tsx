@@ -206,15 +206,6 @@ export const NewsManagement = () => {
                 Crear Nueva Noticia
               </Button>
             </DialogTrigger>
-          </Dialog>
-          
-          <Dialog open={isViewAllModalOpen} onOpenChange={setIsViewAllModalOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2">
-                <List size={16} />
-                Ver Todas las Noticias
-              </Button>
-            </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>Crear Nueva Noticia</DialogTitle>
@@ -251,6 +242,15 @@ export const NewsManagement = () => {
                 </div>
               </div>
             </DialogContent>
+          </Dialog>
+          
+          <Dialog open={isViewAllModalOpen} onOpenChange={setIsViewAllModalOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <List size={16} />
+                Ver Todas las Noticias
+              </Button>
+            </DialogTrigger>
           </Dialog>
         </div>
 
