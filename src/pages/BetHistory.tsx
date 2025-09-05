@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Calendar, TrendingDown, TrendingUp, Trophy } from 'lucide-react';
+import { Calendar, TrendingDown, TrendingUp, Trophy, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
@@ -17,6 +17,7 @@ export const BetHistory = () => {
   const [cancelingId, setCancelingId] = useState<number | null>(null);
   const [matchResults, setMatchResults] = useState<Record<number, string>>({});
   const [matchKickoffs, setMatchKickoffs] = useState<Record<number, Date>>({});
+  const [activeFilter, setActiveFilter] = useState<'all' | 'won' | 'pending'>('all');
 
   useEffect(() => {
     const fetchBets = async () => {
@@ -211,6 +212,15 @@ export const BetHistory = () => {
     }
   };
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'won': return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'lost': return <XCircle className="w-4 h-4 text-red-500" />;
+      case 'pending': return <Clock className="w-4 h-4 text-yellow-500" />;
+      default: return <Clock className="w-4 h-4 text-gray-500" />;
+    }
+  };
+
   const formatBetDisplay = (market: string, selection: string, odds: number): string => {
     return `${market}: ${selection} @ ${odds.toFixed(2)}`;
   };
@@ -229,6 +239,24 @@ export const BetHistory = () => {
     );
   };
 
+  const getMatchName = (matchDescription: string | null) => {
+    return matchDescription || 'Partido no disponible';
+  };
+
+  // Función para filtrar apuestas
+  const getFilteredBets = () => {
+    switch (activeFilter) {
+      case 'won':
+        return bets.filter(bet => bet.status === 'won');
+      case 'pending':
+        return bets.filter(bet => bet.status === 'pending');
+      default:
+        return bets;
+    }
+  };
+
+  const filteredBets = getFilteredBets();
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -237,8 +265,13 @@ export const BetHistory = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid md:grid-cols-4 gap-4">
-        <Card>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card 
+          className={`cursor-pointer transition-all duration-200 hover:bg-green-50 hover:border-green-200 ${
+            activeFilter === 'all' ? 'bg-green-50 border-green-200' : ''
+          }`}
+          onClick={() => setActiveFilter('all')}
+        >
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -250,7 +283,12 @@ export const BetHistory = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className={`cursor-pointer transition-all duration-200 hover:bg-green-50 hover:border-green-200 ${
+            activeFilter === 'won' ? 'bg-green-50 border-green-200' : ''
+          }`}
+          onClick={() => setActiveFilter('won')}
+        >
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -262,7 +300,7 @@ export const BetHistory = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="cursor-default">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -274,7 +312,12 @@ export const BetHistory = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className={`cursor-pointer transition-all duration-200 hover:bg-green-50 hover:border-green-200 ${
+            activeFilter === 'pending' ? 'bg-green-50 border-green-200' : ''
+          }`}
+          onClick={() => setActiveFilter('pending')}
+        >
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -294,48 +337,116 @@ export const BetHistory = () => {
           <CardDescription>Historial completo de todas tus apuestas</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Partido</TableHead>
-                <TableHead>Apuesta</TableHead>
-                <TableHead>Importe</TableHead>
-                <TableHead>Ganancia</TableHead>
-                <TableHead>Resultado</TableHead>
-                <TableHead>Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {bets.length > 0 ? (
-                bets.map((bet) => {
-                  if (bet.bet_type === 'combo' && bet.bet_selections?.length) {
-                    return [
-                      <TableRow key={bet.id} className="bg-muted/30">
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs">COMBO</Badge>
-                            <span className="text-sm">Apuesta Combinada</span>
-                          </div>
-                        </TableCell>
-                        <TableCell></TableCell>
-                        <TableCell>{parseFloat(bet.stake || 0).toFixed(0)} pts</TableCell>
-                        <TableCell>{parseFloat(bet.payout || 0).toFixed(0)} pts</TableCell>
-                        <TableCell>
-                          <Badge variant={getStatusVariant(bet.status)}>{getStatusText(bet.status)}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          {bet.bet_type === 'combo' && bet.bet_selections?.length
-                            ? bet.bet_selections.every((sel: any) => sel.status === 'pending') && canCancelBet(bet) && (
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => handleCancel(bet.id)}
-                                  disabled={cancelingId === bet.id}
-                                >
-                                  {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
-                                </Button>
-                              )
-                            : bet.status === 'pending' && canCancelBet(bet) && (
+          {filteredBets.length > 0 ? (
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden sm:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Partido</TableHead>
+                      <TableHead>Apuesta</TableHead>
+                      <TableHead>Importe</TableHead>
+                      <TableHead>Ganancia</TableHead>
+                      <TableHead>Resultado</TableHead>
+                      <TableHead>Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredBets.map((bet) => {
+                      if (bet.bet_type === 'combo' && bet.bet_selections?.length) {
+                        return [
+                          <TableRow key={bet.id} className="bg-muted/30">
+                            <TableCell className="font-medium">
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-xs">COMBO</Badge>
+                                <span className="text-sm">Apuesta Combinada</span>
+                              </div>
+                            </TableCell>
+                            <TableCell></TableCell>
+                            <TableCell>{parseFloat(bet.stake || 0).toFixed(0)} pts</TableCell>
+                            <TableCell>{parseFloat(bet.payout || 0).toFixed(0)} pts</TableCell>
+                            <TableCell>
+                              <Badge variant={getStatusVariant(bet.status)}>{getStatusText(bet.status)}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              {bet.bet_type === 'combo' && bet.bet_selections?.length
+                                ? bet.bet_selections.every((sel: any) => sel.status === 'pending') && canCancelBet(bet) && (
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => handleCancel(bet.id)}
+                                      disabled={cancelingId === bet.id}
+                                    >
+                                      {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
+                                    </Button>
+                                  )
+                                : bet.status === 'pending' && canCancelBet(bet) && (
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => handleCancel(bet.id)}
+                                      disabled={cancelingId === bet.id}
+                                    >
+                                      {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
+                                    </Button>
+                                  )}
+                            </TableCell>
+                          </TableRow>,
+                          ...bet.bet_selections.map((selection: any) => (
+                             <TableRow key={`${bet.id}-${selection.id}`} className="bg-muted/10 border-l-2 border-muted">
+                               <TableCell className="font-medium pl-8">
+                                 {getMatchResultDisplay(selection.match_description, selection.fixture_id)}
+                               </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm">
+                                    {formatBetDisplay(
+                                      getBettingTranslation(selection.market),
+                                      getBettingTranslation(selection.selection),
+                                      parseFloat(selection.odds || 0)
+                                    )}
+                                  </span>
+                                  <Badge variant={getStatusVariant(selection.status)} className="text-xs">
+                                    {getStatusText(selection.status)}
+                                  </Badge>
+                                </div>
+                              </TableCell>
+                              <TableCell></TableCell>
+                              <TableCell></TableCell>
+                              <TableCell></TableCell>
+                              <TableCell></TableCell>
+                            </TableRow>
+                          )),
+                        ];
+                      } else {
+                        return (
+                           <TableRow key={bet.id}>
+                             <TableCell className="font-medium">
+                               {getMatchResultDisplay(bet.match_description, bet.fixture_id)}
+                             </TableCell>
+                            <TableCell>
+                              {bet.bet_type === 'single' ? (
+                                <>
+                                  {bet.market_bets ? getBettingTranslation(bet.market_bets) + ': ' : ''}
+                                  {(() => {
+                                    const parts = bet.bet_selection?.split(' @ ') || [];
+                                    const selection = getBettingTranslation(parts[0] || '');
+                                    const odds = parts[1] ? parseFloat(parts[1]).toFixed(2) : parseFloat(bet.odds || 0).toFixed(2);
+                                    return `${selection} @ ${odds}`;
+                                  })()}
+                                </>
+                              ) : (
+                                bet.bet_selection
+                              )}
+                            </TableCell>
+                            <TableCell>{parseFloat(bet.stake || 0).toFixed(0)} pts</TableCell>
+                            <TableCell>{parseFloat(bet.payout || 0).toFixed(0)} pts</TableCell>
+                            <TableCell>
+                              <Badge variant={getStatusVariant(bet.status)}>{getStatusText(bet.status)}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              {bet.status === 'pending' && canCancelBet(bet) && (
                                 <Button
                                   variant="destructive"
                                   size="sm"
@@ -345,85 +456,126 @@ export const BetHistory = () => {
                                   {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
                                 </Button>
                               )}
-                        </TableCell>
-                      </TableRow>,
-                      ...bet.bet_selections.map((selection: any) => (
-                         <TableRow key={`${bet.id}-${selection.id}`} className="bg-muted/10 border-l-2 border-muted">
-                           <TableCell className="font-medium pl-8">
-                             {getMatchResultDisplay(selection.match_description, selection.fixture_id)}
-                           </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm">
-                                {formatBetDisplay(
-                                  getBettingTranslation(selection.market),
-                                  getBettingTranslation(selection.selection),
-                                  parseFloat(selection.odds || 0)
-                                )}
-                              </span>
-                              <Badge variant={getStatusVariant(selection.status)} className="text-xs">
-                                {getStatusText(selection.status)}
-                              </Badge>
-                            </div>
-                          </TableCell>
-                          <TableCell></TableCell>
-                          <TableCell></TableCell>
-                          <TableCell></TableCell>
-                          <TableCell></TableCell>
-                        </TableRow>
-                      )),
-                    ];
-                  } else {
-                    return (
-                       <TableRow key={bet.id}>
-                         <TableCell className="font-medium">
-                           {getMatchResultDisplay(bet.match_description, bet.fixture_id)}
-                         </TableCell>
-                        <TableCell>
-                          {bet.bet_type === 'single' ? (
-                            <>
-                              {bet.market_bets ? getBettingTranslation(bet.market_bets) + ': ' : ''}
-                              {(() => {
-                                const parts = bet.bet_selection?.split(' @ ') || [];
-                                const selection = getBettingTranslation(parts[0] || '');
-                                const odds = parts[1] ? parseFloat(parts[1]).toFixed(2) : parseFloat(bet.odds || 0).toFixed(2);
-                                return `${selection} @ ${odds}`;
-                              })()}
-                            </>
-                          ) : (
-                            bet.bet_selection
-                          )}
-                        </TableCell>
-                        <TableCell>{parseFloat(bet.stake || 0).toFixed(0)} pts</TableCell>
-                        <TableCell>{parseFloat(bet.payout || 0).toFixed(0)} pts</TableCell>
-                        <TableCell>
-                          <Badge variant={getStatusVariant(bet.status)}>{getStatusText(bet.status)}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          {bet.status === 'pending' && canCancelBet(bet) && (
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleCancel(bet.id)}
-                              disabled={cancelingId === bet.id}
-                            >
-                              {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  }
-                })
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
-                    No tienes apuestas todavía. ¡Ve a la sección de apuestas para empezar!
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      }
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="block sm:hidden space-y-4">
+                {filteredBets.map((bet) => (
+                  <Card key={bet.id} className="p-4">
+                    <div className="space-y-3">
+                      {/* Header: Tipo + Estado */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
+                          </Badge>
+                          {getStatusIcon(bet.status)}
+                        </div>
+                        {/* Botón de cancelar */}
+                        {bet.status === 'pending' && canCancelBet(bet) && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleCancel(bet.id)}
+                            disabled={cancelingId === bet.id}
+                            className="text-xs"
+                          >
+                            {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar'}
+                          </Button>
+                        )}
+                      </div>
+
+                      {/* Importe y Ganancia */}
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-4">
+                          <span className="text-muted-foreground">
+                            Apostado: <span className="font-medium text-foreground">{parseFloat(bet.stake || 0).toFixed(0)} pts</span>
+                          </span>
+                          <span className="text-muted-foreground">
+                            Ganancia: <span className="font-medium text-foreground">{parseFloat(bet.payout || 0).toFixed(0)} pts</span>
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Partido y Apuesta */}
+                      <div className="space-y-3">
+                        {bet.bet_type === 'combo'
+                          ? bet.bet_selections?.map((sel: any) => (
+                              <div key={sel.id} className="space-y-1">
+                                {/* Partido con resultado en la misma línea */}
+                                <div className="flex items-center justify-between">
+                                  <div className="text-sm font-medium">
+                                    {getMatchName(sel.match_description)}
+                                  </div>
+                                  {sel.fixture_id && matchResults[sel.fixture_id] && (
+                                    <div className="text-xs text-muted-foreground">
+                                      ({matchResults[sel.fixture_id]})
+                                    </div>
+                                  )}
+                                </div>
+                                {/* Apuesta justo debajo */}
+                                <div className="text-sm font-medium text-foreground border-l-2 border-muted pl-2">
+                                  {sel.market}: {getBettingTranslation(sel.selection) || sel.selection} @ {sel.odds}
+                                </div>
+                              </div>
+                            ))
+                          : (
+                              <div className="space-y-1">
+                                {/* Partido con resultado en la misma línea */}
+                                <div className="flex items-center justify-between">
+                                  <div className="text-sm font-medium">
+                                    {getMatchName(bet.match_description)}
+                                  </div>
+                                  {bet.fixture_id && matchResults[bet.fixture_id] && (
+                                    <div className="text-xs text-muted-foreground">
+                                      ({matchResults[bet.fixture_id]})
+                                    </div>
+                                  )}
+                                </div>
+                                {/* Apuesta justo debajo */}
+                                <div className="text-sm font-medium text-foreground border-l-2 border-muted pl-2">
+                                  {bet.bet_type === 'single' ? (
+                                    <>
+                                      {bet.market_bets ? getBettingTranslation(bet.market_bets) + ': ' : ''}
+                                      {(() => {
+                                        const parts = bet.bet_selection?.split(' @ ') || [];
+                                        const selection = getBettingTranslation(parts[0] || '');
+                                        const odds = parts[1] ? parseFloat(parts[1]).toFixed(2) : parseFloat(bet.odds || 0).toFixed(2);
+                                        return `${selection} @ ${odds}`;
+                                      })()}
+                                    </>
+                                  ) : (
+                                    bet.bet_selection
+                                  )}
+                                </div>
+                              </div>
+                            )
+                        }
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="text-center text-muted-foreground py-8">
+              {bets.length === 0 
+                ? "No tienes apuestas todavía. ¡Ve a la sección de apuestas para empezar!"
+                : activeFilter === 'won' 
+                  ? "No tienes apuestas ganadas todavía."
+                  : activeFilter === 'pending'
+                    ? "No tienes apuestas pendientes."
+                    : "No se encontraron apuestas."
+              }
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
