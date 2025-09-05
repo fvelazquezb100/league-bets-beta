@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getBettingTranslation } from '@/utils/bettingTranslations';
+import { UserStatistics } from '@/components/UserStatistics';
 
 export const BetHistory = () => {
   const { user } = useAuth();
@@ -18,6 +19,7 @@ export const BetHistory = () => {
   const [matchResults, setMatchResults] = useState<Record<number, string>>({});
   const [matchKickoffs, setMatchKickoffs] = useState<Record<number, Date>>({});
   const [activeFilter, setActiveFilter] = useState<'all' | 'won' | 'pending'>('all');
+  const [showStatistics, setShowStatistics] = useState(false);
 
   useEffect(() => {
     const fetchBets = async () => {
@@ -144,11 +146,9 @@ export const BetHistory = () => {
     0
   );
 
-  const wonBetsStake = wonBets.reduce((sum, bet) => sum + (parseFloat(bet.stake) || 0), 0);
-  const lostBetsStake = lostBets.reduce((sum, bet) => sum + (parseFloat(bet.stake) || 0), 0);
-  const totalSettledStake = wonBetsStake + lostBetsStake;
+  const settledBets = wonBets.length + lostBets.length;
   const successPercentage =
-    totalSettledStake > 0 ? Math.round((wonBetsStake / totalSettledStake) * 100) : 0;
+    settledBets > 0 ? Math.round((wonBets.length / settledBets) * 100) : 0;
 
   // Function to check if a bet can be cancelled (15 minutes before kickoff)
   const canCancelBet = (bet: any): boolean => {
@@ -300,18 +300,6 @@ export const BetHistory = () => {
           </CardContent>
         </Card>
 
-        <Card className="cursor-default">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Porcentaje de Acierto</p>
-                <p className="text-2xl font-bold text-primary">{successPercentage}%</p>
-              </div>
-              <Trophy className="h-5 w-5 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-
         <Card 
           className={`cursor-pointer transition-all duration-200 hover:bg-green-50 hover:border-green-200 ${
             activeFilter === 'pending' ? 'bg-green-50 border-green-200' : ''
@@ -325,6 +313,22 @@ export const BetHistory = () => {
                 <p className="text-2xl font-bold text-primary">{pendingBets}</p>
               </div>
               <Calendar className="h-5 w-5 text-primary" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card 
+          className="cursor-pointer transition-all duration-200 hover:bg-green-50 hover:border-green-200"
+          onClick={() => setShowStatistics(true)}
+        >
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Estadísticas Personales</p>
+                <p className="text-2xl font-bold text-primary">{successPercentage}%</p>
+                <p className="text-xs text-muted-foreground">% de aciertos de apuestas</p>
+              </div>
+              <Trophy className="h-5 w-5 text-primary" />
             </div>
           </CardContent>
         </Card>
@@ -578,6 +582,12 @@ export const BetHistory = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Modal de Estadísticas */}
+      <UserStatistics 
+        isOpen={showStatistics} 
+        onClose={() => setShowStatistics(false)} 
+      />
     </div>
   );
 };
