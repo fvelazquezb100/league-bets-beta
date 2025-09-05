@@ -131,9 +131,6 @@ export const Clasificacion = () => {
       {/* Player Bet History Modal */}
       <Dialog open={isPlayerModalOpen} onOpenChange={setIsPlayerModalOpen}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
-          <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl">Historial de Apuestas</DialogTitle>
-          </DialogHeader>
           {selectedPlayer && (
             <PlayerBetHistory 
               playerId={selectedPlayer.id} 
