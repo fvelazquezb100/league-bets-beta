@@ -145,15 +145,12 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-foreground">
-          Historial de {playerName}
+          Historial de Apuestas de {playerName}
         </h2>
       </div>
 
-      {/* Bet History Table */}
-      <Card>
-        <CardHeader>
-          <h3 className="text-lg font-semibold">Historial de Apuestas</h3>
-        </CardHeader>
+      {/* Desktop Bet History Table */}
+      <Card className="hidden sm:block">
         <CardContent>
           {bets.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
@@ -342,6 +339,79 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
           )}
         </CardContent>
       </Card>
+
+      {/* Mobile Bet History View - Sin marco */}
+      <div className="block sm:hidden">
+        {bets.length === 0 ? (
+          <div className="text-center text-muted-foreground py-8">
+            No se encontraron apuestas visibles para este jugador.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {bets.map((bet) => (
+              <Card key={bet.id} className="p-4">
+                <div className="space-y-3">
+                  {/* Header: Semana + Tipo + Estado */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-foreground">
+                        Semana {bet.week || '-'}
+                      </span>
+                      <Badge variant="outline" className="text-xs">
+                        {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
+                      </Badge>
+                      {getStatusIcon(bet.status)}
+                    </div>
+                  </div>
+
+                  {/* Partido y Apuesta */}
+                  <div className="space-y-3">
+                    {bet.bet_type === 'combo'
+                      ? bet.bet_selections?.map((sel: any) => (
+                          <div key={sel.id} className="space-y-1">
+                            {/* Partido con resultado en la misma línea */}
+                            <div className="flex items-center justify-between">
+                              <div className="text-sm font-medium">
+                                {getMatchName(sel.match_description)}
+                              </div>
+                              {sel.match_result && (
+                                <div className="text-xs text-muted-foreground">
+                                  ({sel.match_result})
+                                </div>
+                              )}
+                            </div>
+                            {/* Apuesta justo debajo */}
+                            <div className="text-sm font-medium text-foreground border-l-2 border-muted pl-2">
+                              {sel.market}: {getBettingTranslation(sel.selection) || sel.selection} @ {sel.odds}
+                            </div>
+                          </div>
+                        ))
+                      : (
+                          <div className="space-y-1">
+                            {/* Partido con resultado en la misma línea */}
+                            <div className="flex items-center justify-between">
+                              <div className="text-sm font-medium">
+                                {getMatchName(bet.match_description)}
+                              </div>
+                              {bet.match_result && (
+                                <div className="text-xs text-muted-foreground">
+                                  ({bet.match_result})
+                                </div>
+                              )}
+                            </div>
+                            {/* Apuesta justo debajo */}
+                            <div className="text-sm font-medium text-foreground border-l-2 border-muted pl-2">
+                              {bet.market_bets}: {getBettingTranslation(bet.bet_selection) || bet.bet_selection} @ {bet.odds}
+                            </div>
+                          </div>
+                        )}
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

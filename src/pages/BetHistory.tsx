@@ -335,8 +335,8 @@ export const BetHistory = () => {
         </Card>
       </div>
 
-      {/* Bets Table */}
-      <Card className="shadow-lg">
+      {/* Desktop Bets Table */}
+      <Card className="shadow-lg hidden sm:block">
         <CardHeader>
           <CardTitle>Mis Apuestas</CardTitle>
           <CardDescription>Historial completo de todas tus apuestas</CardDescription>
@@ -354,8 +354,8 @@ export const BetHistory = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {bets.length > 0 ? (
-                bets.map((bet) => {
+              {filteredBets.length > 0 ? (
+                filteredBets.map((bet) => {
                   if (bet.bet_type === 'combo' && bet.bet_selections?.length) {
                     return [
                       <TableRow key={bet.id} className="bg-muted/30">
@@ -466,7 +466,12 @@ export const BetHistory = () => {
               ) : (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center text-muted-foreground">
-                    No tienes apuestas todavía. ¡Ve a la sección de apuestas para empezar!
+                    {activeFilter === 'won' 
+                      ? 'No tienes apuestas ganadas todavía.'
+                      : activeFilter === 'pending'
+                      ? 'No tienes apuestas pendientes.'
+                      : 'No tienes apuestas todavía. ¡Ve a la sección de apuestas para empezar!'
+                    }
                   </TableCell>
                 </TableRow>
               )}
@@ -475,6 +480,100 @@ export const BetHistory = () => {
         </CardContent>
       </Card>
 
+      {/* Mobile Bets View - Sin marco */}
+      <div className="block sm:hidden">
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold text-foreground mb-2">Mis Apuestas</h2>
+          <p className="text-muted-foreground">Historial completo de todas tus apuestas</p>
+        </div>
+        <div className="space-y-4">
+            {filteredBets.length > 0 ? (
+              filteredBets.map((bet) => (
+                <Card key={bet.id} className="p-4">
+                  <div className="space-y-3">
+                    {/* Header: Tipo + Estado + Botón Cancelar */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs">
+                          {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
+                        </Badge>
+                        {getStatusIcon(bet.status)}
+                      </div>
+                      {bet.status === 'pending' && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleCancel(bet.id)}
+                          disabled={cancelingId === bet.id}
+                        >
+                          {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar'}
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* Información financiera */}
+                    <div className="flex justify-between text-sm">
+                      <span>Apostado: <span className="font-medium">{parseFloat(bet.stake || 0).toFixed(0)} pts</span></span>
+                      <span>Ganancia: <span className="font-medium">{parseFloat(bet.payout || 0).toFixed(0)} pts</span></span>
+                    </div>
+
+                    {/* Detalles de la apuesta */}
+                    <div className="space-y-3">
+                      {bet.bet_type === 'combo' && bet.bet_selections?.length ? (
+                        bet.bet_selections.map((selection: any) => (
+                          <div key={selection.id} className="space-y-1">
+                            {/* Partido con resultado en la misma línea */}
+                            <div className="flex items-center justify-between">
+                              <div className="text-sm font-medium">
+                                {getMatchName(selection.match_description)}
+                              </div>
+                              {matchResults[selection.fixture_id] && (
+                                <div className="text-xs text-muted-foreground">
+                                  ({matchResults[selection.fixture_id]})
+                                </div>
+                              )}
+                            </div>
+                            {/* Apuesta justo debajo */}
+                            <div className="text-sm font-medium text-foreground border-l-2 border-muted pl-2">
+                              {getBettingTranslation(selection.market)}: {getBettingTranslation(selection.selection)} @ {selection.odds}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="space-y-1">
+                          {/* Partido con resultado en la misma línea */}
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm font-medium">
+                              {getMatchName(bet.match_description)}
+                            </div>
+                            {matchResults[bet.fixture_id] && (
+                              <div className="text-xs text-muted-foreground">
+                                ({matchResults[bet.fixture_id]})
+                              </div>
+                            )}
+                          </div>
+                          {/* Apuesta justo debajo */}
+                          <div className="text-sm font-medium text-foreground border-l-2 border-muted pl-2">
+                            {getBettingTranslation(bet.market_bets)}: {getBettingTranslation(bet.bet_selection)} @ {bet.odds}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              ))
+            ) : (
+              <div className="text-center text-muted-foreground py-8">
+                {activeFilter === 'won' 
+                  ? 'No tienes apuestas ganadas todavía.'
+                  : activeFilter === 'pending'
+                  ? 'No tienes apuestas pendientes.'
+                  : 'No tienes apuestas todavía. ¡Ve a la sección de apuestas para empezar!'
+                }
+              </div>
+            )}
+        </div>
+      </div>
       {/* Modal de Estadísticas */}
       <UserStatistics 
         isOpen={showStatistics} 
