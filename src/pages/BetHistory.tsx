@@ -244,7 +244,6 @@ export const BetHistory = () => {
     return matchDescription || 'Partido no disponible';
   };
 
-
   // Función para filtrar apuestas
   const getFilteredBets = () => {
     switch (activeFilter) {
@@ -575,7 +574,6 @@ export const BetHistory = () => {
             )}
         </div>
       </div>
-
       {/* Modal de Estadísticas */}
       <UserStatistics 
         isOpen={showStatistics} 
