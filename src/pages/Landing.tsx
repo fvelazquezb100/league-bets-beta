@@ -8,8 +8,15 @@ export const Landing = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <img 
+            src="https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/jambollogo.png" 
+            alt="Jambol Logo" 
+            className="h-20 jambol-logo-loading"
+          />
+          <span className="text-lg font-semibold jambol-dark">Cargando...</span>
+        </div>
       </div>
     );
   }
@@ -26,20 +33,32 @@ export const Landing = () => {
         </div>
 
         <article className="container mx-auto px-6 py-24 text-center relative z-10">
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-foreground mb-6">
-            Liga de Apuestas Simuladas
+          {/* Jambol Logo */}
+          <div className="mb-8 flex justify-center">
+            <img 
+              src="https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/jambollogo.png" 
+              alt="Jambol Logo" 
+              className="h-24 md:h-32 jambol-logo"
+            />
+          </div>
+          
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight jambol-dark mb-6">
+            Jambol
           </h1>
+          <h2 className="text-2xl md:text-3xl font-semibold text-muted-foreground mb-6">
+            Liga de Apuestas Simuladas
+          </h2>
           <p className="mt-6 text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
             Apostar nunca fue de ganar dinero, sino de demostrarle a los demás que sabes más de fútbol que ellos.
           </p>
           <div className="mt-12 flex items-center justify-center gap-6">
             <Link to="/signup">
-              <Button variant="hero" size="lg" className="text-lg px-8 py-4">
+              <Button size="lg" className="text-lg px-8 py-4 jambol-primary">
                 Empezar Ahora
               </Button>
             </Link>
             <Link to="/login">
-              <Button variant="outline" size="lg" className="text-lg px-8 py-4">
+              <Button variant="outline" size="lg" className="text-lg px-8 py-4 jambol-secondary">
                 Iniciar Sesión
               </Button>
             </Link>

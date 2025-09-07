@@ -239,7 +239,7 @@ const handleResetWeek = async () => {
                               step={50}
                               value={editBudget}
                               onChange={e => setEditBudget(Number(e.target.value))}
-                              className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                              className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
                               autoFocus
                             />
                           </div>
@@ -253,7 +253,7 @@ const handleResetWeek = async () => {
                               step={1}
                               value={editMinBet}
                               onChange={e => setEditMinBet(Number(e.target.value))}
-                              className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-green-500"
+                              className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-success"
                             />
                           </div>
                           
@@ -266,7 +266,7 @@ const handleResetWeek = async () => {
                               step={1}
                               value={editMaxBet}
                               onChange={e => setEditMaxBet(Number(e.target.value))}
-                              className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                              className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
                             />
                           </div>
                           

@@ -87,8 +87,15 @@ export const Header = () => {
     <header className="bg-card border-b border-border/50 shadow-sm">
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/home" className="text-2xl font-bold text-primary">
-            Liga de Apuestas
+          <Link to="/home" className="flex items-center gap-3">
+            <img 
+              src="https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/jambollogo.png" 
+              alt="Jambol Logo" 
+              className="h-10 jambol-logo"
+            />
+            <span className="text-2xl font-bold jambol-dark">
+              Jambol
+            </span>
           </Link>
           
           <div className="flex items-center gap-6">

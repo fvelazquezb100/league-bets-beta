@@ -67,7 +67,7 @@ export const Clasificacion = () => {
   }, [user]);
 
   useEffect(() => {
-    document.title = 'Clasificación | Apuestas Simuladas';
+    document.title = 'Jambol - Clasificación';
   }, []);
 
   const handlePlayerClick = (profile: any) => {

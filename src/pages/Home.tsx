@@ -102,7 +102,7 @@ export const Home = () => {
   }, [user]);
 
   useEffect(() => {
-    document.title = 'Inicio | Apuestas Simuladas';
+    document.title = 'Jambol - Inicio';
   }, []);
 
   return (

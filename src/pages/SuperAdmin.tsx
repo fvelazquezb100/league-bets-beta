@@ -192,7 +192,7 @@ const SuperAdmin: React.FC = () => {
           <CardFooter className="p-3 sm:p-6">
             <Button
               variant="default"
-              className="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm"
+              className="bg-success hover:bg-success/90 text-success-foreground text-xs sm:text-sm"
               onClick={async () => {
                 const confirm = window.confirm(
                   '¿Estás seguro? Esto recalculará los puntos totales de todos los usuarios según sus apuestas ganadas.'

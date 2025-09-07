@@ -100,7 +100,7 @@ const ResultTotalGoalsSelector = ({ match, isFrozen, handleAddToSlip }: ResultTo
                 className={`h-10 transition-all duration-200 ${
                   matchResult === result.value 
                     ? 'bg-primary text-primary-foreground' 
-                    : 'hover:bg-green-500 hover:text-white hover:border-green-500'
+                    : 'hover:bg-success hover:text-success-foreground hover:border-success'
                 }`}
               >
                 <span className="text-xs">{result.label}</span>
@@ -126,7 +126,7 @@ const ResultTotalGoalsSelector = ({ match, isFrozen, handleAddToSlip }: ResultTo
                 className={`h-10 w-full transition-all duration-200 ${
                   overUnder === 'under' 
                     ? 'bg-primary text-primary-foreground' 
-                    : 'hover:bg-green-500 hover:text-white hover:border-green-500'
+                    : 'hover:bg-success hover:text-success-foreground hover:border-success'
                 }`}
               >
                 <span className="text-xs">Menos de</span>
@@ -176,7 +176,7 @@ const ResultTotalGoalsSelector = ({ match, isFrozen, handleAddToSlip }: ResultTo
                 className={`h-10 w-full transition-all duration-200 ${
                   overUnder === 'over' 
                     ? 'bg-primary text-primary-foreground' 
-                    : 'hover:bg-green-500 hover:text-white hover:border-green-500'
+                    : 'hover:bg-success hover:text-success-foreground hover:border-success'
                 }`}
               >
                 <span className="text-xs">Más de</span>
@@ -193,7 +193,7 @@ const ResultTotalGoalsSelector = ({ match, isFrozen, handleAddToSlip }: ResultTo
           className={`w-full h-12 transition-all duration-200 hover:scale-[1.02] ${
             currentOdds === '0.00' || !matchResult || !overUnder
               ? 'opacity-50 cursor-not-allowed' 
-              : 'hover:bg-green-500 hover:text-white hover:border-green-500'
+              : 'hover:bg-success hover:text-success-foreground hover:border-success'
           }`}
         >
           <span className="text-lg font-bold">

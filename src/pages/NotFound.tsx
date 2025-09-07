@@ -1,5 +1,7 @@
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const NotFound = () => {
   const location = useLocation();
@@ -12,13 +14,23 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">404</h1>
-        <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
-        <a href="/" className="text-blue-500 hover:text-blue-700 underline">
-          Return to Home
-        </a>
+        <div className="mb-8 flex justify-center">
+          <img 
+            src="https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/jambollogo.png" 
+            alt="Jambol Logo" 
+            className="h-24 jambol-logo"
+          />
+        </div>
+        <h1 className="text-6xl font-bold jambol-dark mb-4">404</h1>
+        <h2 className="text-2xl font-semibold jambol-dark mb-2">¡Ups! Página no encontrada</h2>
+        <p className="text-lg text-muted-foreground mb-8">La página que buscas no existe en Jambol</p>
+        <Link to="/">
+          <Button className="jambol-primary">
+            Volver al Inicio
+          </Button>
+        </Link>
       </div>
     </div>
   );

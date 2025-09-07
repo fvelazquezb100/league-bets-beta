@@ -82,7 +82,7 @@ const HalfTimeFullTimeSelector = ({ match, isFrozen, handleAddToSlip }: HalfTime
                 className={`h-10 transition-all duration-200 ${
                   halfTimeResult === result.value 
                     ? 'bg-primary text-primary-foreground' 
-                    : 'hover:bg-green-500 hover:text-white hover:border-green-500'
+                    : 'hover:bg-success hover:text-success-foreground hover:border-success'
                 }`}
               >
                 <span className="text-xs">{result.label}</span>
@@ -105,7 +105,7 @@ const HalfTimeFullTimeSelector = ({ match, isFrozen, handleAddToSlip }: HalfTime
                 className={`h-10 transition-all duration-200 ${
                   fullTimeResult === result.value 
                     ? 'bg-primary text-primary-foreground' 
-                    : 'hover:bg-green-500 hover:text-white hover:border-green-500'
+                    : 'hover:bg-success hover:text-success-foreground hover:border-success'
                 }`}
               >
                 <span className="text-xs">{result.label}</span>
@@ -123,7 +123,7 @@ const HalfTimeFullTimeSelector = ({ match, isFrozen, handleAddToSlip }: HalfTime
           className={`w-full h-12 transition-all duration-200 hover:scale-[1.02] ${
             currentOdds === '0.00' || !halfTimeResult || !fullTimeResult
               ? 'opacity-50 cursor-not-allowed' 
-              : 'hover:bg-green-500 hover:text-white hover:border-green-500'
+              : 'hover:bg-success hover:text-success-foreground hover:border-success'
           }`}
         >
           <span className="text-lg font-bold">
