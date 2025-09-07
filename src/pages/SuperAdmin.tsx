@@ -58,8 +58,8 @@ const SuperAdmin: React.FC = () => {
   const handleForceProcessResults = async () => {
     try {
       setProcessingResults(true);
-      const url = `import.meta.env.VITE_SUPABASE_URL/functions/v1/secure-run-process-matchday-results`;
-      console.log("Debug - VITE_SUPABASE_URL:", import.meta.env.VITE_SUPABASE_URL);
+      const url = `https://sbfgxxdpppgtgiclmctc.supabase.co/functions/v1/secure-run-process-matchday-results`;
+      console.log("Debug - VITE_SUPABASE_URL:", "https://sbfgxxdpppgtgiclmctc.supabase.co");
       console.log("Debug - All env vars:", import.meta.env);      console.log("Debug - URL being called:", url);      const body = JSON.stringify({ trigger: 'admin', timestamp: new Date().toISOString() });
       const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
       if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
@@ -77,7 +77,7 @@ const SuperAdmin: React.FC = () => {
     try {
       setTestingAuth(true);
       setAuthTestResults(null);
-      const baseUrl = 'import.meta.env.VITE_SUPABASE_URL';
+      const baseUrl = 'https://sbfgxxdpppgtgiclmctc.supabase.co';
       const testBody = JSON.stringify({ trigger: 'auth-test', timestamp: new Date().toISOString() });
       const results = { publicWrapper: null as any, protectedFunction: null as any };
 
