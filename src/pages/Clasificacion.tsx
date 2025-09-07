@@ -12,6 +12,7 @@ export const Clasificacion = () => {
   const [profiles, setProfiles] = useState<any[]>([]);
   const [previousChampionName, setPreviousChampionName] = useState<string | null>(null);
   const [previousLastName, setPreviousLastName] = useState<string | null>(null);
+  const [leagueName, setLeagueName] = useState<string>('Jambo');
   const [selectedPlayer, setSelectedPlayer] = useState<{ id: string; name: string } | null>(null);
   const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
 
@@ -45,16 +46,17 @@ export const Clasificacion = () => {
       setProfiles(profilesData ?? []);
     }
 
-    // Obtener datos de la liga para mostrar campeón y último
+    // Obtener datos de la liga para mostrar campeón, último y nombre
     const { data: leagueData, error: leagueError } = await supabase
       .from('leagues')
-      .select('previous_champion, previous_last')
+      .select('name, previous_champion, previous_last')
       .eq('id', leagueId)
       .single();
 
     if (leagueError) {
       console.error('Error fetching league data:', leagueError);
     } else {
+      setLeagueName(leagueData?.name ?? 'Jambo');
       setPreviousChampionName(leagueData?.previous_champion ?? null);
       setPreviousLastName(leagueData?.previous_last ?? null);
     }
@@ -87,7 +89,7 @@ export const Clasificacion = () => {
     <div className="w-full px-2 sm:px-4 space-y-6 sm:space-y-8">
       <div className="text-center">
         <h1 className="text-2xl sm:text-4xl font-bold text-foreground mb-2 sm:mb-4">
-          Clasificación de la Liga Jambo
+          Clasificación de la Liga {leagueName}
         </h1>
         <p className="text-sm sm:text-base text-muted-foreground">Posiciones actuales de todos los jugadores de la liga</p>
       </div>

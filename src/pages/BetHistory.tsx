@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Calendar, TrendingDown, TrendingUp, Trophy, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,6 +22,8 @@ export const BetHistory = () => {
   const [matchKickoffs, setMatchKickoffs] = useState<Record<number, Date>>({});
   const [activeFilter, setActiveFilter] = useState<'all' | 'won' | 'pending'>('all');
   const [showStatistics, setShowStatistics] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [betToCancel, setBetToCancel] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchBets = async () => {
@@ -106,11 +109,20 @@ export const BetHistory = () => {
     return () => clearInterval(t);
   }, []);
 
-  const handleCancel = async (betId: number) => {
+  const handleCancelClick = (betId: number) => {
+    setBetToCancel(betId);
+    setCancelDialogOpen(true);
+  };
+
+  const handleCancelConfirm = async () => {
+    if (!betToCancel) return;
+    
     try {
-      setCancelingId(betId);
-      const { data, error } = await supabase.rpc('cancel_bet', { bet_id_param: betId });
+      setCancelingId(betToCancel);
+      const { data, error } = await supabase.rpc('cancel_bet', { bet_id_param: betToCancel });
       setCancelingId(null);
+      setCancelDialogOpen(false);
+      setBetToCancel(null);
 
       if (error) {
         console.error('Error canceling bet:', error);
@@ -121,7 +133,7 @@ export const BetHistory = () => {
       if (data && typeof data === 'object' && 'success' in data) {
         const result = data as { success: boolean; message?: string; error?: string };
         if (result.success) {
-          setBets((prev) => prev.filter((b) => b.id !== betId));
+          setBets((prev) => prev.filter((b) => b.id !== betToCancel));
           toast({
             title: 'Apuesta cancelada',
             description: result.message || 'Se ha reembolsado tu importe al presupuesto semanal.',
@@ -132,9 +144,16 @@ export const BetHistory = () => {
       }
     } catch (e: any) {
       setCancelingId(null);
+      setCancelDialogOpen(false);
+      setBetToCancel(null);
       console.error('Unexpected error canceling bet:', e);
       toast({ title: 'Error', description: 'Ha ocurrido un error al cancelar la apuesta.' });
     }
+  };
+
+  const handleCancelDialogClose = () => {
+    setCancelDialogOpen(false);
+    setBetToCancel(null);
   };
 
   const wonBets = bets.filter((bet) => bet.status === 'won');
@@ -217,8 +236,8 @@ export const BetHistory = () => {
     switch (status) {
       case 'won': return <CheckCircle className="w-4 h-4 text-green-500" />;
       case 'lost': return <XCircle className="w-4 h-4 text-red-500" />;
-      case 'pending': return <Clock className="w-4 h-4 text-yellow-500" />;
-      default: return <Clock className="w-4 h-4 text-gray-500" />;
+      case 'pending': return null;
+      default: return null;
     }
   };
 
@@ -372,27 +391,16 @@ export const BetHistory = () => {
                           <Badge variant={getStatusVariant(bet.status)}>{getStatusText(bet.status)}</Badge>
                         </TableCell>
                         <TableCell>
-                          {bet.bet_type === 'combo' && bet.bet_selections?.length
-                            ? bet.bet_selections.every((sel: any) => sel.status === 'pending') && (
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => handleCancel(bet.id)}
-                                  disabled={cancelingId === bet.id}
-                                >
-                                  {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
-                                </Button>
-                              )
-                            : bet.status === 'pending' && (
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => handleCancel(bet.id)}
-                                  disabled={cancelingId === bet.id}
-                                >
-                                  {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
-                                </Button>
-                              )}
+                          {canCancelBet(bet) && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleCancelClick(bet.id)}
+                              disabled={cancelingId === bet.id}
+                            >
+                              {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>,
                       ...bet.bet_selections.map((selection: any) => (
@@ -448,11 +456,11 @@ export const BetHistory = () => {
                           <Badge variant={getStatusVariant(bet.status)}>{getStatusText(bet.status)}</Badge>
                         </TableCell>
                         <TableCell>
-                          {bet.status === 'pending' && (
+                          {canCancelBet(bet) && (
                             <Button
                               variant="destructive"
                               size="sm"
-                              onClick={() => handleCancel(bet.id)}
+                              onClick={() => handleCancelClick(bet.id)}
                               disabled={cancelingId === bet.id}
                             >
                               {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
@@ -491,19 +499,28 @@ export const BetHistory = () => {
               filteredBets.map((bet) => (
                 <Card key={bet.id} className="p-4">
                   <div className="space-y-3">
-                    {/* Header: Tipo + Estado + Botón Cancelar */}
+                    {/* Header: Tipo + Semana + Botón Cancelar */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
+                        <Badge 
+                          variant={bet.status === 'won' ? 'default' : bet.status === 'lost' ? 'destructive' : 'outline'} 
+                          className={`text-xs ${
+                            bet.status === 'won' ? 'bg-green-600 hover:bg-green-700 text-white' : 
+                            bet.status === 'lost' ? 'bg-red-600 hover:bg-red-700 text-white' : 
+                            ''
+                          }`}
+                        >
                           {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
                         </Badge>
-                        {getStatusIcon(bet.status)}
+                        <span className="text-xs text-muted-foreground">
+                          Semana {bet.week || 'N/A'}
+                        </span>
                       </div>
-                      {bet.status === 'pending' && (
+                      {canCancelBet(bet) && (
                         <Button
                           variant="destructive"
                           size="sm"
-                          onClick={() => handleCancel(bet.id)}
+                          onClick={() => handleCancelClick(bet.id)}
                           disabled={cancelingId === bet.id}
                         >
                           {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar'}
@@ -534,8 +551,9 @@ export const BetHistory = () => {
                               )}
                             </div>
                             {/* Apuesta justo debajo */}
-                            <div className="text-sm font-medium text-foreground border-l-2 border-muted pl-2">
-                              {getBettingTranslation(selection.market)}: {getBettingTranslation(selection.selection)} @ {selection.odds}
+                            <div className="flex items-center gap-2 text-sm font-medium text-foreground border-l-2 border-muted pl-2">
+                              {getStatusIcon(selection.status)}
+                              <span>{getBettingTranslation(selection.market)}: {getBettingTranslation(selection.selection)} @ {selection.odds}</span>
                             </div>
                           </div>
                         ))
@@ -554,7 +572,12 @@ export const BetHistory = () => {
                           </div>
                           {/* Apuesta justo debajo */}
                           <div className="text-sm font-medium text-foreground border-l-2 border-muted pl-2">
-                            {getBettingTranslation(bet.market_bets)}: {getBettingTranslation(bet.bet_selection)} @ {bet.odds}
+                            {(() => {
+                              const parts = bet.bet_selection?.split(' @ ') || [];
+                              const selection = getBettingTranslation(parts[0] || '');
+                              const odds = parts[1] || bet.odds;
+                              return `${getBettingTranslation(bet.market_bets)}: ${selection} @ ${odds}`;
+                            })()}
                           </div>
                         </div>
                       )}
@@ -579,6 +602,29 @@ export const BetHistory = () => {
         isOpen={showStatistics} 
         onClose={() => setShowStatistics(false)} 
       />
+
+      {/* Dialog de Confirmación de Cancelación */}
+      <AlertDialog open={cancelDialogOpen} onOpenChange={handleCancelDialogClose}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Confirmar cancelación?</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que quieres cancelar esta apuesta? Esta acción no se puede deshacer y se reembolsará tu importe al presupuesto semanal.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelDialogClose}>
+              No, mantener apuesta
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleCancelConfirm}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Sí, cancelar apuesta
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

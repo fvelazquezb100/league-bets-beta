@@ -121,8 +121,8 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
     switch (status) {
       case 'won': return <CheckCircle className="w-4 h-4 text-green-500" />;
       case 'lost': return <XCircle className="w-4 h-4 text-red-500" />;
-      case 'pending': return <Clock className="w-4 h-4 text-yellow-500" />;
-      default: return <Clock className="w-4 h-4 text-gray-500" />;
+      case 'pending': return null;
+      default: return null;
     }
   };
 
@@ -259,16 +259,22 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                 {bets.map((bet) => (
                   <Card key={bet.id} className="p-4">
                     <div className="space-y-3">
-                      {/* Header: Semana + Tipo + Estado */}
+                      {/* Header: Tipo + Semana */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-foreground">
-                            Semana {bet.week || '-'}
-                          </span>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge 
+                            variant={bet.status === 'won' ? 'default' : bet.status === 'lost' ? 'destructive' : 'outline'} 
+                            className={`text-xs ${
+                              bet.status === 'won' ? 'bg-green-600 hover:bg-green-700 text-white' : 
+                              bet.status === 'lost' ? 'bg-red-600 hover:bg-red-700 text-white' : 
+                              ''
+                            }`}
+                          >
                             {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
                           </Badge>
-                          {getStatusIcon(bet.status)}
+                          <span className="text-xs text-muted-foreground">
+                            Semana {bet.week || 'N/A'}
+                          </span>
                         </div>
                       </div>
 
@@ -289,8 +295,9 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                                   )}
                                 </div>
                                 {/* Apuesta justo debajo */}
-                                <div className="text-sm font-medium text-foreground border-l-2 border-muted pl-2">
-                                  {sel.market}: {getBettingTranslation(sel.selection) || sel.selection} @ {sel.odds}
+                                <div className="flex items-center gap-2 text-sm font-medium text-foreground border-l-2 border-muted pl-2">
+                                  {getStatusIcon(sel.status)}
+                                  <span>{sel.market}: {getBettingTranslation(sel.selection) || sel.selection} @ {sel.odds}</span>
                                 </div>
                               </div>
                             ))
@@ -351,16 +358,22 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
             {bets.map((bet) => (
               <Card key={bet.id} className="p-4">
                 <div className="space-y-3">
-                  {/* Header: Semana + Tipo + Estado */}
+                  {/* Header: Tipo + Semana */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-foreground">
-                        Semana {bet.week || '-'}
-                      </span>
-                      <Badge variant="outline" className="text-xs">
+                      <Badge 
+                        variant={bet.status === 'won' ? 'default' : bet.status === 'lost' ? 'destructive' : 'outline'} 
+                        className={`text-xs ${
+                          bet.status === 'won' ? 'bg-green-600 hover:bg-green-700 text-white' : 
+                          bet.status === 'lost' ? 'bg-red-600 hover:bg-red-700 text-white' : 
+                          ''
+                        }`}
+                      >
                         {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
                       </Badge>
-                      {getStatusIcon(bet.status)}
+                      <span className="text-xs text-muted-foreground">
+                        Semana {bet.week || 'N/A'}
+                      </span>
                     </div>
                   </div>
 
@@ -381,8 +394,9 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                               )}
                             </div>
                             {/* Apuesta justo debajo */}
-                            <div className="text-sm font-medium text-foreground border-l-2 border-muted pl-2">
-                              {sel.market}: {getBettingTranslation(sel.selection) || sel.selection} @ {sel.odds}
+                            <div className="flex items-center gap-2 text-sm font-medium text-foreground border-l-2 border-muted pl-2">
+                              {getStatusIcon(sel.status)}
+                              <span>{sel.market}: {getBettingTranslation(sel.selection) || sel.selection} @ {sel.odds}</span>
                             </div>
                           </div>
                         ))
@@ -401,7 +415,12 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                             </div>
                             {/* Apuesta justo debajo */}
                             <div className="text-sm font-medium text-foreground border-l-2 border-muted pl-2">
-                              {bet.market_bets}: {getBettingTranslation(bet.bet_selection) || bet.bet_selection} @ {bet.odds}
+                              {(() => {
+                                const parts = bet.bet_selection?.split(' @ ') || [];
+                                const selection = getBettingTranslation(parts[0] || '');
+                                const odds = parts[1] || bet.odds;
+                                return `${bet.market_bets}: ${selection} @ ${odds}`;
+                              })()}
                             </div>
                           </div>
                         )}
