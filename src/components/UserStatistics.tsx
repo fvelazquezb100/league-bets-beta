@@ -937,13 +937,13 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                         <div className="flex items-center justify-between">
                           <span className="font-medium">{market.market}</span>
                           <div className="flex items-center gap-2">
-                            <Badge className="jambol-button">{market.bets} apuestas</Badge>
-                            <Badge className="bg-white border-[#FFC72C] text-[#2D2D2D] border-2 cursor-default">
+                            <Badge className="bg-white border-[#FFC72C] text-[#2D2D2D] border-2 cursor-default hover:bg-white hover:border-[#FFC72C] hover:text-[#2D2D2D]">{market.bets} apuestas</Badge>
+                            <Badge className="bg-white border-[#FFC72C] text-[#2D2D2D] border-2 cursor-default hover:bg-white hover:border-[#FFC72C] hover:text-[#2D2D2D]">
                               {market.successRate.toFixed(1)}%
                             </Badge>
                           </div>
                         </div>
-                        <Progress value={market.successRate} className="h-2 [&>div]:bg-[#FFC72C]" />
+                        <Progress value={market.successRate} className="h-2 [&>div]:bg-[#FFC72C] [&>div]:border-[#FFC72C] bg-gray-200" />
                       </div>
                     ))}
                   </div>
@@ -962,13 +962,13 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                         <div className="flex items-center justify-between">
                           <span className="font-medium">{team.team}</span>
                           <div className="flex items-center gap-2">
-                            <Badge className="jambol-button">{team.bets} apuestas</Badge>
-                            <Badge className="bg-white border-[#FFC72C] text-[#2D2D2D] border-2 cursor-default">
+                            <Badge className="bg-white border-[#FFC72C] text-[#2D2D2D] border-2 cursor-default hover:bg-white hover:border-[#FFC72C] hover:text-[#2D2D2D]">{team.bets} apuestas</Badge>
+                            <Badge className="bg-white border-[#FFC72C] text-[#2D2D2D] border-2 cursor-default hover:bg-white hover:border-[#FFC72C] hover:text-[#2D2D2D]">
                               {team.successRate.toFixed(1)}%
                             </Badge>
                           </div>
                         </div>
-                        <Progress value={team.successRate} className="h-2 [&>div]:bg-[#FFC72C]" />
+                        <Progress value={team.successRate} className="h-2 [&>div]:bg-[#FFC72C] [&>div]:border-[#FFC72C] bg-gray-200" />
                       </div>
                     ))}
                   </div>
