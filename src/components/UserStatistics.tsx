@@ -147,7 +147,6 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
   const getLeagueName = (leagueId: number): string => {
     switch (leagueId) {
       case 140: return 'La Liga - Primera';
-      case 141: return 'La Liga - Segunda';
       case 2: return 'Champions League';
       case 3: return 'Europa League';
       default: return `Liga ${leagueId}`;
