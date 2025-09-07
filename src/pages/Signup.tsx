@@ -38,7 +38,7 @@ export const Signup = () => {
         setUsernameMsg('Error verificando usuario');
         setIsUsernameTaken(null);
       } else {
-        const exists = data === true;
+        const exists = data === false;
         setIsUsernameTaken(exists);
         setUsernameMsg(exists ? 'Este nombre de usuario ya está en uso' : '');
       }

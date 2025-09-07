@@ -32,6 +32,10 @@ export const Settings = () => {
   // Username form state
   const [newUsername, setNewUsername] = useState('');
   const [usernameLoading, setUsernameLoading] = useState(false);
+  const [isEditingUsername, setIsEditingUsername] = useState(false);
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+  const [isUsernameTaken, setIsUsernameTaken] = useState<boolean | null>(null);
+  const [usernameMsg, setUsernameMsg] = useState('');
   
   // Password form state
   const [currentPassword, setCurrentPassword] = useState('');
@@ -73,12 +77,64 @@ export const Settings = () => {
     fetchUserData();
   }, [user]);
 
+  // Username availability checking
+  useEffect(() => {
+    if (!isEditingUsername || !newUsername || newUsername === profile?.username) {
+      setIsUsernameTaken(null);
+      setUsernameMsg('');
+      return;
+    }
+
+    const timeoutId = setTimeout(async () => {
+      setIsCheckingUsername(true);
+      try {
+        const { data, error } = await supabase.rpc('check_username_availability', {
+          username_to_check: newUsername,
+        });
+        if (error) {
+          console.error('Error checking username:', error);
+          setUsernameMsg('Error verificando usuario');
+          setIsUsernameTaken(null);
+        } else {
+          const isAvailable = data === true;
+          setIsUsernameTaken(!isAvailable);
+          setUsernameMsg(isAvailable ? '' : 'Este nombre de usuario ya está en uso');
+        }
+      } catch (error) {
+        console.error('Error checking username:', error);
+        setUsernameMsg('Error verificando usuario');
+        setIsUsernameTaken(null);
+      } finally {
+        setIsCheckingUsername(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [newUsername, isEditingUsername, profile?.username]);
+
   const handleUsernameUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newUsername.trim()) {
       toast({ title: 'Error', description: 'El nombre de usuario no puede estar vacío.', variant: 'destructive' });
       return;
     }
+    if (newUsername.trim() === profile?.username) {
+      setIsEditingUsername(false);
+      return;
+    }
+    if (isUsernameTaken) {
+      toast({ title: 'Error', description: 'Este nombre de usuario ya está en uso.', variant: 'destructive' });
+      return;
+    }
+    if (newUsername.trim().length < 3) {
+      toast({ title: 'Error', description: 'El nombre de usuario debe tener al menos 3 caracteres.', variant: 'destructive' });
+      return;
+    }
+    if (newUsername.trim().length > 15) {
+      toast({ title: 'Error', description: 'El nombre de usuario debe tener máximo 15 caracteres.', variant: 'destructive' });
+      return;
+    }
+    
     setUsernameLoading(true);
     try {
       const { data, error } = await supabase.rpc('update_username', { new_username: newUsername.trim() });
@@ -86,14 +142,24 @@ export const Settings = () => {
       if (data?.success) {
         toast({ title: '¡Éxito!', description: 'Nombre de usuario actualizado correctamente.' });
         setProfile(prev => prev ? { ...prev, username: newUsername.trim() } : null);
+        setIsEditingUsername(false);
+        setIsUsernameTaken(null);
+        setUsernameMsg('');
       } else {
         toast({ title: 'Error', description: data?.message || 'No se pudo actualizar el nombre de usuario.', variant: 'destructive' });
       }
-    } catch {
-      toast({ title: 'Error', description: 'No se pudo actualizar el nombre de usuario.', variant: 'destructive' });
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message || 'No se pudo actualizar el nombre de usuario.', variant: 'destructive' });
     } finally {
       setUsernameLoading(false);
     }
+  };
+
+  const handleCancelUsernameEdit = () => {
+    setNewUsername(profile?.username || '');
+    setIsEditingUsername(false);
+    setIsUsernameTaken(null);
+    setUsernameMsg('');
   };
 
   const handlePasswordUpdate = async (e: React.FormEvent) => {
@@ -150,7 +216,61 @@ export const Settings = () => {
               </div>
               <div>
                 <Label>Nombre de Usuario</Label>
-                <Input value={profile.username || ''} disabled className="mt-1" />
+                {isEditingUsername ? (
+                  <form onSubmit={handleUsernameUpdate} className="space-y-2">
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <Input
+                          value={newUsername}
+                          onChange={(e) => setNewUsername(e.target.value)}
+                          placeholder="Introduce tu nombre de usuario"
+                          className="mt-1"
+                          disabled={usernameLoading}
+                        />
+                        {isCheckingUsername && (
+                          <p className="text-sm text-muted-foreground mt-1">Verificando disponibilidad...</p>
+                        )}
+                        {usernameMsg && (
+                          <p className={`text-sm mt-1 ${isUsernameTaken ? 'text-red-500' : 'text-green-500'}`}>
+                            {usernameMsg}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          type="submit"
+                          size="sm"
+                          disabled={usernameLoading || isUsernameTaken || newUsername.trim() === profile?.username}
+                        >
+                          {usernameLoading ? 'Guardando...' : 'Guardar'}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleCancelUsernameEdit}
+                          disabled={usernameLoading}
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      El nombre de usuario debe tener entre 3 y 15 caracteres.
+                    </p>
+                  </form>
+                ) : (
+                  <div className="flex items-center gap-2 mt-1">
+                    <Input value={profile.username || ''} disabled className="flex-1" />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsEditingUsername(true)}
+                    >
+                      Editar
+                    </Button>
+                  </div>
+                )}
               </div>
               <div>
                 

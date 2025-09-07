@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
 
     // Use username from signup data if provided, otherwise generate one from email
     let username: string;
-    const providedUsername = record?.raw_user_meta_data?.username;
+    const providedUsername = record?.raw_user_meta_data?.username || record?.user_metadata?.username;
     
     if (providedUsername && typeof providedUsername === 'string') {
       username = providedUsername;
