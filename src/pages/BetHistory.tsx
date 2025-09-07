@@ -304,8 +304,8 @@ export const BetHistory = () => {
         </Card>
 
         <Card 
-          className={`cursor-pointer transition-all duration-200 hover:bg-success/10 hover:border-success/30 ${
-            activeFilter === 'won' ? 'bg-success/10 border-success/30' : ''
+          className={`cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:border-primary/30 ${
+            activeFilter === 'won' ? 'bg-primary/10 border-primary/30' : ''
           }`}
           onClick={() => setActiveFilter('won')}
         >
@@ -321,8 +321,8 @@ export const BetHistory = () => {
         </Card>
 
         <Card 
-          className={`cursor-pointer transition-all duration-200 hover:bg-warning/10 hover:border-warning/30 ${
-            activeFilter === 'pending' ? 'bg-warning/10 border-warning/30' : ''
+          className={`cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:border-primary/30 ${
+            activeFilter === 'pending' ? 'bg-primary/10 border-primary/30' : ''
           }`}
           onClick={() => setActiveFilter('pending')}
         >
@@ -338,7 +338,7 @@ export const BetHistory = () => {
         </Card>
 
         <Card 
-          className="cursor-pointer transition-all duration-200 hover:bg-accent/10 hover:border-accent/30"
+          className="cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:border-primary/30"
           onClick={() => setShowStatistics(true)}
         >
           <CardContent className="p-4">
