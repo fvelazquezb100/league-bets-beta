@@ -37,7 +37,7 @@ serve(async (req) => {
 
     // Environment check
     console.log("Environment check:");
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "https://lflxrkkzudsecvdfdxwl.supabase.co";
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const INTERNAL_SECRET = Deno.env.get("INTERNAL_FUNCTION_SECRET");
     
