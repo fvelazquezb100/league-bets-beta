@@ -246,7 +246,7 @@ export const NewsManagement = () => {
           
           <Dialog open={isViewAllModalOpen} onOpenChange={setIsViewAllModalOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2">
+              <Button className="flex items-center gap-2">
                 <List size={16} />
                 Ver Todas las Noticias
               </Button>
