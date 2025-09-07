@@ -938,7 +938,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                           <span className="font-medium">{market.market}</span>
                           <div className="flex items-center gap-2">
                             <Badge className="jambol-button">{market.bets} apuestas</Badge>
-                            <Badge className={market.successRate >= 50 ? "bg-[#FFC72C] text-[#2D2D2D]" : "jambol-button"}>
+                            <Badge className="bg-white border-[#FFC72C] text-[#2D2D2D] border-2 cursor-default">
                               {market.successRate.toFixed(1)}%
                             </Badge>
                           </div>
@@ -963,7 +963,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                           <span className="font-medium">{team.team}</span>
                           <div className="flex items-center gap-2">
                             <Badge className="jambol-button">{team.bets} apuestas</Badge>
-                            <Badge className={team.successRate >= 50 ? "bg-[#FFC72C] text-[#2D2D2D]" : "jambol-button"}>
+                            <Badge className="bg-white border-[#FFC72C] text-[#2D2D2D] border-2 cursor-default">
                               {team.successRate.toFixed(1)}%
                             </Badge>
                           </div>
