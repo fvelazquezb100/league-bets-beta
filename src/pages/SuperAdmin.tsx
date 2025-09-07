@@ -59,7 +59,7 @@ const SuperAdmin: React.FC = () => {
     try {
       setProcessingResults(true);
       const url = `import.meta.env.VITE_SUPABASE_URL/functions/v1/secure-run-process-matchday-results`;
-      const body = JSON.stringify({ trigger: 'admin', timestamp: new Date().toISOString() });
+      console.log("Debug - URL being called:", url);      const body = JSON.stringify({ trigger: 'admin', timestamp: new Date().toISOString() });
       const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
       if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
       await response.json();
