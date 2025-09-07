@@ -159,7 +159,7 @@ export const Home = () => {
               })
             )}
             <Link to="/bets">
-              <Button className="w-full mt-4">
+              <Button className="jambol-button w-full mt-4">
                 Ver Todos los Partidos
               </Button>
             </Link>
@@ -218,7 +218,7 @@ export const Home = () => {
               })
             )}
             <Link to="/bet-history">
-              <Button variant="outline" className="w-full mt-4">
+              <Button className="jambol-button w-full mt-4">
                 <History className="h-4 w-4 mr-2" />
                 Ver Historial Completo
               </Button>

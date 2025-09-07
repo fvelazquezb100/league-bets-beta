@@ -502,7 +502,7 @@ const Bets = () => {
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 mb-6 gap-2 h-auto">
           <TabsTrigger 
             value="primera" 
-            className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-black data-[state=active]:ring-offset-2"
+            className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-[#FFC72C] data-[state=active]:ring-offset-2"
           >
             {/* Franjas de fondo */}
             <div 
@@ -523,7 +523,7 @@ const Bets = () => {
           </TabsTrigger>
           <TabsTrigger 
             value="champions"
-            className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-black data-[state=active]:ring-offset-2"
+            className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-[#FFC72C] data-[state=active]:ring-offset-2"
           >
             {/* Franjas de fondo azul-azul-blanco */}
             <div 
@@ -544,7 +544,7 @@ const Bets = () => {
           </TabsTrigger>
           <TabsTrigger 
             value="europa"
-            className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-black data-[state=active]:ring-offset-2"
+            className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-[#FFC72C] data-[state=active]:ring-offset-2"
           >
             {/* Franjas de fondo azul-azul-verde */}
             <div 

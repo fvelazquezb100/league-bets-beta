@@ -263,7 +263,7 @@ export const Settings = () => {
                   <div className="flex items-center gap-2 mt-1">
                     <Input value={profile.username || ''} disabled className="flex-1" />
                     <Button
-                      variant="outline"
+                      className="jambol-button"
                       size="sm"
                       onClick={() => setIsEditingUsername(true)}
                     >
