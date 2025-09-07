@@ -158,7 +158,7 @@ export const UpdatePassword = () => {
                     />
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={!hasRecoverySession || isLoading}>
+                  <Button type="submit" className="jambol-button w-full" disabled={!hasRecoverySession || isLoading}>
                     {isLoading ? "Guardando..." : "Save New Password"}
                   </Button>
                 </form>

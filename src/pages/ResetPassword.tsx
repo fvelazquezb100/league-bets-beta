@@ -83,7 +83,7 @@ export const ResetPassword = () => {
                 <p className="text-sm text-muted-foreground">
                   Si existe una cuenta con este correo, se ha enviado un enlace para restablecer la contraseña.
                 </p>
-                <Button asChild variant="secondary">
+                <Button asChild className="jambol-button">
                   <Link to="/login">Volver al inicio de sesión</Link>
                 </Button>
               </div>
@@ -107,7 +107,7 @@ export const ResetPassword = () => {
                   />
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button type="submit" className="jambol-button w-full" disabled={isLoading}>
                   {isLoading ? 'Enviando...' : 'Enviar Instrucciones'}
                 </Button>
               </form>

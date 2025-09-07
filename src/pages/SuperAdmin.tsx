@@ -159,7 +159,7 @@ const SuperAdmin: React.FC = () => {
             </div>
           </CardContent>
           <CardFooter className="p-3 sm:p-6">
-            <Button onClick={handleForceUpdateOdds} disabled={updatingOdds} className="text-xs sm:text-sm">
+            <Button onClick={handleForceUpdateOdds} disabled={updatingOdds} className="jambol-button text-xs sm:text-sm">
               {updatingOdds ? 'Actualizando…' : 'Forzar actualización de cuotas'}
             </Button>
           </CardFooter>
@@ -176,7 +176,7 @@ const SuperAdmin: React.FC = () => {
             </p>
           </CardContent>
           <CardFooter className="p-3 sm:p-6">
-            <Button onClick={handleForceProcessResults} disabled={processingResults} className="text-xs sm:text-sm">
+            <Button onClick={handleForceProcessResults} disabled={processingResults} className="jambol-button text-xs sm:text-sm">
               {processingResults ? 'Procesando…' : 'Forzar procesamiento de resultados'}
             </Button>
           </CardFooter>
@@ -194,8 +194,7 @@ const SuperAdmin: React.FC = () => {
           </CardContent>
           <CardFooter className="p-3 sm:p-6">
             <Button
-              variant="default"
-              className="text-xs sm:text-sm"
+              className="jambol-button text-xs sm:text-sm"
               onClick={async () => {
                 const confirm = window.confirm(
                   '¿Estás seguro? Esto recalculará los puntos totales de todos los usuarios según sus apuestas ganadas.'
@@ -253,7 +252,7 @@ const SuperAdmin: React.FC = () => {
             )}
           </CardContent>
           <CardFooter className="p-3 sm:p-6">
-            <Button onClick={testEdgeFunctionAuth} disabled={testingAuth} className="text-xs sm:text-sm">
+            <Button onClick={testEdgeFunctionAuth} disabled={testingAuth} className="jambol-button text-xs sm:text-sm">
               {testingAuth ? 'Probando autenticación…' : 'Test Edge Function Auth'}
             </Button>
           </CardFooter>

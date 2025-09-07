@@ -126,7 +126,7 @@ export const Signup = () => {
           </CardHeader>
           <CardContent>
             <Link to="/login">
-              <Button className="w-full">
+              <Button className="jambol-button w-full">
                 Ir a Iniciar Sesión
               </Button>
             </Link>

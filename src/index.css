@@ -182,3 +182,8 @@ All colors MUST be HSL.
 .jambol-secondary {
   @apply border-[#007BFF] text-[#007BFF] hover:bg-[#007BFF] hover:text-white;
 }
+
+/* Jambol Button - Light background with gold border and hover */
+.jambol-button {
+  @apply bg-[#F8F9FA] border-[#FFC72C] text-[#2D2D2D] hover:bg-[#FFC72C] hover:text-[#2D2D2D] active:bg-[#FFC72C] active:text-[#2D2D2D] border-2 font-medium transition-colors duration-200;
+}

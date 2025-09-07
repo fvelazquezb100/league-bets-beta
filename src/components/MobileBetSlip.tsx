@@ -302,10 +302,9 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll }: MobileBetSlipP
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-primary">{bet.odds.toFixed(2)}</span>
                       <Button
-                        variant="ghost"
                         size="sm"
                         onClick={() => onRemoveBet(bet.id)}
-                        className="h-6 w-6 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                        className="jambol-button h-6 w-6 p-0 hover:bg-destructive hover:text-destructive-foreground"
                       >
                         <X className="h-3 w-3" />
                       </Button>
@@ -352,6 +351,7 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll }: MobileBetSlipP
 
               <div className="space-y-2">
                 <Button
+                  className="jambol-button w-full"
                   onClick={handlePlaceBet}
                   disabled={
                     isSubmitting || 
@@ -360,17 +360,15 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll }: MobileBetSlipP
                     (selectedBets.length > 1 && hasDuplicateFixtures) ||
                     selectedBets.some(bet => bet.kickoff ? (new Date() >= new Date(new Date(bet.kickoff).getTime() - 15 * 60 * 1000)) : false)
                   }
-                  className="w-full"
                 >
                   {isSubmitting ? 'Procesando...' : 'Realizar Apuestas'}
                 </Button>
                 <Button
-                  variant="outline"
+                  className="jambol-button w-full"
                   onClick={() => {
                     onClearAll();
                     setIsExpanded(false);
                   }}
-                  className="w-full"
                 >
                   Limpiar Boleto
                 </Button>

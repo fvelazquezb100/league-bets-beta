@@ -198,7 +198,7 @@ const handleResetWeek = async () => {
               <div>
                 <div className="text-sm space-y-1">
                   <p><span className="font-semibold mr-2">Nombre:</span>{leagueData.name} ({leagueData.type})</p>
-                  <p className="flex items-center gap-2"><span className="font-semibold">Código:</span><Button variant="ghost" size="sm" onClick={() => handleCopyCode(leagueData.join_code)}>{leagueData.join_code} <Copy size={16} /></Button></p>
+                  <p className="flex items-center gap-2"><span className="font-semibold">Código:</span><Button className="jambol-button" size="sm" onClick={() => handleCopyCode(leagueData.join_code)}>{leagueData.join_code} <Copy size={16} /></Button></p>
                   <p><span className="font-semibold mr-2">Presupuesto:</span>{leagueData.budget} ({leagueData.reset_budget})</p>
                   <p><span className="font-semibold mr-2">Apuesta mínima:</span>{leagueData.min_bet}</p>
                   <p><span className="font-semibold mr-2">Apuesta máxima:</span>{leagueData.max_bet}</p>
@@ -210,7 +210,7 @@ const handleResetWeek = async () => {
                   <div className="mt-4">
                     <Dialog open={isEditFormOpen} onOpenChange={setIsEditFormOpen}>
                       <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="flex items-center gap-2">
+                        <Button className="jambol-button flex items-center gap-2" size="sm">
                           <Settings size={16} />
                           Editar Liga
                         </Button>
@@ -285,12 +285,13 @@ const handleResetWeek = async () => {
                           
                           <div className="flex justify-end gap-2 pt-4">
                             <Button 
-                              variant="outline" 
+                              className="jambol-button"
                               onClick={() => setIsEditFormOpen(false)}
                             >
                               Cancelar
                             </Button>
                             <Button 
+                              className="jambol-button"
                               onClick={handleUpdateLeague} 
                               disabled={isUpdatingLeague}
                             >
@@ -311,7 +312,7 @@ const handleResetWeek = async () => {
           <Card className="md:col-span-2">
             <CardHeader><CardTitle>Reseteo de la Liga</CardTitle></CardHeader>
             <CardContent><p>Esta opción reseteará tu Liga. Todos los puntos serán 0</p></CardContent>
-            <CardFooter><Button onClick={() => setConfirmingReset(true)} disabled={resettingWeek}>{resettingWeek ? 'Reseteando…' : 'Resetear la Liga'}</Button></CardFooter>
+            <CardFooter><Button className="jambol-button" onClick={() => setConfirmingReset(true)} disabled={resettingWeek}>{resettingWeek ? 'Reseteando…' : 'Resetear la Liga'}</Button></CardFooter>
           </Card>
         )}
       </div>
@@ -322,7 +323,7 @@ const handleResetWeek = async () => {
             <p className="text-lg font-semibold">¿Estás seguro que quieres resetear la liga?</p>
             <div className="flex justify-between gap-4">
               <Button variant="destructive" onClick={handleResetWeek}>Sí, resetear</Button>
-              <Button onClick={() => setConfirmingReset(false)}>Cancelar</Button>
+              <Button className="jambol-button" onClick={() => setConfirmingReset(false)}>Cancelar</Button>
             </div>
           </div>
         </div>

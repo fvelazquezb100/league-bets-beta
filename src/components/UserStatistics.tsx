@@ -661,23 +661,20 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
               {/* Filtros de Tipo de Apuesta */}
               <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 mb-6">
                 <Button
-                  variant={betTypeFilter === 'all' ? 'default' : 'outline'}
+                  className={`jambol-button px-4 sm:px-6 text-sm sm:text-base ${betTypeFilter === 'all' ? 'bg-[#FFC72C] text-[#2D2D2D]' : ''}`}
                   onClick={() => setBetTypeFilter('all')}
-                  className="px-4 sm:px-6 text-sm sm:text-base"
                 >
                   Todas las Apuestas
                 </Button>
                 <Button
-                  variant={betTypeFilter === 'single' ? 'default' : 'outline'}
+                  className={`jambol-button px-4 sm:px-6 text-sm sm:text-base ${betTypeFilter === 'single' ? 'bg-[#FFC72C] text-[#2D2D2D]' : ''}`}
                   onClick={() => setBetTypeFilter('single')}
-                  className="px-4 sm:px-6 text-sm sm:text-base"
                 >
                   Apuestas Simples
                 </Button>
                 <Button
-                  variant={betTypeFilter === 'combo' ? 'default' : 'outline'}
+                  className={`jambol-button px-4 sm:px-6 text-sm sm:text-base ${betTypeFilter === 'combo' ? 'bg-[#FFC72C] text-[#2D2D2D]' : ''}`}
                   onClick={() => setBetTypeFilter('combo')}
-                  className="px-4 sm:px-6 text-sm sm:text-base"
                 >
                   Apuestas Combinadas
                 </Button>
