@@ -189,8 +189,8 @@ function evaluateBet(
     }
 
     // HT/FT Double / Medio Tiempo/Final
-    if (marketLower === "medio tiempo/final") {
-      if (selectionLower.includes("/") && fr.halftime_outcome) {
+    if (marketLower === "medio tiempo/final" || marketLower === "ht/ft double") {
+      if (selectionLower.includes("/")) {
         const parts = selectionLower.split("/");
         if (parts.length === 2) {
           const htPart = parts[0].trim();
@@ -199,23 +199,52 @@ function evaluateBet(
           let htCorrect = false;
           let ftCorrect = false;
           
-          // Check halftime outcome
-          if (htPart.includes("home") || htPart.includes("local") || htPart.includes("1")) {
-            htCorrect = fr.halftime_outcome === "home";
-          } else if (htPart.includes("away") || htPart.includes("visitante") || htPart.includes("2")) {
-            htCorrect = fr.halftime_outcome === "away";
-          } else if (htPart.includes("draw") || htPart.includes("empate") || htPart.includes("x")) {
-            htCorrect = fr.halftime_outcome === "draw";
+          // Calculate halftime outcome if not available
+          let halftimeOutcome = fr.halftime_outcome;
+          if (!halftimeOutcome && fr.halftime_home !== undefined && fr.halftime_away !== undefined) {
+            if (fr.halftime_home > fr.halftime_away) {
+              halftimeOutcome = "home";
+            } else if (fr.halftime_home < fr.halftime_away) {
+              halftimeOutcome = "away";
+            } else {
+              halftimeOutcome = "draw";
+            }
           }
           
-          // Check full-time outcome
-          if (ftPart.includes("home") || ftPart.includes("local") || ftPart.includes("1")) {
+          console.log(`HT/FT bet evaluation:`, {
+            market: marketLower,
+            selection: selectionLower,
+            htPart,
+            ftPart,
+            halftimeOutcome: halftimeOutcome,
+            halftimeGoals: { home: fr.halftime_home, away: fr.halftime_away },
+            fullTimeOutcome: fr.outcome
+          });
+          
+          if (!halftimeOutcome) {
+            console.log(`No halftime data available for HT/FT bet`);
+            return false;
+          }
+          
+          // Check halftime outcome - handle both English and Spanish
+          if (htPart.toLowerCase().includes("home") || htPart.toLowerCase().includes("local") || htPart.includes("1")) {
+            htCorrect = halftimeOutcome === "home";
+          } else if (htPart.toLowerCase().includes("away") || htPart.toLowerCase().includes("visitante") || htPart.includes("2")) {
+            htCorrect = halftimeOutcome === "away";
+          } else if (htPart.toLowerCase().includes("draw") || htPart.toLowerCase().includes("empate") || htPart.includes("x")) {
+            htCorrect = halftimeOutcome === "draw";
+          }
+          
+          // Check full-time outcome - handle both English and Spanish
+          if (ftPart.toLowerCase().includes("home") || ftPart.toLowerCase().includes("local") || ftPart.includes("1")) {
             ftCorrect = fr.outcome === "home";
-          } else if (ftPart.includes("away") || ftPart.includes("visitante") || ftPart.includes("2")) {
+          } else if (ftPart.toLowerCase().includes("away") || ftPart.toLowerCase().includes("visitante") || ftPart.includes("2")) {
             ftCorrect = fr.outcome === "away";
-          } else if (ftPart.includes("draw") || ftPart.includes("empate") || ftPart.includes("x")) {
+          } else if (ftPart.toLowerCase().includes("draw") || ftPart.toLowerCase().includes("empate") || ftPart.includes("x")) {
             ftCorrect = fr.outcome === "draw";
           }
+          
+          console.log(`HT/FT result:`, { htCorrect, ftCorrect, finalResult: htCorrect && ftCorrect });
           
           return htCorrect && ftCorrect;
         }

@@ -239,10 +239,13 @@ const Bets = () => {
       });
     }
     
-    // Try exact match first
+    // Try exact match first - search through ALL bookmakers
     for (const bookmaker of match.bookmakers) {
       const market = bookmaker.bets.find(bet => bet.name === marketName);
-      if (market) return market;
+      if (market) {
+        console.log(`Found market "${marketName}" in bookmaker: ${bookmaker.name}`);
+        return market;
+      }
     }
     
     // Try flexible matching for common market variations
@@ -254,7 +257,7 @@ const Bets = () => {
       'Double Chance': ['Double Chance', '1X2 Double Chance', 'Double Chance (1X)'],
       'First Half Winner': ['First Half Winner', '1st Half Winner', 'Half Time Winner', 'HT Winner'],
       'Second Half Winner': ['Second Half Winner', '2nd Half Winner', 'Second Half Result'],
-      'HT/FT Double': ['HT/FT Double', 'Half Time/Full Time', 'HT/FT', 'Half Time Full Time'],
+      'HT/FT Double': ['HT/FT Double', 'Half Time/Full Time', 'HT/FT', 'Half Time Full Time', 'Half Time/Full Time Double', 'HT FT Double'],
       'Result/Total Goals': ['Result/Total Goals', 'Result & Total Goals', 'Match Result & Total Goals'],
       'Result/Both Teams Score': ['Result/Both Teams Score', 'Result & Both Teams Score', 'Match Result & BTTS']
     };
@@ -410,6 +413,19 @@ const Bets = () => {
                       <>
                         {getBetTypesSorted().map(betType => {
                           const market = findMarket(match, betType.apiName);
+                          
+                          // Debug HT/FT Double specifically
+                          if (betType.apiName === 'HT/FT Double') {
+                            console.log('=== HT/FT DOUBLE DEBUG ===');
+                            console.log('Looking for market:', betType.apiName);
+                            console.log('Market found:', !!market);
+                            if (market) {
+                              console.log('Market values:', market.values);
+                            } else {
+                              console.log('Available markets:', match.bookmakers?.[0]?.bets.map(b => b.name));
+                            }
+                          }
+                          
                           if (!market) return null;
 
                           return (
