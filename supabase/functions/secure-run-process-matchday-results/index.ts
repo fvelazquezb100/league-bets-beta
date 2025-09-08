@@ -23,7 +23,7 @@ serve(async (req) => {
 
   try {
     // Log environment variables availability
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "https://lflxrkkzudsecvdfdxwl.supabase.co";
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     
     console.log("Environment check:");

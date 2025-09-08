@@ -8,8 +8,10 @@ interface MainLayoutProps {
 export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-background">
-      <Header />
-      <Navigation />
+      <div className="sticky top-0 z-50 bg-background">
+        <Header />
+        <Navigation />
+      </div>
       <main className="container mx-auto px-6 py-8">
         {children}
       </main>

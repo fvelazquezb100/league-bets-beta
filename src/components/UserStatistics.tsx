@@ -59,6 +59,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
   const { user } = useAuth();
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [filterLoading, setFilterLoading] = useState(false);
   const [betTypeFilter, setBetTypeFilter] = useState<BetTypeFilter>('all');
   const [matchResults, setMatchResults] = useState<Record<number, string>>({});
 
@@ -69,7 +70,12 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
 
   const fetchUserStats = async () => {
     try {
-      setLoading(true);
+      // Only show main loading on initial load, not on filter changes
+      if (!stats) {
+        setLoading(true);
+      } else {
+        setFilterLoading(true);
+      }
       
       // Fetch all user bets with selections
       const { data: betsData, error: betsError } = await supabase
@@ -132,6 +138,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
       console.error('Error fetching user stats:', error);
     } finally {
       setLoading(false);
+      setFilterLoading(false);
     }
   };
 
@@ -147,7 +154,6 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
   const getLeagueName = (leagueId: number): string => {
     switch (leagueId) {
       case 140: return 'La Liga - Primera';
-      case 141: return 'La Liga - Segunda';
       case 2: return 'Champions League';
       case 3: return 'Europa League';
       default: return `Liga ${leagueId}`;
@@ -662,27 +668,34 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
               {/* Filtros de Tipo de Apuesta */}
               <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 mb-6">
                 <Button
-                  variant={betTypeFilter === 'all' ? 'default' : 'outline'}
+                  className={`jambol-button px-4 sm:px-6 text-sm sm:text-base ${betTypeFilter === 'all' ? 'bg-[#FFC72C] text-[#2D2D2D]' : ''}`}
                   onClick={() => setBetTypeFilter('all')}
-                  className="px-4 sm:px-6 text-sm sm:text-base"
                 >
                   Todas las Apuestas
                 </Button>
                 <Button
-                  variant={betTypeFilter === 'single' ? 'default' : 'outline'}
+                  className={`jambol-button px-4 sm:px-6 text-sm sm:text-base ${betTypeFilter === 'single' ? 'bg-[#FFC72C] text-[#2D2D2D]' : ''}`}
                   onClick={() => setBetTypeFilter('single')}
-                  className="px-4 sm:px-6 text-sm sm:text-base"
                 >
                   Apuestas Simples
                 </Button>
                 <Button
-                  variant={betTypeFilter === 'combo' ? 'default' : 'outline'}
+                  className={`jambol-button px-4 sm:px-6 text-sm sm:text-base ${betTypeFilter === 'combo' ? 'bg-[#FFC72C] text-[#2D2D2D]' : ''}`}
                   onClick={() => setBetTypeFilter('combo')}
-                  className="px-4 sm:px-6 text-sm sm:text-base"
                 >
                   Apuestas Combinadas
                 </Button>
               </div>
+
+              {/* Indicador de carga del filtro */}
+              {filterLoading && (
+                <div className="flex justify-center mb-4">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    Actualizando estadísticas...
+                  </div>
+                </div>
+              )}
 
               {/* Estadísticas Destacadas */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -915,13 +928,13 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                         <div className="flex items-center justify-between">
                           <span className="font-medium">{market.market}</span>
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline">{market.bets} apuestas</Badge>
-                            <Badge variant={market.successRate >= 50 ? "default" : "secondary"}>
+                            <Badge className="bg-white border-[#FFC72C] text-[#2D2D2D] border-2 cursor-default hover:bg-white hover:border-[#FFC72C] hover:text-[#2D2D2D]">{market.bets} apuestas</Badge>
+                            <Badge className="bg-white border-[#FFC72C] text-[#2D2D2D] border-2 cursor-default hover:bg-white hover:border-[#FFC72C] hover:text-[#2D2D2D]">
                               {market.successRate.toFixed(1)}%
                             </Badge>
                           </div>
                         </div>
-                        <Progress value={market.successRate} className="h-2" />
+                        <Progress value={market.successRate} className="h-2 [&>div]:bg-[#FFC72C] [&>div]:border-[#FFC72C] bg-gray-200" />
                       </div>
                     ))}
                   </div>
@@ -940,13 +953,13 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                         <div className="flex items-center justify-between">
                           <span className="font-medium">{team.team}</span>
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline">{team.bets} apuestas</Badge>
-                            <Badge variant={team.successRate >= 50 ? "default" : "secondary"}>
+                            <Badge className="bg-white border-[#FFC72C] text-[#2D2D2D] border-2 cursor-default hover:bg-white hover:border-[#FFC72C] hover:text-[#2D2D2D]">{team.bets} apuestas</Badge>
+                            <Badge className="bg-white border-[#FFC72C] text-[#2D2D2D] border-2 cursor-default hover:bg-white hover:border-[#FFC72C] hover:text-[#2D2D2D]">
                               {team.successRate.toFixed(1)}%
                             </Badge>
                           </div>
                         </div>
-                        <Progress value={team.successRate} className="h-2" />
+                        <Progress value={team.successRate} className="h-2 [&>div]:bg-[#FFC72C] [&>div]:border-[#FFC72C] bg-gray-200" />
                       </div>
                     ))}
                   </div>

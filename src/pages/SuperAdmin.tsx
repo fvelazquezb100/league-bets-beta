@@ -58,7 +58,10 @@ const SuperAdmin: React.FC = () => {
   const handleForceProcessResults = async () => {
     try {
       setProcessingResults(true);
-      const url = `https://lflxrkkzudsecvdfdxwl.supabase.co/functions/v1/secure-run-process-matchday-results`;
+      const url = `https://sbfgxxdpppgtgiclmctc.supabase.co/functions/v1/secure-run-process-matchday-results`;
+      console.log("Debug - VITE_SUPABASE_URL:", "https://sbfgxxdpppgtgiclmctc.supabase.co");
+      console.log("Debug - All env vars:", import.meta.env);
+      console.log("Debug - URL being called:", url);
       const body = JSON.stringify({ trigger: 'admin', timestamp: new Date().toISOString() });
       const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
       if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
@@ -76,7 +79,7 @@ const SuperAdmin: React.FC = () => {
     try {
       setTestingAuth(true);
       setAuthTestResults(null);
-      const baseUrl = 'https://lflxrkkzudsecvdfdxwl.supabase.co';
+      const baseUrl = 'https://sbfgxxdpppgtgiclmctc.supabase.co';
       const testBody = JSON.stringify({ trigger: 'auth-test', timestamp: new Date().toISOString() });
       const results = { publicWrapper: null as any, protectedFunction: null as any };
 
@@ -156,7 +159,7 @@ const SuperAdmin: React.FC = () => {
             </div>
           </CardContent>
           <CardFooter className="p-3 sm:p-6">
-            <Button onClick={handleForceUpdateOdds} disabled={updatingOdds} className="text-xs sm:text-sm">
+            <Button onClick={handleForceUpdateOdds} disabled={updatingOdds} className="jambol-button text-xs sm:text-sm">
               {updatingOdds ? 'Actualizando…' : 'Forzar actualización de cuotas'}
             </Button>
           </CardFooter>
@@ -173,7 +176,7 @@ const SuperAdmin: React.FC = () => {
             </p>
           </CardContent>
           <CardFooter className="p-3 sm:p-6">
-            <Button onClick={handleForceProcessResults} disabled={processingResults} className="text-xs sm:text-sm">
+            <Button onClick={handleForceProcessResults} disabled={processingResults} className="jambol-button text-xs sm:text-sm">
               {processingResults ? 'Procesando…' : 'Forzar procesamiento de resultados'}
             </Button>
           </CardFooter>
@@ -191,8 +194,7 @@ const SuperAdmin: React.FC = () => {
           </CardContent>
           <CardFooter className="p-3 sm:p-6">
             <Button
-              variant="default"
-              className="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm"
+              className="jambol-button text-xs sm:text-sm"
               onClick={async () => {
                 const confirm = window.confirm(
                   '¿Estás seguro? Esto recalculará los puntos totales de todos los usuarios según sus apuestas ganadas.'
@@ -250,7 +252,7 @@ const SuperAdmin: React.FC = () => {
             )}
           </CardContent>
           <CardFooter className="p-3 sm:p-6">
-            <Button onClick={testEdgeFunctionAuth} disabled={testingAuth} className="text-xs sm:text-sm">
+            <Button onClick={testEdgeFunctionAuth} disabled={testingAuth} className="jambol-button text-xs sm:text-sm">
               {testingAuth ? 'Probando autenticación…' : 'Test Edge Function Auth'}
             </Button>
           </CardFooter>

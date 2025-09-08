@@ -39,7 +39,7 @@ const WinnerSelector = ({ match, isFrozen, handleAddToSlip }: WinnerSelectorProp
         <div className="flex gap-2 flex-1">
           {market.values.map((value: BetValue) => {
             let displayValue = value.value;
-            let buttonClass = "flex-1 h-10 transition-all duration-200 hover:scale-[1.02] hover:bg-green-500 hover:text-white hover:border-green-500";
+            let buttonClass = "flex-1 h-10 transition-all duration-200 hover:scale-[1.02] hover:bg-success hover:text-success-foreground hover:border-success";
             
             // Customize display based on selection
             if (value.value.toLowerCase().includes('home') || value.value === '1') {

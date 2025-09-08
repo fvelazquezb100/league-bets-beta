@@ -18,7 +18,7 @@ export const UpdatePassword = () => {
 
   useEffect(() => {
     // SEO: title, description, canonical
-    const title = "Set New Password | Liga de Apuestas";
+    const title = "Jambol - Establecer Nueva Contraseña";
     const description = "Establece una nueva contraseña de forma segura.";
     document.title = title;
 
@@ -93,7 +93,14 @@ export const UpdatePassword = () => {
     <div className="min-h-screen flex items-center justify-center bg-background px-6">
       <main className="w-full max-w-md">
         <header className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-primary">Liga de Apuestas</h1>
+          <div className="flex flex-col items-center gap-4">
+            <img 
+              src="https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/jambollogo.png" 
+              alt="Jambol Logo" 
+              className="h-16 jambol-logo"
+            />
+            <h1 className="text-3xl font-bold jambol-dark">Jambol</h1>
+          </div>
         </header>
 
         <Card className="shadow-xl border-border/50">
@@ -151,7 +158,7 @@ export const UpdatePassword = () => {
                     />
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={!hasRecoverySession || isLoading}>
+                  <Button type="submit" className="jambol-button w-full" disabled={!hasRecoverySession || isLoading}>
                     {isLoading ? "Guardando..." : "Save New Password"}
                   </Button>
                 </form>

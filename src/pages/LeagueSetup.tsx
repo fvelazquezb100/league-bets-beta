@@ -18,7 +18,7 @@ export const LeagueSetup = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    document.title = 'Configurar Liga | Apuestas Simuladas';
+    document.title = 'Jambol - Configurar Liga';
   }, []);
 
 const handleCreate = async () => {

@@ -287,8 +287,8 @@ export const BetHistory = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card 
-          className={`cursor-pointer transition-all duration-200 hover:bg-green-50 hover:border-green-200 ${
-            activeFilter === 'all' ? 'bg-green-50 border-green-200' : ''
+          className={`cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:border-primary/30 ${
+            activeFilter === 'all' ? 'bg-primary/10 border-primary/30' : ''
           }`}
           onClick={() => setActiveFilter('all')}
         >
@@ -304,8 +304,8 @@ export const BetHistory = () => {
         </Card>
 
         <Card 
-          className={`cursor-pointer transition-all duration-200 hover:bg-green-50 hover:border-green-200 ${
-            activeFilter === 'won' ? 'bg-green-50 border-green-200' : ''
+          className={`cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:border-primary/30 ${
+            activeFilter === 'won' ? 'bg-primary/10 border-primary/30' : ''
           }`}
           onClick={() => setActiveFilter('won')}
         >
@@ -321,8 +321,8 @@ export const BetHistory = () => {
         </Card>
 
         <Card 
-          className={`cursor-pointer transition-all duration-200 hover:bg-green-50 hover:border-green-200 ${
-            activeFilter === 'pending' ? 'bg-green-50 border-green-200' : ''
+          className={`cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:border-primary/30 ${
+            activeFilter === 'pending' ? 'bg-primary/10 border-primary/30' : ''
           }`}
           onClick={() => setActiveFilter('pending')}
         >
@@ -338,7 +338,7 @@ export const BetHistory = () => {
         </Card>
 
         <Card 
-          className="cursor-pointer transition-all duration-200 hover:bg-green-50 hover:border-green-200"
+          className="cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:border-primary/30"
           onClick={() => setShowStatistics(true)}
         >
           <CardContent className="p-4">
@@ -505,8 +505,8 @@ export const BetHistory = () => {
                         <Badge 
                           variant={bet.status === 'won' ? 'default' : bet.status === 'lost' ? 'destructive' : 'outline'} 
                           className={`text-xs ${
-                            bet.status === 'won' ? 'bg-green-600 hover:bg-green-700 text-white' : 
-                            bet.status === 'lost' ? 'bg-red-600 hover:bg-red-700 text-white' : 
+                            bet.status === 'won' ? 'bg-success hover:bg-success/90 text-success-foreground' : 
+                            bet.status === 'lost' ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : 
                             ''
                           }`}
                         >
@@ -618,7 +618,7 @@ export const BetHistory = () => {
             </AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleCancelConfirm}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             >
               Sí, cancelar apuesta
             </AlertDialogAction>

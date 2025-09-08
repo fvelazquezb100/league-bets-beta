@@ -15,8 +15,8 @@ export const ResetPassword = () => {
 
   useEffect(() => {
     // SEO: title, description, canonical
-    const title = 'Restablecer Contraseña | Liga de Apuestas';
-    const description = 'Restablece tu contraseña de Liga de Apuestas de forma segura.';
+    const title = 'Jambol - Restablecer Contraseña';
+    const description = 'Restablece tu contraseña de Jambol de forma segura.';
     document.title = title;
 
     let meta = document.querySelector('meta[name="description"]');
@@ -60,8 +60,13 @@ export const ResetPassword = () => {
     <div className="min-h-screen flex items-center justify-center bg-background px-6">
       <main className="w-full max-w-md">
         <header className="text-center mb-8">
-          <Link to="/" className="text-3xl font-bold text-primary">
-            Liga de Apuestas
+          <Link to="/" className="flex flex-col items-center gap-4">
+            <img 
+              src="https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/jambollogo.png" 
+              alt="Jambol Logo" 
+              className="h-16 jambol-logo"
+            />
+            <span className="text-3xl font-bold jambol-dark">Jambol</span>
           </Link>
         </header>
 
@@ -78,7 +83,7 @@ export const ResetPassword = () => {
                 <p className="text-sm text-muted-foreground">
                   Si existe una cuenta con este correo, se ha enviado un enlace para restablecer la contraseña.
                 </p>
-                <Button asChild variant="secondary">
+                <Button asChild className="jambol-button">
                   <Link to="/login">Volver al inicio de sesión</Link>
                 </Button>
               </div>
@@ -102,7 +107,7 @@ export const ResetPassword = () => {
                   />
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button type="submit" className="jambol-button w-full" disabled={isLoading}>
                   {isLoading ? 'Enviando...' : 'Enviar Instrucciones'}
                 </Button>
               </form>

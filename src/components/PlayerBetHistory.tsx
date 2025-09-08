@@ -265,8 +265,8 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                           <Badge 
                             variant={bet.status === 'won' ? 'default' : bet.status === 'lost' ? 'destructive' : 'outline'} 
                             className={`text-xs ${
-                              bet.status === 'won' ? 'bg-green-600 hover:bg-green-700 text-white' : 
-                              bet.status === 'lost' ? 'bg-red-600 hover:bg-red-700 text-white' : 
+                              bet.status === 'won' ? 'bg-success hover:bg-success/90 text-success-foreground' : 
+                              bet.status === 'lost' ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : 
                               ''
                             }`}
                           >
@@ -364,8 +364,8 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                       <Badge 
                         variant={bet.status === 'won' ? 'default' : bet.status === 'lost' ? 'destructive' : 'outline'} 
                         className={`text-xs ${
-                          bet.status === 'won' ? 'bg-green-600 hover:bg-green-700 text-white' : 
-                          bet.status === 'lost' ? 'bg-red-600 hover:bg-red-700 text-white' : 
+                          bet.status === 'won' ? 'bg-success hover:bg-success/90 text-success-foreground' : 
+                          bet.status === 'lost' ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : 
                           ''
                         }`}
                       >

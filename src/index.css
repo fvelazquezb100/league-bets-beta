@@ -8,83 +8,97 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 222.2 84% 4.9%;
+    /* Jambol Brand Colors */
+    --background: 210 20% 97.3%; /* Light Background: #F8F9FA */
+    --foreground: 0 0% 17.6%; /* Jambol Dark Grey: #2D2D2D */
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 0 0% 17.6%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 0 0% 17.6%;
 
-    --primary: 142 76% 36%;
-    --primary-foreground: 355.7 100% 97.3%;
+    --primary: 45 100% 58%; /* Jambol Gold: #FFC72C */
+    --primary-foreground: 0 0% 17.6%;
 
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 84% 4.9%;
+    --secondary: 210 100% 50%; /* Accent Blue: #007BFF */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 210 20% 95%; /* Subtle Borders: #E9ECEF */
+    --muted-foreground: 210 9% 46%; /* Secondary Text: #6C757D */
 
-    --accent: 142 46% 56%;
-    --accent-foreground: 222.2 84% 4.9%;
+    --accent: 210 100% 50%; /* Accent Blue: #007BFF */
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84.2% 60.2%; /* Error Red: #DC3545 */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 142 76% 36%;
+    --success: 142 76% 36%; /* Success Green: #28A745 */
+    --success-foreground: 0 0% 100%;
+
+    --warning: 45 100% 50%; /* Warning Orange: #FFC107 */
+    --warning-foreground: 0 0% 17.6%;
+
+    --border: 210 20% 91%; /* Subtle Borders: #E9ECEF */
+    --input: 210 20% 91%;
+    --ring: 45 100% 58%; /* Jambol Gold */
 
     --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 0 0% 17.6%; /* Jambol Dark Grey */
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 45 100% 58%; /* Jambol Gold */
+    --sidebar-primary-foreground: 0 0% 17.6%;
+    --sidebar-accent: 210 20% 95%;
+    --sidebar-accent-foreground: 0 0% 17.6%;
+    --sidebar-border: 210 20% 91%;
+    --sidebar-ring: 45 100% 58%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Dark mode - keeping Jambol brand colors but adjusted for dark theme */
+    --background: 0 0% 8%; /* Very dark background */
+    --foreground: 0 0% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 142 76% 36%;
-    --primary-foreground: 222.2 84% 4.9%;
+    --primary: 45 100% 58%; /* Keep Jambol Gold */
+    --primary-foreground: 0 0% 8%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 210 100% 50%; /* Keep Accent Blue */
+    --secondary-foreground: 0 0% 95%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
 
-    --accent: 142 46% 56%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 210 100% 50%; /* Keep Accent Blue */
+    --accent-foreground: 0 0% 95%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84.2% 60.2%; /* Keep Error Red */
+    --destructive-foreground: 0 0% 95%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 142 76% 36%;
+    --success: 142 76% 36%; /* Keep Success Green */
+    --success-foreground: 0 0% 95%;
+
+    --warning: 45 100% 50%; /* Keep Warning Orange */
+    --warning-foreground: 0 0% 8%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 45 100% 58%; /* Keep Jambol Gold */
     
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 0 0% 8%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 45 100% 58%; /* Keep Jambol Gold */
+    --sidebar-primary-foreground: 0 0% 8%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 45 100% 58%;
   }
 }
 
@@ -96,4 +110,80 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Jambol Brand Utilities */
+@layer utilities {
+  .jambol-gold {
+    @apply text-[#FFC72C];
+  }
+  
+  .jambol-dark {
+    @apply text-[#2D2D2D];
+  }
+  
+  .jambol-bg-gold {
+    @apply bg-[#FFC72C];
+  }
+  
+  .jambol-bg-dark {
+    @apply bg-[#2D2D2D];
+  }
+  
+  .jambol-border-gold {
+    @apply border-[#FFC72C];
+  }
+  
+  .jambol-border-dark {
+    @apply border-[#2D2D2D];
+  }
+}
+
+/* Jambol Logo Animation */
+@keyframes jambol-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+@keyframes jambol-bounce {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translate3d(0,0,0);
+  }
+  40%, 43% {
+    transform: translate3d(0, -8px, 0);
+  }
+  70% {
+    transform: translate3d(0, -4px, 0);
+  }
+  90% {
+    transform: translate3d(0, -2px, 0);
+  }
+}
+
+.jambol-logo {
+  animation: jambol-pulse 2s ease-in-out infinite;
+}
+
+.jambol-logo-loading {
+  animation: jambol-bounce 1s ease-in-out infinite;
+}
+
+/* Custom button variants for Jambol brand */
+.jambol-primary {
+  @apply bg-[#FFC72C] text-[#2D2D2D] hover:bg-[#FFC72C]/90 font-semibold;
+}
+
+.jambol-secondary {
+  @apply border-[#007BFF] text-[#007BFF] hover:bg-[#007BFF] hover:text-white;
+}
+
+/* Jambol Button - Light background with gold border and hover */
+.jambol-button {
+  @apply bg-[#F8F9FA] border-[#FFC72C] text-[#2D2D2D] hover:bg-[#FFC72C] hover:text-[#2D2D2D] active:bg-[#FFC72C] active:text-[#2D2D2D] border-2 font-medium transition-colors duration-200;
 }

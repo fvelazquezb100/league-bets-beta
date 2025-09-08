@@ -201,7 +201,7 @@ export const NewsManagement = () => {
         <div className="flex flex-col sm:flex-row gap-2">
           <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
             <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
+              <Button className="jambol-button flex items-center gap-2">
                 <Plus size={16} />
                 Crear Nueva Noticia
               </Button>
@@ -233,10 +233,10 @@ export const NewsManagement = () => {
                 </div>
                 
                 <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
+                  <Button className="jambol-button" onClick={() => setIsCreateModalOpen(false)}>
                     Cancelar
                   </Button>
-                  <Button onClick={handleCreate} disabled={creating}>
+                  <Button className="jambol-button" onClick={handleCreate} disabled={creating}>
                     {creating ? 'Creando...' : 'Crear Noticia'}
                   </Button>
                 </div>
@@ -246,7 +246,7 @@ export const NewsManagement = () => {
           
           <Dialog open={isViewAllModalOpen} onOpenChange={setIsViewAllModalOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2">
+              <Button className="jambol-button flex items-center gap-2">
                 <List size={16} />
                 Ver Todas las Noticias
               </Button>
@@ -283,10 +283,10 @@ export const NewsManagement = () => {
               </div>
               
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+                <Button className="jambol-button" onClick={() => setIsEditModalOpen(false)}>
                   Cancelar
                 </Button>
-                <Button onClick={handleUpdate}>
+                <Button className="jambol-button" onClick={handleUpdate}>
                   Actualizar Noticia
                 </Button>
               </div>
@@ -308,7 +308,7 @@ export const NewsManagement = () => {
               ) : (
                 <div className="space-y-4">
                   {news.map((item) => (
-                    <div key={item.id} className={`p-4 border rounded-lg ${item.is_frozen ? 'border-yellow-400 bg-yellow-50/50' : ''}`}>
+                    <div key={item.id} className={`p-4 border rounded-lg ${item.is_frozen ? 'border-warning bg-warning/10' : ''}`}>
                       <div className="flex justify-between items-start gap-4">
                         <div className="flex-1">
                           <h4 className="font-medium">{item.title}</h4>
@@ -320,26 +320,23 @@ export const NewsManagement = () => {
                         <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-2">
                           <Button
                             size="sm"
-                            variant="outline"
+                            className="jambol-button w-full sm:w-auto"
                             onClick={() => handleToggleFreeze(item.id, item.is_frozen)}
                             title={item.is_frozen ? 'Descongelar noticia' : 'Congelar noticia'}
-                            className="w-full sm:w-auto"
                           >
                             <Snowflake className={`h-4 w-4 ${item.is_frozen ? 'text-blue-500' : ''}`} />
                           </Button>
                           <Button
                             size="sm"
-                            variant="outline"
+                            className="jambol-button w-full sm:w-auto"
                             onClick={() => handleToggleActive(item.id, item.is_active)}
-                            className="w-full sm:w-auto"
                           >
                             {item.is_active ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                           </Button>
                           <Button
                             size="sm"
-                            variant="outline"
+                            className="jambol-button w-full sm:w-auto"
                             onClick={() => handleEdit(item)}
-                            className="w-full sm:w-auto"
                           >
                             <Edit2 className="h-4 w-4" />
                           </Button>
@@ -372,7 +369,7 @@ export const NewsManagement = () => {
           ) : (
             <div className="space-y-3">
               {news.filter(item => item.is_frozen).map((item) => (
-                <div key={item.id} className={`p-4 border rounded-lg ${item.is_frozen ? 'border-yellow-400 bg-yellow-50/50' : ''}`}>
+                <div key={item.id} className={`p-4 border rounded-lg ${item.is_frozen ? 'border-warning bg-warning/10' : ''}`}>
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1">
                       <h4 className="font-medium">{item.title}</h4>
@@ -384,7 +381,7 @@ export const NewsManagement = () => {
                     <div>
                       <Button
                         size="sm"
-                        variant="outline"
+                        className="jambol-button"
                         onClick={() => handleToggleFreeze(item.id, item.is_frozen)}
                         title={item.is_frozen ? 'Descongelar noticia' : 'Congelar noticia'}
                       >

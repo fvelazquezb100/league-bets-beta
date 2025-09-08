@@ -437,8 +437,17 @@ serve(async (req) => {
     console.log('Request body:', { jobName, trigger: parsedBody?.trigger, timestamp: parsedBody?.timestamp });
 
     // @ts-ignore - Deno global
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "https://lflxrkkzudsecvdfdxwl.supabase.co";
-    // @ts-ignore - Deno global
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    if (!SUPABASE_URL) {
+      console.error("Missing SUPABASE_URL environment variable");
+      return new Response(JSON.stringify({ 
+        error: "Server configuration error: Missing Supabase URL",
+        code: "MISSING_SUPABASE_URL"
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }    // @ts-ignore - Deno global
     const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     // @ts-ignore - Deno global
     const API_FOOTBALL_KEY = Deno.env.get("API_FOOTBALL_KEY");

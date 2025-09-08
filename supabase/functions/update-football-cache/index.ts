@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
     console.log('API Key found. Starting two-step odds fetch...');
 
     // --- STEP 1: Fetch the NEXT 10 upcoming fixture IDs for all leagues ---
-    const leagueIds = [140, 141, 2, 3]; // La Liga, Segunda División, Champions League, Europa League
+    const leagueIds = [140, 2, 3]; // La Liga, Champions League, Europa League
     const currentYear = new Date().getFullYear();
     
     let allFixtureIDs: number[] = [];
@@ -87,8 +87,7 @@ Deno.serve(async (req) => {
     
     for (const leagueId of leagueIds) {
       const leagueName = leagueId === 140 ? 'La Liga' : 
-                        leagueId === 141 ? 'Segunda División' :
-                        leagueId === 2 ? 'Champions League' : 'Europa League';
+                        leagueId === 2 ? 'Champions League' : 'Europa League'; 
       const fixturesUrl = `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${currentYear}&next=10`;
       console.log(`Fetching fixtures from ${leagueName}: ${fixturesUrl}`);
       
@@ -204,7 +203,7 @@ Deno.serve(async (req) => {
         const cronExpr = `${dynamicRunTime.getUTCMinutes()} ${dynamicRunTime.getUTCHours()} ${dynamicRunTime.getUTCDate()} ${dynamicRunTime.getUTCMonth() + 1} *`;
         const jobName = `process-matchday-results-${Math.floor(dynamicRunTime.getTime() / 1000)}`;
 
-        const SUPABASE_URL_FOR_SCHEDULE = Deno.env.get('SUPABASE_URL') ?? 'https://lflxrkkzudsecvdfdxwl.supabase.co';
+        const SUPABASE_URL_FOR_SCHEDULE = Deno.env.get('SUPABASE_URL');
         const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
         const scheduleUrl = `${SUPABASE_URL_FOR_SCHEDULE}/functions/v1/secure-run-process-matchday-results`;
         const authHeader = ANON_KEY ? `Bearer ${ANON_KEY}` : '';

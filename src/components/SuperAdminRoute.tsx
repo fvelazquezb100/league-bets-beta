@@ -32,8 +32,15 @@ export const SuperAdminRoute: React.FC<SuperAdminRouteProps> = ({ children }) =>
 
   if (loading || checkingRole) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <img 
+            src="https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/jambollogo.png" 
+            alt="Jambol Logo" 
+            className="h-20 jambol-logo-loading"
+          />
+          <span className="text-lg font-semibold jambol-dark">Cargando...</span>
+        </div>
       </div>
     );
   }

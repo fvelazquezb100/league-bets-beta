@@ -152,7 +152,7 @@ const ExactScoreSelector = ({ match, isFrozen, handleAddToSlip }: ExactScoreSele
           className={`w-full h-12 transition-all duration-200 hover:scale-[1.02] ${
             currentOdds === '0.00' 
               ? 'opacity-50 cursor-not-allowed' 
-              : 'hover:bg-green-500 hover:text-white hover:border-green-500'
+              : 'hover:bg-success hover:text-success-foreground hover:border-success'
           }`}
         >
           <span className="text-lg font-bold">{currentOdds}</span>

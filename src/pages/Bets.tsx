@@ -85,7 +85,7 @@ const Bets = () => {
   const [userBets, setUserBets] = useState<UserBet[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [drawerShouldRender, setDrawerShouldRender] = useState(false);
-  const [selectedLeague, setSelectedLeague] = useState<'primera' | 'segunda' | 'champions' | 'europa'>('primera');
+  const [selectedLeague, setSelectedLeague] = useState<'primera' | 'champions' | 'europa'>('primera');
   const { toast } = useToast();
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -322,7 +322,7 @@ const Bets = () => {
   const getMatchesByLeague = (league: string) => {
     const leagueMap: Record<string, number> = {
       'primera': 140,
-      'segunda': 141,
+      
       'champions': 2,
       'europa': 3
     };
@@ -498,11 +498,11 @@ const Bets = () => {
 
   const renderContent = () => {
     return (
-      <Tabs value={selectedLeague} onValueChange={(value) => setSelectedLeague(value as 'primera' | 'segunda' | 'champions' | 'europa')} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6 gap-2 h-auto">
+      <Tabs value={selectedLeague} onValueChange={(value) => setSelectedLeague(value as 'primera' | 'champions' | 'europa')} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 mb-6 gap-2 h-auto">
           <TabsTrigger 
             value="primera" 
-            className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-black data-[state=active]:ring-offset-2"
+            className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-[#FFC72C] data-[state=active]:ring-offset-2"
           >
             {/* Franjas de fondo */}
             <div 
@@ -522,29 +522,8 @@ const Bets = () => {
             <span className="relative z-10 text-black font-semibold text-xs sm:text-sm leading-tight">La Liga - Primera</span>
           </TabsTrigger>
           <TabsTrigger 
-            value="segunda"
-            className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-black data-[state=active]:ring-offset-2"
-          >
-            {/* Franjas de fondo */}
-            <div 
-              className="absolute inset-0"
-              style={{
-                background: `
-                  linear-gradient(45deg, 
-                    #C60B1E 0%, #C60B1E 33%, 
-                    #FFC400 33%, #FFC400 66%, 
-                    #C60B1E 66%, #C60B1E 100%
-                  )
-                `,
-                opacity: '0.15'
-              }}
-            />
-            {/* Texto por encima */}
-            <span className="relative z-10 text-black font-semibold text-xs sm:text-sm leading-tight">La Liga - Segunda</span>
-          </TabsTrigger>
-          <TabsTrigger 
             value="champions"
-            className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-black data-[state=active]:ring-offset-2"
+            className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-[#FFC72C] data-[state=active]:ring-offset-2"
           >
             {/* Franjas de fondo azul-azul-blanco */}
             <div 
@@ -565,7 +544,7 @@ const Bets = () => {
           </TabsTrigger>
           <TabsTrigger 
             value="europa"
-            className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-black data-[state=active]:ring-offset-2"
+            className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-[#FFC72C] data-[state=active]:ring-offset-2"
           >
             {/* Franjas de fondo azul-azul-verde */}
             <div 
@@ -586,9 +565,6 @@ const Bets = () => {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="primera" className="mt-0">
-          {renderLeagueContent()}
-        </TabsContent>
-        <TabsContent value="segunda" className="mt-0">
           {renderLeagueContent()}
         </TabsContent>
         <TabsContent value="champions" className="mt-0">
