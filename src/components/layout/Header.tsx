@@ -126,9 +126,8 @@ export const Header = () => {
             {/* Desktop: Logout button (hidden on mobile) */}
             <Button 
               onClick={signOut}
-              variant="outline" 
               size="sm"
-              className="hidden md:flex gap-2"
+              className="hidden md:flex gap-2 jambol-button"
             >
               <LogOut className="h-4 w-4" />
               Cerrar Sesión
@@ -206,8 +205,7 @@ export const Header = () => {
                         signOut();
                         setIsOpen(false);
                       }}
-                      variant="outline" 
-                      className="w-full gap-2"
+                      className="w-full gap-2 jambol-button"
                     >
                       <LogOut className="h-4 w-4" />
                       Cerrar Sesión

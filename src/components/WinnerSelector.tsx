@@ -53,10 +53,9 @@ const WinnerSelector = ({ match, isFrozen, handleAddToSlip }: WinnerSelectorProp
             return (
               <Button
                 key={value.value}
-                variant="outline"
                 onClick={() => handleBet(marketName, value)}
                 disabled={isFrozen}
-                className={buttonClass}
+                className={`${buttonClass} jambol-button`}
               >
                 <div className="flex flex-col items-center">
                   <span className="text-xs font-medium">{displayValue}</span>

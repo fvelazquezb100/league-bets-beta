@@ -93,14 +93,13 @@ const ResultTotalGoalsSelector = ({ match, isFrozen, handleAddToSlip }: ResultTo
             {results.map((result) => (
               <Button
                 key={`result-${result.value}`}
-                variant={matchResult === result.value ? "default" : "outline"}
                 size="sm"
                 onClick={() => setMatchResult(result.value)}
                 disabled={isFrozen}
                 className={`h-10 transition-all duration-200 ${
                   matchResult === result.value 
                     ? 'bg-primary text-primary-foreground' 
-                    : 'hover:bg-success hover:text-success-foreground hover:border-success'
+                    : 'jambol-button'
                 }`}
               >
                 <span className="text-xs">{result.label}</span>
@@ -119,14 +118,13 @@ const ResultTotalGoalsSelector = ({ match, isFrozen, handleAddToSlip }: ResultTo
                 Menos de
               </span>
               <Button
-                variant={overUnder === 'under' ? "default" : "outline"}
                 size="sm"
                 onClick={() => setOverUnder('under')}
                 disabled={isFrozen}
                 className={`h-10 w-full transition-all duration-200 ${
                   overUnder === 'under' 
                     ? 'bg-primary text-primary-foreground' 
-                    : 'hover:bg-success hover:text-success-foreground hover:border-success'
+                    : 'jambol-button'
                 }`}
               >
                 <span className="text-xs">Menos de</span>
@@ -140,11 +138,10 @@ const ResultTotalGoalsSelector = ({ match, isFrozen, handleAddToSlip }: ResultTo
               </span>
               <div className="flex items-center gap-2">
                 <Button
-                  variant="outline"
                   size="sm"
                   onClick={decrementThreshold}
                   disabled={isFrozen || currentIndex === 0}
-                  className="h-8 w-8 p-0"
+                  className="h-8 w-8 p-0 jambol-button"
                 >
                   <Minus className="h-4 w-4" />
                 </Button>
@@ -152,11 +149,10 @@ const ResultTotalGoalsSelector = ({ match, isFrozen, handleAddToSlip }: ResultTo
                   <span className="text-2xl font-bold text-foreground">{totalGoals}</span>
                 </div>
                 <Button
-                  variant="outline"
                   size="sm"
                   onClick={incrementThreshold}
                   disabled={isFrozen || currentIndex === thresholds.length - 1}
-                  className="h-8 w-8 p-0"
+                  className="h-8 w-8 p-0 jambol-button"
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
@@ -169,14 +165,13 @@ const ResultTotalGoalsSelector = ({ match, isFrozen, handleAddToSlip }: ResultTo
                 Más de
               </span>
               <Button
-                variant={overUnder === 'over' ? "default" : "outline"}
                 size="sm"
                 onClick={() => setOverUnder('over')}
                 disabled={isFrozen}
                 className={`h-10 w-full transition-all duration-200 ${
                   overUnder === 'over' 
                     ? 'bg-primary text-primary-foreground' 
-                    : 'hover:bg-success hover:text-success-foreground hover:border-success'
+                    : 'jambol-button'
                 }`}
               >
                 <span className="text-xs">Más de</span>
@@ -189,11 +184,10 @@ const ResultTotalGoalsSelector = ({ match, isFrozen, handleAddToSlip }: ResultTo
         <Button
           onClick={handleAddBet}
           disabled={isFrozen || currentOdds === '0.00' || !matchResult || !overUnder}
-          variant="outline"
-          className={`w-full h-12 transition-all duration-200 hover:scale-[1.02] ${
+          className={`w-full h-12 transition-all duration-200 hover:scale-[1.02] jambol-button ${
             currentOdds === '0.00' || !matchResult || !overUnder
               ? 'opacity-50 cursor-not-allowed' 
-              : 'hover:bg-success hover:text-success-foreground hover:border-success'
+              : ''
           }`}
         >
           <span className="text-lg font-bold">
