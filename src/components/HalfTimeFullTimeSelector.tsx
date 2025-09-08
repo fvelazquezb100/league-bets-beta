@@ -21,25 +21,22 @@ const HalfTimeFullTimeSelector = ({ match, isFrozen, handleAddToSlip }: HalfTime
 
   useEffect(() => {
     const findOdds = () => {
+      if (!match.bookmakers || match.bookmakers.length === 0 || !halfTimeResult || !fullTimeResult) {
+        return '0.00';
+      }
+
+      // Find the HT/FT Double market
       const market = match.bookmakers?.[0]?.bets.find(
         (bet) => bet.name === 'HT/FT Double'
       );
-      if (!market || !halfTimeResult || !fullTimeResult) return '0.00';
+      
+      if (!market) return '0.00';
 
-      // Try different possible formats for the selection
-      const possibleSelections = [
-        `${halfTimeResult}/${fullTimeResult}`,
-        `${halfTimeResult} / ${fullTimeResult}`,
-        `${halfTimeResult}-${fullTimeResult}`,
-        `${halfTimeResult} - ${fullTimeResult}`
-      ];
-
-      for (const selection of possibleSelections) {
-        const value = market.values.find(v => v.value === selection);
-        if (value) return value.odd;
-      }
-
-      return '0.00';
+      // The selection format should be exactly "Home/Draw", "Away/Home", etc.
+      const selection = `${halfTimeResult}/${fullTimeResult}`;
+      const value = market.values.find(v => v.value === selection);
+      
+      return value ? value.odd : '0.00';
     };
     setCurrentOdds(findOdds());
   }, [halfTimeResult, fullTimeResult, match.bookmakers]);
@@ -55,14 +52,6 @@ const HalfTimeFullTimeSelector = ({ match, isFrozen, handleAddToSlip }: HalfTime
     handleAddToSlip(match, 'Medio Tiempo/Final', betValue);
   };
 
-  const getResultShort = (result: string) => {
-    return results.find(r => r.value === result)?.short || result;
-  };
-
-  const getResultLabel = (result: string) => {
-    return results.find(r => r.value === result)?.label || result;
-  };
-
   return (
     <div className="border-t-2 border-border pt-8 mt-8 first:border-t-0 first:pt-0 first:mt-0">
       <h4 className="font-semibold mb-6 text-foreground text-lg">Medio Tiempo/Final</h4>
@@ -75,14 +64,13 @@ const HalfTimeFullTimeSelector = ({ match, isFrozen, handleAddToSlip }: HalfTime
             {results.map((result) => (
               <Button
                 key={`ht-${result.value}`}
-                variant={halfTimeResult === result.value ? "default" : "outline"}
                 size="sm"
                 onClick={() => setHalfTimeResult(result.value)}
                 disabled={isFrozen}
                 className={`h-10 transition-all duration-200 ${
                   halfTimeResult === result.value 
                     ? 'bg-primary text-primary-foreground' 
-                    : 'hover:bg-success hover:text-success-foreground hover:border-success'
+                    : 'jambol-button'
                 }`}
               >
                 <span className="text-xs">{result.label}</span>
@@ -98,14 +86,13 @@ const HalfTimeFullTimeSelector = ({ match, isFrozen, handleAddToSlip }: HalfTime
             {results.map((result) => (
               <Button
                 key={`ft-${result.value}`}
-                variant={fullTimeResult === result.value ? "default" : "outline"}
                 size="sm"
                 onClick={() => setFullTimeResult(result.value)}
                 disabled={isFrozen}
                 className={`h-10 transition-all duration-200 ${
                   fullTimeResult === result.value 
                     ? 'bg-primary text-primary-foreground' 
-                    : 'hover:bg-success hover:text-success-foreground hover:border-success'
+                    : 'jambol-button'
                 }`}
               >
                 <span className="text-xs">{result.label}</span>
@@ -119,11 +106,10 @@ const HalfTimeFullTimeSelector = ({ match, isFrozen, handleAddToSlip }: HalfTime
         <Button
           onClick={handleAddBet}
           disabled={isFrozen || currentOdds === '0.00' || !halfTimeResult || !fullTimeResult}
-          variant="outline"
-          className={`w-full h-12 transition-all duration-200 hover:scale-[1.02] ${
+          className={`w-full h-12 transition-all duration-200 hover:scale-[1.02] jambol-button ${
             currentOdds === '0.00' || !halfTimeResult || !fullTimeResult
               ? 'opacity-50 cursor-not-allowed' 
-              : 'hover:bg-success hover:text-success-foreground hover:border-success'
+              : ''
           }`}
         >
           <span className="text-lg font-bold">

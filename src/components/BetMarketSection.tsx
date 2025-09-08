@@ -116,9 +116,8 @@ const BetMarketSection = ({
           return (
             <Button 
               key={value.value} 
-              variant={hasUserBet ? "default" : "outline"} 
-              className={`flex flex-col h-auto min-h-[60px] sm:min-h-[80px] transition-all duration-200 hover:scale-[1.02] ${
-                hasUserBet ? 'opacity-75 bg-primary text-primary-foreground' : 'hover:bg-accent hover:text-accent-foreground'
+              className={`flex flex-col h-auto min-h-[60px] sm:min-h-[80px] transition-all duration-200 hover:scale-[1.02] jambol-button ${
+                hasUserBet ? 'opacity-75 bg-primary text-primary-foreground' : ''
               }`} 
               disabled={isFrozen} 
               onClick={() => handleAddToSlip(match, betType.displayName, value)}

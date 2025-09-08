@@ -84,11 +84,10 @@ const ExactScoreSelector = ({ match, isFrozen, handleAddToSlip }: ExactScoreSele
           </span>
           <div className="flex items-center gap-2">
             <Button
-              variant="outline"
               size="sm"
               onClick={decrementHome}
               disabled={isFrozen || homeGoals === 0}
-              className="h-8 w-8 p-0"
+              className="h-8 w-8 p-0 jambol-button"
             >
               <Minus className="h-4 w-4" />
             </Button>
@@ -96,11 +95,10 @@ const ExactScoreSelector = ({ match, isFrozen, handleAddToSlip }: ExactScoreSele
               <span className="text-2xl font-bold text-foreground">{homeGoals}</span>
             </div>
             <Button
-              variant="outline"
               size="sm"
               onClick={incrementHome}
               disabled={isFrozen || homeGoals === 4}
-              className="h-8 w-8 p-0"
+              className="h-8 w-8 p-0 jambol-button"
             >
               <Plus className="h-4 w-4" />
             </Button>
@@ -119,11 +117,10 @@ const ExactScoreSelector = ({ match, isFrozen, handleAddToSlip }: ExactScoreSele
           </span>
           <div className="flex items-center gap-2">
             <Button
-              variant="outline"
               size="sm"
               onClick={decrementAway}
               disabled={isFrozen || awayGoals === 0}
-              className="h-8 w-8 p-0"
+              className="h-8 w-8 p-0 jambol-button"
             >
               <Minus className="h-4 w-4" />
             </Button>
@@ -131,11 +128,10 @@ const ExactScoreSelector = ({ match, isFrozen, handleAddToSlip }: ExactScoreSele
               <span className="text-2xl font-bold text-foreground">{awayGoals}</span>
             </div>
             <Button
-              variant="outline"
               size="sm"
               onClick={incrementAway}
               disabled={isFrozen || awayGoals === 4}
-              className="h-8 w-8 p-0"
+              className="h-8 w-8 p-0 jambol-button"
             >
               <Plus className="h-4 w-4" />
             </Button>
@@ -148,11 +144,10 @@ const ExactScoreSelector = ({ match, isFrozen, handleAddToSlip }: ExactScoreSele
         <Button
           onClick={handleAddBet}
           disabled={isFrozen || currentOdds === '0.00'}
-          variant="outline"
-          className={`w-full h-12 transition-all duration-200 hover:scale-[1.02] ${
+          className={`w-full h-12 transition-all duration-200 hover:scale-[1.02] jambol-button ${
             currentOdds === '0.00' 
               ? 'opacity-50 cursor-not-allowed' 
-              : 'hover:bg-success hover:text-success-foreground hover:border-success'
+              : ''
           }`}
         >
           <span className="text-lg font-bold">{currentOdds}</span>
