@@ -111,11 +111,10 @@ const OverUnderSelector = ({ match, isFrozen, handleAddToSlip }: OverUnderSelect
           <Button
             onClick={handleUnderBet}
             disabled={isFrozen || underOdds === '0.00'}
-            variant="outline"
-            className={`w-full h-12 transition-all duration-200 hover:scale-[1.02] ${
+            className={`w-full h-12 transition-all duration-200 hover:scale-[1.02] jambol-button ${
               underOdds === '0.00' 
                 ? 'opacity-50 cursor-not-allowed' 
-                : 'hover:bg-success hover:text-success-foreground hover:border-success'
+                : ''
             }`}
           >
             <span className="text-lg font-bold">{underOdds}</span>
@@ -129,11 +128,10 @@ const OverUnderSelector = ({ match, isFrozen, handleAddToSlip }: OverUnderSelect
           </span>
           <div className="flex items-center gap-2">
             <Button
-              variant="outline"
               size="sm"
               onClick={decrementThreshold}
               disabled={isFrozen || threshold === thresholds[0]}
-              className="h-8 w-8 p-0"
+              className="h-8 w-8 p-0 jambol-button"
             >
               <Minus className="h-4 w-4" />
             </Button>
@@ -141,11 +139,10 @@ const OverUnderSelector = ({ match, isFrozen, handleAddToSlip }: OverUnderSelect
               <span className="text-2xl font-bold text-foreground">{threshold}</span>
             </div>
             <Button
-              variant="outline"
               size="sm"
               onClick={incrementThreshold}
               disabled={isFrozen || threshold === thresholds[thresholds.length - 1]}
-              className="h-8 w-8 p-0"
+              className="h-8 w-8 p-0 jambol-button"
             >
               <Plus className="h-4 w-4" />
             </Button>
@@ -160,11 +157,10 @@ const OverUnderSelector = ({ match, isFrozen, handleAddToSlip }: OverUnderSelect
           <Button
             onClick={handleOverBet}
             disabled={isFrozen || overOdds === '0.00'}
-            variant="outline"
-            className={`w-full h-12 transition-all duration-200 hover:scale-[1.02] ${
+            className={`w-full h-12 transition-all duration-200 hover:scale-[1.02] jambol-button ${
               overOdds === '0.00' 
                 ? 'opacity-50 cursor-not-allowed' 
-                : 'hover:bg-success hover:text-success-foreground hover:border-success'
+                : ''
             }`}
           >
             <span className="text-lg font-bold">{overOdds}</span>

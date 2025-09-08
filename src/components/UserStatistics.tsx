@@ -60,8 +60,17 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [filterLoading, setFilterLoading] = useState(false);
-  const [betTypeFilter, setBetTypeFilter] = useState<BetTypeFilter>('all');
+  const [betTypeFilter, setBetTypeFilter] = useState<BetTypeFilter>(() => {
+    // Try to get the saved filter from localStorage, default to 'all'
+    const savedFilter = localStorage.getItem('userStatsFilter');
+    return (savedFilter as BetTypeFilter) || 'all';
+  });
   const [matchResults, setMatchResults] = useState<Record<number, string>>({});
+
+  const handleFilterChange = (filter: BetTypeFilter) => {
+    setBetTypeFilter(filter);
+    localStorage.setItem('userStatsFilter', filter);
+  };
 
   useEffect(() => {
     if (!user || !isOpen) return;
@@ -669,19 +678,19 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
               <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 mb-6">
                 <Button
                   className={`jambol-button px-4 sm:px-6 text-sm sm:text-base ${betTypeFilter === 'all' ? 'bg-[#FFC72C] text-[#2D2D2D]' : ''}`}
-                  onClick={() => setBetTypeFilter('all')}
+                  onClick={() => handleFilterChange('all')}
                 >
                   Todas las Apuestas
                 </Button>
                 <Button
                   className={`jambol-button px-4 sm:px-6 text-sm sm:text-base ${betTypeFilter === 'single' ? 'bg-[#FFC72C] text-[#2D2D2D]' : ''}`}
-                  onClick={() => setBetTypeFilter('single')}
+                  onClick={() => handleFilterChange('single')}
                 >
                   Apuestas Simples
                 </Button>
                 <Button
                   className={`jambol-button px-4 sm:px-6 text-sm sm:text-base ${betTypeFilter === 'combo' ? 'bg-[#FFC72C] text-[#2D2D2D]' : ''}`}
-                  onClick={() => setBetTypeFilter('combo')}
+                  onClick={() => handleFilterChange('combo')}
                 >
                   Apuestas Combinadas
                 </Button>

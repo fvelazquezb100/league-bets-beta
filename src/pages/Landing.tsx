@@ -53,12 +53,12 @@ export const Landing = () => {
           </p>
           <div className="mt-12 flex items-center justify-center gap-6">
             <Link to="/signup">
-              <Button size="lg" className="text-lg px-8 py-4 jambol-primary">
+              <Button size="lg" className="text-lg px-8 py-4 jambol-button">
                 Empezar Ahora
               </Button>
             </Link>
             <Link to="/login">
-              <Button variant="outline" size="lg" className="text-lg px-8 py-4 jambol-secondary">
+              <Button size="lg" className="text-lg px-8 py-4 jambol-button">
                 Iniciar Sesión
               </Button>
             </Link>

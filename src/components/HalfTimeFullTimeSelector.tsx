@@ -75,14 +75,13 @@ const HalfTimeFullTimeSelector = ({ match, isFrozen, handleAddToSlip }: HalfTime
             {results.map((result) => (
               <Button
                 key={`ht-${result.value}`}
-                variant={halfTimeResult === result.value ? "default" : "outline"}
                 size="sm"
                 onClick={() => setHalfTimeResult(result.value)}
                 disabled={isFrozen}
                 className={`h-10 transition-all duration-200 ${
                   halfTimeResult === result.value 
                     ? 'bg-primary text-primary-foreground' 
-                    : 'hover:bg-success hover:text-success-foreground hover:border-success'
+                    : 'jambol-button'
                 }`}
               >
                 <span className="text-xs">{result.label}</span>
@@ -98,14 +97,13 @@ const HalfTimeFullTimeSelector = ({ match, isFrozen, handleAddToSlip }: HalfTime
             {results.map((result) => (
               <Button
                 key={`ft-${result.value}`}
-                variant={fullTimeResult === result.value ? "default" : "outline"}
                 size="sm"
                 onClick={() => setFullTimeResult(result.value)}
                 disabled={isFrozen}
                 className={`h-10 transition-all duration-200 ${
                   fullTimeResult === result.value 
                     ? 'bg-primary text-primary-foreground' 
-                    : 'hover:bg-success hover:text-success-foreground hover:border-success'
+                    : 'jambol-button'
                 }`}
               >
                 <span className="text-xs">{result.label}</span>
@@ -119,11 +117,10 @@ const HalfTimeFullTimeSelector = ({ match, isFrozen, handleAddToSlip }: HalfTime
         <Button
           onClick={handleAddBet}
           disabled={isFrozen || currentOdds === '0.00' || !halfTimeResult || !fullTimeResult}
-          variant="outline"
-          className={`w-full h-12 transition-all duration-200 hover:scale-[1.02] ${
+          className={`w-full h-12 transition-all duration-200 hover:scale-[1.02] jambol-button ${
             currentOdds === '0.00' || !halfTimeResult || !fullTimeResult
               ? 'opacity-50 cursor-not-allowed' 
-              : 'hover:bg-success hover:text-success-foreground hover:border-success'
+              : ''
           }`}
         >
           <span className="text-lg font-bold">
