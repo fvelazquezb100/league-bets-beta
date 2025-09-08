@@ -21,45 +21,22 @@ const HalfTimeFullTimeSelector = ({ match, isFrozen, handleAddToSlip }: HalfTime
 
   useEffect(() => {
     const findOdds = () => {
-      // Debug: Log the entire match structure
-      console.log('Full match data:', match);
-      console.log('Bookmakers:', match.bookmakers);
-      
-      if (!match.bookmakers || match.bookmakers.length === 0) {
-        console.log('No bookmakers found');
+      if (!match.bookmakers || match.bookmakers.length === 0 || !halfTimeResult || !fullTimeResult) {
         return '0.00';
       }
 
-      // Try to find the HT/FT Double market in any bookmaker
-      let market = null;
-      for (const bookmaker of match.bookmakers) {
-        console.log('Checking bookmaker:', bookmaker.name, 'bets:', bookmaker.bets);
-        market = bookmaker.bets?.find((bet) => bet.name === 'HT/FT Double');
-        if (market) {
-          console.log('Found HT/FT market in bookmaker:', bookmaker.name);
-          break;
-        }
-      }
+      // Find the HT/FT Double market
+      const market = match.bookmakers?.[0]?.bets.find(
+        (bet) => bet.name === 'HT/FT Double'
+      );
       
-      if (!market || !halfTimeResult || !fullTimeResult) {
-        console.log('Market not found or selections incomplete');
-        return '0.00';
-      }
+      if (!market) return '0.00';
 
       // The selection format should be exactly "Home/Draw", "Away/Home", etc.
       const selection = `${halfTimeResult}/${fullTimeResult}`;
-      
-      console.log('Looking for HT/FT selection:', selection);
-      console.log('Available values:', market.values.map(v => v.value));
-      
       const value = market.values.find(v => v.value === selection);
-      if (value) {
-        console.log('Found odds:', value.odd);
-        return value.odd;
-      }
-
-      console.log('No odds found for selection:', selection);
-      return '0.00';
+      
+      return value ? value.odd : '0.00';
     };
     setCurrentOdds(findOdds());
   }, [halfTimeResult, fullTimeResult, match.bookmakers]);
