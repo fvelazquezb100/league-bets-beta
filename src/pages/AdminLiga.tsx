@@ -20,6 +20,13 @@ type LeagueRow = {
   reset_budget: string; 
   join_code: string; 
   league_season: number;
+  available_leagues: number[];
+};
+
+type AvailableLeague = {
+  id: number;
+  name: string;
+  flag: string;
 };
 
 const AdminLiga: React.FC = () => {
@@ -46,6 +53,18 @@ const AdminLiga: React.FC = () => {
   const [editResetBudget, setEditResetBudget] = React.useState('weekly');
   const budgetRef = useRef<HTMLInputElement>(null);
 
+  // Available leagues state
+  const [availableLeagues, setAvailableLeagues] = React.useState<AvailableLeague[]>([]);
+  const [selectedLeagues, setSelectedLeagues] = React.useState<number[]>([]);
+
+  // Define available leagues
+  const allLeagues: AvailableLeague[] = [
+    { id: 140, name: 'La Liga', flag: '' },
+    { id: 2, name: 'Champions League', flag: '' },
+    { id: 3, name: 'Europa League', flag: '' },
+    { id: 262, name: 'Liga MX', flag: '' }
+  ];
+
   React.useEffect(() => {
     const fetchWeek = async () => {
       try {
@@ -65,19 +84,52 @@ const AdminLiga: React.FC = () => {
 
         const { data: leagueData, error: leagueError } = await supabase
           .from('leagues')
-          .select('id, name, week, budget, min_bet, max_bet, type, league_season, reset_budget, join_code')
+          .select('id, name, week, budget, min_bet, max_bet, type, league_season, reset_budget, join_code, available_leagues')
           .eq('id', profileData.league_id)
           .maybeSingle();
-        if (leagueError) throw leagueError;
-
-        setLeagueData(leagueData as LeagueRow);
-        if (leagueData) {
-          setEditLeagueName(leagueData.name);
-          setEditBudget(leagueData.budget);
-          setEditMinBet(leagueData.min_bet);
-          setEditMaxBet(leagueData.max_bet);
-          setEditResetBudget(leagueData.reset_budget);
+        
+        if (leagueError) {
+          // If available_leagues column doesn't exist, try without it
+          if (leagueError.message.includes('available_leagues')) {
+            const { data: fallbackData, error: fallbackError } = await supabase
+              .from('leagues')
+              .select('id, name, week, budget, min_bet, max_bet, type, league_season, reset_budget, join_code')
+              .eq('id', profileData.league_id)
+              .maybeSingle();
+            
+            if (fallbackError) throw fallbackError;
+            
+            setLeagueData(fallbackData as LeagueRow);
+            if (fallbackData) {
+              setEditLeagueName(fallbackData.name);
+              setEditBudget(fallbackData.budget);
+              setEditMinBet(fallbackData.min_bet);
+              setEditMaxBet(fallbackData.max_bet);
+              setEditResetBudget(fallbackData.reset_budget);
+              
+              // Use default available leagues when column doesn't exist
+              setSelectedLeagues([140, 2, 3, 262]);
+            }
+          } else {
+            throw leagueError;
+          }
+        } else {
+          setLeagueData(leagueData as unknown as LeagueRow);
+          if (leagueData) {
+            const league = leagueData as unknown as LeagueRow;
+            setEditLeagueName(league.name);
+            setEditBudget(league.budget);
+            setEditMinBet(league.min_bet);
+            setEditMaxBet(league.max_bet);
+            setEditResetBudget(league.reset_budget);
+            
+            // Initialize selected leagues
+            setSelectedLeagues((league as any).available_leagues || [140, 2, 3, 262]);
+          }
         }
+        
+        // Set available leagues
+        setAvailableLeagues(allLeagues);
       } catch (e: any) {
         console.error(e);
       } finally {
@@ -104,6 +156,14 @@ const AdminLiga: React.FC = () => {
       if (editMinBet !== leagueData.min_bet) { updates.min_bet = editMinBet; hasChanges = true; }
       if (editMaxBet !== leagueData.max_bet) { updates.max_bet = editMaxBet; hasChanges = true; }
       if (editResetBudget !== leagueData.reset_budget) { updates.reset_budget = editResetBudget; hasChanges = true; }
+      
+      // Check if available leagues changed
+      const currentLeagues = (leagueData as any).available_leagues || [];
+      const leaguesChanged = JSON.stringify(currentLeagues.sort()) !== JSON.stringify(selectedLeagues.sort());
+      if (leaguesChanged) { 
+        updates.available_leagues = selectedLeagues; 
+        hasChanges = true; 
+      }
 
       if (!hasChanges) { toast({ title: 'Sin cambios', description: 'No se detectaron cambios para actualizar.' }); return; }
 
@@ -117,6 +177,15 @@ const AdminLiga: React.FC = () => {
       toast({ title: 'Error', description: e?.message ?? 'No se pudo actualizar la liga.', variant: 'destructive' });
     } finally { setIsUpdatingLeague(false); }
   };
+
+  const handleLeagueToggle = (leagueId: number) => {
+    setSelectedLeagues(prev => 
+      prev.includes(leagueId) 
+        ? prev.filter(id => id !== leagueId)
+        : [...prev, leagueId]
+    );
+  };
+
 
 const handleResetWeek = async () => {
   if (!leagueId) return;
@@ -204,6 +273,12 @@ const handleResetWeek = async () => {
                   <p><span className="font-semibold mr-2">Apuesta máxima:</span>{leagueData.max_bet}</p>
                   <p><span className="font-semibold mr-2">Semana:</span>{leagueData.week}</p>
                   <p><span className="font-semibold mr-2">Temporada:</span>{leagueData.league_season}</p>
+                  <p><span className="font-semibold mr-2">Ligas disponibles:</span>
+                    {(leagueData as any).available_leagues?.map((id: number) => {
+                      const league = allLeagues.find(l => l.id === id);
+                      return league ? league.name : '';
+                    }).filter(Boolean).join(', ') || 'No configuradas'}
+                  </p>
                 </div>
 
                 {userRole === 'admin_league' && (
@@ -283,6 +358,26 @@ const handleResetWeek = async () => {
                             </select>
                           </div>
                           
+                          <div className="space-y-2">
+                            <Label>Ligas disponibles para apostar</Label>
+                            <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-3">
+                              {allLeagues.map((league) => (
+                                <div key={league.id} className="flex items-center justify-between">
+                                  <span className="text-sm font-medium">{league.name}</span>
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedLeagues.includes(league.id)}
+                                    onChange={() => handleLeagueToggle(league.id)}
+                                    className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                            <p className="text-xs text-gray-500">
+                              {selectedLeagues.length} liga{selectedLeagues.length !== 1 ? 's' : ''} seleccionada{selectedLeagues.length !== 1 ? 's' : ''}
+                            </p>
+                          </div>
+                          
                           <div className="flex justify-end gap-2 pt-4">
                             <Button 
                               className="jambol-button"
@@ -307,6 +402,7 @@ const handleResetWeek = async () => {
             ) : <p className="text-red-600">No se pudo cargar la información de la liga.</p>}
           </CardContent>
         </Card>
+
 
         {userRole === 'admin_league' && (
           <Card className="md:col-span-2">

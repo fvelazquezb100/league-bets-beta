@@ -85,7 +85,8 @@ const Bets = () => {
   const [userBets, setUserBets] = useState<UserBet[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [drawerShouldRender, setDrawerShouldRender] = useState(false);
-  const [selectedLeague, setSelectedLeague] = useState<'primera' | 'champions' | 'europa'>('primera');
+  const [selectedLeague, setSelectedLeague] = useState<'primera' | 'champions' | 'europa' | 'liga-mx'>('primera');
+  const [availableLeagues, setAvailableLeagues] = useState<number[]>([]);
   const { toast } = useToast();
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -115,6 +116,7 @@ const Bets = () => {
                 const apiData = newCacheData.data as unknown as CachedOddsData;
                 if (apiData && Array.isArray(apiData.response)) {
                   const validMatches = apiData.response.filter(match => match.fixture);
+                  
                   setMatches(validMatches);
                 } else {
                   setMatches([]);
@@ -132,6 +134,7 @@ const Bets = () => {
           const apiData = cacheData.data as unknown as CachedOddsData;
           if (apiData && Array.isArray(apiData.response)) {
             const validMatches = apiData.response.filter(match => match.fixture);
+            
             setMatches(validMatches);
           } else {
             setMatches([]);
@@ -176,12 +179,51 @@ const Bets = () => {
     fetchOddsAndBets();
   }, [user]);
 
+  // Fetch available leagues for the user's league
+  useEffect(() => {
+    const fetchAvailableLeagues = async () => {
+      if (!user) return;
+      
+      try {
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('league_id')
+          .eq('id', user.id)
+          .single();
+          
+        if (profileError) throw profileError;
+        
+        const { data: leagueData, error: leagueError } = await supabase
+          .from('leagues')
+          .select('available_leagues')
+          .eq('id', profileData.league_id)
+          .single();
+          
+        if (leagueError) {
+          // If column doesn't exist yet, use default leagues
+          console.warn('available_leagues column not found, using default leagues');
+          setAvailableLeagues([140, 2, 3, 262]);
+          return;
+        }
+        
+        setAvailableLeagues((leagueData as any)?.available_leagues || [140, 2, 3, 262]);
+      } catch (error) {
+        console.error('Error fetching available leagues:', error);
+        // Default to all leagues if there's an error
+        setAvailableLeagues([140, 2, 3, 262]);
+      }
+    };
+
+    fetchAvailableLeagues();
+  }, [user]);
+
 
   const handleAddToSlip = (match: MatchData, marketName: string, selection: BetValue) => {
-    // Check if match is in the future (outside current week) - BLOCK ALL FUTURE MATCHES
+    // Check if match is in the future (outside allowed timeframe) - BLOCK ALL FUTURE MATCHES
     const matchDate = new Date(match.fixture.date);
     const nextMondayEndOfDay = getNextMondayEndOfDay();
     
+    // For all leagues, only allow betting until Monday 23:59
     if (matchDate > nextMondayEndOfDay) {
       toast({
         title: 'Apuesta no disponible',
@@ -229,21 +271,10 @@ const Bets = () => {
   const findMarket = (match: MatchData, marketName: string) => {
     if (!match.bookmakers || match.bookmakers.length === 0) return undefined;
     
-    // Debug: Log available markets for first match
-    if (match.fixture.id === matches[0]?.fixture.id) {
-      console.log('Available markets for', match.teams?.home?.name, 'vs', match.teams?.away?.name);
-      match.bookmakers.forEach(bookmaker => {
-        bookmaker.bets.forEach(bet => {
-          console.log('- Market:', bet.name, 'Values:', bet.values.map(v => v.value).join(', '));
-        });
-      });
-    }
-    
     // Try exact match first - search through ALL bookmakers
     for (const bookmaker of match.bookmakers) {
       const market = bookmaker.bets.find(bet => bet.name === marketName);
       if (market) {
-        console.log(`Found market "${marketName}" in bookmaker: ${bookmaker.name}`);
         return market;
       }
     }
@@ -267,7 +298,6 @@ const Bets = () => {
       for (const bookmaker of match.bookmakers) {
         const market = bookmaker.bets.find(bet => bet.name === variation);
         if (market) {
-          console.log(`Found market "${marketName}" as "${variation}"`);
           return market;
         }
       }
@@ -327,9 +357,11 @@ const Bets = () => {
       'primera': 140,
       
       'champions': 2,
-      'europa': 3
+      'europa': 3,
+      'liga-mx': 262
     };
     const leagueId = leagueMap[league];
+    
     return matches.filter(match => match.teams?.league_id === leagueId);
   };
 
@@ -343,11 +375,34 @@ const Bets = () => {
     return nextMonday;
   };
 
+  // Calculate next Tuesday at 00:00 for European competitions
+  const getNextTuesdayStart = () => {
+    const now = new Date();
+    const nextTuesday = new Date(now);
+    const daysUntilTuesday = (2 + 7 - now.getDay()) % 7; // 0 = Sunday, 2 = Tuesday
+    nextTuesday.setDate(now.getDate() + (daysUntilTuesday === 0 ? 7 : daysUntilTuesday));
+    nextTuesday.setHours(0, 0, 0, 0);
+    return nextTuesday;
+  };
+
   // Filter matches by date
   const nextMondayEndOfDay = getNextMondayEndOfDay();
+  const nextTuesdayStart = getNextTuesdayStart();
   const leagueMatches = getMatchesByLeague(selectedLeague);
-  const upcomingMatches = leagueMatches.filter(match => new Date(match.fixture.date) <= nextMondayEndOfDay);
-  const futureMatches = leagueMatches.filter(match => new Date(match.fixture.date) > nextMondayEndOfDay);
+  
+  // Declare variables outside the conditional block
+  let upcomingMatches: MatchData[];
+  let futureMatches: MatchData[];
+  
+  // For Champions and Europa League: show all matches, separate by betting availability
+  if (selectedLeague === 'champions' || selectedLeague === 'europa') {
+    upcomingMatches = leagueMatches.filter(match => new Date(match.fixture.date) <= nextMondayEndOfDay);
+    futureMatches = leagueMatches.filter(match => new Date(match.fixture.date) >= nextTuesdayStart);
+  } else {
+    // For other leagues: use original logic
+    upcomingMatches = leagueMatches.filter(match => new Date(match.fixture.date) <= nextMondayEndOfDay);
+    futureMatches = leagueMatches.filter(match => new Date(match.fixture.date) > nextMondayEndOfDay);
+  }
 
   const renderMatchesSection = (matchesToRender: MatchData[], sectionKey: string) => {
     if (matchesToRender.length === 0) {
@@ -394,11 +449,23 @@ const Bets = () => {
               </AccordionTrigger>
               <AccordionContent>
                 <div className="space-y-3 sm:space-y-6 pt-1 sm:pt-4">
-                  {/* Check if match is in the future (outside current week) */}
+                  {/* Check if match is in the future (outside allowed timeframe) */}
                   {(() => {
                     const matchDate = new Date(match.fixture.date);
                     const nextMondayEndOfDay = getNextMondayEndOfDay();
+                    const nextTuesdayStart = getNextTuesdayStart();
                     
+                    // For Champions and Europa League: show future matches but without betting options
+                    if ((selectedLeague === 'champions' || selectedLeague === 'europa') && matchDate >= nextTuesdayStart) {
+                      return (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <p className="text-lg font-medium mb-2">Próximos encuentros</p>
+                          <p>Las apuestas para este partido estarán disponibles próximamente.</p>
+                        </div>
+                      );
+                    }
+                    
+                    // For all leagues: block betting after Monday 23:59
                     if (matchDate > nextMondayEndOfDay) {
                       return (
                         <div className="text-center py-8 text-muted-foreground">
@@ -512,83 +579,113 @@ const Bets = () => {
     );
   };
 
+  // Function to get available tabs based on available leagues
+  const getAvailableTabs = () => {
+    const tabs = [];
+    
+    if (availableLeagues.includes(140)) {
+      tabs.push({ value: 'primera', label: 'La Liga - Primera', leagueId: 140 });
+    }
+    if (availableLeagues.includes(2)) {
+      tabs.push({ value: 'champions', label: 'Champions League', leagueId: 2 });
+    }
+    if (availableLeagues.includes(3)) {
+      tabs.push({ value: 'europa', label: 'Europa League', leagueId: 3 });
+    }
+    if (availableLeagues.includes(262)) {
+      tabs.push({ value: 'liga-mx', label: 'Liga MX', leagueId: 262 });
+    }
+    
+    return tabs;
+  };
+
   const renderContent = () => {
+    const availableTabs = getAvailableTabs();
+    
+    // If current selected league is not available, switch to the first available one
+    if (availableTabs.length > 0 && !availableTabs.find(tab => tab.value === selectedLeague)) {
+      setSelectedLeague(availableTabs[0].value as 'primera' | 'champions' | 'europa' | 'liga-mx');
+    }
+    
     return (
-      <Tabs value={selectedLeague} onValueChange={(value) => setSelectedLeague(value as 'primera' | 'champions' | 'europa')} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 mb-6 gap-2 h-auto">
-          <TabsTrigger 
-            value="primera" 
-            className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-[#FFC72C] data-[state=active]:ring-offset-2"
-          >
-            {/* Franjas de fondo */}
-            <div 
-              className="absolute inset-0"
-              style={{
-                background: `
-                  linear-gradient(45deg, 
-                    #C60B1E 0%, #C60B1E 33%, 
-                    #FFC400 33%, #FFC400 66%, 
-                    #C60B1E 66%, #C60B1E 100%
-                  )
-                `,
-                opacity: '0.15'
-              }}
-            />
-            {/* Texto por encima */}
-            <span className="relative z-10 text-black font-semibold text-xs sm:text-sm leading-tight">La Liga - Primera</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="champions"
-            className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-[#FFC72C] data-[state=active]:ring-offset-2"
-          >
-            {/* Franjas de fondo azul-azul-blanco */}
-            <div 
-              className="absolute inset-0"
-              style={{
-                background: `
-                  linear-gradient(45deg, 
-                    #1e40af 0%, #1e40af 33%, 
-                    #1e40af 33%, #1e40af 66%, 
-                    #ffffff 66%, #ffffff 100%
-                  )
-                `,
-                opacity: '0.4'
-              }}
-            />
-            {/* Texto por encima */}
-            <span className="relative z-10 text-black font-semibold text-xs sm:text-sm leading-tight">Champions League</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="europa"
-            className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-[#FFC72C] data-[state=active]:ring-offset-2"
-          >
-            {/* Franjas de fondo azul-azul-verde */}
-            <div 
-              className="absolute inset-0"
-              style={{
-                background: `
-                  linear-gradient(45deg, 
-                    #1e40af 0%, #1e40af 33%, 
-                    #1e40af 33%, #1e40af 66%, 
-                    #10b981 66%, #10b981 100%
-                  )
-                `,
-                opacity: '0.4'
-              }}
-            />
-            {/* Texto por encima */}
-            <span className="relative z-10 text-black font-semibold text-xs sm:text-sm leading-tight">Europa League</span>
-          </TabsTrigger>
+      <Tabs value={selectedLeague} onValueChange={(value) => setSelectedLeague(value as 'primera' | 'champions' | 'europa' | 'liga-mx')} className="w-full">
+        <TabsList className={`grid w-full mb-6 gap-2 h-auto ${availableTabs.length <= 2 ? 'grid-cols-2' : availableTabs.length === 3 ? 'grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'}`}>
+          {availableTabs.map((tab) => {
+            const getTabStyle = (value: string) => {
+              switch (value) {
+                case 'primera':
+                  return {
+                    background: `
+                      linear-gradient(45deg, 
+                        #C60B1E 0%, #C60B1E 33%, 
+                        #FFC400 33%, #FFC400 66%, 
+                        #C60B1E 66%, #C60B1E 100%
+                      )
+                    `,
+                    opacity: '0.15'
+                  };
+                case 'champions':
+                  return {
+                    background: `
+                      linear-gradient(45deg, 
+                        #1e40af 0%, #1e40af 33%, 
+                        #1e40af 33%, #1e40af 66%, 
+                        #ffffff 66%, #ffffff 100%
+                      )
+                    `,
+                    opacity: '0.4'
+                  };
+                case 'europa':
+                  return {
+                    background: `
+                      linear-gradient(45deg, 
+                        #1e40af 0%, #1e40af 33%, 
+                        #1e40af 33%, #1e40af 66%, 
+                        #10b981 66%, #10b981 100%
+                      )
+                    `,
+                    opacity: '0.4'
+                  };
+                case 'liga-mx':
+                  return {
+                    background: `
+                      linear-gradient(45deg, 
+                        #006847 0%, #006847 33.33%, 
+                        #FFFFFF 33.33%, #FFFFFF 66.66%, 
+                        #CE1126 66.66%, #CE1126 100%
+                      )
+                    `,
+                    opacity: '0.4'
+                  };
+                default:
+                  return { background: '', opacity: '0.1' };
+              }
+            };
+
+            const tabStyle = getTabStyle(tab.value);
+
+            return (
+              <TabsTrigger 
+                key={tab.value}
+                value={tab.value} 
+                className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-[#FFC72C] data-[state=active]:ring-offset-2"
+              >
+                {/* Franjas de fondo */}
+                <div 
+                  className="absolute inset-0"
+                  style={tabStyle}
+                />
+                {/* Texto por encima */}
+                <span className="relative z-10 text-black font-semibold text-xs sm:text-sm leading-tight">{tab.label}</span>
+              </TabsTrigger>
+            );
+          })}
         </TabsList>
-        <TabsContent value="primera" className="mt-0">
-          {renderLeagueContent()}
-        </TabsContent>
-        <TabsContent value="champions" className="mt-0">
-          {renderLeagueContent()}
-        </TabsContent>
-        <TabsContent value="europa" className="mt-0">
-          {renderLeagueContent()}
-        </TabsContent>
+        {availableTabs.map((tab) => (
+          <TabsContent key={tab.value} value={tab.value} className="mt-0">
+            {renderLeagueContent()}
+          </TabsContent>
+        ))}
       </Tabs>
     );
   };

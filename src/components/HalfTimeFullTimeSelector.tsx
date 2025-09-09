@@ -13,16 +13,6 @@ const HalfTimeFullTimeSelector = ({ match, isFrozen, handleAddToSlip }: HalfTime
   const [fullTimeResult, setFullTimeResult] = useState<string>('');
   const [currentOdds, setCurrentOdds] = useState('0.00');
 
-  // Debug: Log the match data when component mounts
-  useEffect(() => {
-    console.log('=== HT/FT COMPONENT MOUNTED ===');
-    console.log('Match data:', match);
-    console.log('Match bookmakers:', match.bookmakers);
-    if (match.bookmakers && match.bookmakers.length > 0) {
-      console.log('First bookmaker data:', match.bookmakers[0]);
-    }
-  }, [match]);
-
   const results = [
     { value: 'Home', label: match.teams?.home?.name || 'Local', short: 'L' },
     { value: 'Draw', label: 'Empate', short: 'E' },
@@ -31,79 +21,29 @@ const HalfTimeFullTimeSelector = ({ match, isFrozen, handleAddToSlip }: HalfTime
 
   useEffect(() => {
     const findOdds = () => {
-      if (!match.bookmakers || match.bookmakers.length === 0 || !halfTimeResult || !fullTimeResult) {
+      if (!match.bookmakers || match.bookmakers.length === 0) {
         return '0.00';
       }
 
-      // Debug: Log the exact structure we're working with
-      console.log('=== HT/FT DEBUG ===');
-      console.log('Match:', match.teams?.home?.name, 'vs', match.teams?.away?.name);
-      console.log('Bookmakers count:', match.bookmakers.length);
-      
       // Search through all bookmakers for HT/FT Double market
-      let htftMarket = null;
-      let foundBookmaker = null;
-      
-      console.log('Searching through all bookmakers for HT/FT Double...');
-      
-      for (let i = 0; i < match.bookmakers.length; i++) {
-        const bookmaker = match.bookmakers[i];
-        console.log(`Bookmaker ${i + 1}: ${bookmaker.name} (${bookmaker.bets.length} markets)`);
-        
+      for (const bookmaker of match.bookmakers) {
         const market = bookmaker.bets.find(bet => bet.name === 'HT/FT Double');
         if (market) {
-          htftMarket = market;
-          foundBookmaker = bookmaker;
-          console.log(`✅ Found HT/FT Double in bookmaker: ${bookmaker.name}`);
-          break;
+          const selection = `${halfTimeResult}/${fullTimeResult}`;
+          const oddsValue = market.values.find(v => v.value === selection);
+          return oddsValue ? oddsValue.odd : '0.00';
         }
       }
       
-      if (!htftMarket) {
-        console.log('❌ HT/FT Double market not found');
-        
-        // Look for similar markets that might contain HT/FT data
-        const similarMarkets = match.bookmakers.flatMap(bookmaker => 
-          bookmaker.bets.filter(bet => 
-            bet.name.toLowerCase().includes('ht') || 
-            bet.name.toLowerCase().includes('half') ||
-            bet.name.toLowerCase().includes('time')
-          )
-        );
-        
-        if (similarMarkets.length > 0) {
-          console.log('🔍 Found similar markets:');
-          similarMarkets.forEach(market => {
-            console.log(`  - "${market.name}" with values:`, market.values.map(v => v.value));
-          });
-        } else {
-          console.log('❌ No similar HT/FT markets found');
-        }
-        
-        return '0.00';
-      }
-
-      console.log('✅ Found HT/FT Double market');
-      console.log('HT/FT market values:', htftMarket.values);
-
-      // Create the selection string exactly as it should be
-      const selection = `${halfTimeResult}/${fullTimeResult}`;
-      console.log('Looking for selection:', selection);
-      
-      // Find the exact match
-      const value = htftMarket.values.find(v => v.value === selection);
-      
-      if (value) {
-        console.log('✅ Found odds for', selection, ':', value.odd);
-        return value.odd;
-      } else {
-        console.log('❌ Selection not found:', selection);
-        console.log('Available selections:', htftMarket.values.map(v => v.value));
-        return '0.00';
-      }
+      return '0.00';
     };
-    setCurrentOdds(findOdds());
-  }, [halfTimeResult, fullTimeResult, match.bookmakers]);
+
+    if (halfTimeResult && fullTimeResult) {
+      setCurrentOdds(findOdds());
+    } else {
+      setCurrentOdds('0.00');
+    }
+  }, [match, halfTimeResult, fullTimeResult]);
 
   const handleAddBet = () => {
     if (currentOdds === '0.00' || !halfTimeResult || !fullTimeResult) return;
@@ -164,7 +104,6 @@ const HalfTimeFullTimeSelector = ({ match, isFrozen, handleAddToSlip }: HalfTime
             ))}
           </div>
         </div>
-
 
         {/* Add Bet Button */}
         <Button

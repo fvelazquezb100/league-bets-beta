@@ -1,4 +1,8 @@
+// @ts-ignore - Deno imports
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+// @ts-ignore - Deno global
+declare const Deno: any;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -77,8 +81,8 @@ Deno.serve(async (req) => {
 
     console.log('API Key found. Starting two-step odds fetch...');
 
-    // --- STEP 1: Fetch the NEXT 10 upcoming fixture IDs for all leagues ---
-    const leagueIds = [140, 2, 3]; // La Liga, Champions League, Europa League
+    // --- STEP 1: Fetch upcoming fixture IDs for all leagues (10 for La Liga/Liga MX, 18 for Champions/Europa) ---
+    const leagueIds = [140, 2, 3, 262]; // La Liga, Champions League, Europa League, Liga MX
     const currentYear = new Date().getFullYear();
     
     let allFixtureIDs: number[] = [];
@@ -87,9 +91,17 @@ Deno.serve(async (req) => {
     
     for (const leagueId of leagueIds) {
       const leagueName = leagueId === 140 ? 'La Liga' : 
-                        leagueId === 2 ? 'Champions League' : 'Europa League'; 
-      const fixturesUrl = `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${currentYear}&next=10`;
-      console.log(`Fetching fixtures from ${leagueName}: ${fixturesUrl}`);
+                        leagueId === 2 ? 'Champions League' : 
+                        leagueId === 3 ? 'Europa League' : 'Liga MX';
+      
+      // Define number of matches per league
+      const matchesPerLeague = leagueId === 140 ? 10 :  // La Liga: 10 partidos
+                              leagueId === 262 ? 10 :  // Liga MX: 10 partidos
+                              leagueId === 2 ? 18 :    // Champions League: 18 partidos
+                              18;                      // Europa League: 18 partidos
+      
+      const fixturesUrl = `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${currentYear}&next=${matchesPerLeague}`;
+      console.log(`Fetching ${matchesPerLeague} fixtures from ${leagueName}: ${fixturesUrl}`);
       
       const fixturesResponse = await fetch(fixturesUrl, {
         headers: {
@@ -120,6 +132,7 @@ Deno.serve(async (req) => {
       allFixturesData.push(...fixturesData.response);
       
       console.log(`Found ${fixtureIDs.length} upcoming fixtures for ${leagueName}.`);
+      console.log(`Fixture IDs for ${leagueName}:`, fixtureIDs.slice(0, 5)); // Log first 5 fixture IDs
       await delay(200); // Small delay between league requests
     }
     
@@ -133,7 +146,10 @@ Deno.serve(async (req) => {
     }
 
     // --- STEP 2: Fetch odds for each of those fixture IDs ---
-    const allOddsData = [];
+    const allOddsData: any[] = [];
+    let oddsSuccessCount = 0;
+    let oddsFailureCount = 0;
+    
     for (const fixtureId of allFixtureIDs) {
       const oddsUrl = `https://v3.football.api-sports.io/odds?fixture=${fixtureId}`;
       console.log(`Fetching odds from: ${oddsUrl}`);
@@ -147,14 +163,50 @@ Deno.serve(async (req) => {
         const oddsJson = await oddsResponse.json();
         if (oddsJson.response && oddsJson.response.length > 0) {
             allOddsData.push(...oddsJson.response);
+            oddsSuccessCount++;
+            console.log(`✅ Successfully fetched odds for fixture ${fixtureId} (${oddsJson.response.length} bookmakers)`);
+        } else {
+          // For European competitions, it's normal to not have odds immediately
+          const teams = allTeamsByFixture.get(fixtureId);
+          const leagueName = teams?.league_name || 'Unknown';
+          if (leagueName === 'Champions League' || leagueName === 'Europa League') {
+            console.log(`ℹ️ No odds yet for ${leagueName} fixture ${fixtureId} (normal for European competitions)`);
+          } else {
+            console.warn(`⚠️ No odds data found for fixture ${fixtureId}`);
+          }
+          oddsFailureCount++;
         }
       } else {
-        console.warn(`Could not fetch odds for fixture ${fixtureId}: ${await oddsResponse.text()}`);
+        console.warn(`❌ Could not fetch odds for fixture ${fixtureId}: ${await oddsResponse.text()}`);
+        oddsFailureCount++;
       }
       await delay(200); // Small delay to be safe with API limits
     }
+    
+    console.log(`Odds fetch summary: ${oddsSuccessCount} successful, ${oddsFailureCount} failed`);
 
-    console.log(`Successfully fetched odds for ${allOddsData.length} matches.`);
+    // Create placeholder entries for fixtures without odds (especially European competitions)
+    const fixturesWithoutOdds = allFixtureIDs.filter(fixtureId => 
+      !allOddsData.some(odds => odds.fixture?.id === fixtureId)
+    );
+    
+    console.log(`Creating placeholder entries for ${fixturesWithoutOdds.length} fixtures without odds`);
+    
+    fixturesWithoutOdds.forEach(fixtureId => {
+      const teams = allTeamsByFixture.get(fixtureId);
+      if (teams) {
+        // Create a minimal placeholder entry
+        const placeholderEntry = {
+          fixture: { id: fixtureId },
+          teams: teams,
+          bookmakers: [] // Empty bookmakers array
+        };
+        allOddsData.push(placeholderEntry);
+        console.log(`📝 Created placeholder for ${teams.league_name} fixture ${fixtureId}`);
+      }
+    });
+
+    console.log(`Total matches in cache (including placeholders): ${allOddsData.length}`);
 
     // --- STEP 3: Upsert the cache ---
     const mergedOdds = allOddsData.map((entry: any) => {
@@ -162,6 +214,18 @@ Deno.serve(async (req) => {
       const teams = fxId ? allTeamsByFixture.get(fxId) : null;
       return teams ? { ...entry, teams } : entry;
     });
+    
+    // Log league distribution in final cache
+    const leagueDistribution = mergedOdds.reduce((acc, match) => {
+      const leagueId = match.teams?.league_id;
+      const leagueName = match.teams?.league_name || 'Unknown';
+      acc[leagueName] = (acc[leagueName] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    console.log('Final cache league distribution:', leagueDistribution);
+    console.log(`Total matches in final cache: ${mergedOdds.length}`);
+    
     const finalCacheObject = { response: mergedOdds };
     const { error: upsertError } = await supabaseAdmin
       .from('match_odds_cache')
