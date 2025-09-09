@@ -1,4 +1,8 @@
+// @ts-ignore - Deno imports
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+// @ts-ignore - Deno global
+declare const Deno: any;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -77,8 +81,8 @@ Deno.serve(async (req) => {
 
     console.log('API Key found. Starting two-step odds fetch...');
 
-    // --- STEP 1: Fetch the NEXT 10 upcoming fixture IDs for all leagues ---
-    const leagueIds = [140, 2, 3]; // La Liga, Champions League, Europa League
+    // --- STEP 1: Fetch upcoming fixture IDs for all leagues (10 for La Liga/Liga MX, 18 for Champions/Europa) ---
+    const leagueIds = [140, 2, 3, 262]; // La Liga, Champions League, Europa League, Liga MX
     const currentYear = new Date().getFullYear();
     
     let allFixtureIDs: number[] = [];
@@ -87,9 +91,17 @@ Deno.serve(async (req) => {
     
     for (const leagueId of leagueIds) {
       const leagueName = leagueId === 140 ? 'La Liga' : 
-                        leagueId === 2 ? 'Champions League' : 'Europa League'; 
-      const fixturesUrl = `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${currentYear}&next=10`;
-      console.log(`Fetching fixtures from ${leagueName}: ${fixturesUrl}`);
+                        leagueId === 2 ? 'Champions League' : 
+                        leagueId === 3 ? 'Europa League' : 'Liga MX';
+      
+      // Define number of matches per league
+      const matchesPerLeague = leagueId === 140 ? 10 :  // La Liga: 10 partidos
+                              leagueId === 262 ? 10 :  // Liga MX: 10 partidos
+                              leagueId === 2 ? 18 :    // Champions League: 18 partidos
+                              18;                      // Europa League: 18 partidos
+      
+      const fixturesUrl = `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${currentYear}&next=${matchesPerLeague}`;
+      console.log(`Fetching ${matchesPerLeague} fixtures from ${leagueName}: ${fixturesUrl}`);
       
       const fixturesResponse = await fetch(fixturesUrl, {
         headers: {
@@ -133,7 +145,7 @@ Deno.serve(async (req) => {
     }
 
     // --- STEP 2: Fetch odds for each of those fixture IDs ---
-    const allOddsData = [];
+    const allOddsData: any[] = [];
     for (const fixtureId of allFixtureIDs) {
       const oddsUrl = `https://v3.football.api-sports.io/odds?fixture=${fixtureId}`;
       console.log(`Fetching odds from: ${oddsUrl}`);

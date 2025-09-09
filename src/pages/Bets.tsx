@@ -85,7 +85,7 @@ const Bets = () => {
   const [userBets, setUserBets] = useState<UserBet[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [drawerShouldRender, setDrawerShouldRender] = useState(false);
-  const [selectedLeague, setSelectedLeague] = useState<'primera' | 'champions' | 'europa'>('primera');
+  const [selectedLeague, setSelectedLeague] = useState<'primera' | 'champions' | 'europa' | 'liga-mx'>('primera');
   const { toast } = useToast();
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -514,8 +514,8 @@ const Bets = () => {
 
   const renderContent = () => {
     return (
-      <Tabs value={selectedLeague} onValueChange={(value) => setSelectedLeague(value as 'primera' | 'champions' | 'europa')} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 mb-6 gap-2 h-auto">
+      <Tabs value={selectedLeague} onValueChange={(value) => setSelectedLeague(value as 'primera' | 'champions' | 'europa' | 'liga-mx')} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6 gap-2 h-auto">
           <TabsTrigger 
             value="primera" 
             className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-[#FFC72C] data-[state=active]:ring-offset-2"
@@ -579,6 +579,27 @@ const Bets = () => {
             {/* Texto por encima */}
             <span className="relative z-10 text-black font-semibold text-xs sm:text-sm leading-tight">Europa League</span>
           </TabsTrigger>
+          <TabsTrigger 
+            value="liga-mx"
+            className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-[#FFC72C] data-[state=active]:ring-offset-2"
+          >
+            {/* Franjas de fondo verde-blanco-rojo (bandera de México) a 45 grados */}
+            <div 
+              className="absolute inset-0"
+              style={{
+                background: `
+                  linear-gradient(45deg, 
+                    #006847 0%, #006847 33.33%, 
+                    #FFFFFF 33.33%, #FFFFFF 66.66%, 
+                    #CE1126 66.66%, #CE1126 100%
+                  )
+                `,
+                opacity: '0.4'
+              }}
+            />
+            {/* Texto por encima */}
+            <span className="relative z-10 text-black font-semibold text-xs sm:text-sm leading-tight">Liga MX</span>
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="primera" className="mt-0">
           {renderLeagueContent()}
@@ -588,6 +609,19 @@ const Bets = () => {
         </TabsContent>
         <TabsContent value="europa" className="mt-0">
           {renderLeagueContent()}
+        </TabsContent>
+        <TabsContent value="liga-mx" className="mt-0">
+          <div className="flex flex-col items-center justify-center py-12 px-4">
+            <div className="text-center max-w-md">
+              <h3 className="text-xl font-semibold text-foreground mb-2">Liga MX</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Próximamente, encuentros de la Liga MX
+              </p>
+              <p className="text-muted-foreground text-xs mt-2">
+                Estamos trabajando para traerte las mejores apuestas de la liga mexicana
+              </p>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     );

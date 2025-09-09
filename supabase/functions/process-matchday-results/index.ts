@@ -8,8 +8,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// League constant – easy to change
-const leagueId = 140; // La Liga
+// League constants – easy to change
+const leagueIds = [140, 2, 3, 262]; // La Liga, Champions League, Europa League, Liga MX
 
 function outcomeFromFixture(fx: any): "home" | "away" | "draw" | null {
   try {
@@ -513,14 +513,42 @@ serve(async (req) => {
       }
     });
 
-    // 1) Fetch recently finished fixtures for this league
+    // 1) Fetch recently finished fixtures for all leagues
     const baseUrl = "https://v3.football.api-sports.io";
-    const finishedRes = await fetch(`${baseUrl}/fixtures?league=${leagueId}&status=FT&last=50`, {
-      headers: { "x-apisports-key": API_FOOTBALL_KEY },
-    });
-    if (!finishedRes.ok) throw new Error(`Finished fixtures fetch failed: ${finishedRes.status}`);
-    const finishedJson = await finishedRes.json();
-    const finished = finishedJson?.response ?? [];
+    let allFinishedFixtures: any[] = [];
+    
+    for (const leagueId of leagueIds) {
+      const leagueName = leagueId === 140 ? 'La Liga' : 
+                        leagueId === 2 ? 'Champions League' : 
+                        leagueId === 3 ? 'Europa League' : 'Liga MX';
+      
+      console.log(`Fetching finished fixtures for ${leagueName} (ID: ${leagueId})`);
+      
+      const finishedRes = await fetch(`${baseUrl}/fixtures?league=${leagueId}&status=FT&last=50`, {
+        headers: { "x-apisports-key": API_FOOTBALL_KEY },
+      });
+      
+      if (!finishedRes.ok) {
+        console.warn(`Failed to fetch finished fixtures for league ${leagueId}: ${finishedRes.status}`);
+        continue; // Skip this league and continue with others
+      }
+      
+      const finishedJson = await finishedRes.json();
+      const finished = finishedJson?.response ?? [];
+      
+      // Add league info to each fixture
+      finished.forEach((fixture: any) => {
+        if (fixture?.fixture?.id) {
+          fixture.league_id = leagueId;
+          fixture.league_name = leagueName;
+        }
+      });
+      
+      allFinishedFixtures.push(...finished);
+      console.log(`Found ${finished.length} finished fixtures for ${leagueName}`);
+    }
+    
+    const finished = allFinishedFixtures;
 
     const outcomeMap = new Map<number, "home" | "away" | "draw">();
     const resultsMap = new Map<number, { 
@@ -598,7 +626,7 @@ serve(async (req) => {
             match_name: `${fx.teams.home.name} vs ${fx.teams.away.name}`,
             home_team: fx.teams.home.name,
             away_team: fx.teams.away.name,
-            league_id: leagueId,
+            league_id: fx.league_id || 140, // Default to La Liga if no league_id found
             season: fx.league?.season || new Date().getFullYear(),
             home_goals: Number(hg),
             away_goals: Number(ag),
