@@ -115,6 +115,7 @@ const Bets = () => {
                 const apiData = newCacheData.data as unknown as CachedOddsData;
                 if (apiData && Array.isArray(apiData.response)) {
                   const validMatches = apiData.response.filter(match => match.fixture);
+                  
                   setMatches(validMatches);
                 } else {
                   setMatches([]);
@@ -132,6 +133,7 @@ const Bets = () => {
           const apiData = cacheData.data as unknown as CachedOddsData;
           if (apiData && Array.isArray(apiData.response)) {
             const validMatches = apiData.response.filter(match => match.fixture);
+            
             setMatches(validMatches);
           } else {
             setMatches([]);
@@ -178,10 +180,11 @@ const Bets = () => {
 
 
   const handleAddToSlip = (match: MatchData, marketName: string, selection: BetValue) => {
-    // Check if match is in the future (outside current week) - BLOCK ALL FUTURE MATCHES
+    // Check if match is in the future (outside allowed timeframe) - BLOCK ALL FUTURE MATCHES
     const matchDate = new Date(match.fixture.date);
     const nextMondayEndOfDay = getNextMondayEndOfDay();
     
+    // For all leagues, only allow betting until Monday 23:59
     if (matchDate > nextMondayEndOfDay) {
       toast({
         title: 'Apuesta no disponible',
@@ -229,21 +232,10 @@ const Bets = () => {
   const findMarket = (match: MatchData, marketName: string) => {
     if (!match.bookmakers || match.bookmakers.length === 0) return undefined;
     
-    // Debug: Log available markets for first match
-    if (match.fixture.id === matches[0]?.fixture.id) {
-      console.log('Available markets for', match.teams?.home?.name, 'vs', match.teams?.away?.name);
-      match.bookmakers.forEach(bookmaker => {
-        bookmaker.bets.forEach(bet => {
-          console.log('- Market:', bet.name, 'Values:', bet.values.map(v => v.value).join(', '));
-        });
-      });
-    }
-    
     // Try exact match first - search through ALL bookmakers
     for (const bookmaker of match.bookmakers) {
       const market = bookmaker.bets.find(bet => bet.name === marketName);
       if (market) {
-        console.log(`Found market "${marketName}" in bookmaker: ${bookmaker.name}`);
         return market;
       }
     }
@@ -267,7 +259,6 @@ const Bets = () => {
       for (const bookmaker of match.bookmakers) {
         const market = bookmaker.bets.find(bet => bet.name === variation);
         if (market) {
-          console.log(`Found market "${marketName}" as "${variation}"`);
           return market;
         }
       }
@@ -327,9 +318,11 @@ const Bets = () => {
       'primera': 140,
       
       'champions': 2,
-      'europa': 3
+      'europa': 3,
+      'liga-mx': 262
     };
     const leagueId = leagueMap[league];
+    
     return matches.filter(match => match.teams?.league_id === leagueId);
   };
 
@@ -343,11 +336,34 @@ const Bets = () => {
     return nextMonday;
   };
 
+  // Calculate next Tuesday at 00:00 for European competitions
+  const getNextTuesdayStart = () => {
+    const now = new Date();
+    const nextTuesday = new Date(now);
+    const daysUntilTuesday = (2 + 7 - now.getDay()) % 7; // 0 = Sunday, 2 = Tuesday
+    nextTuesday.setDate(now.getDate() + (daysUntilTuesday === 0 ? 7 : daysUntilTuesday));
+    nextTuesday.setHours(0, 0, 0, 0);
+    return nextTuesday;
+  };
+
   // Filter matches by date
   const nextMondayEndOfDay = getNextMondayEndOfDay();
+  const nextTuesdayStart = getNextTuesdayStart();
   const leagueMatches = getMatchesByLeague(selectedLeague);
-  const upcomingMatches = leagueMatches.filter(match => new Date(match.fixture.date) <= nextMondayEndOfDay);
-  const futureMatches = leagueMatches.filter(match => new Date(match.fixture.date) > nextMondayEndOfDay);
+  
+  // Declare variables outside the conditional block
+  let upcomingMatches: MatchData[];
+  let futureMatches: MatchData[];
+  
+  // For Champions and Europa League: show all matches, separate by betting availability
+  if (selectedLeague === 'champions' || selectedLeague === 'europa') {
+    upcomingMatches = leagueMatches.filter(match => new Date(match.fixture.date) <= nextMondayEndOfDay);
+    futureMatches = leagueMatches.filter(match => new Date(match.fixture.date) >= nextTuesdayStart);
+  } else {
+    // For other leagues: use original logic
+    upcomingMatches = leagueMatches.filter(match => new Date(match.fixture.date) <= nextMondayEndOfDay);
+    futureMatches = leagueMatches.filter(match => new Date(match.fixture.date) > nextMondayEndOfDay);
+  }
 
   const renderMatchesSection = (matchesToRender: MatchData[], sectionKey: string) => {
     if (matchesToRender.length === 0) {
@@ -394,11 +410,23 @@ const Bets = () => {
               </AccordionTrigger>
               <AccordionContent>
                 <div className="space-y-3 sm:space-y-6 pt-1 sm:pt-4">
-                  {/* Check if match is in the future (outside current week) */}
+                  {/* Check if match is in the future (outside allowed timeframe) */}
                   {(() => {
                     const matchDate = new Date(match.fixture.date);
                     const nextMondayEndOfDay = getNextMondayEndOfDay();
+                    const nextTuesdayStart = getNextTuesdayStart();
                     
+                    // For Champions and Europa League: show future matches but without betting options
+                    if ((selectedLeague === 'champions' || selectedLeague === 'europa') && matchDate >= nextTuesdayStart) {
+                      return (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <p className="text-lg font-medium mb-2">Próximos encuentros</p>
+                          <p>Las apuestas para este partido estarán disponibles próximamente.</p>
+                        </div>
+                      );
+                    }
+                    
+                    // For all leagues: block betting after Monday 23:59
                     if (matchDate > nextMondayEndOfDay) {
                       return (
                         <div className="text-center py-8 text-muted-foreground">
@@ -611,17 +639,7 @@ const Bets = () => {
           {renderLeagueContent()}
         </TabsContent>
         <TabsContent value="liga-mx" className="mt-0">
-          <div className="flex flex-col items-center justify-center py-12 px-4">
-            <div className="text-center max-w-md">
-              <h3 className="text-xl font-semibold text-foreground mb-2">Liga MX</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                Próximamente, encuentros de la Liga MX
-              </p>
-              <p className="text-muted-foreground text-xs mt-2">
-                Estamos trabajando para traerte las mejores apuestas de la liga mexicana
-              </p>
-            </div>
-          </div>
+          {renderLeagueContent()}
         </TabsContent>
       </Tabs>
     );
