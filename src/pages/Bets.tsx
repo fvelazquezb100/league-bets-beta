@@ -86,6 +86,7 @@ const Bets = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [drawerShouldRender, setDrawerShouldRender] = useState(false);
   const [selectedLeague, setSelectedLeague] = useState<'primera' | 'champions' | 'europa' | 'liga-mx'>('primera');
+  const [availableLeagues, setAvailableLeagues] = useState<number[]>([]);
   const { toast } = useToast();
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -176,6 +177,44 @@ const Bets = () => {
     };
 
     fetchOddsAndBets();
+  }, [user]);
+
+  // Fetch available leagues for the user's league
+  useEffect(() => {
+    const fetchAvailableLeagues = async () => {
+      if (!user) return;
+      
+      try {
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('league_id')
+          .eq('id', user.id)
+          .single();
+          
+        if (profileError) throw profileError;
+        
+        const { data: leagueData, error: leagueError } = await supabase
+          .from('leagues')
+          .select('available_leagues')
+          .eq('id', profileData.league_id)
+          .single();
+          
+        if (leagueError) {
+          // If column doesn't exist yet, use default leagues
+          console.warn('available_leagues column not found, using default leagues');
+          setAvailableLeagues([140, 2, 3, 262]);
+          return;
+        }
+        
+        setAvailableLeagues((leagueData as any)?.available_leagues || [140, 2, 3, 262]);
+      } catch (error) {
+        console.error('Error fetching available leagues:', error);
+        // Default to all leagues if there's an error
+        setAvailableLeagues([140, 2, 3, 262]);
+      }
+    };
+
+    fetchAvailableLeagues();
   }, [user]);
 
 
@@ -540,107 +579,113 @@ const Bets = () => {
     );
   };
 
+  // Function to get available tabs based on available leagues
+  const getAvailableTabs = () => {
+    const tabs = [];
+    
+    if (availableLeagues.includes(140)) {
+      tabs.push({ value: 'primera', label: 'La Liga - Primera', leagueId: 140 });
+    }
+    if (availableLeagues.includes(2)) {
+      tabs.push({ value: 'champions', label: 'Champions League', leagueId: 2 });
+    }
+    if (availableLeagues.includes(3)) {
+      tabs.push({ value: 'europa', label: 'Europa League', leagueId: 3 });
+    }
+    if (availableLeagues.includes(262)) {
+      tabs.push({ value: 'liga-mx', label: 'Liga MX', leagueId: 262 });
+    }
+    
+    return tabs;
+  };
+
   const renderContent = () => {
+    const availableTabs = getAvailableTabs();
+    
+    // If current selected league is not available, switch to the first available one
+    if (availableTabs.length > 0 && !availableTabs.find(tab => tab.value === selectedLeague)) {
+      setSelectedLeague(availableTabs[0].value as 'primera' | 'champions' | 'europa' | 'liga-mx');
+    }
+    
     return (
       <Tabs value={selectedLeague} onValueChange={(value) => setSelectedLeague(value as 'primera' | 'champions' | 'europa' | 'liga-mx')} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6 gap-2 h-auto">
-          <TabsTrigger 
-            value="primera" 
-            className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-[#FFC72C] data-[state=active]:ring-offset-2"
-          >
-            {/* Franjas de fondo */}
-            <div 
-              className="absolute inset-0"
-              style={{
-                background: `
-                  linear-gradient(45deg, 
-                    #C60B1E 0%, #C60B1E 33%, 
-                    #FFC400 33%, #FFC400 66%, 
-                    #C60B1E 66%, #C60B1E 100%
-                  )
-                `,
-                opacity: '0.15'
-              }}
-            />
-            {/* Texto por encima */}
-            <span className="relative z-10 text-black font-semibold text-xs sm:text-sm leading-tight">La Liga - Primera</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="champions"
-            className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-[#FFC72C] data-[state=active]:ring-offset-2"
-          >
-            {/* Franjas de fondo azul-azul-blanco */}
-            <div 
-              className="absolute inset-0"
-              style={{
-                background: `
-                  linear-gradient(45deg, 
-                    #1e40af 0%, #1e40af 33%, 
-                    #1e40af 33%, #1e40af 66%, 
-                    #ffffff 66%, #ffffff 100%
-                  )
-                `,
-                opacity: '0.4'
-              }}
-            />
-            {/* Texto por encima */}
-            <span className="relative z-10 text-black font-semibold text-xs sm:text-sm leading-tight">Champions League</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="europa"
-            className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-[#FFC72C] data-[state=active]:ring-offset-2"
-          >
-            {/* Franjas de fondo azul-azul-verde */}
-            <div 
-              className="absolute inset-0"
-              style={{
-                background: `
-                  linear-gradient(45deg, 
-                    #1e40af 0%, #1e40af 33%, 
-                    #1e40af 33%, #1e40af 66%, 
-                    #10b981 66%, #10b981 100%
-                  )
-                `,
-                opacity: '0.4'
-              }}
-            />
-            {/* Texto por encima */}
-            <span className="relative z-10 text-black font-semibold text-xs sm:text-sm leading-tight">Europa League</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="liga-mx"
-            className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-[#FFC72C] data-[state=active]:ring-offset-2"
-          >
-            {/* Franjas de fondo verde-blanco-rojo (bandera de México) a 45 grados */}
-            <div 
-              className="absolute inset-0"
-              style={{
-                background: `
-                  linear-gradient(45deg, 
-                    #006847 0%, #006847 33.33%, 
-                    #FFFFFF 33.33%, #FFFFFF 66.66%, 
-                    #CE1126 66.66%, #CE1126 100%
-                  )
-                `,
-                opacity: '0.4'
-              }}
-            />
-            {/* Texto por encima */}
-            <span className="relative z-10 text-black font-semibold text-xs sm:text-sm leading-tight">Liga MX</span>
-          </TabsTrigger>
+        <TabsList className={`grid w-full mb-6 gap-2 h-auto ${availableTabs.length <= 2 ? 'grid-cols-2' : availableTabs.length === 3 ? 'grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'}`}>
+          {availableTabs.map((tab) => {
+            const getTabStyle = (value: string) => {
+              switch (value) {
+                case 'primera':
+                  return {
+                    background: `
+                      linear-gradient(45deg, 
+                        #C60B1E 0%, #C60B1E 33%, 
+                        #FFC400 33%, #FFC400 66%, 
+                        #C60B1E 66%, #C60B1E 100%
+                      )
+                    `,
+                    opacity: '0.15'
+                  };
+                case 'champions':
+                  return {
+                    background: `
+                      linear-gradient(45deg, 
+                        #1e40af 0%, #1e40af 33%, 
+                        #1e40af 33%, #1e40af 66%, 
+                        #ffffff 66%, #ffffff 100%
+                      )
+                    `,
+                    opacity: '0.4'
+                  };
+                case 'europa':
+                  return {
+                    background: `
+                      linear-gradient(45deg, 
+                        #1e40af 0%, #1e40af 33%, 
+                        #1e40af 33%, #1e40af 66%, 
+                        #10b981 66%, #10b981 100%
+                      )
+                    `,
+                    opacity: '0.4'
+                  };
+                case 'liga-mx':
+                  return {
+                    background: `
+                      linear-gradient(45deg, 
+                        #006847 0%, #006847 33.33%, 
+                        #FFFFFF 33.33%, #FFFFFF 66.66%, 
+                        #CE1126 66.66%, #CE1126 100%
+                      )
+                    `,
+                    opacity: '0.4'
+                  };
+                default:
+                  return { background: '', opacity: '0.1' };
+              }
+            };
+
+            const tabStyle = getTabStyle(tab.value);
+
+            return (
+              <TabsTrigger 
+                key={tab.value}
+                value={tab.value} 
+                className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-[#FFC72C] data-[state=active]:ring-offset-2"
+              >
+                {/* Franjas de fondo */}
+                <div 
+                  className="absolute inset-0"
+                  style={tabStyle}
+                />
+                {/* Texto por encima */}
+                <span className="relative z-10 text-black font-semibold text-xs sm:text-sm leading-tight">{tab.label}</span>
+              </TabsTrigger>
+            );
+          })}
         </TabsList>
-        <TabsContent value="primera" className="mt-0">
-          {renderLeagueContent()}
-        </TabsContent>
-        <TabsContent value="champions" className="mt-0">
-          {renderLeagueContent()}
-        </TabsContent>
-        <TabsContent value="europa" className="mt-0">
-          {renderLeagueContent()}
-        </TabsContent>
-        <TabsContent value="liga-mx" className="mt-0">
-          {renderLeagueContent()}
-        </TabsContent>
+        {availableTabs.map((tab) => (
+          <TabsContent key={tab.value} value={tab.value} className="mt-0">
+            {renderLeagueContent()}
+          </TabsContent>
+        ))}
       </Tabs>
     );
   };
