@@ -87,18 +87,45 @@ const AdminLiga: React.FC = () => {
           .select('id, name, week, budget, min_bet, max_bet, type, league_season, reset_budget, join_code, available_leagues')
           .eq('id', profileData.league_id)
           .maybeSingle();
-        if (leagueError) throw leagueError;
-
-        setLeagueData(leagueData as LeagueRow);
-        if (leagueData) {
-          setEditLeagueName(leagueData.name);
-          setEditBudget(leagueData.budget);
-          setEditMinBet(leagueData.min_bet);
-          setEditMaxBet(leagueData.max_bet);
-          setEditResetBudget(leagueData.reset_budget);
-          
-          // Initialize selected leagues
-          setSelectedLeagues(leagueData.available_leagues || [140, 2, 3, 262]);
+        
+        if (leagueError) {
+          // If available_leagues column doesn't exist, try without it
+          if (leagueError.message.includes('available_leagues')) {
+            const { data: fallbackData, error: fallbackError } = await supabase
+              .from('leagues')
+              .select('id, name, week, budget, min_bet, max_bet, type, league_season, reset_budget, join_code')
+              .eq('id', profileData.league_id)
+              .maybeSingle();
+            
+            if (fallbackError) throw fallbackError;
+            
+            setLeagueData(fallbackData as LeagueRow);
+            if (fallbackData) {
+              setEditLeagueName(fallbackData.name);
+              setEditBudget(fallbackData.budget);
+              setEditMinBet(fallbackData.min_bet);
+              setEditMaxBet(fallbackData.max_bet);
+              setEditResetBudget(fallbackData.reset_budget);
+              
+              // Use default available leagues when column doesn't exist
+              setSelectedLeagues([140, 2, 3, 262]);
+            }
+          } else {
+            throw leagueError;
+          }
+        } else {
+          setLeagueData(leagueData as unknown as LeagueRow);
+          if (leagueData) {
+            const league = leagueData as unknown as LeagueRow;
+            setEditLeagueName(league.name);
+            setEditBudget(league.budget);
+            setEditMinBet(league.min_bet);
+            setEditMaxBet(league.max_bet);
+            setEditResetBudget(league.reset_budget);
+            
+            // Initialize selected leagues
+            setSelectedLeagues((league as any).available_leagues || [140, 2, 3, 262]);
+          }
         }
         
         // Set available leagues
@@ -131,7 +158,7 @@ const AdminLiga: React.FC = () => {
       if (editResetBudget !== leagueData.reset_budget) { updates.reset_budget = editResetBudget; hasChanges = true; }
       
       // Check if available leagues changed
-      const currentLeagues = leagueData.available_leagues || [];
+      const currentLeagues = (leagueData as any).available_leagues || [];
       const leaguesChanged = JSON.stringify(currentLeagues.sort()) !== JSON.stringify(selectedLeagues.sort());
       if (leaguesChanged) { 
         updates.available_leagues = selectedLeagues; 
@@ -247,7 +274,7 @@ const handleResetWeek = async () => {
                   <p><span className="font-semibold mr-2">Semana:</span>{leagueData.week}</p>
                   <p><span className="font-semibold mr-2">Temporada:</span>{leagueData.league_season}</p>
                   <p><span className="font-semibold mr-2">Ligas disponibles:</span>
-                    {leagueData.available_leagues?.map(id => {
+                    {(leagueData as any).available_leagues?.map((id: number) => {
                       const league = allLeagues.find(l => l.id === id);
                       return league ? league.name : '';
                     }).filter(Boolean).join(', ') || 'No configuradas'}
