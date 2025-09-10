@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { User, Shield, Eye, EyeOff } from 'lucide-react';
+import { User, Shield, Eye, EyeOff, LogOut, AlertTriangle } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -45,35 +46,39 @@ export const Settings = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // Leave league state
+  const [leaveLeagueLoading, setLeaveLeagueLoading] = useState(false);
+
+  const fetchUserData = async () => {
+    if (!user) return;
+    try {
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, username, weekly_budget, league_id, global_role')
+        .eq('id', user.id)
+        .single();
+      if (profileError) throw profileError;
+      if (profileData) {
+        setProfile(profileData);
+        setNewUsername(profileData.username || '');
+        if (profileData.league_id) {
+          const { data: leagueData, error: leagueError } = await supabase
+            .from('leagues')
+            .select('name, join_code')
+            .eq('id', profileData.league_id)
+            .single();
+          if (!leagueError && leagueData) setLeague(leagueData);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      if (!user) return;
-      try {
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, username, weekly_budget, league_id, global_role')
-          .eq('id', user.id)
-          .single();
-        if (profileError) throw profileError;
-        if (profileData) {
-          setProfile(profileData);
-          setNewUsername(profileData.username || '');
-          if (profileData.league_id) {
-            const { data: leagueData, error: leagueError } = await supabase
-              .from('leagues')
-              .select('name, join_code')
-              .eq('id', profileData.league_id)
-              .single();
-            if (!leagueError && leagueData) setLeague(leagueData);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchUserData();
   }, [user]);
 
@@ -186,6 +191,39 @@ export const Settings = () => {
       toast({ title: 'Error', description: error.message || 'No se pudo actualizar la contraseña.', variant: 'destructive' });
     } finally {
       setPasswordLoading(false);
+    }
+  };
+
+  const handleLeaveLeague = async () => {
+    if (!user) return;
+    
+    setLeaveLeagueLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('leave-league', {
+        body: { user_id: user.id }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast({
+          title: 'Liga abandonada',
+          description: 'Has salido de la liga exitosamente. Tus puntos y apuestas han sido reseteados.',
+        });
+        
+        // Refresh user data
+        await fetchUserData();
+      } else {
+        throw new Error(data.error || 'Error al salir de la liga');
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudo salir de la liga',
+        variant: 'destructive',
+      });
+    } finally {
+      setLeaveLeagueLoading(false);
     }
   };
 
@@ -394,6 +432,71 @@ export const Settings = () => {
             </form>
           </CardContent>
         </Card>
+
+        {/* Leave League Card */}
+        {profile.league_id && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <LogOut className="h-5 w-5" />
+                Salir de la Liga
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
+                <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Acción irreversible</p>
+                  <p className="text-sm text-muted-foreground">
+                    Al salir de la liga, se resetearán todos tus puntos (totales y de la última semana) a cero, 
+                    y todas tus apuestas se marcarán como semana 0. Esta acción no se puede deshacer.
+                  </p>
+                </div>
+              </div>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    className="jambol-button border-2 border-[#FFC72C] hover:bg-[#FFC72C] hover:text-black"
+                    disabled={leaveLeagueLoading}
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    {leaveLeagueLoading ? 'Saliendo...' : 'Salir de la Liga'}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5 text-amber-500" />
+                      ¿Estás seguro?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="space-y-2">
+                      <p>Esta acción es <strong>irreversible</strong> y tendrá las siguientes consecuencias:</p>
+                      <ul className="list-disc list-inside space-y-1 text-sm">
+                        <li>Todos tus puntos totales se resetearán a <strong>0</strong></li>
+                        <li>Tus puntos de la última semana se resetearán a <strong>0</strong></li>
+                        <li>Serás removido de la liga actual</li>
+                        <li>Todas tus apuestas se marcarán como semana <strong>0</strong></li>
+                      </ul>
+                      <p className="font-medium text-amber-600">
+                        ¿Estás completamente seguro de que quieres continuar?
+                      </p>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleLeaveLeague}
+                      className="jambol-button border-2 border-[#FFC72C] hover:bg-[#FFC72C] hover:text-black"
+                      disabled={leaveLeagueLoading}
+                    >
+                      {leaveLeagueLoading ? 'Saliendo...' : 'Sí, salir de la liga'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
