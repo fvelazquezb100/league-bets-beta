@@ -1,0 +1,47 @@
+[
+  {
+    "id": 1,
+    "title": "¡Bienvenidos a la Liga de Simulación!",
+    "content": "Damos la bienvenida a todos los participantes a nuestra Liga de Simulación de Apuestas Deportivas. \n\nEsperamos que disfruten de la experiencia, compitiendo con estrategia y diversión.\n\nRecordamos que este es un entorno 100% de simulación, sin dinero real. Nuestro objetivo es ofrecer entretenimiento, análisis deportivo y comunidad.\n\nEquipo Oficial de la Liga de Simulación Betadona",
+    "created_at": "2025-08-19T12:47:43.132966+00:00",
+    "created_by": "4ff1b23c-cc4f-4f7d-9697-3e73b618d6aa",
+    "is_active": true,
+    "is_frozen": false
+  },
+  {
+    "id": 2,
+    "title": "Actualización de puntos – Jornada 2",
+    "content": "Los puntos de la Jornada 2 de la Liga serán reseteados hoy a las 22:00 (hora española)\n\nA partir de ese momento podrán realizar nuevas apuestas para la jornada en curso.\n\n\nRecordad, el plazo para apostar se mantendrá abierto hasta 15 minutos antes del inicio del último partido de la Jornada 2 (el próximo lunes con el partido Celta - Real Betis Balompié).\n¡Preparen sus pronósticos y mucha suerte a todos los participantes! \n\nEquipo Oficial de la Liga de Simulación Betadona",
+    "created_at": "2025-08-19T12:49:19.135146+00:00",
+    "created_by": "4ff1b23c-cc4f-4f7d-9697-3e73b618d6aa",
+    "is_active": true,
+    "is_frozen": false
+  },
+  {
+    "id": 3,
+    "title": "Nuevas Funcionalidades - Visualizacion de apuestas de tus oponentes",
+    "content": "¡La liga se pone aún más emocionante! \nA partir de ahora podrás ver las apuestas de tus rivales una vez cerrada la jornada. Ve a la clasificación y selecciona tu oponente, verás todas sus apuestas!\n\nEsto significa que no solo competirás contra tus propios pronósticos, sino que también podrás analizar las estrategias de tus oponentes, comparar resultados y descubrir quién arriesga más en cada jornada. \n\nPrepárate para un juego más estratégico, donde la lectura de tus contrincantes será tan importante como tu intuición deportiva.\n\n¿Estás listo para demostrar que eres el mejor no solo apostando, sino también entendiendo a tus rivales?\n\nEquipo Oficial de la Liga de Simulación Betadona",
+    "created_at": "2025-08-19T13:45:51.313804+00:00",
+    "created_by": "4ff1b23c-cc4f-4f7d-9697-3e73b618d6aa",
+    "is_active": true,
+    "is_frozen": true
+  },
+  {
+    "id": 4,
+    "title": "Actualización de puntos – Semana 3",
+    "content": "Los puntos de la Jornada 3 de la Liga han sido reseteados hoy.\n\nA partir de ese momento podrán realizar nuevas apuestas para la semana en curso.\n\nEste miercoles tenemos un partido adelantado Celta-Betis, correspondiente a la jornada 6 de La Liga\n\nRecordad, el plazo para apostar se mantendrá abierto hasta 15 minutos antes del inicio del último partido de la Jornada 2 (el próximo domingo con el partido Rayo-Barça).\n\n¡Preparen sus pronósticos y mucha suerte a todos los participantes! \n\nEquipo Oficial de la Liga de Simulación Betadona",
+    "created_at": "2025-08-26T00:29:47.401915+00:00",
+    "created_by": "4ff1b23c-cc4f-4f7d-9697-3e73b618d6aa",
+    "is_active": true,
+    "is_frozen": false
+  },
+  {
+    "id": 5,
+    "title": "Retirada de dinero",
+    "content": "Para retirar los créditos podéis solicitar Bizum a Torri o PayPal a Velae. Gracias por vuestra atención. \n\nAtentamente Departamento de bulos",
+    "created_at": "2025-08-26T09:33:21.251137+00:00",
+    "created_by": "e8de9046-4958-4049-b21c-65bc66f55b3e",
+    "is_active": true,
+    "is_frozen": false
+  }
+]

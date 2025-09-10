@@ -1,0 +1,20 @@
+{
+  "startTime": "2025-09-03T14:32:14.836Z",
+  "endTime": "2025-09-03T14:34:47.477Z",
+  "status": "completed_successfully",
+  "errors": [],
+  "warnings": [
+    "No new user ID found for profile 9bdaf860-4177-4555-b8fb-3e9712f9fc8e"
+  ],
+  "stats": {
+    "usersCreated": 21,
+    "usersSkipped": 0,
+    "profilesCreated": 21,
+    "leaguesCreated": 7,
+    "betsCreated": 377,
+    "betSelectionsCreated": 247,
+    "weeklyPerformanceCreated": 0,
+    "newsCreated": 5,
+    "matchResultsCreated": 60
+  }
+}
