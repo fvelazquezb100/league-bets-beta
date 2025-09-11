@@ -8,7 +8,7 @@ interface MainLayoutProps {
 export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-background">
-      <div className="sticky top-0 z-50 bg-background">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-background md:sticky">
         <Header />
         <Navigation />
       </div>

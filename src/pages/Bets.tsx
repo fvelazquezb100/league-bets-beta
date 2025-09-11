@@ -87,10 +87,48 @@ const Bets = () => {
   const [drawerShouldRender, setDrawerShouldRender] = useState(false);
   const [selectedLeague, setSelectedLeague] = useState<'primera' | 'champions' | 'europa' | 'liga-mx'>('primera');
   const [availableLeagues, setAvailableLeagues] = useState<number[]>([]);
+  const [openId, setOpenId] = useState<number | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   const isMobile = useIsMobile();
 
+  // Toggle accordion with scroll control
+  const toggle = (id: number) => {
+    setOpenId(prev => {
+      if (prev === id) {
+        // Closing current item
+        return null;
+      } else {
+        // Opening new item - close previous and scroll to new one
+        if (prev !== null) {
+          // Close previous item first
+          setOpenId(null);
+          // Wait a bit then open new one and scroll
+          setTimeout(() => {
+            setOpenId(id);
+            scrollToItem(id);
+          }, 100);
+          return null;
+        } else {
+          // No previous item, just open and scroll
+          setTimeout(() => scrollToItem(id), 50);
+          return id;
+        }
+      }
+    });
+  };
+
+  // Scroll to specific accordion item
+  const scrollToItem = (id: number) => {
+    const element = document.getElementById(`accordion-item-${id}`);
+    if (element) {
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+        inline: "nearest"
+      });
+    }
+  };
 
   useEffect(() => {
     const fetchOddsAndBets = async () => {
@@ -415,31 +453,45 @@ const Bets = () => {
     }
 
     return (
-      <Accordion type="single" collapsible className="w-full space-y-4">
+      <div className="w-full space-y-4">
         {matchesToRender.map((match) => {
           const kickoff = new Date(match.fixture.date);
           const freezeTime = new Date(kickoff.getTime() - 15 * 60 * 1000);
           const isFrozen = new Date() >= freezeTime;
 
           return (
-            <AccordionItem 
-              value={`${sectionKey}-match-${match.fixture.id}`} 
+            <div 
               key={match.fixture.id} 
               className="border rounded-lg p-1 sm:p-4 bg-card shadow-sm w-full max-w-none"
-              id={`accordion-${sectionKey}-${match.fixture.id}`}
+              id={`accordion-item-${match.fixture.id}`}
             >
-              <AccordionTrigger>
+              <button
+                onClick={() => toggle(match.fixture.id)}
+                className="w-full text-left flex items-center justify-between p-2 hover:bg-muted/50 rounded-md transition-colors"
+              >
                 <div className="text-left w-full">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-bold text-sm sm:text-lg text-foreground">{match.teams?.home?.name ?? 'Local'} vs {match.teams?.away?.name ?? 'Visitante'}</p>
                       <p className="text-xs sm:text-sm text-muted-foreground">{new Date(match.fixture.date).toLocaleString()}</p>
                     </div>
-                    {getBetsForFixture(match.fixture.id).length > 0 && (
-                      <Badge variant="secondary" className="ml-2 bg-white text-black border-2 border-[#FFC72C]">
-                        {getBetsForFixture(match.fixture.id).length} apuesta{getBetsForFixture(match.fixture.id).length > 1 ? 's' : ''}
-                      </Badge>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {getBetsForFixture(match.fixture.id).length > 0 && (
+                        <Badge variant="secondary" className="ml-2 bg-white text-black border-2 border-[#FFC72C]">
+                          {getBetsForFixture(match.fixture.id).length} apuesta{getBetsForFixture(match.fixture.id).length > 1 ? 's' : ''}
+                        </Badge>
+                      )}
+                      <svg
+                        className={`w-4 h-4 transition-transform duration-200 ${
+                          openId === match.fixture.id ? 'rotate-180' : ''
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
                   </div>
                   {getBetPreview(match.fixture.id) && (
                     <p className="text-xs text-muted-foreground mt-1">
@@ -447,9 +499,10 @@ const Bets = () => {
                     </p>
                   )}
                 </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-3 sm:space-y-6 pt-1 sm:pt-4">
+              </button>
+              
+              {openId === match.fixture.id && (
+                <div className="space-y-3 sm:space-y-6 pt-1 sm:pt-4 animate-in slide-in-from-top-2 duration-200">
                   {/* Check if match is in the future (outside allowed timeframe) */}
                   {(() => {
                     const matchDate = new Date(match.fixture.date);
@@ -507,11 +560,11 @@ const Bets = () => {
                     );
                   })()}
                 </div>
-              </AccordionContent>
-            </AccordionItem>
+              )}
+            </div>
           )
         })}
-      </Accordion>
+      </div>
     );
   };
 
