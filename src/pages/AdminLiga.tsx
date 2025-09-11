@@ -368,7 +368,9 @@ const handleResetWeek = async () => {
                                     type="checkbox"
                                     checked={selectedLeagues.includes(league.id)}
                                     onChange={() => handleLeagueToggle(league.id)}
-                                    className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+
+                                    className="w-4 h-4 text-[#FFC72C] border-gray-300 rounded focus:ring-[#FFC72C] accent-[#FFC72C]"
+
                                   />
                                 </div>
                               ))}

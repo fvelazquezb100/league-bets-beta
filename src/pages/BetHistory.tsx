@@ -232,6 +232,26 @@ export const BetHistory = () => {
     }
   };
 
+  const getStatusClassName = (status: string) => {
+    if (status === 'pending') {
+      return 'bg-white text-black border-2 border-[#FFC72C] hover:bg-white hover:text-black';
+    }
+    return '';
+  };
+
+  const getBetTypeBadgeClassName = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-white text-black border-2 border-[#FFC72C] hover:bg-white hover:text-black';
+      case 'won':
+        return 'bg-[#FFC72C] text-black border-2 border-[#FFC72C] hover:bg-[#FFC72C] hover:text-black';
+      case 'lost':
+        return 'bg-destructive hover:bg-destructive/90 text-destructive-foreground';
+      default:
+        return '';
+    }
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'won': return <CheckCircle className="w-4 h-4 text-green-500" />;
@@ -388,7 +408,7 @@ export const BetHistory = () => {
                         <TableCell>{parseFloat(bet.stake || 0).toFixed(0)} pts</TableCell>
                         <TableCell>{parseFloat(bet.payout || 0).toFixed(0)} pts</TableCell>
                         <TableCell>
-                          <Badge variant={getStatusVariant(bet.status)}>{getStatusText(bet.status)}</Badge>
+                          <Badge variant={getStatusVariant(bet.status)} className={getStatusClassName(bet.status)}>{getStatusText(bet.status)}</Badge>
                         </TableCell>
                         <TableCell>
                           {canCancelBet(bet) && (
@@ -417,7 +437,7 @@ export const BetHistory = () => {
                                   parseFloat(selection.odds || 0)
                                 )}
                               </span>
-                              <Badge variant={getStatusVariant(selection.status)} className="text-xs">
+                              <Badge variant={getStatusVariant(selection.status)} className={`text-xs ${getStatusClassName(selection.status)}`}>
                                 {getStatusText(selection.status)}
                               </Badge>
                             </div>
@@ -453,7 +473,7 @@ export const BetHistory = () => {
                         <TableCell>{parseFloat(bet.stake || 0).toFixed(0)} pts</TableCell>
                         <TableCell>{parseFloat(bet.payout || 0).toFixed(0)} pts</TableCell>
                         <TableCell>
-                          <Badge variant={getStatusVariant(bet.status)}>{getStatusText(bet.status)}</Badge>
+                          <Badge variant={getStatusVariant(bet.status)} className={getStatusClassName(bet.status)}>{getStatusText(bet.status)}</Badge>
                         </TableCell>
                         <TableCell>
                           {canCancelBet(bet) && (
@@ -503,12 +523,8 @@ export const BetHistory = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Badge 
-                          variant={bet.status === 'won' ? 'default' : bet.status === 'lost' ? 'destructive' : 'outline'} 
-                          className={`text-xs ${
-                            bet.status === 'won' ? 'bg-success hover:bg-success/90 text-success-foreground' : 
-                            bet.status === 'lost' ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : 
-                            ''
-                          }`}
+                          variant="outline"
+                          className={`text-xs ${getBetTypeBadgeClassName(bet.status)}`}
                         >
                           {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
                         </Badge>

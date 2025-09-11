@@ -103,7 +103,7 @@ export const Navigation = () => {
   return (
     <>
       {/* Desktop Navigation */}
-      <nav className="bg-card border-b border-border/50 hidden md:block">
+      <nav className="bg-card border-b border-border/50 hidden md:block bg-background">
         <div className="container mx-auto px-6">
           <div className="flex space-x-8">
             {navigationItems.map(item => renderLink(item.name, item.href, item.icon))}
