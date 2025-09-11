@@ -286,6 +286,7 @@ export const Settings = () => {
                           type="button"
                           variant="outline"
                           size="sm"
+                          className="bg-white text-black border-2 border-[#FFC72C] hover:bg-white hover:text-black"
                           onClick={handleCancelUsernameEdit}
                           disabled={usernameLoading}
                         >
@@ -315,16 +316,15 @@ export const Settings = () => {
                 <div className="flex items-center gap-3 mt-1">
                   <span>{`usuario ${displayRole}`}</span>
                   {showUpgradeButton && (
-                    <Button size="sm" onClick={async () => {
-                      try {
-                        const { error } = await supabase.from('profiles').update({ global_role: 'pro' }).eq('id', profile.id);
-                        if (error) throw error;
-                        setProfile({ ...profile, global_role: 'pro' });
-                        toast({ title: '¡Éxito!', description: 'Usuario actualizado a PRO.' });
-                      } catch (error: any) {
-                        toast({ title: 'Error', description: error.message || 'No se pudo actualizar a PRO.', variant: 'destructive' });
-                      }
-                    }}>
+                    <Button 
+                      size="sm" 
+                      onClick={() => {
+                        toast({ 
+                          title: 'Próximamente', 
+                          description: 'Próximamente podrás disfrutar de ventajas siendo PRO' 
+                        });
+                      }}
+                    >
                       Actualizar a PRO
                     </Button>
                   )}

@@ -12,7 +12,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         <Header />
         <Navigation />
       </div>
-      <main className="container mx-auto px-6 py-8">
+      <main className="container mx-auto px-6 py-8 pt-20 md:pt-8">
         {children}
       </main>
     </div>
