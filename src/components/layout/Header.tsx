@@ -84,7 +84,7 @@ export const Header = () => {
   }, [user]);
 
   return (
-    <header className="bg-card border-b border-border/50 shadow-sm">
+    <header className="bg-card border-b border-border/50 shadow-sm bg-background">
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <Link to="/home" className="flex items-center gap-3">
@@ -136,7 +136,7 @@ export const Header = () => {
             {/* Mobile: Hamburger menu */}
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="md:hidden">
+                <Button variant="outline" size="sm" className="md:hidden border-[#FFC72C] text-[#FFC72C] hover:bg-[#FFC72C] hover:text-black">
                   <Menu className="h-4 w-4" />
                 </Button>
               </SheetTrigger>

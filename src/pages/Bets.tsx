@@ -91,6 +91,7 @@ const Bets = () => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
 
+
   useEffect(() => {
     const fetchOddsAndBets = async () => {
       setLoading(true);
@@ -435,7 +436,7 @@ const Bets = () => {
                       <p className="text-xs sm:text-sm text-muted-foreground">{new Date(match.fixture.date).toLocaleString()}</p>
                     </div>
                     {getBetsForFixture(match.fixture.id).length > 0 && (
-                      <Badge variant="secondary" className="ml-2">
+                      <Badge variant="secondary" className="ml-2 bg-white text-black border-2 border-[#FFC72C]">
                         {getBetsForFixture(match.fixture.id).length} apuesta{getBetsForFixture(match.fixture.id).length > 1 ? 's' : ''}
                       </Badge>
                     )}
@@ -481,17 +482,6 @@ const Bets = () => {
                         {getBetTypesSorted().map(betType => {
                           const market = findMarket(match, betType.apiName);
                           
-                          // Debug HT/FT Double specifically
-                          if (betType.apiName === 'HT/FT Double') {
-                            console.log('=== HT/FT DOUBLE DEBUG ===');
-                            console.log('Looking for market:', betType.apiName);
-                            console.log('Market found:', !!market);
-                            if (market) {
-                              console.log('Market values:', market.values);
-                            } else {
-                              console.log('Available markets:', match.bookmakers?.[0]?.bets.map(b => b.name));
-                            }
-                          }
                           
                           if (!market) return null;
 
@@ -700,7 +690,7 @@ const Bets = () => {
           <div className="flex-grow">
             {renderContent()}
           </div>
-          <div className="w-full md:w-1/3 md:sticky md:top-0 md:self-start">
+          <div className="w-full md:w-1/3 md:sticky md:top-32 md:self-start z-40">
             <BetSlip 
               selectedBets={selectedBets} 
               onRemoveBet={(betId) => setSelectedBets(prev => prev.filter(bet => bet.id !== betId))}

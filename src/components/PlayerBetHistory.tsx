@@ -117,6 +117,17 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
     }
   };
 
+  const getBetTypeBadgeClassName = (status: string) => {
+    switch (status) {
+      case 'won':
+        return 'bg-[#FFC72C] text-black border-2 border-[#FFC72C]';
+      case 'lost':
+        return 'bg-destructive hover:bg-destructive/90 text-destructive-foreground';
+      default:
+        return '';
+    }
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'won': return <CheckCircle className="w-4 h-4 text-green-500" />;
@@ -263,12 +274,8 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Badge 
-                            variant={bet.status === 'won' ? 'default' : bet.status === 'lost' ? 'destructive' : 'outline'} 
-                            className={`text-xs ${
-                              bet.status === 'won' ? 'bg-success hover:bg-success/90 text-success-foreground' : 
-                              bet.status === 'lost' ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : 
-                              ''
-                            }`}
+                            variant="outline"
+                            className={`text-xs ${getBetTypeBadgeClassName(bet.status)}`}
                           >
                             {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
                           </Badge>
@@ -362,12 +369,8 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Badge 
-                        variant={bet.status === 'won' ? 'default' : bet.status === 'lost' ? 'destructive' : 'outline'} 
-                        className={`text-xs ${
-                          bet.status === 'won' ? 'bg-success hover:bg-success/90 text-success-foreground' : 
-                          bet.status === 'lost' ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : 
-                          ''
-                        }`}
+                        variant="outline"
+                        className={`text-xs ${getBetTypeBadgeClassName(bet.status)}`}
                       >
                         {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
                       </Badge>
