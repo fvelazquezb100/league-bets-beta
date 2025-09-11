@@ -89,7 +89,7 @@ export const Clasificacion = () => {
     <div className="w-full px-2 sm:px-4 space-y-6 sm:space-y-8">
       <div className="text-center">
         <h1 className="text-2xl sm:text-4xl font-bold text-foreground mb-2 sm:mb-4">
-          Clasificación. {leagueName}
+          Clasificación de {leagueName}
         </h1>
         <p className="text-sm sm:text-base text-muted-foreground">Posiciones actuales de todos los jugadores de la liga</p>
       </div>
