@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Minus, Plus } from 'lucide-react';
 import type { MatchData, BetValue } from '@/pages/Bets';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ResultTotalGoalsSelectorProps {
   match: MatchData;
@@ -14,6 +16,9 @@ const ResultTotalGoalsSelector = ({ match, isFrozen, handleAddToSlip }: ResultTo
   const [totalGoals, setTotalGoals] = useState<number>(2.5);
   const [overUnder, setOverUnder] = useState<'over' | 'under' | null>(null);
   const [currentOdds, setCurrentOdds] = useState('0.00');
+  const [isCalculatedOdds, setIsCalculatedOdds] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const { user } = useAuth();
 
   const results = [
     { value: 'Home', label: match.teams?.home?.name || 'Local', short: 'L' },
@@ -23,33 +28,149 @@ const ResultTotalGoalsSelector = ({ match, isFrozen, handleAddToSlip }: ResultTo
 
   const thresholds = [1.5, 2.5, 3.5, 4.5];
 
+  // Fetch user profile to check if superadmin
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) return;
+      
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('global_role')
+        .eq('id', user.id)
+        .maybeSingle();
+      
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        return;
+      }
+      
+      if (profileData) {
+        setIsSuperAdmin(profileData.global_role === 'superadmin');
+      }
+    };
+
+    fetchProfile();
+  }, [user]);
+
   useEffect(() => {
     const findOdds = () => {
-      const market = match.bookmakers?.[0]?.bets.find(
-        (bet) => bet.name === 'Result/Total Goals'
-      );
-      if (!market || !matchResult || !overUnder) return '0.00';
-
-      // Try different possible formats for the selection
-      const overUnderText = overUnder === 'over' ? 'Over' : 'Under';
-      const possibleSelections = [
-        `${matchResult}/${overUnderText} ${totalGoals}`,
-        `${matchResult} / ${overUnderText} ${totalGoals}`,
-        `${matchResult}/${overUnderText}${totalGoals}`,
-        `${matchResult} / ${overUnderText}${totalGoals}`,
-        `${matchResult}/${overUnderText} ${totalGoals}`,
-        `${matchResult} / ${overUnderText} ${totalGoals}`
-      ];
-
-      for (const selection of possibleSelections) {
-        const value = market.values.find(v => v.value === selection);
-        if (value) return value.odd;
+      if (!matchResult || !overUnder || !match.bookmakers) {
+        setIsCalculatedOdds(false);
+        return '0.00';
       }
 
+      const overUnderText = overUnder === 'over' ? 'Over' : 'Under';
+      const targetValue = `${matchResult}/${overUnderText} ${totalGoals}`;
+      
+      let bestOdd = '0.00';
+      let bestOddValue = 0;
+      
+      // First, search through all bookmakers for the specific Result/Total Goals market
+      for (const bookmaker of match.bookmakers) {
+        const market = bookmaker.bets.find(
+          (bet) => bet.name === 'Result/Total Goals'
+        );
+        
+        if (market && market.values) {
+          // Try different possible formats for the selection
+          const possibleSelections = [
+            targetValue,
+            `${matchResult} / ${overUnderText} ${totalGoals}`,
+            `${matchResult}/${overUnderText}${totalGoals}`,
+            `${matchResult} / ${overUnderText}${totalGoals}`,
+            `${matchResult}/${overUnderText} ${totalGoals}`,
+            `${matchResult} / ${overUnderText} ${totalGoals}`
+          ];
+
+          for (const selection of possibleSelections) {
+            const value = market.values.find(v => v.value === selection);
+            if (value) {
+              const oddValue = parseFloat(value.odd);
+              if (oddValue > bestOddValue) {
+                bestOddValue = oddValue;
+                bestOdd = value.odd;
+              }
+            }
+          }
+        }
+      }
+      
+      // If we found odds in the Result/Total Goals market, return them
+      if (bestOdd !== '0.00') {
+        setIsCalculatedOdds(false);
+        return bestOdd;
+      }
+      
+      // If not found, try to calculate by multiplying match winner odds * total goals odds
+      const calculatedOdds = calculateOddsFromSeparateMarkets();
+      if (calculatedOdds !== '0.00') {
+        setIsCalculatedOdds(true);
+        return calculatedOdds;
+      }
+      
+      setIsCalculatedOdds(false);
       return '0.00';
     };
+    
     setCurrentOdds(findOdds());
   }, [matchResult, totalGoals, overUnder, match.bookmakers]);
+
+  // Function to calculate odds by multiplying match winner * total goals
+  const calculateOddsFromSeparateMarkets = () => {
+    if (!matchResult || !overUnder || !match.bookmakers) return '0.00';
+    
+    const overUnderText = overUnder === 'over' ? 'Over' : 'Under';
+    let matchWinnerOdd = '0.00';
+    let totalGoalsOdd = '0.00';
+    
+    // Find match winner odds
+    for (const bookmaker of match.bookmakers) {
+      const matchWinnerMarket = bookmaker.bets.find(
+        (bet) => bet.name === 'Match Winner'
+      );
+      
+      if (matchWinnerMarket && matchWinnerMarket.values) {
+        const matchWinnerValue = matchWinnerMarket.values.find(v => 
+          v.value === matchResult || 
+          v.value === (matchResult === 'Home' ? 'Home Win' : matchResult === 'Away' ? 'Away Win' : 'Draw')
+        );
+        
+        if (matchWinnerValue) {
+          matchWinnerOdd = matchWinnerValue.odd;
+          break;
+        }
+      }
+    }
+    
+    // Find total goals odds
+    for (const bookmaker of match.bookmakers) {
+      const totalGoalsMarket = bookmaker.bets.find(
+        (bet) => bet.name === 'Total Goals' || bet.name === 'Goals Over/Under'
+      );
+      
+      if (totalGoalsMarket && totalGoalsMarket.values) {
+        const totalGoalsValue = totalGoalsMarket.values.find(v => 
+          v.value === `${overUnderText} ${totalGoals}` ||
+          v.value === `${overUnderText}${totalGoals}` ||
+          v.value === `${overUnderText} ${totalGoals}` ||
+          v.value === `${overUnderText}${totalGoals}`
+        );
+        
+        if (totalGoalsValue) {
+          totalGoalsOdd = totalGoalsValue.odd;
+          break;
+        }
+      }
+    }
+    
+    // Calculate combined odds
+    if (matchWinnerOdd !== '0.00' && totalGoalsOdd !== '0.00') {
+      const combinedOdd = parseFloat(matchWinnerOdd) * parseFloat(totalGoalsOdd) * 0.8;
+      return combinedOdd.toFixed(1);
+    }
+    
+    return '0.00';
+  };
 
   const handleAddBet = () => {
     if (currentOdds === '0.00' || !matchResult || !overUnder) return;
@@ -196,6 +317,15 @@ const ResultTotalGoalsSelector = ({ match, isFrozen, handleAddToSlip }: ResultTo
              currentOdds === '0.00' ? 'Cuotas no disponibles' : `${currentOdds}`}
           </span>
         </Button>
+        
+        {/* Calculated odds message for superadmin only */}
+        {isCalculatedOdds && isSuperAdmin && (
+          <div className="mt-1 text-center">
+            <p className="text-xs text-muted-foreground">
+              Cuota calculada
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
