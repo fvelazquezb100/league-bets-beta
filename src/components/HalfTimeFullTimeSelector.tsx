@@ -5,10 +5,11 @@ import type { MatchData, BetValue } from '@/pages/Bets';
 interface HalfTimeFullTimeSelectorProps {
   match: MatchData;
   isFrozen: boolean;
+  hasUserBetOnMarket: (fixtureId: number, marketName: string, selection: string) => boolean;
   handleAddToSlip: (match: MatchData, marketName: string, selection: BetValue) => void;
 }
 
-const HalfTimeFullTimeSelector = ({ match, isFrozen, handleAddToSlip }: HalfTimeFullTimeSelectorProps) => {
+const HalfTimeFullTimeSelector = ({ match, isFrozen, hasUserBetOnMarket, handleAddToSlip }: HalfTimeFullTimeSelectorProps) => {
   const [halfTimeResult, setHalfTimeResult] = useState<string>('');
   const [fullTimeResult, setFullTimeResult] = useState<string>('');
   const [currentOdds, setCurrentOdds] = useState('0.00');

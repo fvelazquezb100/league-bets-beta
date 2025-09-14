@@ -6,10 +6,11 @@ import type { MatchData, BetValue } from '@/pages/Bets';
 interface ExactScoreSelectorProps {
   match: MatchData;
   isFrozen: boolean;
+  hasUserBetOnMarket: (fixtureId: number, marketName: string, selection: string) => boolean;
   handleAddToSlip: (match: MatchData, marketName: string, selection: BetValue) => void;
 }
 
-const ExactScoreSelector = ({ match, isFrozen, handleAddToSlip }: ExactScoreSelectorProps) => {
+const ExactScoreSelector = ({ match, isFrozen, hasUserBetOnMarket, handleAddToSlip }: ExactScoreSelectorProps) => {
   const [homeGoals, setHomeGoals] = useState(0);
   const [awayGoals, setAwayGoals] = useState(0);
   const [currentOdds, setCurrentOdds] = useState<string>('0.00');
