@@ -282,11 +282,14 @@ const Bets = () => {
       kickoff: match.fixture.date,
     };
 
-    if (selectedBets.some(b => b.id === bet.id)) {
+    // Check if this bet is already selected in the slip
+    const existingBet = selectedBets.find(b => b.id === bet.id);
+    if (existingBet) {
+      // Remove from slip (toggle off)
+      setSelectedBets(prev => prev.filter(b => b.id !== bet.id));
       toast({
-        title: 'Selección ya añadida',
-        description: 'Ya has añadido esta selección a tu boleto.',
-        variant: 'destructive',
+        title: 'Selección eliminada',
+        description: `${selection.value} eliminada del boleto`,
       });
       return;
     }
@@ -372,22 +375,11 @@ const Bets = () => {
   };
 
   const hasUserBetOnMarket = (fixtureId: number, marketName: string, selection: string) => {
-    const bets = getBetsForFixture(fixtureId);
-    return bets.some(bet => {
-      if (bet.bet_selections && bet.bet_selections.length > 0) {
-        return bet.bet_selections.some(sel => 
-          sel.fixture_id === fixtureId && sel.market === marketName && sel.selection === selection
-        );
-      }
-      if (bet.bet_type === 'single' && bet.fixture_id === fixtureId && bet.bet_selection && bet.market_bets) {
-        const parts = bet.bet_selection.split(' @ ');
-        if (parts.length >= 1) {
-          const betSelection = parts[0].trim();
-          return bet.market_bets === marketName && betSelection === selection;
-        }
-      }
-      return false;
-    });
+    // Only check if this selection is in the current slip (selectedBets)
+    // Do NOT check placed bets from database
+    return selectedBets.some(bet => 
+      bet.fixtureId === fixtureId && bet.market === marketName && bet.selection === selection
+    );
   };
 
   // Get matches by league

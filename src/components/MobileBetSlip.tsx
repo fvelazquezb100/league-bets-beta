@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import { X, DollarSign, ChevronUp, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -252,132 +253,127 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll }: MobileBetSlipP
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t shadow-lg">
-      {/* Collapsed State - Always Visible */}
-      <div 
-        className="px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Boleto</span>
-              <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
-                {selectedBets.length}
-              </span>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              Cuota: {totalOdds.toFixed(2)}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {stake && (
-              <div className="text-sm font-medium">
-                Ganancia: {potentialWinnings} pts
+    <Drawer open={isExpanded} onOpenChange={setIsExpanded}>
+      {/* Fixed Bottom Bar - Always Visible */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t shadow-lg">
+        <DrawerTrigger asChild>
+          <div className="px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Boleto</span>
+                  <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
+                    {selectedBets.length}
+                  </span>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Cuota: {totalOdds.toFixed(2)}
+                </div>
               </div>
-            )}
-            {isExpanded ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronUp className="h-4 w-4" />
-            )}
+              <div className="flex items-center gap-2">
+                {stake && (
+                  <div className="text-sm font-medium">
+                    Ganancia: {potentialWinnings} pts
+                  </div>
+                )}
+                <ChevronUp className="h-4 w-4" />
+              </div>
+            </div>
           </div>
-        </div>
+        </DrawerTrigger>
       </div>
 
-      {/* Expanded State */}
-      {isExpanded && (
-        <div className="border-t bg-background max-h-[70vh] overflow-y-auto">
-          <div className="p-4 space-y-4">
-            {/* Selected Bets */}
-            <div className="space-y-3">
-              {selectedBets.map((bet) => (
-                <div key={bet.id} className="border rounded-lg p-3">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{bet.matchDescription}</p>
-                      <p className="text-xs text-muted-foreground">{getBettingTranslation(bet.market)}</p>
-                      <p className="text-sm font-semibold">{getBettingTranslation(bet.selection)}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-primary">{bet.odds.toFixed(2)}</span>
-                      <Button
-                        size="sm"
-                        onClick={() => onRemoveBet(bet.id)}
-                        className="jambol-button h-6 w-6 p-0 hover:bg-destructive hover:text-destructive-foreground"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
+      {/* Drawer Content */}
+      <DrawerContent className="max-h-[85vh]">
+        <div className="p-4 space-y-4">
+          {/* Selected Bets */}
+          <div className="space-y-3">
+            {selectedBets.map((bet) => (
+              <div key={bet.id} className="border rounded-lg p-3">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{bet.matchDescription}</p>
+                    <p className="text-xs text-muted-foreground">{getBettingTranslation(bet.market)}</p>
+                    <p className="text-sm font-semibold">{getBettingTranslation(bet.selection)}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-primary">{bet.odds.toFixed(2)}</span>
+                    <Button
+                      size="sm"
+                      onClick={() => onRemoveBet(bet.id)}
+                      className="jambol-button h-6 w-6 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
                   </div>
                 </div>
-              ))}
+              </div>
+            ))}
+          </div>
+
+          <Separator />
+
+          {/* Betting Form */}
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="stake">Importe (pts)</Label>
+              <Input
+                id="stake"
+                type="number"
+                placeholder="0.00"
+                value={stake}
+                onChange={(e) => setStake(e.target.value)}
+                min="0"
+                step="0.01"
+              />
             </div>
 
-            <Separator />
-
-            {/* Betting Form */}
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="stake">Importe (pts)</Label>
-                <Input
-                  id="stake"
-                  type="number"
-                  placeholder="0.00"
-                  value={stake}
-                  onChange={(e) => setStake(e.target.value)}
-                  min="0"
-                  step="0.01"
-                />
+            {weeklyBudget !== null && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-2 rounded">
+                <DollarSign className="h-4 w-4" />
+                <span>Presupuesto Semanal: <span className="font-semibold">{weeklyBudget} pts</span></span>
               </div>
+            )}
 
-              {weeklyBudget !== null && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-2 rounded">
-                  <DollarSign className="h-4 w-4" />
-                  <span>Presupuesto Semanal: <span className="font-semibold">{weeklyBudget} pts</span></span>
-                </div>
-              )}
-
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>Cuota Total:</span>
-                  <span className="font-semibold">{totalOdds.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Ganancia Potencial:</span>
-                  <span className="font-semibold text-primary">{potentialWinnings} pts</span>
-                </div>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span>Cuota Total:</span>
+                <span className="font-semibold">{totalOdds.toFixed(2)}</span>
               </div>
-
-              <div className="space-y-2">
-                <Button
-                  className="jambol-button w-full"
-                  onClick={handlePlaceBet}
-                  disabled={
-                    isSubmitting || 
-                    !stake || 
-                    parseFloat(stake) <= 0 || 
-                    (selectedBets.length > 1 && hasDuplicateFixtures) ||
-                    selectedBets.some(bet => bet.kickoff ? (new Date() >= new Date(new Date(bet.kickoff).getTime() - 15 * 60 * 1000)) : false)
-                  }
-                >
-                  {isSubmitting ? 'Procesando...' : 'Realizar Apuestas'}
-                </Button>
-                <Button
-                  className="jambol-button w-full"
-                  onClick={() => {
-                    onClearAll();
-                    setIsExpanded(false);
-                  }}
-                >
-                  Limpiar Boleto
-                </Button>
+              <div className="flex justify-between">
+                <span>Ganancia Potencial:</span>
+                <span className="font-semibold text-primary">{potentialWinnings} pts</span>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Button
+                className="jambol-button w-full"
+                onClick={handlePlaceBet}
+                disabled={
+                  isSubmitting || 
+                  !stake || 
+                  parseFloat(stake) <= 0 || 
+                  (selectedBets.length > 1 && hasDuplicateFixtures) ||
+                  selectedBets.some(bet => bet.kickoff ? (new Date() >= new Date(new Date(bet.kickoff).getTime() - 15 * 60 * 1000)) : false)
+                }
+              >
+                {isSubmitting ? 'Procesando...' : 'Realizar Apuestas'}
+              </Button>
+              <Button
+                className="jambol-button w-full"
+                onClick={() => {
+                  onClearAll();
+                  setIsExpanded(false);
+                }}
+              >
+                Limpiar Boleto
+              </Button>
             </div>
           </div>
         </div>
-      )}
-    </div>
+      </DrawerContent>
+    </Drawer>
   );
 };
 
