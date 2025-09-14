@@ -6,10 +6,11 @@ import type { MatchData, BetValue } from '@/pages/Bets';
 interface OverUnderSelectorProps {
   match: MatchData;
   isFrozen: boolean;
+  hasUserBetOnMarket: (fixtureId: number, marketName: string, selection: string) => boolean;
   handleAddToSlip: (match: MatchData, marketName: string, selection: BetValue) => void;
 }
 
-const OverUnderSelector = ({ match, isFrozen, handleAddToSlip }: OverUnderSelectorProps) => {
+const OverUnderSelector = ({ match, isFrozen, hasUserBetOnMarket, handleAddToSlip }: OverUnderSelectorProps) => {
   const [threshold, setThreshold] = useState(2.5);
   const [underOdds, setUnderOdds] = useState<string>('0.00');
   const [overOdds, setOverOdds] = useState<string>('0.00');
@@ -111,13 +112,19 @@ const OverUnderSelector = ({ match, isFrozen, handleAddToSlip }: OverUnderSelect
           <Button
             onClick={handleUnderBet}
             disabled={isFrozen || underOdds === '0.00'}
-            className={`w-full h-12 transition-all duration-200 hover:scale-[1.02] jambol-button ${
+            className={`w-full h-12 transition-all duration-200 hover:scale-[1.02] ${
+              hasUserBetOnMarket(match.fixture.id, 'Goles Más/Menos de', `Under ${threshold}`)
+                ? 'bg-[#FFC72C] text-black border-2 border-[#FFC72C] hover:bg-[#FFC72C]/90 font-bold'
+                : 'jambol-button'
+            } ${
               underOdds === '0.00' 
                 ? 'opacity-50 cursor-not-allowed' 
                 : ''
             }`}
           >
-            <span className="text-lg font-bold">{underOdds}</span>
+            <div className="flex flex-col items-center">
+              <span className="text-lg font-bold">{underOdds}</span>
+            </div>
           </Button>
         </div>
 
@@ -157,13 +164,19 @@ const OverUnderSelector = ({ match, isFrozen, handleAddToSlip }: OverUnderSelect
           <Button
             onClick={handleOverBet}
             disabled={isFrozen || overOdds === '0.00'}
-            className={`w-full h-12 transition-all duration-200 hover:scale-[1.02] jambol-button ${
+            className={`w-full h-12 transition-all duration-200 hover:scale-[1.02] ${
+              hasUserBetOnMarket(match.fixture.id, 'Goles Más/Menos de', `Over ${threshold}`)
+                ? 'bg-[#FFC72C] text-black border-2 border-[#FFC72C] hover:bg-[#FFC72C]/90 font-bold'
+                : 'jambol-button'
+            } ${
               overOdds === '0.00' 
                 ? 'opacity-50 cursor-not-allowed' 
                 : ''
             }`}
           >
-            <span className="text-lg font-bold">{overOdds}</span>
+            <div className="flex flex-col items-center">
+              <span className="text-lg font-bold">{overOdds}</span>
+            </div>
           </Button>
         </div>
       </div>

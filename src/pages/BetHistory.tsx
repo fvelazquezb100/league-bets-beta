@@ -18,6 +18,7 @@ export const BetHistory = () => {
   const [bets, setBets] = useState<any[]>([]);
   const [now, setNow] = useState<Date>(new Date());
   const [cancelingId, setCancelingId] = useState<number | null>(null);
+  const [timeLeft, setTimeLeft] = useState<{ [betId: number]: string }>({});
   const [matchResults, setMatchResults] = useState<Record<number, string>>({});
   const [matchKickoffs, setMatchKickoffs] = useState<Record<number, Date>>({});
   const [activeFilter, setActiveFilter] = useState<'all' | 'won' | 'pending'>('all');
@@ -105,9 +106,25 @@ export const BetHistory = () => {
   }, [user]);
 
   useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 30000);
+    const t = setInterval(() => setNow(new Date()), 1000); // Update every second
     return () => clearInterval(t);
   }, []);
+
+  // Update time remaining for each bet
+  useEffect(() => {
+    const newTimeLeft: { [betId: number]: string } = {};
+    
+    bets.forEach(bet => {
+      if (bet.status === 'pending') {
+        const cutoffTime = getBetCutoffTime(bet);
+        if (cutoffTime) {
+          newTimeLeft[bet.id] = formatTimeRemaining(cutoffTime);
+        }
+      }
+    });
+    
+    setTimeLeft(newTimeLeft);
+  }, [now, bets, matchKickoffs]);
 
   const handleCancelClick = (betId: number) => {
     setBetToCancel(betId);
@@ -170,21 +187,27 @@ export const BetHistory = () => {
   const successPercentage =
     settledBets > 0 ? Math.round((wonBets.length / settledBets) * 100) : 0;
 
-  // Function to check if a bet can be cancelled (15 minutes before kickoff)
-  const canCancelBet = (bet: any): boolean => {
-    if (bet.status !== 'pending') return false;
-    
+  // Function to get the cutoff time for a bet
+  const getBetCutoffTime = (bet: any): Date | null => {
     // For single bets
     if (bet.bet_type === 'single' && bet.fixture_id) {
       const kickoff = matchKickoffs[bet.fixture_id];
       if (kickoff) {
-        const cutoffTime = new Date(kickoff.getTime() - 15 * 60 * 1000); // 15 minutes before
-        return now < cutoffTime;
+        return new Date(kickoff.getTime() - 16 * 60 * 1000); // 16 minutes before
       }
     }
     
     // For combo bets
     if (bet.bet_type === 'combo' && bet.bet_selections) {
+      // Check if any selection is already finished (won or lost)
+      const hasFinishedSelection = bet.bet_selections.some((selection: any) => 
+        selection.status === 'won' || selection.status === 'lost'
+      );
+      
+      if (hasFinishedSelection) {
+        return null; // Cannot cancel if any match is already finished
+      }
+      
       // Find the earliest kickoff time among all selections
       let earliestKickoff: Date | null = null;
       
@@ -198,12 +221,41 @@ export const BetHistory = () => {
       });
       
       if (earliestKickoff) {
-        const cutoffTime = new Date(earliestKickoff.getTime() - 15 * 60 * 1000); // 15 minutes before
-        return now < cutoffTime;
+        return new Date(earliestKickoff.getTime() - 16 * 60 * 1000); // 16 minutes before
       }
     }
     
-    return false; // Default to false if we can't determine kickoff time
+    return null;
+  };
+
+  // Function to check if a bet can be cancelled (16 minutes before kickoff and no matches finished)
+  const canCancelBet = (bet: any): boolean => {
+    if (bet.status !== 'pending') return false;
+    
+    const cutoffTime = getBetCutoffTime(bet);
+    return cutoffTime ? now < cutoffTime : false;
+  };
+
+  // Function to format time remaining with seconds countdown
+  const formatTimeRemaining = (cutoffTime: Date): string => {
+    const timeDiff = cutoffTime.getTime() - now.getTime();
+    
+    if (timeDiff <= 0) {
+      return 'Tiempo agotado';
+    }
+    
+    const totalSeconds = Math.floor(timeDiff / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m ${seconds}s`;
+    } else if (minutes > 0) {
+      return `${minutes}m ${seconds}s`;
+    } else {
+      return `${seconds}s`;
+    }
   };
 
   const getStatusText = (status: string) => {
@@ -412,14 +464,23 @@ export const BetHistory = () => {
                         </TableCell>
                         <TableCell>
                           {canCancelBet(bet) && (
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleCancelClick(bet.id)}
-                              disabled={cancelingId === bet.id}
-                            >
-                              {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
-                            </Button>
+                            <div className="flex flex-col items-end gap-1">
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleCancelClick(bet.id)}
+                                disabled={cancelingId === bet.id}
+                              >
+                                {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
+                              </Button>
+                              <span className={`text-xs font-mono ${
+                                timeLeft[bet.id]?.includes('s') && !timeLeft[bet.id]?.includes('m') 
+                                  ? 'text-red-500 font-bold animate-pulse' 
+                                  : 'text-muted-foreground'
+                              }`}>
+                                {timeLeft[bet.id] || 'Calculando...'}
+                              </span>
+                            </div>
                           )}
                         </TableCell>
                       </TableRow>,
@@ -477,14 +538,23 @@ export const BetHistory = () => {
                         </TableCell>
                         <TableCell>
                           {canCancelBet(bet) && (
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleCancelClick(bet.id)}
-                              disabled={cancelingId === bet.id}
-                            >
-                              {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
-                            </Button>
+                            <div className="flex flex-col items-end gap-1">
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleCancelClick(bet.id)}
+                                disabled={cancelingId === bet.id}
+                              >
+                                {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
+                              </Button>
+                              <span className={`text-xs font-mono ${
+                                timeLeft[bet.id]?.includes('s') && !timeLeft[bet.id]?.includes('m') 
+                                  ? 'text-red-500 font-bold animate-pulse' 
+                                  : 'text-muted-foreground'
+                              }`}>
+                                {timeLeft[bet.id] || 'Calculando...'}
+                              </span>
+                            </div>
                           )}
                         </TableCell>
                       </TableRow>
@@ -533,14 +603,19 @@ export const BetHistory = () => {
                         </span>
                       </div>
                       {canCancelBet(bet) && (
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleCancelClick(bet.id)}
-                          disabled={cancelingId === bet.id}
-                        >
-                          {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar'}
-                        </Button>
+                        <div className="flex flex-col items-end gap-1">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleCancelClick(bet.id)}
+                            disabled={cancelingId === bet.id}
+                          >
+                            {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar'}
+                          </Button>
+                          <span className="text-xs text-muted-foreground">
+                            {timeLeft[bet.id] || 'Calculando...'}
+                          </span>
+                        </div>
                       )}
                     </div>
 

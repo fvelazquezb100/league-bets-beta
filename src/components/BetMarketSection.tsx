@@ -31,6 +31,7 @@ const BetMarketSection = ({
       <ExactScoreSelector
         match={match}
         isFrozen={isFrozen}
+        hasUserBetOnMarket={hasUserBetOnMarket}
         handleAddToSlip={handleAddToSlip}
       />
     );
@@ -42,6 +43,7 @@ const BetMarketSection = ({
       <OverUnderSelector
         match={match}
         isFrozen={isFrozen}
+        hasUserBetOnMarket={hasUserBetOnMarket}
         handleAddToSlip={handleAddToSlip}
       />
     );
@@ -53,6 +55,7 @@ const BetMarketSection = ({
       <WinnerSelector
         match={match}
         isFrozen={isFrozen}
+        hasUserBetOnMarket={hasUserBetOnMarket}
         handleAddToSlip={handleAddToSlip}
       />
     );
@@ -69,6 +72,7 @@ const BetMarketSection = ({
       <HalfTimeFullTimeSelector
         match={match}
         isFrozen={isFrozen}
+        hasUserBetOnMarket={hasUserBetOnMarket}
         handleAddToSlip={handleAddToSlip}
       />
     );
@@ -80,6 +84,7 @@ const BetMarketSection = ({
       <ResultTotalGoalsSelector
         match={match}
         isFrozen={isFrozen}
+        hasUserBetOnMarket={hasUserBetOnMarket}
         handleAddToSlip={handleAddToSlip}
       />
     );
@@ -116,8 +121,10 @@ const BetMarketSection = ({
           return (
             <Button 
               key={value.value} 
-              className={`flex flex-col h-auto min-h-[60px] sm:min-h-[80px] transition-all duration-200 hover:scale-[1.02] jambol-button ${
-                hasUserBet ? 'opacity-75 bg-primary text-primary-foreground' : ''
+              className={`flex flex-col h-auto min-h-[60px] sm:min-h-[80px] transition-all duration-200 hover:scale-[1.02] ${
+                hasUserBet 
+                  ? 'bg-[#FFC72C] text-black border-2 border-[#FFC72C] hover:bg-[#FFC72C]/90 font-bold' 
+                  : 'jambol-button'
               }`} 
               disabled={isFrozen} 
               onClick={() => handleAddToSlip(match, betType.displayName, value)}
@@ -133,13 +140,11 @@ const BetMarketSection = ({
                     )) : displayText}
                   </span>
                   <span className="font-bold text-sm sm:text-base">{value.odd}</span>
-                  {hasUserBet && <span className="text-xs">✓ Apostado</span>}
                 </div>
               ) : (
                 <>
                   <span className="text-xs sm:text-sm">{displayText}</span>
                   <span className="font-bold text-sm sm:text-base">{value.odd}</span>
-                  {hasUserBet && <span className="text-xs">✓ Apostado</span>}
                 </>
               )}
             </Button>
