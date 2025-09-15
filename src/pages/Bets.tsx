@@ -396,12 +396,23 @@ const Bets = () => {
     return matches.filter(match => match.teams?.league_id === leagueId);
   };
 
-  // Calculate next Monday at 23:59
+  // Calculate next Monday at 23:59 (end of betting week)
   const getNextMondayEndOfDay = () => {
     const now = new Date();
     const nextMonday = new Date(now);
-    const daysUntilMonday = (1 + 7 - now.getDay()) % 7; // 0 = Sunday, 1 = Monday
-    nextMonday.setDate(now.getDate() + (daysUntilMonday === 0 ? 7 : daysUntilMonday));
+    const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    
+    // Calculate days until next Monday
+    let daysUntilMonday;
+    if (currentDay === 0) { // Sunday
+      daysUntilMonday = 1; // Next day is Monday
+    } else if (currentDay === 1) { // Monday
+      daysUntilMonday = 0; // Today is Monday
+    } else { // Tuesday to Saturday
+      daysUntilMonday = (8 - currentDay) % 7; // Days until next Monday
+    }
+    
+    nextMonday.setDate(now.getDate() + daysUntilMonday);
     nextMonday.setHours(23, 59, 59, 999);
     return nextMonday;
   };
