@@ -6,20 +6,25 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
+import { loginSchema, type LoginInput } from '@/schemas/validation';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { APP_CONFIG } from '@/config/app';
 
 export const Login = () => {
   const { signIn, user, loading } = useAuth();
+  const { handleError } = useErrorHandler();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
           <img 
-            src="https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/jambollogo.png" 
+            src={APP_CONFIG.ASSETS.LOGO} 
             alt="Jambol Logo" 
             className="h-20 jambol-logo-loading"
           />
@@ -36,19 +41,34 @@ export const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setValidationErrors({});
     setIsLoading(true);
+
+    // Validate form data
+    const formData: LoginInput = {
+      email,
+      password,
+    };
+
+    try {
+      loginSchema.parse(formData);
+    } catch (err: any) {
+      const errors: Record<string, string> = {};
+      err.errors?.forEach((error: any) => {
+        errors[error.path[0]] = error.message;
+      });
+      setValidationErrors(errors);
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const { error } = await signIn(email, password);
       if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          setError('Credenciales de inicio de sesión inválidas');
-        } else {
-          setError(error.message);
-        }
+        handleError(error, { component: 'Login', action: 'signIn' });
       }
     } catch (err) {
-      setError('Error de conexión. Inténtalo de nuevo.');
+      handleError(err, { component: 'Login', action: 'signIn' });
     } finally {
       setIsLoading(false);
     }
@@ -63,7 +83,7 @@ export const Login = () => {
             <div className="text-center mb-8">
               <Link to="/" className="flex flex-col items-center gap-4">
                 <img 
-                  src="https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/jambollogo.png" 
+                  src={APP_CONFIG.ASSETS.LOGO} 
                   alt="Jambol Logo" 
                   className="h-16 jambol-logo"
                 />
@@ -142,7 +162,7 @@ export const Login = () => {
         {/* Right side - Header Logo (Desktop only) */}
         <div className="hidden lg:flex lg:flex-1 lg:relative lg:bg-gradient-to-br lg:from-primary/10 lg:to-accent/10">
           <img 
-            src="https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/headerlogocort.png" 
+            src={APP_CONFIG.ASSETS.HEADER_LOGO} 
             alt="Jambol Header" 
             className="w-full h-full object-cover object-center"
           />

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { APP_CONFIG } from '@/config/app';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -95,7 +96,7 @@ export const UpdatePassword = () => {
         <header className="text-center mb-8">
           <div className="flex flex-col items-center gap-4">
             <img 
-              src="https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/jambollogo.png" 
+              src={APP_CONFIG.ASSETS.LOGO} 
               alt="Jambol Logo" 
               className="h-16 jambol-logo"
             />

@@ -1,5 +1,6 @@
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { APP_CONFIG } from '@/config/app';
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
@@ -18,7 +19,7 @@ const NotFound = () => {
       <div className="text-center">
         <div className="mb-8 flex justify-center">
           <img 
-            src="https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/jambollogo.png" 
+            src={APP_CONFIG.ASSETS.LOGO} 
             alt="Jambol Logo" 
             className="h-24 jambol-logo"
           />

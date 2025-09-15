@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
+import { APP_CONFIG } from '@/config/app';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -35,7 +36,7 @@ export const SuperAdminRoute: React.FC<SuperAdminRouteProps> = ({ children }) =>
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
           <img 
-            src="https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/jambollogo.png" 
+            src={APP_CONFIG.ASSETS.LOGO} 
             alt="Jambol Logo" 
             className="h-20 jambol-logo-loading"
           />

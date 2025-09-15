@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { APP_CONFIG } from '@/config/app';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 
@@ -11,7 +12,7 @@ export const Landing = () => {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
           <img 
-            src="https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/jambollogo.png" 
+            src={APP_CONFIG.ASSETS.LOGO} 
             alt="Jambol Logo" 
             className="h-20 jambol-logo-loading"
           />
@@ -36,7 +37,7 @@ export const Landing = () => {
           {/* Jambol Logo */}
           <div className="mb-8 flex justify-center">
             <img 
-              src="https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/jambollogo.png" 
+              src={APP_CONFIG.ASSETS.LOGO} 
               alt="Jambol Logo" 
               className="h-24 md:h-32 jambol-logo"
             />

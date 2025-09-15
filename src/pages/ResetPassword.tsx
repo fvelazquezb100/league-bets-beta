@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
+import { APP_CONFIG } from '@/config/app';
 
 export const ResetPassword = () => {
   const [email, setEmail] = useState('');
@@ -62,7 +63,7 @@ export const ResetPassword = () => {
         <header className="text-center mb-8">
           <Link to="/" className="flex flex-col items-center gap-4">
             <img 
-              src="https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/jambollogo.png" 
+              src={APP_CONFIG.ASSETS.LOGO} 
               alt="Jambol Logo" 
               className="h-16 jambol-logo"
             />
