@@ -8,10 +8,11 @@ import { supabase } from '@/integrations/supabase/client';
 interface ResultTotalGoalsSelectorProps {
   match: MatchData;
   isFrozen: boolean;
+  hasUserBetOnMarket: (fixtureId: number, marketName: string, selection: string) => boolean;
   handleAddToSlip: (match: MatchData, marketName: string, selection: BetValue) => void;
 }
 
-const ResultTotalGoalsSelector = ({ match, isFrozen, handleAddToSlip }: ResultTotalGoalsSelectorProps) => {
+const ResultTotalGoalsSelector = ({ match, isFrozen, hasUserBetOnMarket, handleAddToSlip }: ResultTotalGoalsSelectorProps) => {
   const [matchResult, setMatchResult] = useState<string>('');
   const [totalGoals, setTotalGoals] = useState<number>(2.5);
   const [overUnder, setOverUnder] = useState<'over' | 'under' | null>(null);

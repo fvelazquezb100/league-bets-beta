@@ -4,10 +4,11 @@ import type { MatchData, BetValue } from '@/pages/Bets';
 interface WinnerSelectorProps {
   match: MatchData;
   isFrozen: boolean;
+  hasUserBetOnMarket: (fixtureId: number, marketName: string, selection: string) => boolean;
   handleAddToSlip: (match: MatchData, marketName: string, selection: BetValue) => void;
 }
 
-const WinnerSelector = ({ match, isFrozen, handleAddToSlip }: WinnerSelectorProps) => {
+const WinnerSelector = ({ match, isFrozen, hasUserBetOnMarket, handleAddToSlip }: WinnerSelectorProps) => {
   // Find the three winner markets
   const findMarket = (marketName: string) => {
     if (!match.bookmakers || match.bookmakers.length === 0) return null;
@@ -39,7 +40,7 @@ const WinnerSelector = ({ match, isFrozen, handleAddToSlip }: WinnerSelectorProp
         <div className="flex gap-2 flex-1">
           {market.values.map((value: BetValue) => {
             let displayValue = value.value;
-            let buttonClass = "flex-1 h-10 transition-all duration-200 hover:scale-[1.02] hover:bg-success hover:text-success-foreground hover:border-success";
+            const hasUserBet = hasUserBetOnMarket(match.fixture.id, marketName, value.value);
             
             // Customize display based on selection
             if (value.value.toLowerCase().includes('home') || value.value === '1') {
@@ -55,7 +56,11 @@ const WinnerSelector = ({ match, isFrozen, handleAddToSlip }: WinnerSelectorProp
                 key={value.value}
                 onClick={() => handleBet(marketName, value)}
                 disabled={isFrozen}
-                className={`${buttonClass} jambol-button`}
+                className={`flex-1 h-10 transition-all duration-200 hover:scale-[1.02] ${
+                  hasUserBet 
+                    ? 'bg-[#FFC72C] text-black border-2 border-[#FFC72C] hover:bg-[#FFC72C]/90 font-bold' 
+                    : 'jambol-button'
+                }`}
               >
                 <div className="flex flex-col items-center">
                   <span className="text-xs font-medium">{displayValue}</span>
