@@ -8,6 +8,8 @@ import { X, DollarSign } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { getBettingTranslation } from '@/utils/bettingTranslations';
+import { betSchema, type BetInput } from '@/schemas/validation';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 interface Bet {
   id: string;

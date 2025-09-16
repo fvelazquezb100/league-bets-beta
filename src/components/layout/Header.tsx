@@ -5,6 +5,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { LogOut, User, DollarSign, Trophy, Menu, Home, History, Settings, Shield, Award } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
+import { APP_CONFIG } from '@/config/app';
 
 const navigationItems = [
   {
@@ -89,7 +90,7 @@ export const Header = () => {
         <div className="flex items-center justify-between">
           <Link to="/home" className="flex items-center gap-3">
             <img 
-              src="https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/jambollogo.png" 
+              src={APP_CONFIG.ASSETS.LOGO} 
               alt="Jambol Logo" 
               className="h-10 jambol-logo"
             />

@@ -7,9 +7,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { APP_CONFIG } from '@/config/app';
+import { signupSchema, type SignupInput } from '@/schemas/validation';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 export const Signup = () => {
   const { signUp, user, loading } = useAuth();
+  const { handleError } = useErrorHandler();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -20,6 +24,7 @@ export const Signup = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!username) {
@@ -53,7 +58,7 @@ export const Signup = () => {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
           <img 
-            src="https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/jambollogo.png" 
+            src={APP_CONFIG.ASSETS.LOGO} 
             alt="Jambol Logo" 
             className="h-20 jambol-logo-loading"
           />
@@ -70,10 +75,25 @@ export const Signup = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setValidationErrors({});
     setIsLoading(true);
 
-    if (!username) {
-      setError('El nombre de usuario es requerido');
+    // Validate form data
+    const formData: SignupInput = {
+      email,
+      password,
+      confirmPassword,
+      username,
+    };
+
+    try {
+      signupSchema.parse(formData);
+    } catch (err: any) {
+      const errors: Record<string, string> = {};
+      err.errors?.forEach((error: any) => {
+        errors[error.path[0]] = error.message;
+      });
+      setValidationErrors(errors);
       setIsLoading(false);
       return;
     }
@@ -84,31 +104,15 @@ export const Signup = () => {
       return;
     }
 
-    if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden');
-      setIsLoading(false);
-      return;
-    }
-
-    if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres');
-      setIsLoading(false);
-      return;
-    }
-
     try {
       const { error } = await signUp(email, password, username);
       if (error) {
-        if (error.message.includes('already registered')) {
-          setError('Este correo ya está registrado');
-        } else {
-          setError(error.message);
-        }
+        handleError(error, { component: 'Signup', action: 'signUp' });
       } else {
         setSuccess(true);
       }
     } catch (err) {
-      setError('Error de conexión. Inténtalo de nuevo.');
+      handleError(err, { component: 'Signup', action: 'signUp' });
     } finally {
       setIsLoading(false);
     }
@@ -145,7 +149,7 @@ export const Signup = () => {
             <div className="text-center mb-8">
               <Link to="/" className="flex flex-col items-center gap-4">
                 <img 
-                  src="https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/jambollogo.png" 
+                  src={APP_CONFIG.ASSETS.LOGO} 
                   alt="Jambol Logo" 
                   className="h-16 jambol-logo"
                 />
@@ -255,7 +259,7 @@ export const Signup = () => {
         {/* Right side - Header Logo (Desktop only) */}
         <div className="hidden lg:flex lg:flex-1 lg:relative lg:bg-gradient-to-br lg:from-primary/10 lg:to-accent/10">
           <img 
-            src="https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/headerlogocort.png" 
+            src={APP_CONFIG.ASSETS.HEADER_LOGO} 
             alt="Jambol Header" 
             className="w-full h-full object-cover object-center"
           />
