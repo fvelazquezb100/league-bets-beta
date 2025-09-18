@@ -321,37 +321,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Add SUPABASE_URL to vault for current environment
-DO $$
-DECLARE
-  current_project_ref text;
-BEGIN
-  -- Check if we're in staging or production based on existing function URLs
-  SELECT CASE 
-    WHEN EXISTS (
-      SELECT 1 FROM pg_proc p 
-      JOIN pg_namespace n ON p.pronamespace = n.oid 
-      WHERE n.nspname = 'public' 
-      AND p.proname = 'cron_process_results'
-      AND pg_get_functiondef(p.oid) LIKE '%lflxrkkzudsecvdfdxwl%'
-    ) THEN 'lflxrkkzudsecvdfdxwl'  -- Production
-    WHEN EXISTS (
-      SELECT 1 FROM pg_proc p 
-      JOIN pg_namespace n ON p.pronamespace = n.oid 
-      WHERE n.nspname = 'public' 
-      AND p.proname = 'cron_process_results'
-      AND pg_get_functiondef(p.oid) LIKE '%sbfgxxdpppgtgiclmctc%'
-    ) THEN 'sbfgxxdpppgtgiclmctc'  -- Staging
-    ELSE 'lflxrkkzudsecvdfdxwl'    -- Default to production
-  END INTO current_project_ref;
-  
-  -- Insert or update the SUPABASE_URL secret
-  INSERT INTO vault.secrets (name, secret) 
-  VALUES ('SUPABASE_URL', 'https://' || current_project_ref || '.supabase.co')
-  ON CONFLICT (name) 
-  DO UPDATE SET secret = EXCLUDED.secret;
-  
-  RAISE NOTICE 'SUPABASE_URL secret set for project: %', current_project_ref;
-END $$;
+-- Note: SUPABASE_URL secret should be manually added to vault.secrets through the Supabase dashboard
+-- This avoids permission issues during automated migrations
+-- The functions have been updated with fallback logic to detect the environment automatically
 
 SELECT 'Comprehensive UX improvements, mobile fixes, and security improvements completed' as message;
