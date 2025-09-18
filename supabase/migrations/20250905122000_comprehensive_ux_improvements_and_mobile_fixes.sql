@@ -13,14 +13,14 @@
 -- Add kickoff_time column to store the original kickoff date/time for each match
 -- This allows the cancel bet functionality to work even after matches have started
 ALTER TABLE public.match_results 
-ADD COLUMN kickoff_time TIMESTAMP WITH TIME ZONE;
+ADD COLUMN IF NOT EXISTS kickoff_time TIMESTAMP WITH TIME ZONE;
 
 -- Add a comment to document the purpose of this column
 COMMENT ON COLUMN public.match_results.kickoff_time IS 'Original kickoff date and time of the match, used for bet cancellation logic';
 
 -- Create indexes for better query performance
-CREATE INDEX idx_match_results_kickoff_time ON public.match_results(kickoff_time);
-CREATE INDEX idx_match_results_fixture_kickoff ON public.match_results(fixture_id, kickoff_time);
+CREATE INDEX IF NOT EXISTS idx_match_results_kickoff_time ON public.match_results(kickoff_time);
+CREATE INDEX IF NOT EXISTS idx_match_results_fixture_kickoff ON public.match_results(fixture_id, kickoff_time);
 
 -- ============================================================================
 -- PART 2: Update cancel_bet function to use match_results
