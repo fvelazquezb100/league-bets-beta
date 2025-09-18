@@ -241,7 +241,37 @@ Deno.serve(async (req) => {
     
     console.log('Cache updated successfully!');
 
-    // --- STEP 4: Dynamically schedule results processing 5 hours after the latest fixture ends ---
+    // --- STEP 4: Create/update match_results entries with kickoff_time ---
+    console.log('Creating/updating match_results entries with kickoff times...');
+    
+    const matchResultsUpserts = allFixturesData
+      .filter(fixture => fixture?.fixture?.id && fixture?.fixture?.date)
+      .map(fixture => ({
+        fixture_id: fixture.fixture.id,
+        kickoff_time: fixture.fixture.date,
+        // Don't overwrite existing result data, only set kickoff_time
+      }));
+    
+    console.log(`Upserting ${matchResultsUpserts.length} match_results entries with kickoff times`);
+    
+    if (matchResultsUpserts.length > 0) {
+      // Use upsert with onConflict to only update kickoff_time if the record doesn't exist
+      // or if kickoff_time is null
+      const { error: matchResultsError } = await supabaseAdmin
+        .from('match_results')
+        .upsert(matchResultsUpserts, { 
+          onConflict: 'fixture_id',
+          ignoreDuplicates: false 
+        });
+
+      if (matchResultsError) {
+        console.warn('Failed to upsert match_results entries:', matchResultsError.message);
+      } else {
+        console.log('Successfully created/updated match_results entries with kickoff times');
+      }
+    }
+
+    // --- STEP 5: Dynamically schedule results processing 5 hours after the latest fixture ends ---
     try {
       // Extract latest fixture kickoff time from the fetched fixtures
       const fixtureTimes: number[] = Array.isArray(allFixturesData)

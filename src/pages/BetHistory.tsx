@@ -5,105 +5,57 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Calendar, TrendingDown, TrendingUp, Trophy, CheckCircle, XCircle, Clock } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getBettingTranslation } from '@/utils/bettingTranslations';
 import { UserStatistics } from '@/components/UserStatistics';
+import { useUserBetHistory, useCancelBet } from '@/hooks/useUserBets';
+import { useMatchResults, useKickoffTimes } from '@/hooks/useMatchResults';
 
 export const BetHistory = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [bets, setBets] = useState<any[]>([]);
+  
+  // React Query hooks
+  const { data: bets = [], isLoading: betsLoading, refetch: refetchBets } = useUserBetHistory(user?.id);
+  const cancelBetMutation = useCancelBet();
+  
+  // Extract fixture IDs from bets for related data
+  const fixtureIds = useMemo(() => {
+    const ids = new Set<number>();
+    bets.forEach((bet) => {
+      if (bet.fixture_id) {
+        ids.add(bet.fixture_id);
+      }
+      if (bet.bet_selections) {
+        bet.bet_selections.forEach((selection: any) => {
+          if (selection.fixture_id) {
+            ids.add(selection.fixture_id);
+          }
+        });
+      }
+    });
+    return Array.from(ids);
+  }, [bets]);
+  
+  // Fetch related data
+  const { data: matchResults = {} } = useMatchResults(fixtureIds);
+  const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
+  
+  // Local UI state
   const [now, setNow] = useState<Date>(new Date());
-  const [cancelingId, setCancelingId] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState<{ [betId: number]: string }>({});
-  const [matchResults, setMatchResults] = useState<Record<number, string>>({});
-  const [matchKickoffs, setMatchKickoffs] = useState<Record<number, Date>>({});
   const [activeFilter, setActiveFilter] = useState<'all' | 'won' | 'pending'>('all');
   const [showStatistics, setShowStatistics] = useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [betToCancel, setBetToCancel] = useState<number | null>(null);
+  
+  // Derive canceling state from mutation
+  const cancelingId = cancelBetMutation.isPending ? betToCancel : null;
 
-  useEffect(() => {
-    const fetchBets = async () => {
-      if (!user) return;
-
-      const { data: betsData, error: betsError } = await supabase
-        .from('bets')
-        .select('*, bet_selections(*)')
-        .eq('user_id', user.id)
-        .order('id', { ascending: false });
-
-      if (betsError) {
-        console.error('Error fetching bets:', betsError);
-        return;
-      }
-
-      if (betsData) {
-        setBets(betsData);
-
-        // Get all unique fixture_ids from bets and bet_selections
-        const fixtureIds = new Set<number>();
-        betsData.forEach((bet) => {
-          if (bet.fixture_id) {
-            fixtureIds.add(bet.fixture_id);
-          }
-          if (bet.bet_selections) {
-            bet.bet_selections.forEach((selection: any) => {
-              if (selection.fixture_id) {
-                fixtureIds.add(selection.fixture_id);
-              }
-            });
-          }
-        });
-
-        // Fetch match results and kickoff times for these fixture_ids
-        if (fixtureIds.size > 0) {
-          try {
-            // Fetch match results
-            const { data: resultsData } = await (supabase as any)
-              .from('match_results')
-              .select('fixture_id, match_result')
-              .in('fixture_id', Array.from(fixtureIds));
-            
-            if (resultsData) {
-              const resultsMap: Record<number, string> = {};
-              resultsData.forEach((result: any) => {
-                resultsMap[result.fixture_id] = result.match_result;
-              });
-              setMatchResults(resultsMap);
-            }
-
-            // Fetch kickoff times from match_odds_cache
-            const { data: cacheData } = await supabase
-              .from('match_odds_cache')
-              .select('data')
-              .eq('id', 1)
-              .single();
-
-            if (cacheData?.data) {
-              const data = cacheData.data as any;
-              if (data.response) {
-                const kickoffsMap: Record<number, Date> = {};
-                data.response.forEach((match: any) => {
-                  if (match.fixture?.id && match.fixture?.date) {
-                    kickoffsMap[match.fixture.id] = new Date(match.fixture.date);
-                  }
-                });
-                setMatchKickoffs(kickoffsMap);
-              }
-            }
-          } catch (error) {
-            console.error('Error fetching match data:', error);
-          }
-        }
-      }
-    };
-
-    fetchBets();
-  }, [user]);
+  // Data fetching is now handled by React Query hooks above
+  // Automatic caching, background updates, and error handling!
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000); // Update every second
@@ -135,36 +87,24 @@ export const BetHistory = () => {
     if (!betToCancel) return;
     
     try {
-      setCancelingId(betToCancel);
-      const { data, error } = await supabase.rpc('cancel_bet', { bet_id_param: betToCancel });
-      setCancelingId(null);
+      await cancelBetMutation.mutateAsync(betToCancel);
+      
       setCancelDialogOpen(false);
       setBetToCancel(null);
-
-      if (error) {
-        console.error('Error canceling bet:', error);
-        toast({ title: 'No se pudo cancelar', description: error.message });
-        return;
-      }
-
-      if (data && typeof data === 'object' && 'success' in data) {
-        const result = data as { success: boolean; message?: string; error?: string };
-        if (result.success) {
-          setBets((prev) => prev.filter((b) => b.id !== betToCancel));
-          toast({
-            title: 'Apuesta cancelada',
-            description: result.message || 'Se ha reembolsado tu importe al presupuesto semanal.',
-          });
-        } else {
-          toast({ title: 'No se pudo cancelar', description: result.error || 'Error desconocido' });
-        }
-      }
-    } catch (e: any) {
-      setCancelingId(null);
+      
+      toast({
+        title: 'Apuesta cancelada',
+        description: 'Se ha reembolsado tu importe al presupuesto semanal.',
+      });
+    } catch (error: any) {
       setCancelDialogOpen(false);
       setBetToCancel(null);
-      console.error('Unexpected error canceling bet:', e);
-      toast({ title: 'Error', description: 'Ha ocurrido un error al cancelar la apuesta.' });
+      console.error('Error canceling bet:', error);
+      toast({ 
+        title: 'Error', 
+        description: error?.message || 'Ha ocurrido un error al cancelar la apuesta.',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -484,8 +424,8 @@ export const BetHistory = () => {
                           )}
                         </TableCell>
                       </TableRow>,
-                      ...bet.bet_selections.map((selection: any) => (
-                         <TableRow key={`${bet.id}-${selection.id}`} className="bg-muted/10 border-l-2 border-muted">
+                      ...bet.bet_selections.map((selection: any, index: number) => (
+                         <TableRow key={`${bet.id}-${selection.id || index}`} className="bg-muted/10 border-l-2 border-muted">
                            <TableCell className="font-medium pl-8">
                              {getMatchResultDisplay(selection.match_description, selection.fixture_id)}
                            </TableCell>
@@ -628,8 +568,8 @@ export const BetHistory = () => {
                     {/* Detalles de la apuesta */}
                     <div className="space-y-3">
                       {bet.bet_type === 'combo' && bet.bet_selections?.length ? (
-                        bet.bet_selections.map((selection: any) => (
-                          <div key={selection.id} className="space-y-1">
+                        bet.bet_selections.map((selection: any, index: number) => (
+                          <div key={selection.id || `selection-${index}`} className="space-y-1">
                             {/* Partido con resultado en la misma línea */}
                             <div className="flex items-center justify-between">
                               <div className="text-sm font-medium">

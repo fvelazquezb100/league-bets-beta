@@ -32,15 +32,26 @@ export const ensureUserProfile = async (user: User): Promise<boolean> => {
     }
 
     // Generate username from email or metadata
-    let username = user.user_metadata?.username || user.email?.split('@')[0] || 'Usuario';
+    let baseUsername = user.user_metadata?.username || user.email?.split('@')[0] || 'Usuario';
+    let username = baseUsername;
     
-    // Check if username is taken
-    const { data: usernameExists } = await supabase
-      .rpc('check_username_availability', { username_to_check: username });
+    // Check if username is taken and find available one
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    while (attempts < maxAttempts) {
+      const { data: isAvailable } = await supabase
+        .rpc('check_username_availability', { username_to_check: username });
 
-    // If username exists, append random number
-    if (usernameExists) {
-      username = `${username}${Math.floor(Math.random() * 1000)}`;
+      // If username is available (function returns true when available)
+      if (isAvailable) {
+        break;
+      }
+      
+      // Username is taken, try with suffix
+      attempts++;
+      const suffix = Math.floor(100 + Math.random() * 900); // 3-digit suffix
+      username = `${baseUsername}_${suffix}`;
     }
 
     // Create profile
