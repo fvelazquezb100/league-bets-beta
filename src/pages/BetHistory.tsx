@@ -117,9 +117,9 @@ export const BetHistory = () => {
   const lostBets = bets.filter((bet) => bet.status === 'lost');
   const pendingBets = bets.filter((bet) => bet.status === 'pending').length;
 
-  const totalBetAmount = bets.reduce((sum, bet) => sum + (parseFloat(bet.stake) || 0), 0);
+  const totalBetAmount = bets.reduce((sum, bet) => sum + (bet.stake || 0), 0);
   const totalPayout = bets.reduce(
-    (sum, bet) => sum + (bet.status === 'won' ? (parseFloat(bet.payout) || 0) : 0),
+    (sum, bet) => sum + (bet.status === 'won' ? (bet.payout || 0) : 0),
     0
   );
 
@@ -264,8 +264,8 @@ export const BetHistory = () => {
     return (
       <div>
         <div>{matchName}</div>
-        {result && (
-          <div className="text-xs text-muted-foreground">{result}</div>
+        {result?.match_result && (
+          <div className="text-xs text-muted-foreground">{result.match_result}</div>
         )}
       </div>
     );
@@ -397,8 +397,8 @@ export const BetHistory = () => {
                           </div>
                         </TableCell>
                         <TableCell></TableCell>
-                        <TableCell>{parseFloat(bet.stake || 0).toFixed(0)} pts</TableCell>
-                        <TableCell>{parseFloat(bet.payout || 0).toFixed(0)} pts</TableCell>
+                        <TableCell>{(bet.stake || 0).toFixed(0)} pts</TableCell>
+                        <TableCell>{(bet.payout || 0).toFixed(0)} pts</TableCell>
                         <TableCell>
                           <Badge variant={getStatusVariant(bet.status)} className={getStatusClassName(bet.status)}>{getStatusText(bet.status)}</Badge>
                         </TableCell>
@@ -463,7 +463,7 @@ export const BetHistory = () => {
                               {(() => {
                                 const parts = bet.bet_selection?.split(' @ ') || [];
                                 const selection = getBettingTranslation(parts[0] || '');
-                                const odds = parts[1] ? parseFloat(parts[1]).toFixed(2) : parseFloat(bet.odds || 0).toFixed(2);
+                                const odds = parts[1] ? parseFloat(parts[1]).toFixed(2) : (bet.odds || 0).toFixed(2);
                                 return `${selection} @ ${odds}`;
                               })()}
                             </>
@@ -471,8 +471,8 @@ export const BetHistory = () => {
                             bet.bet_selection
                           )}
                         </TableCell>
-                        <TableCell>{parseFloat(bet.stake || 0).toFixed(0)} pts</TableCell>
-                        <TableCell>{parseFloat(bet.payout || 0).toFixed(0)} pts</TableCell>
+                        <TableCell>{(bet.stake || 0).toFixed(0)} pts</TableCell>
+                        <TableCell>{(bet.payout || 0).toFixed(0)} pts</TableCell>
                         <TableCell>
                           <Badge variant={getStatusVariant(bet.status)} className={getStatusClassName(bet.status)}>{getStatusText(bet.status)}</Badge>
                         </TableCell>
@@ -561,8 +561,8 @@ export const BetHistory = () => {
 
                     {/* Información financiera */}
                     <div className="flex justify-between text-sm">
-                      <span>Apostado: <span className="font-medium">{parseFloat(bet.stake || 0).toFixed(0)} pts</span></span>
-                      <span>Ganancia: <span className="font-medium">{parseFloat(bet.payout || 0).toFixed(0)} pts</span></span>
+                      <span>Apostado: <span className="font-medium">{(bet.stake || 0).toFixed(0)} pts</span></span>
+                      <span>Ganancia: <span className="font-medium">{(bet.payout || 0).toFixed(0)} pts</span></span>
                     </div>
 
                     {/* Detalles de la apuesta */}
@@ -575,9 +575,9 @@ export const BetHistory = () => {
                               <div className="text-sm font-medium">
                                 {getMatchName(selection.match_description)}
                               </div>
-                              {matchResults[selection.fixture_id] && (
+                              {matchResults[selection.fixture_id]?.match_result && (
                                 <div className="text-xs text-muted-foreground">
-                                  ({matchResults[selection.fixture_id]})
+                                  ({matchResults[selection.fixture_id].match_result})
                                 </div>
                               )}
                             </div>
@@ -595,9 +595,9 @@ export const BetHistory = () => {
                             <div className="text-sm font-medium">
                               {getMatchName(bet.match_description)}
                             </div>
-                            {matchResults[bet.fixture_id] && (
+                            {matchResults[bet.fixture_id]?.match_result && (
                               <div className="text-xs text-muted-foreground">
-                                ({matchResults[bet.fixture_id]})
+                                ({matchResults[bet.fixture_id].match_result})
                               </div>
                             )}
                           </div>

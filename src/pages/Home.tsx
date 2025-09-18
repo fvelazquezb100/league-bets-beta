@@ -132,7 +132,7 @@ export const Home = () => {
               recentBets.map((bet) => {
                 const status = String(bet.status || 'pending');
                 const stake = Number(bet.stake ?? 0);
-                const payout = Number(bet.payout ?? 0);
+                const payout = bet.payout ?? 0;
                 const net = payout - stake;
                 const isWon = status === 'won';
                 const isLost = status === 'lost';

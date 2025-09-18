@@ -4,8 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 // Types for match results
 export interface MatchResult {
   fixture_id: number;
-  match_result: string;
-  kickoff_time?: string;
+  match_result: string | null;
+  kickoff_time?: string | null;
 }
 
 // Fetch match results for specific fixture IDs

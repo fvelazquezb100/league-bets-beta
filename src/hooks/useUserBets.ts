@@ -11,11 +11,18 @@ export interface UserBet {
   fixture_id?: number;
   bet_selection?: string;
   market_bets?: string;
+  payout?: number;
+  odds?: number;
+  week?: string;
+  created_at?: string;
   bet_selections?: {
+    id?: number;
     market: string;
     selection: string;
     odds: number;
     fixture_id?: number;
+    match_description?: string;
+    status?: string;
   }[];
 }
 
@@ -32,11 +39,18 @@ const fetchUserBets = async (userId: string): Promise<UserBet[]> => {
       fixture_id,
       bet_selection,
       market_bets,
+      payout,
+      odds,
+      week,
+      created_at,
       bet_selections (
+        id,
         market,
         selection,
         odds,
-        fixture_id
+        fixture_id,
+        match_description,
+        status
       )
     `)
     .eq('user_id', userId)
@@ -63,12 +77,17 @@ const fetchAllUserBets = async (userId: string): Promise<UserBet[]> => {
       bet_selection,
       market_bets,
       payout,
+      odds,
+      week,
       created_at,
       bet_selections (
+        id,
         market,
         selection,
         odds,
-        fixture_id
+        fixture_id,
+        match_description,
+        status
       )
     `)
     .eq('user_id', userId)
