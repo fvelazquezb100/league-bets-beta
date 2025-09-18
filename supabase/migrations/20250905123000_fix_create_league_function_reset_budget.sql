@@ -70,5 +70,4 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Add comment explaining the fix
-COMMENT ON FUNCTION public.create_league_and_join IS 'Creates a new league with proper default values including reset_budget=weekly (lowercase) to ensure compatibility with reset_weekly_budgets() function';
+-- Function updated successfully to include reset_budget and proper default values
