@@ -90,14 +90,73 @@ const fetchAllUserBets = async (userId: string): Promise<UserBet[]> => {
         status
       )
     `)
-    .eq('user_id', userId)
-    .order('id', { ascending: false });
+    .eq('user_id', userId);
 
   if (betsError) {
     throw new Error(`Failed to fetch user bet history: ${betsError.message}`);
   }
 
-  return betsData as UserBet[] || [];
+  if (!betsData) return [];
+
+  // Get all unique fixture IDs to fetch kickoff times
+  const fixtureIds = new Set<number>();
+  betsData.forEach(bet => {
+    if (bet.fixture_id) {
+      fixtureIds.add(bet.fixture_id);
+    }
+    if (bet.bet_selections) {
+      bet.bet_selections.forEach((selection: any) => {
+        if (selection.fixture_id) {
+          fixtureIds.add(selection.fixture_id);
+        }
+      });
+    }
+  });
+
+  // Fetch kickoff times for all fixtures
+  const { data: kickoffData } = await supabase
+    .from('match_results')
+    .select('fixture_id, kickoff_time')
+    .in('fixture_id', Array.from(fixtureIds));
+
+  const kickoffMap: Record<number, string> = {};
+  kickoffData?.forEach(match => {
+    kickoffMap[match.fixture_id] = match.kickoff_time;
+  });
+
+  // Sort bets by earliest match kickoff time
+  const sortedBets = betsData.sort((a, b) => {
+    const getEarliestKickoff = (bet: any): Date => {
+      let earliestDate = new Date('2099-12-31'); // Far future as default
+      
+      // For single bets
+      if (bet.fixture_id && kickoffMap[bet.fixture_id]) {
+        earliestDate = new Date(kickoffMap[bet.fixture_id]);
+      }
+      
+      // For combo bets, find the earliest match
+      if (bet.bet_selections) {
+        bet.bet_selections.forEach((selection: any) => {
+          if (selection.fixture_id && kickoffMap[selection.fixture_id]) {
+            const selectionDate = new Date(kickoffMap[selection.fixture_id]);
+            if (selectionDate < earliestDate) {
+              earliestDate = selectionDate;
+            }
+          }
+        });
+      }
+      
+      return earliestDate;
+    };
+
+    const dateA = getEarliestKickoff(a);
+    const dateB = getEarliestKickoff(b);
+    
+    // Sort by kickoff time descending (most recent matches first)
+    return dateB.getTime() - dateA.getTime();
+  });
+
+  return sortedBets as UserBet[];
 };
 
 // Cancel bet function
