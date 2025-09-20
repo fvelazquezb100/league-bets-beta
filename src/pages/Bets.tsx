@@ -378,6 +378,21 @@ const Bets = () => {
                         {getBetTypesSorted().map(betType => {
                           const market = findMarket(match, betType.apiName);
                           
+                          // Special case for Result/Total Goals - always show even if market not found
+                          // The component will calculate odds internally
+                          if (betType.apiName === 'Result/Total Goals') {
+                            return (
+                              <BetMarketSection
+                                key={betType.apiName}
+                                match={match}
+                                betType={betType}
+                                market={market || { id: 0, name: 'Result/Total Goals', values: [] }}
+                                isFrozen={isFrozen}
+                                hasUserBetOnMarket={hasUserBetOnMarket}
+                                handleAddToSlip={handleAddToSlip}
+                              />
+                            );
+                          }
                           
                           if (!market) return null;
 

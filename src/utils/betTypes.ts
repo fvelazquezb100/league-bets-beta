@@ -85,9 +85,11 @@ export const BET_TYPES: Record<string, BetTypeConfig> = {
   }
 };
 
-// Get bet types sorted by display order
+// Get bet types sorted by display order (exclude hidden markets)
 export const getBetTypesSorted = (): BetTypeConfig[] => {
-  return Object.values(BET_TYPES).sort((a, b) => a.order - b.order);
+  return Object.values(BET_TYPES)
+    .filter(betType => betType.order < 90) // Exclude hidden markets (order >= 90)
+    .sort((a, b) => a.order - b.order);
 };
 
 // Get bet types by category
