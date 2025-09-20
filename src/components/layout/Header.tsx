@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { LogOut, User, DollarSign, Trophy, Menu, Home, History, Settings, Shield, Award } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
 import { APP_CONFIG } from '@/config/app';
+import { LdrsLoader } from '@/components/ui/ldrs-loader';
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 const navigationItems = [
   {
@@ -138,10 +140,16 @@ export const Header = () => {
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" size="sm" className="md:hidden border-[#FFC72C] text-[#FFC72C] hover:bg-[#FFC72C] hover:text-black">
-                  <Menu className="h-4 w-4" />
+                  <LdrsLoader type="hatch" size="18" color="#FFC72C" speed="7.0" stroke="3" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-80">
+                <VisuallyHidden>
+                  <SheetTitle>Menú de navegación</SheetTitle>
+                  <SheetDescription>
+                    Accede a todas las secciones de tu liga
+                  </SheetDescription>
+                </VisuallyHidden>
                 <div className="flex flex-col h-full">
                   {/* Header */}
                   <div className="pb-4 mb-4 border-b">

@@ -21,7 +21,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
       try {
         setLoading(true);
 
-        // 1. Traemos apuestas
+        // 1. Traemos apuestas (solo ganadas o perdidas)
         const { data: betsData, error: betsError } = await supabase
           .from('bets')
           .select(`
@@ -37,6 +37,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
             )
           `)
           .eq('user_id', playerId)
+          .in('status', ['won', 'lost'])
           .order('id', { ascending: false });
 
         if (betsError) {
@@ -165,7 +166,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
         <CardContent>
           {bets.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
-              No se encontraron apuestas visibles para este jugador.
+              Este jugador no tiene apuestas finalizadas (ganadas o perdidas) todavía.
             </p>
           ) : (
             <>
@@ -358,7 +359,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
       <div className="block sm:hidden">
         {bets.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">
-            No se encontraron apuestas visibles para este jugador.
+            Este jugador no tiene apuestas finalizadas (ganadas o perdidas) todavía.
           </div>
         ) : (
           <div className="space-y-4">

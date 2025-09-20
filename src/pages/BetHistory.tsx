@@ -75,7 +75,14 @@ export const BetHistory = () => {
       }
     });
     
-    setTimeLeft(newTimeLeft);
+    // Only update if there are actual changes
+    setTimeLeft(prevTimeLeft => {
+      const hasChanges = Object.keys(newTimeLeft).some(
+        key => newTimeLeft[parseInt(key)] !== prevTimeLeft[parseInt(key)]
+      ) || Object.keys(prevTimeLeft).length !== Object.keys(newTimeLeft).length;
+      
+      return hasChanges ? newTimeLeft : prevTimeLeft;
+    });
   }, [now, bets, matchKickoffs]);
 
   const handleCancelClick = (betId: number) => {
@@ -113,12 +120,15 @@ export const BetHistory = () => {
     setBetToCancel(null);
   };
 
-  const wonBets = bets.filter((bet) => bet.status === 'won');
-  const lostBets = bets.filter((bet) => bet.status === 'lost');
-  const pendingBets = bets.filter((bet) => bet.status === 'pending').length;
+  // Filter out cancelled bets from statistics
+  const activeBets = bets.filter((bet) => bet.status !== 'cancelled');
+  
+  const wonBets = activeBets.filter((bet) => bet.status === 'won');
+  const lostBets = activeBets.filter((bet) => bet.status === 'lost');
+  const pendingBets = activeBets.filter((bet) => bet.status === 'pending').length;
 
-  const totalBetAmount = bets.reduce((sum, bet) => sum + (bet.stake || 0), 0);
-  const totalPayout = bets.reduce(
+  const totalBetAmount = activeBets.reduce((sum, bet) => sum + (bet.stake || 0), 0);
+  const totalPayout = activeBets.reduce(
     (sum, bet) => sum + (bet.status === 'won' ? (bet.payout || 0) : 0),
     0
   );
@@ -206,6 +216,8 @@ export const BetHistory = () => {
         return 'Ganada';
       case 'lost':
         return 'Perdida';
+      case 'cancelled':
+        return 'Cancelada';
       default:
         return status;
     }
@@ -219,6 +231,8 @@ export const BetHistory = () => {
         return 'destructive';
       case 'pending':
         return 'secondary';
+      case 'cancelled':
+        return 'outline';
       default:
         return 'secondary';
     }
@@ -227,6 +241,9 @@ export const BetHistory = () => {
   const getStatusClassName = (status: string) => {
     if (status === 'pending') {
       return 'bg-white text-black border-2 border-[#FFC72C] hover:bg-white hover:text-black';
+    }
+    if (status === 'cancelled') {
+      return 'bg-white text-gray-600 border-2 border-gray-400 hover:bg-white hover:text-gray-600';
     }
     return '';
   };
@@ -239,6 +256,8 @@ export const BetHistory = () => {
         return 'bg-[#FFC72C] text-black border-2 border-[#FFC72C] hover:bg-[#FFC72C] hover:text-black';
       case 'lost':
         return 'bg-destructive hover:bg-destructive/90 text-destructive-foreground';
+      case 'cancelled':
+        return 'bg-white text-gray-600 border-2 border-gray-400 hover:bg-white hover:text-gray-600';
       default:
         return '';
     }
@@ -248,6 +267,7 @@ export const BetHistory = () => {
     switch (status) {
       case 'won': return <CheckCircle className="w-4 h-4 text-green-500" />;
       case 'lost': return <XCircle className="w-4 h-4 text-red-500" />;
+      case 'cancelled': return <XCircle className="w-4 h-4 text-gray-500" />;
       case 'pending': return null;
       default: return null;
     }
@@ -398,7 +418,7 @@ export const BetHistory = () => {
                         </TableCell>
                         <TableCell></TableCell>
                         <TableCell>{(bet.stake || 0).toFixed(0)} pts</TableCell>
-                        <TableCell>{(bet.payout || 0).toFixed(0)} pts</TableCell>
+                        <TableCell>{bet.status === 'cancelled' ? '-' : `${(bet.payout || 0).toFixed(0)} pts`}</TableCell>
                         <TableCell>
                           <Badge variant={getStatusVariant(bet.status)} className={getStatusClassName(bet.status)}>{getStatusText(bet.status)}</Badge>
                         </TableCell>
@@ -472,7 +492,7 @@ export const BetHistory = () => {
                           )}
                         </TableCell>
                         <TableCell>{(bet.stake || 0).toFixed(0)} pts</TableCell>
-                        <TableCell>{(bet.payout || 0).toFixed(0)} pts</TableCell>
+                        <TableCell>{bet.status === 'cancelled' ? '-' : `${(bet.payout || 0).toFixed(0)} pts`}</TableCell>
                         <TableCell>
                           <Badge variant={getStatusVariant(bet.status)} className={getStatusClassName(bet.status)}>{getStatusText(bet.status)}</Badge>
                         </TableCell>
@@ -562,7 +582,7 @@ export const BetHistory = () => {
                     {/* Información financiera */}
                     <div className="flex justify-between text-sm">
                       <span>Apostado: <span className="font-medium">{(bet.stake || 0).toFixed(0)} pts</span></span>
-                      <span>Ganancia: <span className="font-medium">{(bet.payout || 0).toFixed(0)} pts</span></span>
+                      <span>Ganancia: <span className="font-medium">{bet.status === 'cancelled' ? '-' : `${(bet.payout || 0).toFixed(0)} pts`}</span></span>
                     </div>
 
                     {/* Detalles de la apuesta */}

@@ -236,7 +236,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
 
       toast({
         title: '¡Apuesta realizada!',
-        description: `Apuesta ${selectedBets.length > 1 ? 'combinada' : ''} de pts${stake} realizada con éxito.`,
+        description: `Apuesta ${selectedBets.length > 1 ? 'combinada' : ''} de ${stake} pts realizada con éxito.`,
       });
 
       // Clear the bet slip

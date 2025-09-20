@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMatchOdds, type MatchData, type BetValue } from '@/hooks/useMatchOdds';
 import { useUserBets, type UserBet } from '@/hooks/useUserBets';
 import { useAvailableLeagues } from '@/hooks/useAvailableLeagues';
+import { MagicCard } from '@/components/ui/MagicCard';
 
 // Re-export types from hooks for compatibility
 export type { Team, Fixture, Teams, BetValue, BetMarket, Bookmaker, MatchData, CachedOddsData } from '@/hooks/useMatchOdds';
@@ -69,10 +70,16 @@ const Bets = () => {
   const scrollToItem = (id: number) => {
     const element = document.getElementById(`accordion-item-${id}`);
     if (element) {
-      element.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-        inline: "nearest"
+      // Intentar obtener la altura real del header
+      const header = document.querySelector('header');
+      const headerHeight = header ? header.offsetHeight + 40 : 140; // +40px de margen extra
+      
+      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+      const offsetPosition = elementPosition - headerHeight;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
       });
     }
   };
@@ -287,15 +294,24 @@ const Bets = () => {
           const isFrozen = new Date() >= freezeTime;
 
           return (
-            <div 
-              key={match.fixture.id} 
+            <MagicCard
+              key={match.fixture.id}
+              enableStars={true}
+              enableSpotlight={true}
+              enableBorderGlow={true}
+              enableTilt={false}
+              clickEffect={false}
+              enableMagnetism={false}
+              particleCount={6}
+              glowColor="255, 199, 44"
               className="border rounded-lg p-1 sm:p-4 bg-card shadow-sm w-full max-w-none"
-              id={`accordion-item-${match.fixture.id}`}
+              style={{ '--match-id': match.fixture.id } as React.CSSProperties}
             >
-              <button
-                onClick={() => toggle(match.fixture.id)}
-                className="w-full text-left flex items-center justify-between p-2 hover:bg-muted/50 rounded-md transition-colors"
-              >
+              <div id={`accordion-item-${match.fixture.id}`}>
+                <button
+                  onClick={() => toggle(match.fixture.id)}
+                  className="w-full text-left flex items-center justify-between p-2 hover:bg-muted/50 rounded-md transition-colors"
+                >
                 <div className="text-left w-full">
                   <div className="flex items-center justify-between">
                     <div>
@@ -304,7 +320,7 @@ const Bets = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       {getBetsForFixture(match.fixture.id).length > 0 && (
-                        <Badge variant="secondary" className="ml-2 bg-white text-black border-2 border-[#FFC72C]">
+                        <Badge variant="secondary" className="ml-2 bg-white text-black border-2 border-[#FFC72C] hover:bg-white focus:bg-white focus:ring-0 focus:ring-offset-0 cursor-default pointer-events-none">
                           {getBetsForFixture(match.fixture.id).length} apuesta{getBetsForFixture(match.fixture.id).length > 1 ? 's' : ''}
                         </Badge>
                       )}
@@ -388,7 +404,8 @@ const Bets = () => {
                   })()}
                 </div>
               )}
-            </div>
+              </div>
+            </MagicCard>
           )
         })}
       </div>
