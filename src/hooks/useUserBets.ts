@@ -124,8 +124,20 @@ const fetchAllUserBets = async (userId: string): Promise<UserBet[]> => {
     kickoffMap[match.fixture_id] = match.kickoff_time;
   });
 
-  // Sort bets by earliest match kickoff time
+  // Sort bets with complex logic: week > match date > bet ID
   const sortedBets = betsData.sort((a, b) => {
+    const weekA = Number(a.week) || 0;
+    const weekB = Number(b.week) || 0;
+    
+    // First sort by week (descending: latest week first, week 0 last)
+    if (weekA !== weekB) {
+      // Special handling for week 0 - always last
+      if (weekA === 0) return 1;
+      if (weekB === 0) return -1;
+      return weekB - weekA; // Higher weeks first
+    }
+    
+    // Within same week, sort by earliest match kickoff time
     const getEarliestKickoff = (bet: any): Date => {
       let earliestDate = new Date('2099-12-31'); // Far future as default
       
@@ -152,8 +164,14 @@ const fetchAllUserBets = async (userId: string): Promise<UserBet[]> => {
     const dateA = getEarliestKickoff(a);
     const dateB = getEarliestKickoff(b);
     
-    // Sort by kickoff time descending (most recent matches first)
-    return dateB.getTime() - dateA.getTime();
+    // If both have valid dates, sort by date (descending: most recent first)
+    if (dateA.getTime() !== new Date('2099-12-31').getTime() && 
+        dateB.getTime() !== new Date('2099-12-31').getTime()) {
+      return dateB.getTime() - dateA.getTime();
+    }
+    
+    // If no dates available, sort by bet ID (descending: newest first)
+    return b.id - a.id;
   });
 
   return sortedBets as UserBet[];

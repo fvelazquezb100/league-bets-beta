@@ -21,7 +21,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
       try {
         setLoading(true);
 
-        // 1. Traemos apuestas (solo ganadas o perdidas)
+        // 1. Traemos apuestas (solo ganadas o perdidas, excluyendo semana 0)
         const { data: betsData, error: betsError } = await supabase
           .from('bets')
           .select(`
@@ -38,7 +38,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
           `)
           .eq('user_id', playerId)
           .in('status', ['won', 'lost'])
-          .order('id', { ascending: false });
+          .not('week', 'eq', 0); // Exclude week 0 (historical bets)
 
         if (betsError) {
           console.error('Error fetching player bets:', betsError);
@@ -86,7 +86,53 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
           })),
         }));
 
-        setBets(betsWithResults);
+        // 5. Ordenar apuestas: por semana (desc) > fecha encuentro (desc) > ID (desc)
+        const sortedBets = betsWithResults.sort((a, b) => {
+          const weekA = Number(a.week) || 0;
+          const weekB = Number(b.week) || 0;
+          
+          // First sort by week (descending: latest week first)
+          if (weekA !== weekB) {
+            return weekB - weekA;
+          }
+          
+          // Within same week, sort by earliest match kickoff time
+          const getEarliestKickoff = (bet: any): Date => {
+            let earliestDate = new Date('2099-12-31'); // Far future as default
+            
+            // For single bets
+            if (bet.fixture_id && map[bet.fixture_id]) {
+              // We don't have kickoff times here, use a fallback
+              earliestDate = new Date('2000-01-01'); // Past date to indicate we have data
+            }
+            
+            // For combo bets, check if any selection has data
+            if (bet.bet_selections) {
+              bet.bet_selections.forEach((selection: any) => {
+                if (selection.fixture_id && map[selection.fixture_id]) {
+                  earliestDate = new Date('2000-01-01'); // Past date to indicate we have data
+                }
+              });
+            }
+            
+            return earliestDate;
+          };
+
+          const dateA = getEarliestKickoff(a);
+          const dateB = getEarliestKickoff(b);
+          
+          // If both have match data, they're equivalent for date sorting
+          // Fall back to bet ID sorting
+          if (dateA.getTime() !== new Date('2099-12-31').getTime() && 
+              dateB.getTime() !== new Date('2099-12-31').getTime()) {
+            return b.id - a.id; // Newer bets first
+          }
+          
+          // If no match data available, sort by bet ID (descending: newest first)
+          return b.id - a.id;
+        });
+
+        setBets(sortedBets);
       } catch (error) {
         console.error('Error fetching player bet history:', error);
         setBets([]);
