@@ -49,10 +49,36 @@ Deno.serve(async (req) => {
     if (providedUsername && typeof providedUsername === 'string') {
       username = providedUsername;
     } else {
-      const base = email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 20);
-      const suffix = Math.floor(1000 + Math.random() * 9000);
-      username = `${base}_${suffix}`;
+      // Generate base username from email without automatic suffix
+      username = email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 20);
     }
+
+    // Check if username already exists and add suffix only if necessary
+    let finalUsername = username;
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    while (attempts < maxAttempts) {
+      const { data: isAvailable, error: checkError } = await supabase
+        .rpc('check_username_availability', { username_to_check: finalUsername });
+      
+      if (checkError) {
+        console.warn('Error checking username availability:', checkError);
+        break; // Continue with current username if check fails
+      }
+      
+      if (isAvailable) {
+        // Username is available
+        break;
+      }
+      
+      // Username exists, try with suffix
+      attempts++;
+      const suffix = Math.floor(100 + Math.random() * 900); // 3-digit suffix
+      finalUsername = `${username}_${suffix}`;
+    }
+    
+    username = finalUsername;
 
     // Insert the profile (league_id left NULL on purpose)
     const { error: insertError } = await supabase

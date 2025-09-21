@@ -22,6 +22,7 @@ import { ResetPassword } from "./pages/ResetPassword";
 import { UpdatePassword } from "./pages/UpdatePassword";
 import { LeagueSetup } from "./pages/LeagueSetup";
 import { Settings } from "./pages/Settings";
+import { SmartRedirect } from "./components/SmartRedirect";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -46,51 +47,65 @@ const App = () => (
             } />
             <Route path="/home" element={
               <ProtectedRoute>
-                <MainLayout>
-                  <Home />
-                </MainLayout>
+                <SmartRedirect>
+                  <MainLayout>
+                    <Home />
+                  </MainLayout>
+                </SmartRedirect>
               </ProtectedRoute>
             } />
             <Route path="/clasificacion" element={
               <ProtectedRoute>
-                <MainLayout>
-                  <Clasificacion />
-                </MainLayout>
+                <SmartRedirect>
+                  <MainLayout>
+                    <Clasificacion />
+                  </MainLayout>
+                </SmartRedirect>
               </ProtectedRoute>
             } />
             <Route path="/bets" element={
               <ProtectedRoute>
-                <MainLayout>
-                  <Bets />
-                </MainLayout>
+                <SmartRedirect>
+                  <MainLayout>
+                    <Bets />
+                  </MainLayout>
+                </SmartRedirect>
               </ProtectedRoute>
             } />
             <Route path="/bet-history" element={
               <ProtectedRoute>
-                <MainLayout>
-                  <BetHistory />
-                </MainLayout>
+                <SmartRedirect>
+                  <MainLayout>
+                    <BetHistory />
+                  </MainLayout>
+                </SmartRedirect>
               </ProtectedRoute>
             } />
             <Route path="/settings" element={
               <ProtectedRoute>
-                <MainLayout>
-                  <Settings />
-                </MainLayout>
+                <SmartRedirect>
+                  <MainLayout>
+                    <Settings />
+                  </MainLayout>
+                </SmartRedirect>
               </ProtectedRoute>
             } />
             <Route path="/admin-liga" element={
               <AdminRoute>
-                <MainLayout>
-                  <AdminLiga />
-                </MainLayout>
+                <SmartRedirect>
+                  <MainLayout>
+                    <AdminLiga />
+                  </MainLayout>
+                </SmartRedirect>
               </AdminRoute>
             } />
             <Route path="/superadmin" element={
               <SuperAdminRoute>
-                <MainLayout>
-                  <SuperAdmin />
-                </MainLayout>
+                <SmartRedirect>
+                  <MainLayout>
+                    <SuperAdmin />
+                  </MainLayout>
+                </SmartRedirect>
               </SuperAdminRoute>
             } />
             <Route path="*" element={<NotFound />} />

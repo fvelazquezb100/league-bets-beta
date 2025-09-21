@@ -537,11 +537,9 @@ DECLARE
   v_earliest_kickoff timestamp with time zone;
   v_current_time timestamp with time zone := now();
   v_cutoff_time timestamp with time zone;
-  v_cache_data jsonb;
   v_fixture_id integer;
-  v_kickoff_str text;
   v_kickoff_time timestamp with time zone;
-  v_response_item jsonb;
+  v_match_result RECORD;
 BEGIN
   -- Get the bet details
   SELECT * INTO v_bet
@@ -558,15 +556,6 @@ BEGIN
     RAISE EXCEPTION 'Only pending bets can be cancelled';
   END IF;
 
-  -- Get cache data
-  SELECT data INTO v_cache_data
-  FROM match_odds_cache
-  WHERE id = 1;
-
-  IF v_cache_data IS NULL THEN
-    RAISE EXCEPTION 'Match odds cache not found';
-  END IF;
-
   -- Handle different bet types
   IF v_bet.bet_type = 'single' THEN
     -- Single bet logic
@@ -574,22 +563,16 @@ BEGIN
       RAISE EXCEPTION 'This bet is not linked to a fixture';
     END IF;
 
-    -- Look for fixture in the response array
-    FOR v_response_item IN SELECT * FROM jsonb_array_elements(v_cache_data->'response')
-    LOOP
-      IF (v_response_item->'fixture'->>'id')::integer = v_bet.fixture_id THEN
-        v_kickoff_str := v_response_item->'fixture'->>'date';
-        IF v_kickoff_str IS NOT NULL THEN
-          v_kickoff_time := v_kickoff_str::timestamp with time zone;
-          v_earliest_kickoff := v_kickoff_time;
-          EXIT; -- Found it, break out of loop
-        END IF;
-      END IF;
-    END LOOP;
+    -- Look for fixture kickoff time in match_results table
+    SELECT kickoff_time INTO v_kickoff_time
+    FROM match_results
+    WHERE fixture_id = v_bet.fixture_id;
 
-    IF v_earliest_kickoff IS NULL THEN
+    IF v_kickoff_time IS NULL THEN
       RAISE EXCEPTION 'Kickoff time not found for this fixture';
     END IF;
+
+    v_earliest_kickoff := v_kickoff_time;
 
   ELSIF v_bet.bet_type = 'combo' THEN
     -- Combo bet logic
@@ -601,22 +584,17 @@ BEGIN
       FROM bet_selections 
       WHERE bet_id = bet_id_param AND fixture_id IS NOT NULL
     LOOP
-      -- Look for fixture in the response array
-      FOR v_response_item IN SELECT * FROM jsonb_array_elements(v_cache_data->'response')
-      LOOP
-        IF (v_response_item->'fixture'->>'id')::integer = v_fixture_id THEN
-          v_kickoff_str := v_response_item->'fixture'->>'date';
-          IF v_kickoff_str IS NOT NULL THEN
-            v_kickoff_time := v_kickoff_str::timestamp with time zone;
-            
-            -- Track earliest kickoff time
-            IF v_earliest_kickoff IS NULL OR v_kickoff_time < v_earliest_kickoff THEN
-              v_earliest_kickoff := v_kickoff_time;
-            END IF;
-            EXIT; -- Found this fixture, move to next
-          END IF;
+      -- Look for fixture kickoff time in match_results table
+      SELECT kickoff_time INTO v_kickoff_time
+      FROM match_results
+      WHERE fixture_id = v_fixture_id;
+
+      IF v_kickoff_time IS NOT NULL THEN
+        -- Track earliest kickoff time
+        IF v_earliest_kickoff IS NULL OR v_kickoff_time < v_earliest_kickoff THEN
+          v_earliest_kickoff := v_kickoff_time;
         END IF;
-      END LOOP;
+      END IF;
     END LOOP;
 
     -- Check if we found any valid kickoff times

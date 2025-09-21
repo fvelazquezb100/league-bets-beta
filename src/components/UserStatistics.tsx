@@ -86,11 +86,12 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
         setFilterLoading(true);
       }
       
-      // Fetch all user bets with selections
+      // Fetch all user bets with selections (excluding cancelled bets)
       const { data: betsData, error: betsError } = await supabase
         .from('bets')
         .select('*, bet_selections(*)')
         .eq('user_id', user.id)
+        .neq('status', 'cancelled')
         .order('id', { ascending: false });
 
       if (betsError) {

@@ -5,105 +5,57 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Calendar, TrendingDown, TrendingUp, Trophy, CheckCircle, XCircle, Clock } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getBettingTranslation } from '@/utils/bettingTranslations';
 import { UserStatistics } from '@/components/UserStatistics';
+import { useUserBetHistory, useCancelBet } from '@/hooks/useUserBets';
+import { useMatchResults, useKickoffTimes } from '@/hooks/useMatchResults';
 
 export const BetHistory = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [bets, setBets] = useState<any[]>([]);
+  
+  // React Query hooks
+  const { data: bets = [], isLoading: betsLoading, refetch: refetchBets } = useUserBetHistory(user?.id);
+  const cancelBetMutation = useCancelBet();
+  
+  // Extract fixture IDs from bets for related data
+  const fixtureIds = useMemo(() => {
+    const ids = new Set<number>();
+    bets.forEach((bet) => {
+      if (bet.fixture_id) {
+        ids.add(bet.fixture_id);
+      }
+      if (bet.bet_selections) {
+        bet.bet_selections.forEach((selection: any) => {
+          if (selection.fixture_id) {
+            ids.add(selection.fixture_id);
+          }
+        });
+      }
+    });
+    return Array.from(ids);
+  }, [bets]);
+  
+  // Fetch related data
+  const { data: matchResults = {} } = useMatchResults(fixtureIds);
+  const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
+  
+  // Local UI state
   const [now, setNow] = useState<Date>(new Date());
-  const [cancelingId, setCancelingId] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState<{ [betId: number]: string }>({});
-  const [matchResults, setMatchResults] = useState<Record<number, string>>({});
-  const [matchKickoffs, setMatchKickoffs] = useState<Record<number, Date>>({});
   const [activeFilter, setActiveFilter] = useState<'all' | 'won' | 'pending'>('all');
   const [showStatistics, setShowStatistics] = useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [betToCancel, setBetToCancel] = useState<number | null>(null);
+  
+  // Derive canceling state from mutation
+  const cancelingId = cancelBetMutation.isPending ? betToCancel : null;
 
-  useEffect(() => {
-    const fetchBets = async () => {
-      if (!user) return;
-
-      const { data: betsData, error: betsError } = await supabase
-        .from('bets')
-        .select('*, bet_selections(*)')
-        .eq('user_id', user.id)
-        .order('id', { ascending: false });
-
-      if (betsError) {
-        console.error('Error fetching bets:', betsError);
-        return;
-      }
-
-      if (betsData) {
-        setBets(betsData);
-
-        // Get all unique fixture_ids from bets and bet_selections
-        const fixtureIds = new Set<number>();
-        betsData.forEach((bet) => {
-          if (bet.fixture_id) {
-            fixtureIds.add(bet.fixture_id);
-          }
-          if (bet.bet_selections) {
-            bet.bet_selections.forEach((selection: any) => {
-              if (selection.fixture_id) {
-                fixtureIds.add(selection.fixture_id);
-              }
-            });
-          }
-        });
-
-        // Fetch match results and kickoff times for these fixture_ids
-        if (fixtureIds.size > 0) {
-          try {
-            // Fetch match results
-            const { data: resultsData } = await (supabase as any)
-              .from('match_results')
-              .select('fixture_id, match_result')
-              .in('fixture_id', Array.from(fixtureIds));
-            
-            if (resultsData) {
-              const resultsMap: Record<number, string> = {};
-              resultsData.forEach((result: any) => {
-                resultsMap[result.fixture_id] = result.match_result;
-              });
-              setMatchResults(resultsMap);
-            }
-
-            // Fetch kickoff times from match_odds_cache
-            const { data: cacheData } = await supabase
-              .from('match_odds_cache')
-              .select('data')
-              .eq('id', 1)
-              .single();
-
-            if (cacheData?.data) {
-              const data = cacheData.data as any;
-              if (data.response) {
-                const kickoffsMap: Record<number, Date> = {};
-                data.response.forEach((match: any) => {
-                  if (match.fixture?.id && match.fixture?.date) {
-                    kickoffsMap[match.fixture.id] = new Date(match.fixture.date);
-                  }
-                });
-                setMatchKickoffs(kickoffsMap);
-              }
-            }
-          } catch (error) {
-            console.error('Error fetching match data:', error);
-          }
-        }
-      }
-    };
-
-    fetchBets();
-  }, [user]);
+  // Data fetching is now handled by React Query hooks above
+  // Automatic caching, background updates, and error handling!
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000); // Update every second
@@ -123,7 +75,14 @@ export const BetHistory = () => {
       }
     });
     
-    setTimeLeft(newTimeLeft);
+    // Only update if there are actual changes
+    setTimeLeft(prevTimeLeft => {
+      const hasChanges = Object.keys(newTimeLeft).some(
+        key => newTimeLeft[parseInt(key)] !== prevTimeLeft[parseInt(key)]
+      ) || Object.keys(prevTimeLeft).length !== Object.keys(newTimeLeft).length;
+      
+      return hasChanges ? newTimeLeft : prevTimeLeft;
+    });
   }, [now, bets, matchKickoffs]);
 
   const handleCancelClick = (betId: number) => {
@@ -135,36 +94,24 @@ export const BetHistory = () => {
     if (!betToCancel) return;
     
     try {
-      setCancelingId(betToCancel);
-      const { data, error } = await supabase.rpc('cancel_bet', { bet_id_param: betToCancel });
-      setCancelingId(null);
+      await cancelBetMutation.mutateAsync(betToCancel);
+      
       setCancelDialogOpen(false);
       setBetToCancel(null);
-
-      if (error) {
-        console.error('Error canceling bet:', error);
-        toast({ title: 'No se pudo cancelar', description: error.message });
-        return;
-      }
-
-      if (data && typeof data === 'object' && 'success' in data) {
-        const result = data as { success: boolean; message?: string; error?: string };
-        if (result.success) {
-          setBets((prev) => prev.filter((b) => b.id !== betToCancel));
-          toast({
-            title: 'Apuesta cancelada',
-            description: result.message || 'Se ha reembolsado tu importe al presupuesto semanal.',
-          });
-        } else {
-          toast({ title: 'No se pudo cancelar', description: result.error || 'Error desconocido' });
-        }
-      }
-    } catch (e: any) {
-      setCancelingId(null);
+      
+      toast({
+        title: 'Apuesta cancelada',
+        description: 'Se ha reembolsado tu importe al presupuesto semanal.',
+      });
+    } catch (error: any) {
       setCancelDialogOpen(false);
       setBetToCancel(null);
-      console.error('Unexpected error canceling bet:', e);
-      toast({ title: 'Error', description: 'Ha ocurrido un error al cancelar la apuesta.' });
+      console.error('Error canceling bet:', error);
+      toast({ 
+        title: 'Error', 
+        description: error?.message || 'Ha ocurrido un error al cancelar la apuesta.',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -173,13 +120,16 @@ export const BetHistory = () => {
     setBetToCancel(null);
   };
 
-  const wonBets = bets.filter((bet) => bet.status === 'won');
-  const lostBets = bets.filter((bet) => bet.status === 'lost');
-  const pendingBets = bets.filter((bet) => bet.status === 'pending').length;
+  // Filter out cancelled bets from statistics
+  const activeBets = bets.filter((bet) => bet.status !== 'cancelled');
+  
+  const wonBets = activeBets.filter((bet) => bet.status === 'won');
+  const lostBets = activeBets.filter((bet) => bet.status === 'lost');
+  const pendingBets = activeBets.filter((bet) => bet.status === 'pending').length;
 
-  const totalBetAmount = bets.reduce((sum, bet) => sum + (parseFloat(bet.stake) || 0), 0);
-  const totalPayout = bets.reduce(
-    (sum, bet) => sum + (bet.status === 'won' ? (parseFloat(bet.payout) || 0) : 0),
+  const totalBetAmount = activeBets.reduce((sum, bet) => sum + (bet.stake || 0), 0);
+  const totalPayout = activeBets.reduce(
+    (sum, bet) => sum + (bet.status === 'won' ? (bet.payout || 0) : 0),
     0
   );
 
@@ -266,6 +216,8 @@ export const BetHistory = () => {
         return 'Ganada';
       case 'lost':
         return 'Perdida';
+      case 'cancelled':
+        return 'Cancelada';
       default:
         return status;
     }
@@ -279,6 +231,8 @@ export const BetHistory = () => {
         return 'destructive';
       case 'pending':
         return 'secondary';
+      case 'cancelled':
+        return 'outline';
       default:
         return 'secondary';
     }
@@ -287,6 +241,9 @@ export const BetHistory = () => {
   const getStatusClassName = (status: string) => {
     if (status === 'pending') {
       return 'bg-white text-black border-2 border-[#FFC72C] hover:bg-white hover:text-black';
+    }
+    if (status === 'cancelled') {
+      return 'bg-white text-gray-600 border-2 border-gray-400 hover:bg-white hover:text-gray-600';
     }
     return '';
   };
@@ -299,6 +256,8 @@ export const BetHistory = () => {
         return 'bg-[#FFC72C] text-black border-2 border-[#FFC72C] hover:bg-[#FFC72C] hover:text-black';
       case 'lost':
         return 'bg-destructive hover:bg-destructive/90 text-destructive-foreground';
+      case 'cancelled':
+        return 'bg-white text-gray-600 border-2 border-gray-400 hover:bg-white hover:text-gray-600';
       default:
         return '';
     }
@@ -308,6 +267,7 @@ export const BetHistory = () => {
     switch (status) {
       case 'won': return <CheckCircle className="w-4 h-4 text-green-500" />;
       case 'lost': return <XCircle className="w-4 h-4 text-red-500" />;
+      case 'cancelled': return <XCircle className="w-4 h-4 text-gray-500" />;
       case 'pending': return null;
       default: return null;
     }
@@ -324,8 +284,8 @@ export const BetHistory = () => {
     return (
       <div>
         <div>{matchName}</div>
-        {result && (
-          <div className="text-xs text-muted-foreground">{result}</div>
+        {result?.match_result && (
+          <div className="text-xs text-muted-foreground">{result.match_result}</div>
         )}
       </div>
     );
@@ -335,19 +295,36 @@ export const BetHistory = () => {
     return matchDescription || 'Partido no disponible';
   };
 
-  // Función para filtrar apuestas
+  // Función para filtrar apuestas (excluyendo semana 0)
   const getFilteredBets = () => {
+    const nonHistoricalBets = bets.filter(bet => Number(bet.week) !== 0);
+    
     switch (activeFilter) {
       case 'won':
-        return bets.filter(bet => bet.status === 'won');
+        return nonHistoricalBets.filter(bet => bet.status === 'won');
       case 'pending':
-        return bets.filter(bet => bet.status === 'pending');
+        return nonHistoricalBets.filter(bet => bet.status === 'pending');
       default:
-        return bets;
+        return nonHistoricalBets;
+    }
+  };
+
+  // Apuestas históricas (semana 0)
+  const getHistoricalBets = () => {
+    const historicalBets = bets.filter(bet => Number(bet.week) === 0);
+    
+    switch (activeFilter) {
+      case 'won':
+        return historicalBets.filter(bet => bet.status === 'won');
+      case 'pending':
+        return historicalBets.filter(bet => bet.status === 'pending');
+      default:
+        return historicalBets;
     }
   };
 
   const filteredBets = getFilteredBets();
+  const historicalBets = getHistoricalBets();
 
   return (
     <div className="space-y-6">
@@ -457,8 +434,8 @@ export const BetHistory = () => {
                           </div>
                         </TableCell>
                         <TableCell></TableCell>
-                        <TableCell>{parseFloat(bet.stake || 0).toFixed(0)} pts</TableCell>
-                        <TableCell>{parseFloat(bet.payout || 0).toFixed(0)} pts</TableCell>
+                        <TableCell>{(bet.stake || 0).toFixed(0)} pts</TableCell>
+                        <TableCell>{bet.status === 'cancelled' ? '-' : `${(bet.payout || 0).toFixed(0)} pts`}</TableCell>
                         <TableCell>
                           <Badge variant={getStatusVariant(bet.status)} className={getStatusClassName(bet.status)}>{getStatusText(bet.status)}</Badge>
                         </TableCell>
@@ -484,8 +461,8 @@ export const BetHistory = () => {
                           )}
                         </TableCell>
                       </TableRow>,
-                      ...bet.bet_selections.map((selection: any) => (
-                         <TableRow key={`${bet.id}-${selection.id}`} className="bg-muted/10 border-l-2 border-muted">
+                      ...bet.bet_selections.map((selection: any, index: number) => (
+                         <TableRow key={`${bet.id}-${selection.id || index}`} className="bg-muted/10 border-l-2 border-muted">
                            <TableCell className="font-medium pl-8">
                              {getMatchResultDisplay(selection.match_description, selection.fixture_id)}
                            </TableCell>
@@ -523,7 +500,7 @@ export const BetHistory = () => {
                               {(() => {
                                 const parts = bet.bet_selection?.split(' @ ') || [];
                                 const selection = getBettingTranslation(parts[0] || '');
-                                const odds = parts[1] ? parseFloat(parts[1]).toFixed(2) : parseFloat(bet.odds || 0).toFixed(2);
+                                const odds = parts[1] ? parseFloat(parts[1]).toFixed(2) : (bet.odds || 0).toFixed(2);
                                 return `${selection} @ ${odds}`;
                               })()}
                             </>
@@ -531,8 +508,8 @@ export const BetHistory = () => {
                             bet.bet_selection
                           )}
                         </TableCell>
-                        <TableCell>{parseFloat(bet.stake || 0).toFixed(0)} pts</TableCell>
-                        <TableCell>{parseFloat(bet.payout || 0).toFixed(0)} pts</TableCell>
+                        <TableCell>{(bet.stake || 0).toFixed(0)} pts</TableCell>
+                        <TableCell>{bet.status === 'cancelled' ? '-' : `${(bet.payout || 0).toFixed(0)} pts`}</TableCell>
                         <TableCell>
                           <Badge variant={getStatusVariant(bet.status)} className={getStatusClassName(bet.status)}>{getStatusText(bet.status)}</Badge>
                         </TableCell>
@@ -621,23 +598,23 @@ export const BetHistory = () => {
 
                     {/* Información financiera */}
                     <div className="flex justify-between text-sm">
-                      <span>Apostado: <span className="font-medium">{parseFloat(bet.stake || 0).toFixed(0)} pts</span></span>
-                      <span>Ganancia: <span className="font-medium">{parseFloat(bet.payout || 0).toFixed(0)} pts</span></span>
+                      <span>Apostado: <span className="font-medium">{(bet.stake || 0).toFixed(0)} pts</span></span>
+                      <span>Ganancia: <span className="font-medium">{bet.status === 'cancelled' ? '-' : `${(bet.payout || 0).toFixed(0)} pts`}</span></span>
                     </div>
 
                     {/* Detalles de la apuesta */}
                     <div className="space-y-3">
                       {bet.bet_type === 'combo' && bet.bet_selections?.length ? (
-                        bet.bet_selections.map((selection: any) => (
-                          <div key={selection.id} className="space-y-1">
+                        bet.bet_selections.map((selection: any, index: number) => (
+                          <div key={selection.id || `selection-${index}`} className="space-y-1">
                             {/* Partido con resultado en la misma línea */}
                             <div className="flex items-center justify-between">
                               <div className="text-sm font-medium">
                                 {getMatchName(selection.match_description)}
                               </div>
-                              {matchResults[selection.fixture_id] && (
+                              {matchResults[selection.fixture_id]?.match_result && (
                                 <div className="text-xs text-muted-foreground">
-                                  ({matchResults[selection.fixture_id]})
+                                  ({matchResults[selection.fixture_id].match_result})
                                 </div>
                               )}
                             </div>
@@ -655,9 +632,9 @@ export const BetHistory = () => {
                             <div className="text-sm font-medium">
                               {getMatchName(bet.match_description)}
                             </div>
-                            {matchResults[bet.fixture_id] && (
+                            {matchResults[bet.fixture_id]?.match_result && (
                               <div className="text-xs text-muted-foreground">
-                                ({matchResults[bet.fixture_id]})
+                                ({matchResults[bet.fixture_id].match_result})
                               </div>
                             )}
                           </div>
@@ -688,6 +665,198 @@ export const BetHistory = () => {
             )}
         </div>
       </div>
+      {/* Historical Bets Section (Week 0) */}
+      {historicalBets.length > 0 && (
+        <div className="space-y-4">
+          {/* Separator line */}
+          <div className="flex items-center gap-4 my-8">
+            <div className="flex-1 border-t border-border"></div>
+            <div className="px-4 py-2 bg-muted rounded-lg">
+              <span className="text-sm font-medium text-muted-foreground">Apuestas Históricas</span>
+            </div>
+            <div className="flex-1 border-t border-border"></div>
+          </div>
+
+          {/* Desktop Historical Bets Table */}
+          <Card className="shadow-lg hidden sm:block">
+            <CardHeader>
+              <CardTitle>Apuestas Históricas (Temporadas Anteriores)</CardTitle>
+              <CardDescription>Historial de apuestas de temporadas pasadas</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Partido</TableHead>
+                    <TableHead>Apuesta</TableHead>
+                    <TableHead>Importe</TableHead>
+                    <TableHead>Ganancia</TableHead>
+                    <TableHead>Resultado</TableHead>
+                    <TableHead>Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {historicalBets.map((bet) => {
+                    if (bet.bet_type === 'combo' && bet.bet_selections?.length) {
+                      return [
+                        <TableRow key={bet.id} className="bg-muted/30">
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs">COMBO</Badge>
+                              <span className="text-sm">Apuesta Combinada</span>
+                            </div>
+                          </TableCell>
+                          <TableCell></TableCell>
+                          <TableCell>{(bet.stake || 0).toFixed(0)} pts</TableCell>
+                          <TableCell>{bet.status === 'cancelled' ? '-' : `${(bet.payout || 0).toFixed(0)} pts`}</TableCell>
+                          <TableCell>
+                            <Badge variant={getStatusVariant(bet.status)} className={getStatusClassName(bet.status)}>{getStatusText(bet.status)}</Badge>
+                          </TableCell>
+                          <TableCell></TableCell>
+                        </TableRow>,
+                        ...bet.bet_selections.map((selection: any, index: number) => (
+                           <TableRow key={`${bet.id}-${selection.id || index}`} className="bg-muted/10 border-l-2 border-muted">
+                             <TableCell className="font-medium pl-8">
+                               {getMatchResultDisplay(selection.match_description, selection.fixture_id)}
+                             </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm">
+                                  {formatBetDisplay(
+                                    getBettingTranslation(selection.market),
+                                    getBettingTranslation(selection.selection),
+                                    parseFloat(selection.odds || 0)
+                                  )}
+                                </span>
+                                <Badge variant={getStatusVariant(selection.status)} className={`text-xs ${getStatusClassName(selection.status)}`}>
+                                  {getStatusText(selection.status)}
+                                </Badge>
+                              </div>
+                            </TableCell>
+                            <TableCell></TableCell>
+                            <TableCell></TableCell>
+                            <TableCell></TableCell>
+                            <TableCell></TableCell>
+                          </TableRow>
+                        )),
+                      ];
+                    } else {
+                      return (
+                         <TableRow key={bet.id}>
+                           <TableCell className="font-medium">
+                             {getMatchResultDisplay(bet.match_description, bet.fixture_id)}
+                           </TableCell>
+                          <TableCell>
+                            {bet.bet_type === 'single' ? (
+                              <>
+                                {bet.market_bets ? getBettingTranslation(bet.market_bets) + ': ' : ''}
+                                {(() => {
+                                  const parts = bet.bet_selection?.split(' @ ') || [];
+                                  const selection = getBettingTranslation(parts[0] || '');
+                                  const odds = parts[1] ? parseFloat(parts[1]).toFixed(2) : (bet.odds || 0).toFixed(2);
+                                  return `${selection} @ ${odds}`;
+                                })()}
+                              </>
+                            ) : (
+                              bet.bet_selection
+                            )}
+                          </TableCell>
+                          <TableCell>{(bet.stake || 0).toFixed(0)} pts</TableCell>
+                          <TableCell>{bet.status === 'cancelled' ? '-' : `${(bet.payout || 0).toFixed(0)} pts`}</TableCell>
+                          <TableCell>
+                            <Badge variant={getStatusVariant(bet.status)} className={getStatusClassName(bet.status)}>{getStatusText(bet.status)}</Badge>
+                          </TableCell>
+                          <TableCell></TableCell>
+                        </TableRow>
+                      );
+                    }
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Mobile Historical Bets View */}
+          <div className="block sm:hidden space-y-4">
+            {historicalBets.map((bet) => (
+              <Card key={bet.id} className="p-4 opacity-75">
+                <div className="space-y-3">
+                  {/* Header: Tipo + Semana */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        variant="outline"
+                        className={`text-xs ${getBetTypeBadgeClassName(bet.status)}`}
+                      >
+                        {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        Histórica
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Información financiera */}
+                  <div className="flex justify-between text-sm">
+                    <span>Apostado: <span className="font-medium">{(bet.stake || 0).toFixed(0)} pts</span></span>
+                    <span>Ganancia: <span className="font-medium">{bet.status === 'cancelled' ? '-' : `${(bet.payout || 0).toFixed(0)} pts`}</span></span>
+                  </div>
+
+                  {/* Detalles de la apuesta */}
+                  <div className="space-y-3">
+                    {bet.bet_type === 'combo' && bet.bet_selections?.length ? (
+                      bet.bet_selections.map((selection: any, index: number) => (
+                        <div key={selection.id || `selection-${index}`} className="space-y-1">
+                          {/* Partido con resultado en la misma línea */}
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm font-medium">
+                              {getMatchName(selection.match_description)}
+                            </div>
+                            {matchResults[selection.fixture_id]?.match_result && (
+                              <div className="text-xs text-muted-foreground">
+                                ({matchResults[selection.fixture_id].match_result})
+                              </div>
+                            )}
+                          </div>
+                          {/* Apuesta justo debajo */}
+                          <div className="flex items-center gap-2 text-sm font-medium text-foreground border-l-2 border-muted pl-2">
+                            {getStatusIcon(selection.status)}
+                            <span>{getBettingTranslation(selection.market)}: {getBettingTranslation(selection.selection)} @ {selection.odds}</span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="space-y-1">
+                        {/* Partido con resultado en la misma línea */}
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm font-medium">
+                            {getMatchName(bet.match_description)}
+                          </div>
+                          {matchResults[bet.fixture_id]?.match_result && (
+                            <div className="text-xs text-muted-foreground">
+                              ({matchResults[bet.fixture_id].match_result})
+                            </div>
+                          )}
+                        </div>
+                        {/* Apuesta justo debajo */}
+                        <div className="text-sm font-medium text-foreground border-l-2 border-muted pl-2">
+                          {(() => {
+                            const parts = bet.bet_selection?.split(' @ ') || [];
+                            const selection = getBettingTranslation(parts[0] || '');
+                            const odds = parts[1] || bet.odds;
+                            return `${getBettingTranslation(bet.market_bets)}: ${selection} @ ${odds}`;
+                          })()}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Modal de Estadísticas */}
       <UserStatistics 
         isOpen={showStatistics} 

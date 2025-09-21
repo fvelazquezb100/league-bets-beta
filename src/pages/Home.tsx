@@ -2,22 +2,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
 import { History } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { NewsBoard } from '@/components/NewsBoard';
+import { useMatchOdds, type MatchData } from '@/hooks/useMatchOdds';
+import { useUserBetHistory } from '@/hooks/useUserBets';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 
-// Types for odds cache minimal usage
-interface Team { id: number; name: string; logo: string }
-interface Fixture { id: number; date: string }
-interface Teams { home: Team; away: Team }
-interface BetValue { value: string; odd: string }
-interface BetMarket { id: number; name: string; values: BetValue[] }
-interface Bookmaker { id: number; name: string; bets: BetMarket[] }
-interface MatchData { fixture: Fixture; teams: Teams; bookmakers: Bookmaker[] }
-interface CachedOddsData { response?: MatchData[] }
+// Types imported from hooks - no need to redefine
 
 const findMarket = (match: MatchData, marketName: string) => {
   if (!match.bookmakers || match.bookmakers.length === 0) return undefined;
@@ -31,75 +25,22 @@ const findMarket = (match: MatchData, marketName: string) => {
 export const Home = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [userProfile, setUserProfile] = useState<any>(null);
-  const [upcoming, setUpcoming] = useState<MatchData[]>([]);
-  const [loadingUpcoming, setLoadingUpcoming] = useState(true);
-  const [recentBets, setRecentBets] = useState<any[]>([]);
-  const [loadingActivity, setLoadingActivity] = useState(true);
+  
+  // React Query hooks for data fetching
+  const { data: userProfile } = useUserProfile(user?.id);
+  const { data: allMatches = [], isLoading: matchesLoading } = useMatchOdds();
+  const { data: allBets = [], isLoading: betsLoading } = useUserBetHistory(user?.id);
+  
+  // Derived data
+  const upcoming = allMatches.slice(0, 2); // Top 2 matches
+  const recentBets = allBets.slice(0, 3); // Latest 3 bets
+  
+  // Loading states
+  const loadingUpcoming = matchesLoading;
+  const loadingActivity = betsLoading;
 
-  // Fetch user data to check league setup
-  const fetchUserData = async () => {
-    if (!user) return;
-
-    const { data: currentProfile } = await supabase
-      .from('profiles')
-      .select('id, league_id')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    setUserProfile(currentProfile ?? null);
-
-    // If user has no league, redirect to setup
-    if (currentProfile && !currentProfile.league_id && window.location.pathname === '/home') {
-      navigate('/league-setup', { replace: true });
-    }
-  };
-
-  useEffect(() => {
-    fetchUserData();
-  }, [user]);
-
-  useEffect(() => {
-    const fetchHomeData = async () => {
-      try {
-        setLoadingUpcoming(true);
-        setLoadingActivity(true);
-
-        // Upcoming matches from odds cache (take top 2)
-        const { data: cacheData } = await supabase
-          .from('match_odds_cache')
-          .select('data')
-          .single();
-
-        const apiData = (cacheData?.data ?? {}) as unknown as CachedOddsData;
-        const matches = Array.isArray(apiData.response)
-          ? apiData.response.filter((m: any) => m?.fixture).slice(0, 2)
-          : [];
-        setUpcoming(matches as MatchData[]);
-
-        // Recent bets (latest 3)
-        if (user) {
-          const { data: rb } = await supabase
-            .from('bets')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('id', { ascending: false })
-            .limit(3);
-          setRecentBets(rb ?? []);
-        } else {
-          setRecentBets([]);
-        }
-      } catch {
-        setUpcoming([]);
-        setRecentBets([]);
-      } finally {
-        setLoadingUpcoming(false);
-        setLoadingActivity(false);
-      }
-    };
-
-    fetchHomeData();
-  }, [user]);
+  // Data fetching is now handled by React Query hooks above
+  // No more manual useEffect needed!
 
   useEffect(() => {
     document.title = 'Jambol - Inicio';
@@ -191,7 +132,7 @@ export const Home = () => {
               recentBets.map((bet) => {
                 const status = String(bet.status || 'pending');
                 const stake = Number(bet.stake ?? 0);
-                const payout = Number(bet.payout ?? 0);
+                const payout = bet.payout ?? 0;
                 const net = payout - stake;
                 const isWon = status === 'won';
                 const isLost = status === 'lost';

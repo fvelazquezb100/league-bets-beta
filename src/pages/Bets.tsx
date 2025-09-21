@@ -1,6 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { supabase } from '../integrations/supabase/client';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import BetSlip from '@/components/BetSlip';
 import MobileBetSlip from '@/components/MobileBetSlip';
@@ -13,84 +11,34 @@ import BetMarketSection from '@/components/BetMarketSection';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { getBettingTranslation } from '@/utils/bettingTranslations';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useMatchOdds, type MatchData, type BetValue } from '@/hooks/useMatchOdds';
+import { useUserBets, type UserBet } from '@/hooks/useUserBets';
+import { useAvailableLeagues } from '@/hooks/useAvailableLeagues';
+import { MagicCard } from '@/components/ui/MagicCard';
 
-// --- Type Definitions for API-Football Odds Data ---
-export interface Team {
-  id: number;
-  name: string;
-  logo: string;
-}
-
-export interface Fixture {
-  id: number;
-  date: string;
-}
-
-export interface Teams {
-  home: Team;
-  away: Team;
-  league_id?: number;
-  league_name?: string;
-}
-
-export interface BetValue {
-  value: string;
-  odd: string;
-}
-
-export interface BetMarket {
-  id: number;
-  name: string;
-  values: BetValue[];
-}
-
-export interface Bookmaker {
-  id: number;
-  name: string;
-  bets: BetMarket[];
-}
-
-export interface MatchData {
-  fixture: Fixture;
-  teams: Teams;
-  bookmakers: Bookmaker[];
-}
-
-export interface CachedOddsData {
-  response?: MatchData[];
-}
-
-interface UserBet {
-  id: number;
-  stake: number;
-  status: string;
-  bet_type: string;
-  match_description?: string;
-  fixture_id?: number;
-  bet_selection?: string;
-  market_bets?: string;
-  bet_selections?: {
-    market: string;
-    selection: string;
-    odds: number;
-    fixture_id?: number;
-  }[];
-}
+// Re-export types from hooks for compatibility
+export type { Team, Fixture, Teams, BetValue, BetMarket, Bookmaker, MatchData, CachedOddsData } from '@/hooks/useMatchOdds';
+export type { UserBet } from '@/hooks/useUserBets';
 
 const Bets = () => {
-  const [matches, setMatches] = useState<MatchData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Local UI state
   const [selectedBets, setSelectedBets] = useState<any[]>([]);
-  const [userBets, setUserBets] = useState<UserBet[]>([]);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [drawerShouldRender, setDrawerShouldRender] = useState(false);
   const [selectedLeague, setSelectedLeague] = useState<'primera' | 'champions' | 'europa' | 'liga-mx'>('primera');
-  const [availableLeagues, setAvailableLeagues] = useState<number[]>([]);
   const [openId, setOpenId] = useState<number | null>(null);
+  
+  // Hooks
   const { toast } = useToast();
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  
+  // React Query hooks for data fetching
+  const { data: matches = [], isLoading: matchesLoading, error: matchesError } = useMatchOdds();
+  const { data: userBets = [], isLoading: userBetsLoading } = useUserBets(user?.id);
+  const { data: availableLeagues = [140, 2, 3, 262], isLoading: leaguesLoading } = useAvailableLeagues(user?.id);
+  
+  // Derived loading and error states
+  const loading = matchesLoading || userBetsLoading || leaguesLoading;
+  const error = matchesError ? 'Failed to fetch or parse live betting data. Please try again later.' : null;
 
   // Toggle accordion with scroll control
   const toggle = (id: number) => {
@@ -122,139 +70,22 @@ const Bets = () => {
   const scrollToItem = (id: number) => {
     const element = document.getElementById(`accordion-item-${id}`);
     if (element) {
-      element.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-        inline: "nearest"
+      // Intentar obtener la altura real del header
+      const header = document.querySelector('header');
+      const headerHeight = header ? header.offsetHeight + 40 : 140; // +40px de margen extra
+      
+      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+      const offsetPosition = elementPosition - headerHeight;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
       });
     }
   };
 
-  useEffect(() => {
-    const fetchOddsAndBets = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const { data: cacheData, error: cacheError } = await supabase
-          .from('match_odds_cache')
-          .select('data')
-          .maybeSingle();
-
-        if (cacheError) throw new Error('Failed to fetch data from cache.');
-
-        if (!cacheData || !cacheData.data) {
-          try {
-            const { error: populateError } = await supabase.functions.invoke('secure-run-update-football-cache');
-            if (!populateError) {
-              const { data: newCacheData, error: retryError } = await supabase
-                .from('match_odds_cache')
-                .select('data')
-                .maybeSingle();
-              
-              if (!retryError && newCacheData && newCacheData.data) {
-                const apiData = newCacheData.data as unknown as CachedOddsData;
-                if (apiData && Array.isArray(apiData.response)) {
-                  const validMatches = apiData.response.filter(match => match.fixture);
-                  
-                  setMatches(validMatches);
-                } else {
-                  setMatches([]);
-                }
-              } else {
-                throw new Error('Cache is still empty after population attempt.');
-              }
-            } else {
-              throw new Error('Failed to populate cache automatically.');
-            }
-          } catch {
-            throw new Error('Cache is empty and auto-population failed. Please try refreshing the page.');
-          }
-        } else {
-          const apiData = cacheData.data as unknown as CachedOddsData;
-          if (apiData && Array.isArray(apiData.response)) {
-            const validMatches = apiData.response.filter(match => match.fixture);
-            
-            setMatches(validMatches);
-          } else {
-            setMatches([]);
-          }
-        }
-
-        if (user) {
-          const { data: betsData, error: betsError } = await supabase
-            .from('bets')
-            .select(`
-              id,
-              stake,
-              status,
-              bet_type,
-              match_description,
-              fixture_id,
-              bet_selection,
-              market_bets,
-              bet_selections (
-                market,
-                selection,
-                odds,
-                fixture_id
-              )
-            `)
-            .eq('user_id', user.id)
-            .eq('status', 'pending');
-
-          if (!betsError && betsData) {
-            setUserBets(betsData as UserBet[]);
-          }
-        }
-
-      } catch (err: any) {
-        setError('Failed to fetch or parse live betting data. Please try again later.');
-        console.error("Error details:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchOddsAndBets();
-  }, [user]);
-
-  // Fetch available leagues for the user's league
-  useEffect(() => {
-    const fetchAvailableLeagues = async () => {
-      if (!user) return;
-      
-      try {
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('league_id')
-          .eq('id', user.id)
-          .single();
-          
-        if (profileError) throw profileError;
-        
-        const { data: leagueData, error: leagueError } = await supabase
-          .from('leagues')
-          .select('available_leagues')
-          .eq('id', profileData.league_id)
-          .single();
-          
-        if (leagueError) {
-          // If column doesn't exist yet, use default leagues
-          console.warn('available_leagues column not found, using default leagues');
-          setAvailableLeagues([140, 2, 3, 262]);
-          return;
-        }
-        
-        setAvailableLeagues((leagueData as any)?.available_leagues || [140, 2, 3, 262]);
-      } catch (error) {
-        console.error('Error fetching available leagues:', error);
-        // Default to all leagues if there's an error
-        setAvailableLeagues([140, 2, 3, 262]);
-      }
-    };
-
-    fetchAvailableLeagues();
-  }, [user]);
+  // Data fetching is now handled by React Query hooks above
+  // No more manual useEffect needed!
 
 
   const handleAddToSlip = (match: MatchData, marketName: string, selection: BetValue) => {
@@ -463,15 +294,24 @@ const Bets = () => {
           const isFrozen = new Date() >= freezeTime;
 
           return (
-            <div 
-              key={match.fixture.id} 
+            <MagicCard
+              key={match.fixture.id}
+              enableStars={true}
+              enableSpotlight={true}
+              enableBorderGlow={true}
+              enableTilt={false}
+              clickEffect={false}
+              enableMagnetism={false}
+              particleCount={6}
+              glowColor="255, 199, 44"
               className="border rounded-lg p-1 sm:p-4 bg-card shadow-sm w-full max-w-none"
-              id={`accordion-item-${match.fixture.id}`}
+              style={{ '--match-id': match.fixture.id } as React.CSSProperties}
             >
-              <button
-                onClick={() => toggle(match.fixture.id)}
-                className="w-full text-left flex items-center justify-between p-2 hover:bg-muted/50 rounded-md transition-colors"
-              >
+              <div id={`accordion-item-${match.fixture.id}`}>
+                <button
+                  onClick={() => toggle(match.fixture.id)}
+                  className="w-full text-left flex items-center justify-between p-2 hover:bg-muted/50 rounded-md transition-colors"
+                >
                 <div className="text-left w-full">
                   <div className="flex items-center justify-between">
                     <div>
@@ -480,7 +320,7 @@ const Bets = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       {getBetsForFixture(match.fixture.id).length > 0 && (
-                        <Badge variant="secondary" className="ml-2 bg-white text-black border-2 border-[#FFC72C]">
+                        <Badge variant="secondary" className="ml-2 bg-white text-black border-2 border-[#FFC72C] hover:bg-white focus:bg-white focus:ring-0 focus:ring-offset-0 cursor-default pointer-events-none">
                           {getBetsForFixture(match.fixture.id).length} apuesta{getBetsForFixture(match.fixture.id).length > 1 ? 's' : ''}
                         </Badge>
                       )}
@@ -538,6 +378,21 @@ const Bets = () => {
                         {getBetTypesSorted().map(betType => {
                           const market = findMarket(match, betType.apiName);
                           
+                          // Special case for Result/Total Goals - always show even if market not found
+                          // The component will calculate odds internally
+                          if (betType.apiName === 'Result/Total Goals') {
+                            return (
+                              <BetMarketSection
+                                key={betType.apiName}
+                                match={match}
+                                betType={betType}
+                                market={market || { id: 0, name: 'Result/Total Goals', values: [] }}
+                                isFrozen={isFrozen}
+                                hasUserBetOnMarket={hasUserBetOnMarket}
+                                handleAddToSlip={handleAddToSlip}
+                              />
+                            );
+                          }
                           
                           if (!market) return null;
 
@@ -564,7 +419,8 @@ const Bets = () => {
                   })()}
                 </div>
               )}
-            </div>
+              </div>
+            </MagicCard>
           )
         })}
       </div>

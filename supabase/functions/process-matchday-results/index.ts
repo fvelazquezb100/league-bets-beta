@@ -619,6 +619,13 @@ serve(async (req) => {
         const htHome = fx?.score?.halftime?.home ?? null;
         const htAway = fx?.score?.halftime?.away ?? null;
         
+        // Check if match_results entry already exists to preserve kickoff_time
+        const { data: existingResult } = await sb
+          .from('match_results')
+          .select('kickoff_time')
+          .eq('fixture_id', id)
+          .single();
+
         const { error: insertError } = await sb
           .from('match_results')
           .upsert({
@@ -634,7 +641,9 @@ serve(async (req) => {
             halftime_away: htAway !== null ? Number(htAway) : 0,
             outcome: oc,
             finished_at: fx.fixture?.date || new Date().toISOString(),
-            match_result: `${hg}-${ag}`
+            match_result: `${hg}-${ag}`,
+            // Preserve existing kickoff_time if it exists, otherwise use fixture date
+            kickoff_time: existingResult?.kickoff_time || fx.fixture?.date || new Date().toISOString()
           }, {
             onConflict: 'fixture_id'
           });

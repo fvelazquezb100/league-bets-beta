@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       backup_bet_selections: {
@@ -155,6 +180,7 @@ export type Database = {
         Row: {
           bet_selection: string | null
           bet_type: string | null
+          created_at: string | null
           fixture_id: number | null
           id: number
           market_bets: string | null
@@ -169,6 +195,7 @@ export type Database = {
         Insert: {
           bet_selection?: string | null
           bet_type?: string | null
+          created_at?: string | null
           fixture_id?: number | null
           id?: number
           market_bets?: string | null
@@ -183,13 +210,14 @@ export type Database = {
         Update: {
           bet_selection?: string | null
           bet_type?: string | null
+          created_at?: string | null
           fixture_id?: number | null
           id?: number
           market_bets?: string | null
           match_description?: string | null
           odds?: number | null
           payout?: number | null
-          stake?: number | null
+          stake?: string | null
           status?: string | null
           user_id?: string
           week?: string | null
@@ -206,6 +234,7 @@ export type Database = {
       }
       leagues: {
         Row: {
+          available_leagues: number[] | null
           budget: number | null
           created_at: string
           id: number
@@ -221,6 +250,7 @@ export type Database = {
           week: number
         }
         Insert: {
+          available_leagues?: number[] | null
           budget?: number | null
           created_at?: string
           id?: number
@@ -236,6 +266,7 @@ export type Database = {
           week?: number
         }
         Update: {
+          available_leagues?: number[] | null
           budget?: number | null
           created_at?: string
           id?: number
@@ -272,49 +303,52 @@ export type Database = {
       }
       match_results: {
         Row: {
-          away_goals: number
-          away_team: string
-          finished_at: string
+          away_goals: number | null
+          away_team: string | null
+          finished_at: string | null
           fixture_id: number
-          halftime_away: number
-          halftime_home: number
-          home_goals: number
-          home_team: string
-          league_id: number
-          match_name: string
+          halftime_away: number | null
+          halftime_home: number | null
+          home_goals: number | null
+          home_team: string | null
+          kickoff_time: string | null
+          league_id: number | null
+          match_name: string | null
           match_result: string | null
-          outcome: string
-          season: number
+          outcome: string | null
+          season: number | null
         }
         Insert: {
-          away_goals: number
-          away_team: string
-          finished_at: string
+          away_goals?: number | null
+          away_team?: string | null
+          finished_at?: string | null
           fixture_id: number
-          halftime_away: number
-          halftime_home: number
-          home_goals: number
-          home_team: string
-          league_id: number
-          match_name: string
+          halftime_away?: number | null
+          halftime_home?: number | null
+          home_goals?: number | null
+          home_team?: string | null
+          kickoff_time?: string | null
+          league_id?: number | null
+          match_name?: string | null
           match_result?: string | null
-          outcome: string
-          season: number
+          outcome?: string | null
+          season?: number | null
         }
         Update: {
-          away_goals?: number
-          away_team?: string
-          finished_at?: string
+          away_goals?: number | null
+          away_team?: string | null
+          finished_at?: string | null
           fixture_id?: number
-          halftime_away?: number
-          halftime_home?: number
-          home_goals?: number
-          home_team?: string
-          league_id?: number
-          match_name?: string
+          halftime_away?: number | null
+          halftime_home?: number | null
+          home_goals?: number | null
+          home_team?: string | null
+          kickoff_time?: string | null
+          league_id?: number | null
+          match_name?: string | null
           match_result?: string | null
-          outcome?: string
-          season?: number
+          outcome?: string | null
+          season?: number | null
         }
         Relationships: []
       }
@@ -452,12 +486,21 @@ export type Database = {
         Returns: boolean
       }
       create_league_and_join: {
-        Args: { _league_name: string; _user_id: string }
+        Args:
+          | { _league_name: string; _user_id: string }
+          | { admin_username_param?: string; league_name_param: string }
         Returns: undefined
       }
       cron_process_results: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      get_available_leagues: {
+        Args: { league_id_param: number }
+        Returns: {
+          league_id: number
+          league_name: string
+        }[]
       }
       get_current_user_global_role: {
         Args: Record<PropertyKey, never>
@@ -553,6 +596,10 @@ export type Database = {
       update_username: {
         Args: { new_username: string }
         Returns: Database["public"]["CompositeTypes"]["username_update_result"]
+      }
+      validate_available_leagues: {
+        Args: { league_ids: number[] }
+        Returns: boolean
       }
     }
     Enums: {
@@ -685,6 +732,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       league_type: ["free", "premium"],

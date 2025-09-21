@@ -166,7 +166,7 @@ const ResultTotalGoalsSelector = ({ match, isFrozen, hasUserBetOnMarket, handleA
     
     // Calculate combined odds
     if (matchWinnerOdd !== '0.00' && totalGoalsOdd !== '0.00') {
-      const combinedOdd = parseFloat(matchWinnerOdd) * parseFloat(totalGoalsOdd) * 0.8;
+      const combinedOdd = parseFloat(matchWinnerOdd) * parseFloat(totalGoalsOdd);
       return combinedOdd.toFixed(1);
     }
     

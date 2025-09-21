@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { X, DollarSign, ChevronUp, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -51,6 +51,8 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll }: MobileBetSlipP
     };
     loadWeeklyBudget();
   }, []);
+
+  // No automatic drawer management - handle manually to avoid conflicts
 
   // Check for duplicate fixtures
   const fixtureIds = selectedBets.map(bet => bet.fixtureId).filter(id => id !== undefined);
@@ -220,12 +222,6 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll }: MobileBetSlipP
           match_description: bet.matchDescription
         }));
 
-        // Debug logging
-        console.log('🔍 DEBUG - Combo bet data:');
-        console.log('Selected bets:', selectedBets);
-        console.log('Mapped selections:', selections);
-        console.log('Stake amount:', stakeAmount);
-        console.log('Total odds:', totalOdds);
 
         const { data: betId, error: comboError } = await supabase.rpc('place_combo_bet', {
           stake_amount: stakeAmount,
@@ -242,19 +238,15 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll }: MobileBetSlipP
 
       toast({
         title: '¡Apuesta realizada!',
-        description: `Apuesta ${selectedBets.length > 1 ? 'combinada' : ''} de pts${stake} realizada con éxito.`,
+        description: `Apuesta ${selectedBets.length > 1 ? 'combinada' : ''} de ${stake} pts realizada con éxito.`,
       });
 
-      // Clear the bet slip
+      // Clear the bet slip and close sheet
       onClearAll();
       setStake('');
       setIsExpanded(false);
 
     } catch (error) {
-      console.error('🚨 DEBUG - Full error object:', error);
-      console.error('🔍 DEBUG - Error details:', error.details);
-      console.error('🔍 DEBUG - Error message:', error.message);
-      console.error('🔍 DEBUG - Error code:', error.code);
       console.error('Error placing bet:', error);
       toast({
         title: 'Error',
@@ -266,16 +258,34 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll }: MobileBetSlipP
     }
   };
 
+  const handleClearAll = () => {
+    onClearAll();
+    setStake('');
+    setIsExpanded(false);
+  };
+
+  const handleRemoveBet = (betId: string) => {
+    onRemoveBet(betId);
+    
+    // If this was the last bet, close sheet
+    if (selectedBets.length === 1) {
+      setIsExpanded(false);
+    }
+  };
+
   // Don't render if no bets selected
   if (selectedBets.length === 0) {
     return null;
   }
 
   return (
-    <Drawer open={isExpanded} onOpenChange={setIsExpanded}>
+    <Sheet 
+      open={isExpanded} 
+      onOpenChange={setIsExpanded}
+    >
       {/* Fixed Bottom Bar - Always Visible */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t shadow-lg">
-        <DrawerTrigger asChild>
+        <SheetTrigger asChild>
           <div className="px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -299,11 +309,11 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll }: MobileBetSlipP
               </div>
             </div>
           </div>
-        </DrawerTrigger>
+        </SheetTrigger>
       </div>
 
-      {/* Drawer Content */}
-      <DrawerContent className="max-h-[85vh] flex flex-col">
+      {/* Sheet Content */}
+      <SheetContent side="bottom" className="max-h-[85vh] flex flex-col p-0">
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto px-4">
           <div className="space-y-4 py-4">
@@ -321,7 +331,7 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll }: MobileBetSlipP
                       <span className="font-bold text-primary">{bet.odds.toFixed(2)}</span>
                       <Button
                         size="sm"
-                        onClick={() => onRemoveBet(bet.id)}
+                        onClick={() => handleRemoveBet(bet.id)}
                         className="jambol-button h-6 w-6 p-0 hover:bg-destructive hover:text-destructive-foreground"
                       >
                         <X className="h-3 w-3" />
@@ -386,17 +396,14 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll }: MobileBetSlipP
             </Button>
             <Button
               className="jambol-button w-full"
-              onClick={() => {
-                onClearAll();
-                setIsExpanded(false);
-              }}
+              onClick={handleClearAll}
             >
               Limpiar Boleto
             </Button>
           </div>
         </div>
-      </DrawerContent>
-    </Drawer>
+      </SheetContent>
+    </Sheet>
   );
 };
 
