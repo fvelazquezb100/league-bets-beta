@@ -76,7 +76,7 @@ export const MatchAvailabilityControl = () => {
         
         days.push({
           date: dateStr,
-          isEnabled: dayData?.is_live_betting_enabled ?? false,
+          isEnabled: (dayData as any)?.is_live_betting_enabled ?? false,
           dayName: date.toLocaleDateString('es-ES', { weekday: 'short' }),
           isToday: i === 0
         });
@@ -84,7 +84,7 @@ export const MatchAvailabilityControl = () => {
 
       setAvailabilityDays(days);
     } catch (error) {
-      handleError(error, 'Error loading availability data');
+      handleError(error, { context: 'Error loading availability data' });
     } finally {
       setLoading(false);
     }
@@ -142,7 +142,7 @@ export const MatchAvailabilityControl = () => {
         )
       );
     } catch (error) {
-      handleError(error, 'Error updating match availability');
+      handleError(error, { context: 'Error updating match availability' });
     } finally {
       setSaving(false);
     }
