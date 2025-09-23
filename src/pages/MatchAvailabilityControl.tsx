@@ -207,7 +207,7 @@ export const MatchAvailabilityControl = () => {
                       {new Date(day.date).getDate()}
                     </div>
                     {day.isToday && (
-                      <Badge variant="secondary" className="text-xs bg-white text-black border border-[#FFC72C]">
+                      <Badge className="text-xs bg-white text-black border border-[#FFC72C] hover:bg-white">
                         Hoy
                       </Badge>
                     )}

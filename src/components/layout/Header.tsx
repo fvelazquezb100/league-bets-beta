@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { LogOut, User, DollarSign, Trophy, Menu, Home, History, Settings, Shield, Award } from 'lucide-react';
@@ -45,46 +46,29 @@ const navigationItems = [
 
 export const Header = () => {
   const { user, signOut } = useAuth();
-  const [profile, setProfile] = useState<any>(null);
+  const { data: profile, isLoading: profileLoading } = useUserProfile(user?.id);
   const [league, setLeague] = useState<any>(null);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user) return;
+    const fetchLeague = async () => {
+      if (!profile?.league_id) return;
       
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('username, weekly_budget, league_id, role, global_role')
-        .eq('id', user.id)
+      const { data: leagueData, error: leagueError } = await supabase
+        .from('leagues')
+        .select('name, join_code')
+        .eq('id', profile.league_id)
         .maybeSingle();
       
-      if (profileError) {
-        console.error('Error fetching profile:', profileError);
-        return;
-      }
-      
-      if (profileData) {
-        setProfile(profileData);
-        
-        if (profileData.league_id) {
-          const { data: leagueData, error: leagueError } = await supabase
-            .from('leagues')
-            .select('name, join_code')
-            .eq('id', profileData.league_id)
-            .maybeSingle();
-          
-          if (leagueError) {
-            console.error('Error fetching league:', leagueError);
-          } else if (leagueData) {
-            setLeague(leagueData);
-          }
-        }
+      if (leagueError) {
+        console.error('Error fetching league:', leagueError);
+      } else if (leagueData) {
+        setLeague(leagueData);
       }
     };
 
-    fetchProfile();
-  }, [user]);
+    fetchLeague();
+  }, [profile?.league_id]);
 
   return (
     <header className="bg-card border-b border-border/50 shadow-sm bg-background">

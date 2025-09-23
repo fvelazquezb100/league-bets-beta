@@ -203,8 +203,8 @@ export const useUserBets = (userId?: string) => {
     queryKey: ['user-bets', 'pending', userId],
     queryFn: () => fetchUserBets(userId!),
     enabled: !!userId,
-    staleTime: 30 * 1000, // 30 seconds - bets change frequently
-    refetchInterval: 60 * 1000, // Auto-refresh every minute
+    staleTime: 0, // Always consider data stale for immediate updates
+    refetchInterval: 30 * 1000, // Auto-refresh every 30 seconds
   });
 };
 
@@ -214,7 +214,8 @@ export const useUserBetHistory = (userId?: string) => {
     queryKey: ['user-bets', 'all', userId],
     queryFn: () => fetchAllUserBets(userId!),
     enabled: !!userId,
-    staleTime: 2 * 60 * 1000, // 2 minutes - history doesn't change often
+    staleTime: 0, // Always consider data stale for immediate updates
+    refetchInterval: 30 * 1000, // Auto-refresh every 30 seconds
   });
 };
 

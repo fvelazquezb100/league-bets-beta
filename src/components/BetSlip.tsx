@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getBettingTranslation } from '@/utils/bettingTranslations';
 import { betSchema, type BetInput } from '@/schemas/validation';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface Bet {
   id: string;
@@ -32,8 +33,10 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
   const [stake, setStake] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [weeklyBudget, setWeeklyBudget] = useState<number | null>(null);
+  const [minBet, setMinBet] = useState<number>(10); // Default minimum bet
   const { toast } = useToast();
   const { cutoffMinutes } = useBettingSettings();
+  const queryClient = useQueryClient();
 
   // Check for duplicate fixtures
   const fixtureIds = selectedBets.map(bet => bet.fixtureId).filter(id => id !== undefined);
@@ -43,24 +46,91 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
   const totalOdds = selectedBets.reduce((acc, bet) => acc * bet.odds, 1);
   const potentialWinnings = stake ? (parseFloat(stake.replace(',', '.')) * totalOdds).toFixed(2) : '0.00';
 
+  // Handle stake input - only allow integers
+  const handleStakeChange = (value: string) => {
+    // Remove any non-numeric characters except for the first character
+    const numericValue = value.replace(/[^0-9]/g, '');
+    setStake(numericValue);
+  };
+
+  // Handle increment/decrement by 10
+  const handleIncrement = () => {
+    const currentValue = parseInt(stake) || 0;
+    const newValue = currentValue + 10;
+    setStake(newValue.toString());
+  };
+
+  const handleDecrement = () => {
+    const currentValue = parseInt(stake) || 0;
+    const newValue = Math.max(minBet, currentValue - 10);
+    setStake(newValue.toString());
+  };
+
+  // Handle spinner arrows (up/down keys and mouse wheel)
+  const handleSpinnerChange = (direction: 'up' | 'down') => {
+    const currentValue = parseInt(stake) || 0;
+    const delta = direction === 'up' ? 10 : -10;
+    const newValue = Math.max(minBet, currentValue + delta);
+    setStake(newValue.toString());
+  };
+
   useEffect(() => {
-    const fetchWeeklyBudget = async () => {
+    const fetchUserData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('weekly_budget')
+        .select('weekly_budget, league_id')
         .eq('id', user.id)
         .single();
 
       if (profile) {
         setWeeklyBudget(profile.weekly_budget);
+        
+        // Get league minimum bet amount
+        if (profile.league_id) {
+          const { data: league } = await supabase
+            .from('leagues')
+            .select('min_bet')
+            .eq('id', profile.league_id)
+            .single();
+
+          if (league?.min_bet) {
+            setMinBet(Number(league.min_bet));
+            // Set default stake to minimum bet amount
+            setStake(league.min_bet.toString());
+          }
+        }
       }
     };
 
-    fetchWeeklyBudget();
+    fetchUserData();
   }, []);
+
+  // Handle keyboard arrow keys
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      handleSpinnerChange('up');
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      handleSpinnerChange('down');
+    }
+  };
+
+  // Handle input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleStakeChange(e.target.value);
+  };
+
+
+  // Reset stake to minimum when bet slip is cleared
+  useEffect(() => {
+    if (selectedBets.length === 0 && stake !== minBet.toString()) {
+      setStake(minBet.toString());
+    }
+  }, [selectedBets.length, minBet, stake]);
 
   const handlePlaceBet = async () => {
     if (!stake || parseFloat(stake) <= 0) {
@@ -236,14 +306,18 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
       // Update local weekly budget state
       setWeeklyBudget(profile.weekly_budget - stakeAmount);
 
+      // Invalidate React Query cache to refresh data immediately
+      queryClient.invalidateQueries({ queryKey: ['user-bets'] });
+      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+
       toast({
         title: '¡Apuesta realizada!',
         description: `Apuesta ${selectedBets.length > 1 ? 'combinada' : ''} de ${stake} pts realizada con éxito.`,
       });
 
-      // Clear the bet slip
+      // Clear the bet slip and reset stake to minimum
       onClearAll();
-      setStake('');
+      setStake(minBet.toString());
 
     } catch (error) {
       console.error('Error placing bet:', error);
@@ -299,15 +373,45 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
             <div className="space-y-3">
               <div>
                 <Label htmlFor="stake">Importe (pts)</Label>
-                <Input
-                  id="bet-amount"
-                  type="number"
-                  placeholder="0.00"
-                  value={stake}
-                  onChange={(e) => setStake(e.target.value)}
-                  min="0"
-                  step="0.01"
-                />
+                <div className="relative">
+                  <Input
+                    id="bet-amount"
+                    type="text"
+                    placeholder="0"
+                    value={stake}
+                    onChange={handleInputChange}
+                    onKeyDown={handleKeyDown}
+                    onWheel={(e) => {
+                      e.preventDefault();
+                      const delta = e.deltaY > 0 ? -10 : 10;
+                      const currentValue = parseInt(stake) || 0;
+                      const newValue = Math.max(minBet, currentValue + delta);
+                      setStake(newValue.toString());
+                    }}
+                    className="pr-8"
+                  />
+                  <div className="absolute right-1 top-0 bottom-0 flex flex-col">
+                    <button
+                      type="button"
+                      onClick={() => handleSpinnerChange('up')}
+                      className="flex-1 flex items-center justify-center text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      style={{ fontSize: '10px', lineHeight: '1' }}
+                    >
+                      ▲
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSpinnerChange('down')}
+                      className="flex-1 flex items-center justify-center text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      style={{ fontSize: '10px', lineHeight: '1' }}
+                    >
+                      ▼
+                    </button>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Mínimo: {minBet} pts • Usa las flechas para incrementar de 10 en 10
+                </p>
               </div>
 
               {weeklyBudget !== null && (

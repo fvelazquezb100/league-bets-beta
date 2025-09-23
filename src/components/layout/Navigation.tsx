@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Home, DollarSign, History, Shield, Settings, Trophy, Award, Menu, LogOut, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -43,42 +44,27 @@ const navigationItems = [
 export const Navigation = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [profile, setProfile] = useState<any>(null);
+  const { data: profile } = useUserProfile(user?.id);
   const [league, setLeague] = useState<any>(null);
   const [isOpen, setIsOpen] = useState(false);
 
+  const isSuperAdmin = profile?.global_role === 'superadmin';
+
   useEffect(() => {
-    let cancelled = false;
+    const fetchLeague = async () => {
+      if (!profile?.league_id) return;
 
-    const fetchProfile = async () => {
-      if (!user) return;
-
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('username, weekly_budget, league_id, global_role')
-        .eq('id', user.id)
+      const { data: leagueData } = await supabase
+        .from('leagues')
+        .select('name')
+        .eq('id', profile.league_id)
         .maybeSingle();
 
-      if (!cancelled && profileData) {
-        setProfile(profileData);
-        setIsSuperAdmin(profileData.global_role === 'superadmin');
-
-        if (profileData.league_id) {
-          const { data: leagueData } = await supabase
-            .from('leagues')
-            .select('name')
-            .eq('id', profileData.league_id)
-            .maybeSingle();
-
-          if (leagueData) setLeague(leagueData);
-        }
-      }
+      if (leagueData) setLeague(leagueData);
     };
 
-    fetchProfile();
-    return () => { cancelled = true; };
-  }, [user]);
+    fetchLeague();
+  }, [profile?.league_id]);
 
   const renderLink = (name: string, href: string, Icon: any) => {
     const isActive = location.pathname === href;
