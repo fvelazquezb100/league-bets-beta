@@ -298,7 +298,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
               <div>
                 <Label htmlFor="stake">Importe (pts)</Label>
                 <Input
-                  id="stake"
+                  id="bet-amount"
                   type="number"
                   placeholder="0.00"
                   value={stake}
@@ -328,6 +328,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
 
               <div className="space-y-2">
                 <Button
+                  id="realizar-apuesta"
                   onClick={handlePlaceBet}
                   disabled={
                     isSubmitting || 
