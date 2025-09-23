@@ -2,9 +2,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface BettingSetting {
+  id: number;
   setting_key: string;
   setting_value: string;
   description: string;
+  created_at: string;
   updated_at: string;
 }
 
@@ -15,25 +17,64 @@ export interface BettingSettingsResponse {
   new_cutoff_minutes?: number;
 }
 
-// For now, we'll use a simple implementation since the RPC functions don't exist
-// This can be expanded later when the database functions are created
-
-// Get current betting cutoff time in minutes (default implementation)
+// Get current betting cutoff time in minutes from database
 const getBettingCutoffMinutes = async (): Promise<number> => {
-  // For now, return a default value
-  // This can be replaced with a database query when the table is created
-  return 15; // Default to 15 minutes
+  try {
+    const { data, error } = await supabase
+      .from('betting_settings' as any)
+      .select('*')
+      .eq('setting_key', 'betting_cutoff_minutes')
+      .single();
+
+    if (error) {
+      console.error('Database error:', error);
+      return 15; // Default to 15 minutes
+    }
+
+    if (!data) {
+      console.warn('No data found for betting_cutoff_minutes');
+      return 15; // Default to 15 minutes
+    }
+
+    const minutes = parseInt((data as any).setting_value, 10) || 15;
+    return minutes;
+  } catch (err) {
+    console.error('Exception in getBettingCutoffMinutes:', err);
+    return 15; // Default to 15 minutes
+  }
 };
 
-// Update betting cutoff time (placeholder implementation)
+// Update betting cutoff time in database
 const updateBettingCutoffTime = async (minutes: number): Promise<BettingSettingsResponse> => {
-  // For now, just return success
-  // This can be replaced with actual database update when the table is created
-  return {
-    success: true,
-    message: 'Cutoff time updated successfully',
-    new_cutoff_minutes: minutes
-  };
+  try {
+    const { data, error } = await supabase
+      .from('betting_settings' as any)
+      .update({ 
+        setting_value: minutes.toString(),
+        updated_at: new Date().toISOString()
+      } as any)
+      .eq('setting_key', 'betting_cutoff_minutes')
+      .select()
+      .single();
+
+    if (error) {
+      return {
+        success: false,
+        error: `Failed to update cutoff time: ${error.message}`
+      };
+    }
+
+    return {
+      success: true,
+      message: 'Cutoff time updated successfully',
+      new_cutoff_minutes: minutes
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: 'Failed to save cutoff time'
+    };
+  }
 };
 
 export const useBettingSettings = () => {

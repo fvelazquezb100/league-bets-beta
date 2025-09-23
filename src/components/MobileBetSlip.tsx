@@ -31,28 +31,74 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll }: MobileBetSlipP
   const [stake, setStake] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [weeklyBudget, setWeeklyBudget] = useState<number | null>(null);
+  const [minBet, setMinBet] = useState<number>(10); // Default minimum bet
   const [isExpanded, setIsExpanded] = useState(false);
   const { toast } = useToast();
   const { cutoffMinutes } = useBettingSettings();
 
-  // Load weekly budget on component mount
+  // Helper to adjust stake by 10, respecting minBet
+  const adjustStakeBy10 = (direction: 'up' | 'down') => {
+    const current = parseFloat(stake) || 0;
+    const next = direction === 'up' ? current + 10 : Math.max(minBet, current - 10);
+    setStake(next.toString());
+  };
+
+  // Intercept native spinner clicks and wheel events
+  const handleStakeInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      adjustStakeBy10('up');
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      adjustStakeBy10('down');
+    }
+  };
+
+  const handleStakeInputWheel = (e: React.WheelEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    adjustStakeBy10(e.deltaY < 0 ? 'up' : 'down');
+  };
+
+
+  // Load user data on component mount
   useEffect(() => {
-    const loadWeeklyBudget = async () => {
+    const loadUserData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        // Get user profile with league_id
         const { data: profile } = await supabase
           .from('profiles')
-          .select('weekly_budget')
+          .select('weekly_budget, league_id')
           .eq('id', user.id)
           .single();
 
         if (profile) {
           setWeeklyBudget(profile.weekly_budget);
+          
+          // Get minimum bet for the league
+          if (profile.league_id) {
+            const { data: league } = await supabase
+              .from('leagues')
+              .select('min_bet')
+              .eq('id', profile.league_id)
+              .single();
+            
+            if (league && league.min_bet) {
+              setMinBet(Math.floor(league.min_bet)); // Remove decimals
+            }
+          }
         }
       }
     };
-    loadWeeklyBudget();
+    loadUserData();
   }, []);
+
+  // Set default stake to minimum bet when minBet changes
+  useEffect(() => {
+    if (minBet && !stake) {
+      setStake(minBet.toString());
+    }
+  }, [minBet, stake]);
 
   // No automatic drawer management - handle manually to avoid conflicts
 
@@ -139,54 +185,38 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll }: MobileBetSlipP
         return;
       }
 
-      // Nueva validación: mínimo por apuesta según la liga
-      const { data: league, error: leagueError } = await supabase
-        .from('leagues')
-        .select('min_bet')
-        .eq('id', profile.league_id)
-        .maybeSingle();
-
-      if (leagueError || !league) {
+      // Validación: mínimo por apuesta según la liga
+      if (stakeAmount < minBet) {
         toast({
           title: 'Error',
-          description: 'No se pudo validar la liga.',
-          variant: 'destructive',
-        });
-        return;
-      }  
-      const minimumBet = Number((league as any)?.min_bet ?? 0);
-      if (stakeAmount < minimumBet) {
-        toast({
-          title: 'Error',
-          description: `La apuesta mínima en esta liga es de ${minimumBet}.`,
+          description: `La apuesta mínima en esta liga es de ${minBet}.`,
           variant: 'destructive',
         });
         return;
       }  
 
       // Nueva validación: maximo por apuesta según la liga
-      const { data: maxBetLeague, error: maxBetLeagueError } = await supabase
-        .from('leagues')
-        .select('max_bet')
-        .eq('id', profile.league_id)
-        .maybeSingle();
+      if (profile.league_id) {
+        const { data: maxBetLeague, error: maxBetLeagueError } = await supabase
+          .from('leagues')
+          .select('max_bet')
+          .eq('id', profile.league_id)
+          .maybeSingle();
 
-      if (maxBetLeagueError || !maxBetLeague) {
-        toast({
-          title: 'Error',
-          description: 'No se pudo validar la liga.',
-          variant: 'destructive',
-        });
-        return;
-      }  
-      const maxBet = Number((maxBetLeague as any)?.max_bet ?? 0);
-      if (stakeAmount > maxBet) {
-        toast({
-          title: 'Error',
-          description: `La apuesta máxima en esta liga es de ${maxBet}.`,
-          variant: 'destructive',
-        });
-        return;
+        if (maxBetLeagueError) {
+          console.error('Error fetching max bet:', maxBetLeagueError);
+          // Continue without max bet validation if there's an error
+        } else if (maxBetLeague) {
+          const maxBet = Number(maxBetLeague.max_bet ?? 0);
+          if (stakeAmount > maxBet) {
+            toast({
+              title: 'Error',
+              description: `La apuesta máxima en esta liga es de ${maxBet}.`,
+              variant: 'destructive',
+            });
+            return;
+          }
+        }
       }
 
       // Validar presupuesto semanal disponible
@@ -350,15 +380,37 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll }: MobileBetSlipP
             <div className="space-y-3">
               <div>
                 <Label htmlFor="stake">Importe (pts)</Label>
-                <Input
-                  id="stake"
-                  type="number"
-                  placeholder="0.00"
-                  value={stake}
-                  onChange={(e) => setStake(e.target.value)}
-                  min="0"
-                  step="0.01"
-                />
+                <div className="relative">
+                  <Input
+                    id="stake"
+                    type="text"
+                    placeholder="0"
+                    value={stake}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^0-9]/g, '');
+                      setStake(value);
+                    }}
+                    onKeyDown={handleStakeInputKeyDown}
+                    onWheel={handleStakeInputWheel}
+                    className="pr-8"
+                  />
+                  <div className="absolute right-1 top-0 h-full flex flex-col">
+                    <button
+                      type="button"
+                      onClick={() => adjustStakeBy10('up')}
+                      className="flex-1 flex items-center justify-center text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      ▲
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => adjustStakeBy10('down')}
+                      className="flex-1 flex items-center justify-center text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      ▼
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-2 rounded">
@@ -397,7 +449,8 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll }: MobileBetSlipP
               {isSubmitting ? 'Procesando...' : 'Realizar Apuestas'}
             </Button>
             <Button
-              className="jambol-button w-full"
+              variant="outline"
+              className="w-full bg-white text-black border border-[#FFC72C] hover:bg-[#FFC72C] hover:text-black"
               onClick={handleClearAll}
             >
               Limpiar Boleto

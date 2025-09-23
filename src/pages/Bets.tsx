@@ -15,6 +15,7 @@ import { useMatchOdds, type MatchData, type BetValue } from '@/hooks/useMatchOdd
 import { useUserBets, type UserBet } from '@/hooks/useUserBets';
 import { useAvailableLeagues } from '@/hooks/useAvailableLeagues';
 import { useMatchAvailability } from '@/hooks/useMatchAvailability';
+import { useBettingSettings } from '@/hooks/useBettingSettings';
 import { MagicCard } from '@/components/ui/MagicCard';
 
 // Re-export types from hooks for compatibility
@@ -24,6 +25,7 @@ export type { UserBet } from '@/hooks/useUserBets';
 const Bets = () => {
   // Local UI state
   const [selectedBets, setSelectedBets] = useState<any[]>([]);
+  const { cutoffMinutes } = useBettingSettings();
   const [selectedLeague, setSelectedLeague] = useState<'primera' | 'champions' | 'europa' | 'liga-mx'>('primera');
   const [openId, setOpenId] = useState<number | null>(null);
   
@@ -313,8 +315,9 @@ const Bets = () => {
       <div className="w-full space-y-4">
         {matchesToRender.map((match) => {
           const kickoff = new Date(match.fixture.date);
-          const freezeTime = new Date(kickoff.getTime() - 15 * 60 * 1000);
+          const freezeTime = new Date(kickoff.getTime() - cutoffMinutes * 60 * 1000);
           const isFrozen = new Date() >= freezeTime;
+          
 
           return (
             <MagicCard
