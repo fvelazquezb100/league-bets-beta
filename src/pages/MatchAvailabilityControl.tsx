@@ -84,7 +84,7 @@ export const MatchAvailabilityControl = () => {
 
       setAvailabilityDays(days);
     } catch (error) {
-      handleError(error, { context: 'Error loading availability data' });
+      handleError(error, { component: 'MatchAvailabilityControl', action: 'loadAvailabilityData' });
     } finally {
       setLoading(false);
     }
@@ -142,7 +142,7 @@ export const MatchAvailabilityControl = () => {
         )
       );
     } catch (error) {
-      handleError(error, { context: 'Error updating match availability' });
+      handleError(error, { component: 'MatchAvailabilityControl', action: 'toggleAvailability' });
     } finally {
       setSaving(false);
     }
