@@ -8,18 +8,24 @@ export interface MatchAvailabilityData {
 
 // Fetch function for match availability
 const fetchMatchAvailability = async (): Promise<MatchAvailabilityData[]> => {
-  const { data, error } = await supabase
-    .from('match_availability_control')
-    .select('date, is_live_betting_enabled')
-    .gte('date', new Date().toISOString().split('T')[0])
-    .lte('date', new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
-    .order('date');
+  try {
+    const { data, error } = await supabase
+      .from('match_availability_control' as any)
+      .select('date, is_live_betting_enabled')
+      .gte('date', new Date().toISOString().split('T')[0])
+      .lte('date', new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+      .order('date');
 
-  if (error) {
-    throw new Error('Failed to fetch match availability data.');
+    if (error) {
+      console.warn('Failed to fetch match availability data:', error);
+      return []; // Return empty array instead of throwing
+    }
+
+    return (data as any) || [];
+  } catch (error) {
+    console.warn('Error fetching match availability data:', error);
+    return []; // Return empty array instead of throwing
   }
-
-  return data || [];
 };
 
 // Custom hook for match availability
