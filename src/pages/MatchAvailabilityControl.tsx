@@ -55,7 +55,7 @@ export const MatchAvailabilityControl = () => {
       
       // Get availability data for the next 15 days
       const { data, error } = await supabase
-        .from('match_availability_control')
+        .from('match_availability_control' as any)
         .select('date, is_live_betting_enabled')
         .gte('date', new Date().toISOString().split('T')[0])
         .lte('date', new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
@@ -72,7 +72,7 @@ export const MatchAvailabilityControl = () => {
         date.setDate(today.getDate() + i);
         const dateStr = date.toISOString().split('T')[0];
         
-        const dayData = data?.find(item => item.date === dateStr);
+        const dayData = data?.find((item: any) => item.date === dateStr);
         
         days.push({
           date: dateStr,
@@ -96,7 +96,7 @@ export const MatchAvailabilityControl = () => {
       
       // First try to update existing record
       const { data: existingData, error: selectError } = await supabase
-        .from('match_availability_control')
+        .from('match_availability_control' as any)
         .select('id')
         .eq('date', date)
         .single();
@@ -109,22 +109,22 @@ export const MatchAvailabilityControl = () => {
       if (existingData) {
         // Update existing record
         const { error: updateError } = await supabase
-          .from('match_availability_control')
+          .from('match_availability_control' as any)
           .update({
             is_live_betting_enabled: isEnabled,
             updated_at: new Date().toISOString()
-          })
+          } as any)
           .eq('date', date);
         error = updateError;
       } else {
         // Insert new record
         const { error: insertError } = await supabase
-          .from('match_availability_control')
+          .from('match_availability_control' as any)
           .insert({
             date,
             is_live_betting_enabled: isEnabled,
             updated_at: new Date().toISOString()
-          });
+          } as any);
         error = insertError;
       }
 
