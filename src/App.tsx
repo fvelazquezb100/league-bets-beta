@@ -18,6 +18,7 @@ import { TestDemo } from "./pages/TestDemo";
 import { Clasificacion } from "./pages/Clasificacion";
 import Bets from "./pages/Bets";
 import { BetHistory } from "./pages/BetHistory";
+import { MatchAvailabilityControl } from "./pages/MatchAvailabilityControl";
 import NotFound from "./pages/NotFound";
 import AdminLiga from "./pages/AdminLiga";
 import { AdminRoute } from "./components/AdminRoute";
@@ -114,6 +115,15 @@ const App = () => (
                 <SmartRedirect>
                   <MainLayout>
                     <SuperAdmin />
+                  </MainLayout>
+                </SmartRedirect>
+              </SuperAdminRoute>
+            } />
+            <Route path="/match-availability-control" element={
+              <SuperAdminRoute>
+                <SmartRedirect>
+                  <MainLayout>
+                    <MatchAvailabilityControl />
                   </MainLayout>
                 </SmartRedirect>
               </SuperAdminRoute>

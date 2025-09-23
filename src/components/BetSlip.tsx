@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { X, DollarSign } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useBettingSettings } from '@/hooks/useBettingSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { getBettingTranslation } from '@/utils/bettingTranslations';
 import { betSchema, type BetInput } from '@/schemas/validation';
@@ -32,6 +33,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [weeklyBudget, setWeeklyBudget] = useState<number | null>(null);
   const { toast } = useToast();
+  const { cutoffMinutes } = useBettingSettings();
 
   // Check for duplicate fixtures
   const fixtureIds = selectedBets.map(bet => bet.fixtureId).filter(id => id !== undefined);
@@ -89,16 +91,16 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
       return;
     }
 
-    // Bloqueo por cierre: 15 minutos antes del inicio
+    // Bloqueo por cierre: X minutos antes del inicio (configurable)
     const isAnyFrozen = selectedBets.some(bet => {
       if (!bet.kickoff) return false;
-      const freeze = new Date(new Date(bet.kickoff).getTime() - 15 * 60 * 1000);
+      const freeze = new Date(new Date(bet.kickoff).getTime() - cutoffMinutes * 60 * 1000);
       return new Date() >= freeze;
     });
     if (isAnyFrozen) {
       toast({
         title: 'Apuestas cerradas',
-        description: 'Al menos una selección está cerrada (15 min antes del inicio).',
+        description: `Al menos una selección está cerrada (${cutoffMinutes} min antes del inicio).`,
         variant: 'destructive',
       });
       return;
@@ -335,7 +337,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
                     !stake || 
                     parseFloat(stake) <= 0 || 
                     (selectedBets.length > 1 && hasDuplicateFixtures) ||
-                    selectedBets.some(bet => bet.kickoff ? (new Date() >= new Date(new Date(bet.kickoff).getTime() - 15 * 60 * 1000)) : false)
+                    selectedBets.some(bet => bet.kickoff ? (new Date() >= new Date(new Date(bet.kickoff).getTime() - cutoffMinutes * 60 * 1000)) : false)
                   }
                   className="w-full"
                 >

@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { X, DollarSign, ChevronUp, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useBettingSettings } from '@/hooks/useBettingSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { getBettingTranslation } from '@/utils/bettingTranslations';
 
@@ -32,6 +33,7 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll }: MobileBetSlipP
   const [weeklyBudget, setWeeklyBudget] = useState<number | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const { toast } = useToast();
+  const { cutoffMinutes } = useBettingSettings();
 
   // Load weekly budget on component mount
   useEffect(() => {
@@ -91,16 +93,16 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll }: MobileBetSlipP
       return;
     }
 
-    // Bloqueo por cierre: 15 minutos antes del inicio
+    // Bloqueo por cierre: X minutos antes del inicio (configurable)
     const isAnyFrozen = selectedBets.some(bet => {
       if (!bet.kickoff) return false;
-      const freeze = new Date(new Date(bet.kickoff).getTime() - 15 * 60 * 1000);
+      const freeze = new Date(new Date(bet.kickoff).getTime() - cutoffMinutes * 60 * 1000);
       return new Date() >= freeze;
     });
     if (isAnyFrozen) {
       toast({
         title: 'Apuestas cerradas',
-        description: 'Al menos una selección está cerrada (15 min antes del inicio).',
+        description: `Al menos una selección está cerrada (${cutoffMinutes} min antes del inicio).`,
         variant: 'destructive',
       });
       return;

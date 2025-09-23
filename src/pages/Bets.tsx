@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMatchOdds, type MatchData, type BetValue } from '@/hooks/useMatchOdds';
 import { useUserBets, type UserBet } from '@/hooks/useUserBets';
 import { useAvailableLeagues } from '@/hooks/useAvailableLeagues';
+import { useMatchAvailability } from '@/hooks/useMatchAvailability';
 import { MagicCard } from '@/components/ui/MagicCard';
 
 // Re-export types from hooks for compatibility
@@ -35,10 +36,36 @@ const Bets = () => {
   const { data: matches = [], isLoading: matchesLoading, error: matchesError } = useMatchOdds();
   const { data: userBets = [], isLoading: userBetsLoading } = useUserBets(user?.id);
   const { data: availableLeagues = [140, 2, 3, 262], isLoading: leaguesLoading } = useAvailableLeagues(user?.id);
+  const { data: matchAvailability = [], isLoading: availabilityLoading } = useMatchAvailability();
   
   // Derived loading and error states
-  const loading = matchesLoading || userBetsLoading || leaguesLoading;
+  const loading = matchesLoading || userBetsLoading || leaguesLoading || availabilityLoading;
   const error = matchesError ? 'Failed to fetch or parse live betting data. Please try again later.' : null;
+
+  // Helper function to check if live betting is enabled for a specific date
+  const isLiveBettingEnabled = (matchDate: string): boolean => {
+    try {
+      // Validate the date string first
+      if (!matchDate || typeof matchDate !== 'string') {
+        return false;
+      }
+      
+      const date = new Date(matchDate);
+      
+      // Check if the date is valid
+      if (isNaN(date.getTime())) {
+        console.warn('Invalid date provided to isLiveBettingEnabled:', matchDate);
+        return false;
+      }
+      
+      const dateStr = date.toISOString().split('T')[0];
+      const availability = matchAvailability.find(item => item.date === dateStr);
+      return availability?.is_live_betting_enabled ?? false;
+    } catch (error) {
+      console.error('Error in isLiveBettingEnabled:', error, 'matchDate:', matchDate);
+      return false;
+    }
+  };
 
   // Toggle accordion with scroll control
   const toggle = (id: number) => {
@@ -258,26 +285,22 @@ const Bets = () => {
     return nextTuesday;
   };
 
-  // Filter matches by date
-  const nextMondayEndOfDay = getNextMondayEndOfDay();
-  const nextTuesdayStart = getNextTuesdayStart();
+  // Filter matches by availability control
   const leagueMatches = getMatchesByLeague(selectedLeague);
   
-  // Declare variables outside the conditional block
-  let upcomingMatches: MatchData[];
-  let futureMatches: MatchData[];
+  // Separate matches by live betting availability
+  const liveBettingMatches: MatchData[] = [];
+  const upcomingMatches: MatchData[] = [];
   
-  // For Champions and Europa League: show all matches, separate by betting availability
-  if (selectedLeague === 'champions' || selectedLeague === 'europa') {
-    upcomingMatches = leagueMatches.filter(match => new Date(match.fixture.date) <= nextMondayEndOfDay);
-    futureMatches = leagueMatches.filter(match => new Date(match.fixture.date) >= nextTuesdayStart);
-  } else {
-    // For other leagues: use original logic
-    upcomingMatches = leagueMatches.filter(match => new Date(match.fixture.date) <= nextMondayEndOfDay);
-    futureMatches = leagueMatches.filter(match => new Date(match.fixture.date) > nextMondayEndOfDay);
-  }
+  leagueMatches.forEach(match => {
+    if (isLiveBettingEnabled(match.fixture.date)) {
+      liveBettingMatches.push(match);
+    } else {
+      upcomingMatches.push(match);
+    }
+  });
 
-  const renderMatchesSection = (matchesToRender: MatchData[], sectionKey: string) => {
+  const renderMatchesSection = (matchesToRender: MatchData[], sectionKey: string, showOdds: boolean = true) => {
     if (matchesToRender.length === 0) {
       return (
         <div className="text-center p-8 bg-card rounded-lg shadow">
@@ -346,14 +369,10 @@ const Bets = () => {
               
               {openId === match.fixture.id && (
                 <div className="space-y-3 sm:space-y-6 pt-1 sm:pt-4 animate-in slide-in-from-top-2 duration-200">
-                  {/* Check if match is in the future (outside allowed timeframe) */}
+                  {/* Check if live betting is enabled for this match */}
                   {(() => {
-                    const matchDate = new Date(match.fixture.date);
-                    const nextMondayEndOfDay = getNextMondayEndOfDay();
-                    const nextTuesdayStart = getNextTuesdayStart();
-                    
-                    // For Champions and Europa League: show future matches but without betting options
-                    if ((selectedLeague === 'champions' || selectedLeague === 'europa') && matchDate >= nextTuesdayStart) {
+                    // If showOdds is false, show upcoming matches without betting options
+                    if (!showOdds) {
                       return (
                         <div className="text-center py-8 text-muted-foreground">
                           <p className="text-lg font-medium mb-2">Próximos encuentros</p>
@@ -362,17 +381,26 @@ const Bets = () => {
                       );
                     }
                     
-                    // For all leagues: block betting after Monday 23:59
-                    if (matchDate > nextMondayEndOfDay) {
+                    // Check if live betting is enabled for this specific date
+                    if (!isLiveBettingEnabled(match.fixture.date)) {
                       return (
                         <div className="text-center py-8 text-muted-foreground">
-                          <p className="text-lg font-medium mb-2">Apuesta no disponible</p>
-                          <p>Solo se pueden apostar partidos de la semana actual.</p>
+                          <p className="text-lg font-medium mb-2">Próximos encuentros</p>
+                          <p>Las apuestas para este partido estarán disponibles próximamente.</p>
                         </div>
                       );
                     }
                     
                     // Show normal betting options for current week matches
+                    // Check if there are any bookmakers available
+                    if (!match.bookmakers || match.bookmakers.length === 0) {
+                      return (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <p>No hay mercados de apuestas disponibles para este partido.</p>
+                        </div>
+                      );
+                    }
+
                     return (
                       <>
                         {getBetTypesSorted().map(betType => {
@@ -464,16 +492,16 @@ const Bets = () => {
         {/* Main section: matches up to next Monday 23:59 */}
         <div>
           <h2 className="text-2xl font-semibold mb-4 text-foreground">Cuotas en Vivo</h2>
-          {renderMatchesSection(upcomingMatches, 'upcoming')}
+          {renderMatchesSection(liveBettingMatches, 'live-betting', true)}
         </div>
 
-        {/* Future matches section: matches after next Monday 23:59 */}
-        {futureMatches.length > 0 && (
+        {/* Upcoming matches section: matches without live betting */}
+        {upcomingMatches.length > 0 && (
           <>
             <div className="border-t border-border my-8"></div>
             <div>
               <h2 className="text-2xl font-semibold mb-4 text-foreground">Próximos Encuentros</h2>
-              {renderMatchesSection(futureMatches, 'future')}
+              {renderMatchesSection(upcomingMatches, 'upcoming', false)}
             </div>
           </>
         )}
