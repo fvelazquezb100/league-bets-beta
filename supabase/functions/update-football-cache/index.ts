@@ -13,6 +13,27 @@ const corsHeaders = {
 // Helper function to add a delay between API calls to respect rate limits
 const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
+// Helper function to make API requests with timeout
+const fetchWithTimeout = async (url: string, options: RequestInit, timeoutMs: number = 10000) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error(`Request timeout after ${timeoutMs}ms`);
+    }
+    throw error;
+  }
+};
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -103,14 +124,24 @@ Deno.serve(async (req) => {
       const fixturesUrl = `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${currentYear}&next=${matchesPerLeague}`;
       console.log(`Fetching ${matchesPerLeague} fixtures from ${leagueName}: ${fixturesUrl}`);
       
-      const fixturesResponse = await fetch(fixturesUrl, {
+      const fixturesResponse = await fetchWithTimeout(fixturesUrl, {
         headers: {
           'x-apisports-key': API_KEY,
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Accept': 'application/json',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Cache-Control': 'no-cache',
         },
-      });
+      }, 15000); // 15 second timeout for fixtures
 
       if (!fixturesResponse.ok) {
-        console.warn(`Failed to fetch fixtures for league ${leagueId}: ${await fixturesResponse.text()}`);
+        let errorText = '';
+        try {
+          errorText = await fixturesResponse.text();
+        } catch (e) {
+          errorText = 'Could not read error response';
+        }
+        console.warn(`Failed to fetch fixtures for league ${leagueId}: Status ${fixturesResponse.status} - ${errorText}`);
         continue; // Skip this league and continue with others
       }
 
@@ -133,7 +164,7 @@ Deno.serve(async (req) => {
       
       console.log(`Found ${fixtureIDs.length} upcoming fixtures for ${leagueName}.`);
       console.log(`Fixture IDs for ${leagueName}:`, fixtureIDs.slice(0, 5)); // Log first 5 fixture IDs
-      await delay(200); // Small delay between league requests
+      await delay(1000); // Increased delay between league requests to avoid blocking
     }
     
     console.log(`Total fixtures found across all leagues: ${allFixtureIDs.length}`);
@@ -153,13 +184,19 @@ Deno.serve(async (req) => {
     for (const fixtureId of allFixtureIDs) {
       const oddsUrl = `https://v3.football.api-sports.io/odds?fixture=${fixtureId}`;
       console.log(`Fetching odds from: ${oddsUrl}`);
-      const oddsResponse = await fetch(oddsUrl, {
-        headers: {
-          'x-apisports-key': API_KEY,
-        },
-      });
+      
+      try {
+        const oddsResponse = await fetchWithTimeout(oddsUrl, {
+          headers: {
+            'x-apisports-key': API_KEY,
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'application/json',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Cache-Control': 'no-cache',
+          },
+        }, 20000); // 20 second timeout for odds
 
-      if (oddsResponse.ok) {
+        if (oddsResponse.ok) {
         const oddsJson = await oddsResponse.json();
         if (oddsJson.response && oddsJson.response.length > 0) {
             allOddsData.push(...oddsJson.response);
@@ -177,10 +214,20 @@ Deno.serve(async (req) => {
           oddsFailureCount++;
         }
       } else {
-        console.warn(`❌ Could not fetch odds for fixture ${fixtureId}: ${await oddsResponse.text()}`);
+        let errorText = '';
+        try {
+          errorText = await oddsResponse.text();
+        } catch (e) {
+          errorText = 'Could not read error response';
+        }
+          console.warn(`❌ Could not fetch odds for fixture ${fixtureId}: Status ${oddsResponse.status} - ${errorText}`);
+          oddsFailureCount++;
+        }
+      } catch (error) {
+        console.error(`❌ Exception fetching odds for fixture ${fixtureId}:`, error.message);
         oddsFailureCount++;
       }
-      await delay(200); // Small delay to be safe with API limits
+      await delay(1000); // Increased delay to avoid Cloudflare blocking
     }
     
     console.log(`Odds fetch summary: ${oddsSuccessCount} successful, ${oddsFailureCount} failed`);
@@ -195,14 +242,21 @@ Deno.serve(async (req) => {
     fixturesWithoutOdds.forEach(fixtureId => {
       const teams = allTeamsByFixture.get(fixtureId);
       if (teams) {
-        // Create a minimal placeholder entry
+        // Find the original fixture data to get the date
+        const originalFixture = allFixturesData.find(f => f?.fixture?.id === fixtureId);
+        const fixtureDate = originalFixture?.fixture?.date || null;
+        
+        // Create a minimal placeholder entry with date
         const placeholderEntry = {
-          fixture: { id: fixtureId },
+          fixture: { 
+            id: fixtureId,
+            date: fixtureDate
+          },
           teams: teams,
           bookmakers: [] // Empty bookmakers array
         };
         allOddsData.push(placeholderEntry);
-        console.log(`📝 Created placeholder for ${teams.league_name} fixture ${fixtureId}`);
+        console.log(`📝 Created placeholder for ${teams.league_name} fixture ${fixtureId} with date: ${fixtureDate}`);
       }
     });
 

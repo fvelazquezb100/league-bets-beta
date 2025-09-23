@@ -74,6 +74,7 @@ export const Login = () => {
     }
   };
 
+
   return (
     <div className="min-h-screen bg-background">
       <div className="flex min-h-screen">
@@ -145,6 +146,7 @@ export const Login = () => {
                     {isLoading ? 'Iniciando...' : 'Iniciar Sesión'}
                   </Button>
                 </form>
+                
                 
                 <div className="mt-6 text-center">
                   <p className="text-sm text-muted-foreground">

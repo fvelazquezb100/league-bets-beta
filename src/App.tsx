@@ -10,9 +10,15 @@ import { Landing } from "./pages/Landing";
 import { Login } from "./pages/Login";
 import { Signup } from "./pages/Signup";
 import { Home } from "./pages/Home";
+import { HomeDemo } from "./pages/HomeDemo";
+import { BetsDemo } from "./pages/BetsDemo";
+import { BetHistoryDemo } from "./pages/BetHistoryDemo";
+import { ClasificacionDemo } from "./pages/ClasificacionDemo";
+import { TestDemo } from "./pages/TestDemo";
 import { Clasificacion } from "./pages/Clasificacion";
 import Bets from "./pages/Bets";
 import { BetHistory } from "./pages/BetHistory";
+import { MatchAvailabilityControl } from "./pages/MatchAvailabilityControl";
 import NotFound from "./pages/NotFound";
 import AdminLiga from "./pages/AdminLiga";
 import { AdminRoute } from "./components/AdminRoute";
@@ -38,6 +44,11 @@ const App = () => (
             <Route path="/signup" element={<Signup />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/update-password" element={<UpdatePassword />} />
+            <Route path="/home-demo" element={<HomeDemo />} />
+            <Route path="/bets-demo" element={<BetsDemo />} />
+            <Route path="/bet-history-demo" element={<BetHistoryDemo />} />
+            <Route path="/clasificacion-demo" element={<ClasificacionDemo />} />
+            <Route path="/test-demo" element={<TestDemo />} />
             <Route path="/league-setup" element={
               <ProtectedRoute>
                 <MainLayout>
@@ -104,6 +115,15 @@ const App = () => (
                 <SmartRedirect>
                   <MainLayout>
                     <SuperAdmin />
+                  </MainLayout>
+                </SmartRedirect>
+              </SuperAdminRoute>
+            } />
+            <Route path="/match-availability-control" element={
+              <SuperAdminRoute>
+                <SmartRedirect>
+                  <MainLayout>
+                    <MatchAvailabilityControl />
                   </MainLayout>
                 </SmartRedirect>
               </SuperAdminRoute>

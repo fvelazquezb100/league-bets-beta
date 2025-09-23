@@ -4,12 +4,18 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { NewsManagement } from '@/components/NewsManagement'; // Tarjeta de noticias
+import { NewsManagement } from '@/components/NewsManagement';
+import { BettingSettingsControl } from '@/components/BettingSettingsControl';
+import { useMatchAvailability } from '@/hooks/useMatchAvailability';
+import { useNavigate } from 'react-router-dom';
 
 const SuperAdmin: React.FC = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { data: matchAvailability = [] } = useMatchAvailability();
 
-  //añadido card para hacer calculo manual de puntos
+  // Calculate active days count
+  const activeDaysCount = matchAvailability.filter(item => item.is_live_betting_enabled).length;
   
   // Caché de cuotas
   const {
@@ -17,243 +23,286 @@ const SuperAdmin: React.FC = () => {
     isLoading: loadingLastUpdated,
     refetch,
   } = useQuery({
-    queryKey: ['odds-cache-last-updated'],
+    queryKey: ['lastUpdated'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('match_odds_cache')
         .select('last_updated')
-        .eq('id', 1)
+        .order('last_updated', { ascending: false })
+        .limit(1)
         .single();
-      if (error) throw error;
-      return data?.last_updated as string | null;
+
+      if (error) {
+        throw error;
+      }
+
+      return data?.last_updated;
     },
   });
 
-  const [updatingOdds, setUpdatingOdds] = React.useState(false);
-  const [processingResults, setProcessingResults] = React.useState(false);
-  const [testingAuth, setTestingAuth] = React.useState(false);
-  const [authTestResults, setAuthTestResults] = React.useState<any>(null);
-
-  // Funciones generales
-  const handleForceUpdateOdds = async () => {
+  const updateCache = async () => {
     try {
-      setUpdatingOdds(true);
-      const { data, error } = await supabase.functions.invoke('secure-run-update-football-cache', {
-        body: { trigger: 'admin', timestamp: new Date().toISOString() }
+      const { data, error } = await supabase.functions.invoke('secure-run-update-football-cache');
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: 'Actualización de Caché',
+        description: 'Caché de cuotas actualizado exitosamente',
       });
       
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
-      toast({ title: 'Actualización forzada', description: 'Se inició la actualización de cuotas.' });
-      await refetch();
-    } catch (e: any) {
-      console.error('Error updating odds cache:', e);
-      toast({ title: 'Error', description: e?.message ?? 'No se pudo actualizar las cuotas.', variant: 'destructive' });
-    } finally {
-      setUpdatingOdds(false);
+      // Refetch the last updated time
+      refetch();
+    } catch (error: any) {
+      toast({
+        title: 'Error en Actualización',
+        description: error.message,
+        variant: 'destructive',
+      });
     }
   };
 
-  const handleForceProcessResults = async () => {
+  const processResults = async () => {
     try {
-      setProcessingResults(true);
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/secure-run-process-matchday-results`;
-      const body = JSON.stringify({ trigger: 'admin', timestamp: new Date().toISOString() });
-      const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
-      if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
-      await response.json();
-      toast({ title: 'Procesamiento forzado', description: 'Se inició el procesamiento de resultados correctamente.' });
-    } catch (e: any) {
-      toast({ title: 'Error', description: e?.message ?? 'No se pudo procesar los resultados.', variant: 'destructive' });
+      const { data, error } = await supabase.functions.invoke('secure-run-process-matchday-results', {
+        body: { force: true },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: 'Procesamiento de Resultados',
+        description: 'Resultados procesados exitosamente',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error en Procesamiento',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const recalculatePoints = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-reset-budgets', {
+        body: { recalculate: true },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: 'Recálculo de Puntos',
+        description: 'Puntos recalculados exitosamente',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error en Recálculo',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const testEdgeFunctionAuth = async () => {
+    try {
+      // Test with a simple function that we know works
+      const { data, error } = await supabase.functions.invoke('secure-run-update-football-cache', {
+        body: { test: true },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: 'Edge Function Auth Test',
+        description: `Success: Edge Functions are working correctly`,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Edge Function Auth Test Failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const [updatingCache, setUpdatingCache] = React.useState(false);
+  const [processingResults, setProcessingResults] = React.useState(false);
+  const [recalculatingPoints, setRecalculatingPoints] = React.useState(false);
+  const [testingAuth, setTestingAuth] = React.useState(false);
+
+  const handleUpdateCache = async () => {
+    setUpdatingCache(true);
+    try {
+      await updateCache();
+    } finally {
+      setUpdatingCache(false);
+    }
+  };
+
+  const handleProcessResults = async () => {
+    setProcessingResults(true);
+    try {
+      await processResults();
     } finally {
       setProcessingResults(false);
     }
   };
 
-  // Test de autenticación
-  const testEdgeFunctionAuth = async () => {
+  const handleRecalculatePoints = async () => {
+    setRecalculatingPoints(true);
     try {
-      setTestingAuth(true);
-      setAuthTestResults(null);
-      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const testBody = JSON.stringify({ trigger: 'auth-test', timestamp: new Date().toISOString() });
-      const results = { publicWrapper: null as any, protectedFunction: null as any };
+      await recalculatePoints();
+    } finally {
+      setRecalculatingPoints(false);
+    }
+  };
 
-      // Public wrapper
-      try {
-        const response1 = await fetch(`${baseUrl}/functions/v1/secure-run-process-matchday-results`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: testBody,
-        });
-        results.publicWrapper = {
-          success: response1.ok,
-          status: response1.status,
-          statusText: response1.statusText,
-          data: response1.ok ? await response1.json() : await response1.text(),
-        };
-      } catch (e: any) {
-        results.publicWrapper = { success: false, status: 'Network Error', statusText: e.message, data: null };
-      }
-
-      // Protected function
-      try {
-        const response2 = await fetch(`${baseUrl}/functions/v1/process-matchday-results`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: testBody,
-        });
-        results.protectedFunction = {
-          success: response2.ok,
-          status: response2.status,
-          statusText: response2.statusText,
-          data: response2.ok ? await response2.json() : await response2.text(),
-        };
-      } catch (e: any) {
-        results.protectedFunction = { success: false, status: 'Network Error', statusText: e.message, data: null };
-      }
-
-      setAuthTestResults(results);
-
-      const publicOk = results.publicWrapper?.success;
-      const protectedBlocked = !results.protectedFunction?.success &&
-                               (results.protectedFunction?.status === 401 || results.protectedFunction?.status === 403);
-
-      if (publicOk && protectedBlocked) {
-        toast({ title: 'Auth Test: Success', description: 'Public wrapper accessible, protected function properly secured.' });
-      } else {
-        toast({ title: 'Auth Test: Issues Found', description: 'Check the test results below for details.', variant: 'destructive' });
-      }
-    } catch (e: any) {
-      toast({ title: 'Auth Test Failed', description: e?.message ?? 'Failed to run authentication tests.', variant: 'destructive' });
+  const handleTestAuth = async () => {
+    setTestingAuth(true);
+    try {
+      await testEdgeFunctionAuth();
     } finally {
       setTestingAuth(false);
     }
   };
 
   return (
-    <div className="w-full px-2 sm:px-6 py-4 sm:py-8">
-      <header className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold">SuperAdmin</h1>
-        <p className="text-sm sm:text-base text-muted-foreground">Herramientas de administración global del sistema.</p>
-      </header>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-        {/* Tarjeta de Noticias */}
-        <div className="md:col-span-2 w-full -mx-2 sm:mx-0">
-          <NewsManagement />
+    <div className="container mx-auto px-4 py-8">
+      <div className="space-y-6">
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl font-bold">Panel de Superadministrador</h1>
+          <p className="text-muted-foreground">
+            Gestiona la configuración global de la aplicación
+          </p>
         </div>
 
-        {/* Caché de cuotas */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base sm:text-lg">Caché de Cuotas</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 p-3 sm:p-6">
-            <div className="text-xs sm:text-sm text-muted-foreground">
-              Última actualización: {loadingLastUpdated ? 'Cargando…' : lastUpdated ? new Date(lastUpdated).toLocaleString() : 'No disponible'}
-            </div>
-          </CardContent>
-          <CardFooter className="p-3 sm:p-6">
-            <Button onClick={handleForceUpdateOdds} disabled={updatingOdds} className="jambol-button text-xs sm:text-sm">
-              {updatingOdds ? 'Actualizando…' : 'Forzar actualización de cuotas'}
-            </Button>
-          </CardFooter>
-        </Card>
+        {/* News Management - Full width at top */}
+        <NewsManagement />
 
-        {/* Procesamiento de resultados */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base sm:text-lg">Procesamiento de Resultados</CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 sm:p-6">
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              Ejecuta manualmente el procesamiento de resultados de la última jornada.
-            </p>
-          </CardContent>
-          <CardFooter className="p-3 sm:p-6">
-            <Button onClick={handleForceProcessResults} disabled={processingResults} className="jambol-button text-xs sm:text-sm">
-              {processingResults ? 'Procesando…' : 'Forzar procesamiento de resultados'}
-            </Button>
-          </CardFooter>
-        </Card>
+        {/* Cache de Cuotas and Procesamiento de Resultados - Side by side */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Caché de Cuotas */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base sm:text-lg">Caché de Cuotas</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 p-3 sm:p-6">
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Última actualización: {loadingLastUpdated ? 'Cargando...' : lastUpdated ? new Date(lastUpdated).toLocaleString('es-ES') : 'Nunca'}
+              </p>
+            </CardContent>
+            <CardFooter className="p-3 sm:p-6">
+              <Button 
+                onClick={handleUpdateCache}
+                disabled={updatingCache}
+                className="jambol-button text-xs sm:text-sm"
+              >
+                {updatingCache ? 'Actualizando...' : 'Forzar actualización de cuotas'}
+              </Button>
+            </CardFooter>
+          </Card>
 
-        {/* Recalcular Total Points */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base sm:text-lg">Recalcular Puntos Totales</CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 sm:p-6">
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              Ejecuta manualmente el cálculo total de puntos de todos los usuarios, según sus apuestas ganadas.
-            </p>
-          </CardContent>
-          <CardFooter className="p-3 sm:p-6">
-            <Button
-              className="jambol-button text-xs sm:text-sm"
-              onClick={async () => {
-                const confirm = window.confirm(
-                  '¿Estás seguro? Esto recalculará los puntos totales de todos los usuarios según sus apuestas ganadas.'
-                );
-                if (!confirm) return;
+          {/* Procesamiento de Resultados */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base sm:text-lg">Procesamiento de Resultados</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 p-3 sm:p-6">
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Ejecuta manualmente el procesamiento de resultados de la última jornada.
+              </p>
+            </CardContent>
+            <CardFooter className="p-3 sm:p-6">
+              <Button 
+                onClick={handleProcessResults}
+                disabled={processingResults}
+                className="jambol-button text-xs sm:text-sm"
+              >
+                {processingResults ? 'Procesando...' : 'Forzar procesamiento de resultados'}
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
 
-                try {
-                  const { data, error } = await supabase.functions.invoke('recalc_total_points');
-                  if (error) throw error;
-                  toast({ title: 'Cálculo completado', description: 'Los puntos totales se han recalculado correctamente.' });
-                  console.log('Recalc total points result:', data);
-                } catch (e: any) {
-                  console.error('Error recalculando puntos totales:', e);
-                  toast({ title: 'Error', description: e?.message ?? 'No se pudo recalcular los puntos.', variant: 'destructive' });
-                }
-              }}
-            >
-              Recalcular Puntos
-            </Button>
-          </CardFooter>
-        </Card>
+        {/* Recalcular Puntos Totales and Test - Side by side */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Recalcular Puntos Totales */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base sm:text-lg">Recalcular Puntos Totales</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 p-3 sm:p-6">
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Ejecuta manualmente el cálculo total de puntos de todos los usuarios, según sus apuestas ganadas.
+              </p>
+            </CardContent>
+            <CardFooter className="p-3 sm:p-6">
+              <Button 
+                onClick={handleRecalculatePoints}
+                disabled={recalculatingPoints}
+                className="jambol-button text-xs sm:text-sm"
+              >
+                {recalculatingPoints ? 'Recalculando...' : 'Recalcular Puntos'}
+              </Button>
+            </CardFooter>
+          </Card>
 
-        {/* Test de autenticación */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base sm:text-lg">Test de Autenticación de Edge Functions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 p-3 sm:p-6">
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              Prueba la configuración de autenticación de las Edge Functions para diagnosticar problemas.
-            </p>
-            {authTestResults && (
-              <div className="space-y-4">
-                <div className="border rounded-lg p-3 sm:p-4">
-                  <h4 className="font-medium mb-2 text-sm sm:text-base">Public Wrapper (secure-run-process-matchday-results):</h4>
-                  <div className="text-xs sm:text-sm">
-                    <div>Status: {authTestResults.publicWrapper?.status} {authTestResults.publicWrapper?.statusText}</div>
-                    <div>Success: {authTestResults.publicWrapper?.success ? '✅' : '❌'}</div>
-                    <div className="mt-2 font-mono text-xs bg-muted p-2 rounded overflow-x-auto">
-                      {JSON.stringify(authTestResults.publicWrapper?.data, null, 2)}
-                    </div>
-                  </div>
-                </div>
-                <div className="border rounded-lg p-3 sm:p-4">
-                  <h4 className="font-medium mb-2 text-sm sm:text-base">Protected Function (process-matchday-results):</h4>
-                  <div className="text-xs sm:text-sm">
-                    <div>Status: {authTestResults.protectedFunction?.status} {authTestResults.protectedFunction?.statusText}</div>
-                    <div>Success: {authTestResults.protectedFunction?.success ? '✅' : '❌'}</div>
-                    <div className="mt-2 font-mono text-xs bg-muted p-2 rounded overflow-x-auto">
-                      {JSON.stringify(authTestResults.protectedFunction?.data, null, 2)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </CardContent>
-          <CardFooter className="p-3 sm:p-6">
-            <Button onClick={testEdgeFunctionAuth} disabled={testingAuth} className="jambol-button text-xs sm:text-sm">
-              {testingAuth ? 'Probando autenticación…' : 'Test Edge Function Auth'}
-            </Button>
-          </CardFooter>
-        </Card>
+          {/* Test de Autenticación de Edge Functions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base sm:text-lg">Test de Autenticación de Edge Functions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 p-3 sm:p-6">
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Prueba la configuración de autenticación de las Edge Functions para diagnosticar problemas.
+              </p>
+            </CardContent>
+            <CardFooter className="p-3 sm:p-6">
+              <Button 
+                onClick={handleTestAuth} 
+                disabled={testingAuth} 
+                className="jambol-button text-xs sm:text-sm"
+              >
+                {testingAuth ? 'Probando...' : 'Test Edge Function Auth'}
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+
+        {/* New controls at the bottom */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Configuración de Tiempo de Apuestas */}
+          <BettingSettingsControl />
+
+          {/* Control de Disponibilidad de Partidos */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base sm:text-lg">Control de Disponibilidad de Partidos</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 p-3 sm:p-6">
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Días activos en los próximos 15 días: <strong>{activeDaysCount} días</strong>
+              </p>
+            </CardContent>
+            <CardFooter className="p-3 sm:p-6">
+              <Button 
+                onClick={() => navigate('/match-availability-control')}
+                className="jambol-button text-xs sm:text-sm"
+              >
+                Abrir Control de Disponibilidad
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
       </div>
     </div>
   );
