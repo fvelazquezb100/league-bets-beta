@@ -11,11 +11,13 @@ import { useToast } from '@/hooks/use-toast';
 import { getBettingTranslation } from '@/utils/bettingTranslations';
 import { UserStatistics } from '@/components/UserStatistics';
 import { useUserBetHistory, useCancelBet } from '@/hooks/useUserBets';
+import { useBettingSettings } from '@/hooks/useBettingSettings';
 import { useMatchResults, useKickoffTimes } from '@/hooks/useMatchResults';
 
 export const BetHistory = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { cutoffMinutes } = useBettingSettings();
   
   // React Query hooks
   const { data: bets = [], isLoading: betsLoading, refetch: refetchBets } = useUserBetHistory(user?.id);
@@ -83,7 +85,7 @@ export const BetHistory = () => {
       
       return hasChanges ? newTimeLeft : prevTimeLeft;
     });
-  }, [now, bets, matchKickoffs]);
+  }, [now, bets, matchKickoffs, matchResults]);
 
   const handleCancelClick = (betId: number) => {
     setBetToCancel(betId);
@@ -141,9 +143,25 @@ export const BetHistory = () => {
   const getBetCutoffTime = (bet: any): Date | null => {
     // For single bets
     if (bet.bet_type === 'single' && bet.fixture_id) {
+      // Check if match has already started by looking at match_results
+      const matchResult = matchResults[bet.fixture_id];
+      if (matchResult) {
+        // Check if match has finished
+        if (matchResult.match_result) {
+          return null; // Match has finished, cannot cancel
+        }
+        // Check if match has started
+        if (matchResult.kickoff_time) {
+          const kickoffTime = new Date(matchResult.kickoff_time);
+          if (now >= kickoffTime) {
+            return null; // Match has started, cannot cancel
+          }
+        }
+      }
+      
       const kickoff = matchKickoffs[bet.fixture_id];
       if (kickoff) {
-        return new Date(kickoff.getTime() - 16 * 60 * 1000); // 16 minutes before
+        return new Date(kickoff.getTime() - cutoffMinutes * 60 * 1000); // Use dynamic cutoff minutes
       }
     }
     
@@ -156,6 +174,29 @@ export const BetHistory = () => {
       
       if (hasFinishedSelection) {
         return null; // Cannot cancel if any match is already finished
+      }
+      
+      // Check if any match has already started by looking at match_results
+      const hasStartedMatch = bet.bet_selections.some((selection: any) => {
+        if (selection.fixture_id) {
+          const matchResult = matchResults[selection.fixture_id];
+          if (matchResult) {
+            // Check if match has finished
+            if (matchResult.match_result) {
+              return true; // Match has finished
+            }
+            // Check if match has started
+            if (matchResult.kickoff_time) {
+              const kickoffTime = new Date(matchResult.kickoff_time);
+              return now >= kickoffTime; // Match has started
+            }
+          }
+        }
+        return false;
+      });
+      
+      if (hasStartedMatch) {
+        return null; // Cannot cancel if any match has already started
       }
       
       // Find the earliest kickoff time among all selections
@@ -171,16 +212,69 @@ export const BetHistory = () => {
       });
       
       if (earliestKickoff) {
-        return new Date(earliestKickoff.getTime() - 16 * 60 * 1000); // 16 minutes before
+        return new Date(earliestKickoff.getTime() - cutoffMinutes * 60 * 1000); // Use dynamic cutoff minutes
       }
     }
     
     return null;
   };
 
-  // Function to check if a bet can be cancelled (16 minutes before kickoff and no matches finished)
+  // Function to check if a bet can be cancelled (using dynamic cutoff minutes before kickoff and no matches finished)
   const canCancelBet = (bet: any): boolean => {
     if (bet.status !== 'pending') return false;
+    
+    // For single bets - check if match has already started
+    if (bet.bet_type === 'single' && bet.fixture_id) {
+      const matchResult = matchResults[bet.fixture_id];
+      if (matchResult) {
+        // Check if match has finished (has match_result)
+        if (matchResult.match_result) {
+          return false; // Match has finished, cannot cancel
+        }
+        // Check if match has started (kickoff_time has passed)
+        if (matchResult.kickoff_time) {
+          const kickoffTime = new Date(matchResult.kickoff_time);
+          if (now >= kickoffTime) {
+            return false; // Match has started, cannot cancel
+          }
+        }
+      }
+    }
+    
+    // For combo bets - check if any match has already started
+    if (bet.bet_type === 'combo' && bet.bet_selections) {
+      // Check if any selection is already finished (won or lost)
+      const hasFinishedSelection = bet.bet_selections.some((selection: any) => 
+        selection.status === 'won' || selection.status === 'lost'
+      );
+      
+      if (hasFinishedSelection) {
+        return false; // Cannot cancel if any match is already finished
+      }
+      
+      // Check if any match has already started by looking at match_results
+      const hasStartedMatch = bet.bet_selections.some((selection: any) => {
+        if (selection.fixture_id) {
+          const matchResult = matchResults[selection.fixture_id];
+          if (matchResult) {
+            // Check if match has finished
+            if (matchResult.match_result) {
+              return true; // Match has finished
+            }
+            // Check if match has started
+            if (matchResult.kickoff_time) {
+              const kickoffTime = new Date(matchResult.kickoff_time);
+              return now >= kickoffTime; // Match has started
+            }
+          }
+        }
+        return false;
+      });
+      
+      if (hasStartedMatch) {
+        return false; // Cannot cancel if any match has already started
+      }
+    }
     
     const cutoffTime = getBetCutoffTime(bet);
     return cutoffTime ? now < cutoffTime : false;
