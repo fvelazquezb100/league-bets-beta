@@ -8,6 +8,7 @@ import { NewsManagement } from '@/components/NewsManagement';
 import { BettingSettingsControl } from '@/components/BettingSettingsControl';
 import { useMatchAvailability } from '@/hooks/useMatchAvailability';
 import { useNavigate } from 'react-router-dom';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 const SuperAdmin: React.FC = () => {
   const { toast } = useToast();
@@ -134,6 +135,7 @@ const SuperAdmin: React.FC = () => {
     }
   };
 
+
   const [updatingCache, setUpdatingCache] = React.useState(false);
   const [processingResults, setProcessingResults] = React.useState(false);
   const [recalculatingPoints, setRecalculatingPoints] = React.useState(false);
@@ -174,6 +176,7 @@ const SuperAdmin: React.FC = () => {
       setTestingAuth(false);
     }
   };
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -233,7 +236,7 @@ const SuperAdmin: React.FC = () => {
           </Card>
         </div>
 
-        {/* Recalcular Puntos Totales and Test - Side by side */}
+        {/* Recalcular Puntos Totales y Test - Two columns */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Recalcular Puntos Totales */}
           <Card>
@@ -255,6 +258,7 @@ const SuperAdmin: React.FC = () => {
               </Button>
             </CardFooter>
           </Card>
+
 
           {/* Test de Autenticación de Edge Functions */}
           <Card>
