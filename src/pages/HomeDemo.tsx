@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { History, Calendar, Home, BarChart3 } from 'lucide-react';
 import { APP_CONFIG } from '@/config/app';
+import { useDemoLanguage } from '@/hooks/useDemoLanguage';
 
 export const HomeDemo = () => {
+  const navigate = useNavigate();
+  const { language } = useDemoLanguage();
   const [currentStep, setCurrentStep] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -109,18 +113,24 @@ export const HomeDemo = () => {
 
   const steps = [
     {
-      title: "BIENVENIDO A JAMBOL",
-      content: "Una liga de simulación de apuestas donde puedes demostrar que sabes más de fútbol que tus amigos. Disfruta de apuestas justas con cuotas en vivo, partidos reales de las mejores ligas del mundo y compite con otros jugadores en un entorno 100% seguro y divertido.",
+      title: language === 'es' ? "BIENVENIDO A JAMBOL" : "WELCOME TO JAMBOL",
+      content: language === 'es' 
+        ? "Una liga de simulación de apuestas donde puedes demostrar que sabes más de fútbol que tus amigos. Disfruta de apuestas justas con cuotas en vivo, partidos reales de las mejores ligas del mundo y compite con otros jugadores en un entorno 100% seguro y divertido."
+        : "A betting simulation league where you can prove you know more about football than your friends. Enjoy fair betting with live odds, real matches from the world's best leagues and compete with other players in a 100% safe and fun environment.",
       highlight: null
     },
     {
-      title: "NOTICIAS",
-      content: "En esta página puedes ver las noticias importantes de tu liga, como reseteos de puntos y resultados de jornadas.",
+      title: language === 'es' ? "NOTICIAS" : "NEWS",
+      content: language === 'es' 
+        ? "En esta página puedes ver las noticias importantes de tu liga, como reseteos de puntos y resultados de jornadas."
+        : "On this page you can see important news from your league, such as point resets and matchday results.",
       highlight: "news-section"
     },
     {
-      title: "APUESTAS",
-      content: "Ahora veremos como apostar para ir ganando puntos en tu liga.",
+      title: language === 'es' ? "APUESTAS" : "BETS",
+      content: language === 'es' 
+        ? "Ahora veremos como apostar para ir ganando puntos en tu liga."
+        : "Now we'll see how to bet to earn points in your league.",
       highlight: "bets-nav-button"
     }
   ];
@@ -130,8 +140,8 @@ export const HomeDemo = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Ir a la siguiente página demo
-      window.location.href = '/bets-demo';
+      // Ir a la siguiente página demo preservando el idioma
+      navigate(`/bets-demo?lang=${language}`);
     }
   };
 
@@ -192,7 +202,7 @@ export const HomeDemo = () => {
       </nav>
 
       {/* Contenido principal */}
-      <main className="container mx-auto px-4 py-8 pt-32">
+      <main className="container mx-auto px-4 py-8 pt-20">
         <div className="space-y-8">
           {/* Título de bienvenida */}
           <div className="text-center">
@@ -356,13 +366,15 @@ Equipo Oficial de la Liga de Simulación Jambol"
                   disabled={currentStep === 0}
                   className="bg-[#FFC72C] text-black hover:bg-[#e6b328] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  ← Anterior
+                  ← {language === 'es' ? 'Anterior' : 'Previous'}
                 </Button>
                 <Button
                   onClick={handleNext}
                   className="bg-[#FFC72C] text-black hover:bg-[#e6b328]"
                 >
-                  {currentStep < steps.length - 1 ? 'Siguiente →' : 'Ir a Apuestas →'}
+                  {currentStep < steps.length - 1 
+                    ? (language === 'es' ? 'Siguiente →' : 'Next →') 
+                    : (language === 'es' ? 'Ir a Apuestas →' : 'Go to Bets →')}
                 </Button>
               </div>
             </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,11 +14,14 @@ import { APP_CONFIG } from '@/config/app';
 export const Login = () => {
   const { signIn, user, loading } = useAuth();
   const { handleError } = useErrorHandler();
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [showMobileAlert, setShowMobileAlert] = useState(false);
 
   if (loading) {
     return (
@@ -74,6 +78,17 @@ export const Login = () => {
     }
   };
 
+  const handleStartDemo = () => {
+    if (isMobile) {
+      setShowMobileAlert(true);
+    } else {
+      navigate('/demo-language');
+    }
+  };
+
+  const handleCloseMobileAlert = () => {
+    setShowMobileAlert(false);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -155,6 +170,20 @@ export const Login = () => {
                       Regístrate
                     </Link>
                   </p>
+                  
+                  <div className="mt-4">
+                    <p className="text-sm text-muted-foreground mb-3">
+                      ¿Quieres hacer una demostración de una liga Jambol?
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full bg-white border-[#FFC72C] text-black hover:bg-[#FFC72C] hover:text-white"
+                      onClick={handleStartDemo}
+                    >
+                      Demo Jambol
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -170,6 +199,28 @@ export const Login = () => {
           />
         </div>
       </div>
+
+      {/* Modal de alerta para móviles */}
+      {showMobileAlert && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Funcionalidad solo disponible en la versión de PC
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Esta funcionalidad solo está disponible en la versión de PC / This functionality is only available in the PC version
+            </p>
+            <div className="flex justify-end">
+              <Button
+                onClick={handleCloseMobileAlert}
+                className="bg-[#FFC72C] text-black hover:bg-[#e6b328]"
+              >
+                Aceptar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

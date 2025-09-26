@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Home, BarChart3, History, Calendar, Award, ArrowDown } from 'lucide-react';
 import { APP_CONFIG } from '@/config/app';
+import { useDemoLanguage } from '@/hooks/useDemoLanguage';
 
 export const ClasificacionDemo = () => {
+  const navigate = useNavigate();
+  const { language } = useDemoLanguage();
   const [currentStep, setCurrentStep] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<{ id: string; name: string } | null>(null);
@@ -67,18 +71,24 @@ export const ClasificacionDemo = () => {
 
   const steps = [
     {
-      title: "CLASIFICACIÓN DE LA LIGA",
-      content: "Aquí puedes ver la clasificación de tu liga con todos los participantes ordenados por puntos totales. El jugador con más puntos está en la primera posición.",
+      title: language === 'es' ? "CLASIFICACIÓN DE LA LIGA" : "LEAGUE STANDINGS",
+      content: language === 'es' 
+        ? "Aquí puedes ver la clasificación de tu liga con todos los participantes ordenados por puntos totales. El jugador con más puntos está en la primera posición."
+        : "Here you can see your league standings with all participants ranked by total points. The player with the most points is in first position.",
       highlight: "clasificacion-table"
     },
     {
-      title: "VER APUESTAS DE OTROS",
-      content: "Puedes hacer clic en cualquier jugador para ver su historial de apuestas y analizar su estrategia de juego.",
+      title: language === 'es' ? "VER APUESTAS DE OTROS" : "VIEW OTHERS' BETS",
+      content: language === 'es' 
+        ? "Puedes hacer clic en cualquier jugador para ver su historial de apuestas y analizar su estrategia de juego."
+        : "You can click on any player to see their betting history and analyze their game strategy.",
       highlight: "player-row-1"
     },
     {
-      title: "¡ÚNETE A LA DIVERSIÓN!",
-      content: "¡Es hora de que todos participen! Juega con responsabilidad, evalúa los partidos cuidadosamente y, sobre todo, ¡diviértete con tus amigos! La Liga Jambol es el lugar perfecto para demostrar tus conocimientos de fútbol mientras disfrutas de la competencia amistosa.",
+      title: language === 'es' ? "¡ÚNETE A LA DIVERSIÓN!" : "JOIN THE FUN!",
+      content: language === 'es' 
+        ? "¡Es hora de que todos participen! Juega con responsabilidad, evalúa los partidos cuidadosamente y, sobre todo, ¡diviértete con tus amigos! La Liga Jambol es el lugar perfecto para demostrar tus conocimientos de fútbol mientras disfrutas de la competencia amistosa."
+        : "It's time for everyone to participate! Play responsibly, evaluate matches carefully and, above all, have fun with your friends! Jambol League is the perfect place to demonstrate your football knowledge while enjoying friendly competition.",
       highlight: null
     }
   ];
@@ -174,7 +184,7 @@ export const ClasificacionDemo = () => {
         </div>
       </nav>
 
-      <main className="container mx-auto px-4 py-8 pt-32">
+      <main className="container mx-auto px-4 py-8 pt-20">
         <div className="space-y-6">
           {/* Título de la liga */}
           <div className="text-center">
@@ -283,13 +293,15 @@ export const ClasificacionDemo = () => {
                   disabled={currentStep === 0}
                   className="bg-[#FFC72C] text-black hover:bg-[#e6b328] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ease-in-out"
                 >
-                  ← Anterior
+                  ← {language === 'es' ? 'Anterior' : 'Previous'}
                 </Button>
                       <Button
                         onClick={handleNext}
                         className="bg-[#FFC72C] text-black hover:bg-[#e6b328] transition-all duration-300 ease-in-out"
                       >
-                        {currentStep < steps.length - 1 ? 'Siguiente →' : 'Finalizar Demo'}
+                        {currentStep < steps.length - 1 
+                          ? (language === 'es' ? 'Siguiente →' : 'Next →') 
+                          : (language === 'es' ? 'Finalizar Demo' : 'Finish Demo')}
                       </Button>
               </div>
             </div>

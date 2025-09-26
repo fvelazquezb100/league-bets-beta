@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Home, BarChart3, History, Calendar, TrendingDown, TrendingUp, Trophy } from 'lucide-react';
+import { useDemoLanguage } from '@/hooks/useDemoLanguage';
 
 export const BetHistoryDemo = () => {
+  const navigate = useNavigate();
+  const { language } = useDemoLanguage();
   const [currentStep, setCurrentStep] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -49,18 +53,24 @@ export const BetHistoryDemo = () => {
 
   const steps = [
     {
-      title: "HISTORIAL DE APUESTAS",
-      content: "Aquí puedes ver todas tus apuestas realizadas. En la tabla encontrarás diferentes tipos de apuestas:<br />• PERDIDAS<br />• GANADAS<br /> • CANCELADAS<br />• PENDIENTE. Esta apuesta sí la puedes cancelar hasta que el partido empiece",
+      title: language === 'es' ? "HISTORIAL DE APUESTAS" : "BET HISTORY",
+      content: language === 'es' 
+        ? "Aquí puedes ver todas tus apuestas realizadas. En la tabla encontrarás diferentes tipos de apuestas:<br />• PERDIDAS<br />• GANADAS<br /> • CANCELADAS<br />• PENDIENTE. Esta apuesta sí la puedes cancelar hasta que el partido empiece"
+        : "Here you can see all your placed bets. In the table you will find different types of bets:<br />• LOST<br />• WON<br />• CANCELLED<br />• PENDING. This bet you can cancel until the match starts",
       highlight: "bets-table"
     },
     {
-      title: "FILTROS DE VISUALIZACIÓN",
-      content: "Estas tarjetas actúan como filtros para facilitar la visualización de tus apuestas. Puedes hacer clic en ellas para ver solo las apuestas ganadas, perdidas o pendientes.",
+      title: language === 'es' ? "FILTROS DE VISUALIZACIÓN" : "VIEW FILTERS",
+      content: language === 'es' 
+        ? "Estas tarjetas actúan como filtros para facilitar la visualización de tus apuestas. Puedes hacer clic en ellas para ver solo las apuestas ganadas, perdidas o pendientes."
+        : "These cards act as filters to facilitate viewing your bets. You can click on them to see only won, lost or pending bets.",
       highlight: "filters-section"
     },
     {
-      title: "ESTADÍSTICAS PERSONALES",
-      content: "Aquí puedes ver tus estadísticas detalladas: porcentaje de aciertos, apuestas más rentables, y análisis de tu rendimiento. Ahora puedes ver la clasificación de tu liga con los puntos que has sumado.",
+      title: language === 'es' ? "ESTADÍSTICAS PERSONALES" : "PERSONAL STATISTICS",
+      content: language === 'es' 
+        ? "Aquí puedes ver tus estadísticas detalladas: porcentaje de aciertos, apuestas más rentables, y análisis de tu rendimiento. Ahora puedes ver la clasificación de tu liga con los puntos que has sumado."
+        : "Here you can see your detailed statistics: hit percentage, most profitable bets, and performance analysis. Now you can see your league standings with the points you have accumulated.",
       highlight: "stats-card"
     }
   ];
@@ -83,8 +93,8 @@ export const BetHistoryDemo = () => {
         }
       }, 100);
     } else {
-      // Ir a clasificación
-      window.location.href = '/clasificacion-demo';
+      // Ir a clasificación preservando el idioma
+      navigate(`/clasificacion-demo?lang=${language}`);
     }
   };
 
@@ -154,7 +164,7 @@ export const BetHistoryDemo = () => {
       </nav>
 
       {/* Contenido principal */}
-      <main className="container mx-auto px-4 py-8 pt-32">
+      <main className="container mx-auto px-4 py-8 pt-20">
         <div className="w-full px-2 sm:container sm:mx-auto sm:p-4">
           <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Historial de Apuestas</h1>
           
@@ -364,13 +374,15 @@ export const BetHistoryDemo = () => {
                   disabled={currentStep === 0}
                   className="bg-[#FFC72C] text-black hover:bg-[#e6b328] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ease-in-out"
                 >
-                  ← Anterior
+                  ← {language === 'es' ? 'Anterior' : 'Previous'}
                 </Button>
                       <Button
                         onClick={handleNext}
                         className="bg-[#FFC72C] text-black hover:bg-[#e6b328] transition-all duration-300 ease-in-out"
                       >
-                        {currentStep < steps.length - 1 ? 'Siguiente →' : 'Ir a Clasificación →'}
+                        {currentStep < steps.length - 1 
+                          ? (language === 'es' ? 'Siguiente →' : 'Next →') 
+                          : (language === 'es' ? 'Ir a Clasificación →' : 'Go to Standings →')}
                       </Button>
               </div>
             </div>
