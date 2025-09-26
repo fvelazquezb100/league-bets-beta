@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Copy, Settings } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 type ProfileRow = { league_id: number; role: string; };
 type LeagueRow = { 
@@ -37,6 +38,7 @@ const AdminLiga: React.FC = () => {
   const [leagueName, setLeagueName] = React.useState<string | null>(null);
   const [loadingWeek, setLoadingWeek] = React.useState(true);
   const [resettingWeek, setResettingWeek] = React.useState(false);
+  const [resettingWeekManually, setResettingWeekManually] = React.useState(false);
   const [leagueId, setLeagueId] = React.useState<number | null>(null);
   const [leagueData, setLeagueData] = React.useState<LeagueRow | null>(null);
   const [userRole, setUserRole] = React.useState<string | null>(null);
@@ -253,14 +255,59 @@ const handleResetWeek = async () => {
   }
 };
 
+const handleResetWeekManually = async () => {
+  if (!leagueId) return;
+
+  try {
+    setResettingWeekManually(true);
+
+    // Ejecutar reset manual de semana específico para esta liga
+    const { data, error } = await supabase.functions.invoke('admin-reset-budgets', {
+      body: { 
+        manual_week_reset: true,
+        force: true,
+        league_id: leagueId  // Solo resetear esta liga específica
+      },
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    toast({
+      title: 'Reset de Semana Completado',
+      description: 'Semana incrementada, puntos guardados y presupuestos reseteados para tu liga',
+    });
+
+    // Refrescar datos de la liga
+    const { data: updatedLeague, error: leagueError } = await supabase
+      .from('leagues')
+      .select('week')
+      .eq('id', leagueId)
+      .single();
+    
+    if (!leagueError && updatedLeague) {
+      setLeagueData(prev => prev ? { ...prev, week: updatedLeague.week } : null);
+    }
+  } catch (error: any) {
+    toast({
+      title: 'Error en Reset de Semana',
+      description: error.message,
+      variant: 'destructive',
+    });
+  } finally {
+    setResettingWeekManually(false);
+  }
+};
+
   return (
     <div>
       <header className="mb-8">
         <h1 className="text-3xl font-bold">Panel de Administración de tu Liga</h1>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-        <Card className="md:col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+        <Card>
           <CardHeader><CardTitle>Información de la Liga</CardTitle></CardHeader>
           <CardContent>
             {loadingWeek ? <p>Cargando datos de la liga…</p> : leagueData ? (
@@ -295,89 +342,153 @@ const handleResetWeek = async () => {
                           <DialogTitle>Editar Configuración de la Liga</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="league-name">Nombre de la Liga</Label>
-                            <Input 
-                              id="league-name"
-                              value={editLeagueName} 
-                              onChange={e => setEditLeagueName(e.target.value)}
-                            />
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <Label>Presupuesto: {editBudget}</Label>
-                            <input
-                              ref={budgetRef}
-                              type="range"
-                              min={500}
-                              max={10000}
-                              step={50}
-                              value={editBudget}
-                              onChange={e => setEditBudget(Number(e.target.value))}
-                              className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
-                              autoFocus
-                            />
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <Label>Apuesta Mínima: {editMinBet}</Label>
-                            <input
-                              type="range"
-                              min={1}
-                              max={editMaxBet}
-                              step={1}
-                              value={editMinBet}
-                              onChange={e => setEditMinBet(Number(e.target.value))}
-                              className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-success"
-                            />
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <Label>Apuesta Máxima: {editMaxBet}</Label>
-                            <input
-                              type="range"
-                              min={editMinBet}
-                              max={editBudget}
-                              step={1}
-                              value={editMaxBet}
-                              onChange={e => setEditMaxBet(Number(e.target.value))}
-                              className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
-                            />
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <Label htmlFor="reset-budget">Frecuencia de reseteo de presupuesto</Label>
-                            <select 
-                              id="reset-budget"
-                              value={editResetBudget} 
-                              onChange={e => setEditResetBudget(e.target.value)}
-                              className="w-full p-2 border border-gray-300 rounded-md"
-                            >
-                              <option value="daily">Diario</option>
-                              <option value="weekly">Semanal</option>
-                            </select>
-                          </div>
+                          {leagueData?.type === 'free' ? (
+                            <div className="space-y-4">
+                              <div className="text-center py-2">
+                                <p className="text-muted-foreground mb-2">
+                                  <strong>⚠️ Configuración Premium</strong>
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  Actualiza a premium para poder editar todos estos datos:
+                                </p>
+                              </div>
+                              
+                              {/* Mostrar configuración actual (solo lectura) */}
+                              <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                                <h4 className="font-semibold text-sm text-gray-700">Configuración actual (solo lectura):</h4>
+                                
+                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                  <div>
+                                    <span className="font-medium text-gray-600">Nombre:</span>
+                                    <p className="text-gray-800">{leagueData?.name}</p>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium text-gray-600">Presupuesto:</span>
+                                    <p className="text-gray-800">{leagueData?.budget}</p>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium text-gray-600">Apuesta Mín:</span>
+                                    <p className="text-gray-800">{leagueData?.min_bet}</p>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium text-gray-600">Apuesta Máx:</span>
+                                    <p className="text-gray-800">{leagueData?.max_bet}</p>
+                                  </div>
+                                  <div className="col-span-2">
+                                    <span className="font-medium text-gray-600">Reseteo:</span>
+                                    <p className="text-gray-800 capitalize">{leagueData?.reset_budget}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="space-y-2">
+                                <Label htmlFor="league-name">Nombre de la Liga</Label>
+                                <Input 
+                                  id="league-name"
+                                  value={editLeagueName} 
+                                  onChange={e => setEditLeagueName(e.target.value)}
+                                />
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <Label>Presupuesto: {editBudget}</Label>
+                                <input
+                                  ref={budgetRef}
+                                  type="range"
+                                  min={500}
+                                  max={10000}
+                                  step={50}
+                                  value={editBudget}
+                                  onChange={e => setEditBudget(Number(e.target.value))}
+                                  className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                                  autoFocus
+                                />
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <Label>Apuesta Mínima: {editMinBet}</Label>
+                                <input
+                                  type="range"
+                                  min={1}
+                                  max={editMaxBet}
+                                  step={1}
+                                  value={editMinBet}
+                                  onChange={e => setEditMinBet(Number(e.target.value))}
+                                  className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-success"
+                                />
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <Label>Apuesta Máxima: {editMaxBet}</Label>
+                                <input
+                                  type="range"
+                                  min={editMinBet}
+                                  max={editBudget}
+                                  step={1}
+                                  value={editMaxBet}
+                                  onChange={e => setEditMaxBet(Number(e.target.value))}
+                                  className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                                />
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <Label htmlFor="reset-budget">Frecuencia de reseteo de presupuesto</Label>
+                                <select 
+                                  id="reset-budget"
+                                  value={editResetBudget} 
+                                  onChange={e => setEditResetBudget(e.target.value)}
+                                  className="w-full p-2 border border-gray-300 rounded-md"
+                                >
+                                  <option value="daily">Diario</option>
+                                  <option value="weekly">Semanal</option>
+                                </select>
+                              </div>
+                            </>
+                          )}
                           
                           <div className="space-y-2">
                             <Label>Ligas disponibles para apostar</Label>
-                            <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-3">
-                              {allLeagues.map((league) => (
-                                <div key={league.id} className="flex items-center justify-between">
-                                  <span className="text-sm font-medium">{league.name}</span>
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedLeagues.includes(league.id)}
-                                    onChange={() => handleLeagueToggle(league.id)}
-
-                                    className="w-4 h-4 text-[#FFC72C] border-gray-300 rounded focus:ring-[#FFC72C] accent-[#FFC72C]"
-
-                                  />
+                            {leagueData?.type === 'free' ? (
+                              <>
+                                <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-3">
+                                  {allLeagues.map((league) => (
+                                    <div key={league.id} className="flex items-center justify-between">
+                                      <span className="text-sm font-medium">{league.name}</span>
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedLeagues.includes(league.id)}
+                                        onChange={() => handleLeagueToggle(league.id)}
+                                        className="w-4 h-4 text-[#FFC72C] border-gray-300 rounded focus:ring-[#FFC72C] accent-[#FFC72C]"
+                                      />
+                                    </div>
+                                  ))}
                                 </div>
-                              ))}
-                            </div>
-                            <p className="text-xs text-gray-500">
-                              {selectedLeagues.length} liga{selectedLeagues.length !== 1 ? 's' : ''} seleccionada{selectedLeagues.length !== 1 ? 's' : ''}
-                            </p>
+                                <p className="text-xs text-gray-500">
+                                  {selectedLeagues.length} liga{selectedLeagues.length !== 1 ? 's' : ''} seleccionada{selectedLeagues.length !== 1 ? 's' : ''}
+                                </p>
+                              </>
+                            ) : (
+                              <>
+                                <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-3">
+                                  {allLeagues.map((league) => (
+                                    <div key={league.id} className="flex items-center justify-between">
+                                      <span className="text-sm font-medium">{league.name}</span>
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedLeagues.includes(league.id)}
+                                        onChange={() => handleLeagueToggle(league.id)}
+                                        className="w-4 h-4 text-[#FFC72C] border-gray-300 rounded focus:ring-[#FFC72C] accent-[#FFC72C]"
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                                <p className="text-xs text-gray-500">
+                                  {selectedLeagues.length} liga{selectedLeagues.length !== 1 ? 's' : ''} seleccionada{selectedLeagues.length !== 1 ? 's' : ''}
+                                </p>
+                              </>
+                            )}
                           </div>
                           
                           <div className="flex justify-end gap-2 pt-4">
@@ -407,11 +518,109 @@ const handleResetWeek = async () => {
 
 
         {userRole === 'admin_league' && (
-          <Card className="md:col-span-2">
-            <CardHeader><CardTitle>Reseteo de la Liga</CardTitle></CardHeader>
-            <CardContent><p>Esta opción reseteará tu Liga. Todos los puntos serán 0</p></CardContent>
-            <CardFooter><Button className="jambol-button" onClick={() => setConfirmingReset(true)} disabled={resettingWeek}>{resettingWeek ? 'Reseteando…' : 'Resetear la Liga'}</Button></CardFooter>
-          </Card>
+          <>
+            <Card>
+              <CardHeader><CardTitle>Reseteo de la Liga</CardTitle></CardHeader>
+              <CardContent>
+                {leagueData?.type === 'free' ? (
+                  <div className="text-center py-4">
+                    <p className="text-muted-foreground mb-2">
+                      <strong>⚠️ Funcionalidad Premium</strong>
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Actualiza a premium para poder tener esta funcionalidad
+                    </p>
+                  </div>
+                ) : (
+                  <p>Esta opción reseteará tu Liga. Todos los puntos serán 0</p>
+                )}
+              </CardContent>
+              <CardFooter>
+                {leagueData?.type === 'free' ? (
+                  <Button 
+                    disabled 
+                    className="jambol-button opacity-50 cursor-not-allowed"
+                  >
+                    Resetear la Liga
+                  </Button>
+                ) : (
+                  <Button 
+                    className="jambol-button" 
+                    onClick={() => setConfirmingReset(true)} 
+                    disabled={resettingWeek}
+                  >
+                    {resettingWeek ? 'Reseteando…' : 'Resetear la Liga'}
+                  </Button>
+                )}
+              </CardFooter>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Reset Manual de Semana</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {leagueData?.type === 'free' ? (
+                  <div className="text-center py-4">
+                    <p className="text-muted-foreground mb-2">
+                      <strong>⚠️ Funcionalidad Premium</strong>
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Actualiza a premium para poder tener esta funcionalidad
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    <strong>⚠️ ATENCIÓN:</strong> Ejecuta el reset de semana para tu liga: guarda puntos actuales, incrementa semana +1 y resetea presupuestos.
+                  </p>
+                )}
+              </CardContent>
+              <CardFooter>
+                {leagueData?.type === 'free' ? (
+                  <Button 
+                    disabled 
+                    className="jambol-button opacity-50 cursor-not-allowed"
+                  >
+                    Reset Manual de Semana
+                  </Button>
+                ) : (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        disabled={resettingWeekManually}
+                        className="jambol-button"
+                      >
+                        {resettingWeekManually ? 'Reseteando...' : 'Reset Manual de Semana'}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta acción ejecutará el reset de semana para tu liga:
+                          <br />• Guardará los puntos de la semana actual
+                          <br />• Incrementará la semana de tu liga
+                          <br />• Reseteará los presupuestos de los usuarios de tu liga
+                          <br />
+                          <br />
+                          <strong>Esta acción no se puede deshacer.</strong>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={handleResetWeekManually}
+                          className="jambol-button"
+                        >
+                          Sí, resetear semana
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </CardFooter>
+            </Card>
+          </>
         )}
       </div>
 
