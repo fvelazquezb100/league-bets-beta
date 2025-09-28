@@ -3,15 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { APP_CONFIG } from '@/config/app';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const DemoLanguage = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [selectedLanguage, setSelectedLanguage] = useState<'es' | 'en' | null>(null);
 
   const handleLanguageSelect = (language: 'es' | 'en') => {
     setSelectedLanguage(language);
     // Navegar a la demo con el idioma seleccionado
-    navigate(`/home-demo?lang=${language}`);
+    if (isMobile) {
+      navigate(`/home-demo-movil?lang=${language}`);
+    } else {
+      navigate(`/home-demo?lang=${language}`);
+    }
   };
 
   return (

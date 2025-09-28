@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Home, BarChart3, History, Calendar, TrendingDown, TrendingUp, Trophy } from 'lucide-react';
 import { useDemoLanguage } from '@/hooks/useDemoLanguage';
+import { APP_CONFIG } from '@/config/app';
 
 export const BetHistoryDemo = () => {
   const navigate = useNavigate();
@@ -124,10 +125,12 @@ export const BetHistoryDemo = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-[#FFC72C] rounded-full flex items-center justify-center">
-                <span className="text-black font-bold text-sm">J</span>
-              </div>
-              <h1 className="text-2xl font-bold text-[#FFC72C]">JAMBOL</h1>
+              <img 
+                src={APP_CONFIG.ASSETS.LOGO} 
+                alt="Jambol Logo" 
+                className="h-8 jambol-logo"
+              />
+              <h1 className="text-2xl font-bold text-foreground">JAMBOL</h1>
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-muted-foreground">Demo User</span>

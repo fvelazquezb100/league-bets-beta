@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { X, DollarSign, ChevronUp, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useBettingSettings } from '@/hooks/useBettingSettings';
@@ -25,14 +25,22 @@ interface MobileBetSlipProps {
   selectedBets: Bet[];
   onRemoveBet: (betId: string) => void;
   onClearAll: () => void;
+  forceOpen?: boolean;
 }
 
-const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll }: MobileBetSlipProps) => {
+const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll, forceOpen = false }: MobileBetSlipProps) => {
   const [stake, setStake] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [weeklyBudget, setWeeklyBudget] = useState<number | null>(null);
   const [minBet, setMinBet] = useState<number>(10); // Default minimum bet
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // Effect to handle forceOpen prop
+  useEffect(() => {
+    if (forceOpen) {
+      setIsExpanded(true);
+    }
+  }, [forceOpen]);
   const { toast } = useToast();
   const { cutoffMinutes } = useBettingSettings();
 
@@ -293,14 +301,17 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll }: MobileBetSlipP
   const handleClearAll = () => {
     onClearAll();
     setStake('');
-    setIsExpanded(false);
+    // Don't close if forceOpen is active
+    if (!forceOpen) {
+      setIsExpanded(false);
+    }
   };
 
   const handleRemoveBet = (betId: string) => {
     onRemoveBet(betId);
     
-    // If this was the last bet, close sheet
-    if (selectedBets.length === 1) {
+    // If this was the last bet, close sheet (unless forceOpen is active)
+    if (selectedBets.length === 1 && !forceOpen) {
       setIsExpanded(false);
     }
   };
@@ -313,12 +324,18 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll }: MobileBetSlipP
   return (
     <Sheet 
       open={isExpanded} 
-      onOpenChange={setIsExpanded}
+      onOpenChange={(open) => {
+        // Don't allow any changes when forceOpen is active
+        if (forceOpen) {
+          return;
+        }
+        setIsExpanded(open);
+      }}
     >
       {/* Fixed Bottom Bar - Always Visible */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t shadow-lg">
         <SheetTrigger asChild>
-          <div className="px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors">
+          <div className={`px-4 py-3 ${forceOpen ? 'cursor-default' : 'cursor-pointer hover:bg-muted/50'} transition-colors`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
@@ -346,6 +363,14 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll }: MobileBetSlipP
 
       {/* Sheet Content */}
       <SheetContent side="bottom" className="max-h-[85vh] flex flex-col p-0">
+        <SheetTitle className="sr-only">Boleto de Apuestas</SheetTitle>
+        {/* Overlay to block interactions when forceOpen is active */}
+        {forceOpen && (
+          <div 
+            className="absolute inset-0 z-10 bg-transparent"
+            style={{ pointerEvents: 'none' }}
+          />
+        )}
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto px-4">
           <div className="space-y-4 py-4">

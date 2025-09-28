@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from '@/components/ui/sheet';
@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { APP_CONFIG } from '@/config/app';
 import { LdrsLoader } from '@/components/ui/ldrs-loader';
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { cn } from '@/lib/utils';
 
 const navigationItems = [
   {
@@ -44,6 +45,7 @@ const navigationItems = [
 ];
 
 export const Header = () => {
+  const location = useLocation();
   const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [league, setLeague] = useState<any>(null);
@@ -179,12 +181,18 @@ export const Header = () => {
                     <nav className="space-y-2">
                       {navigationItems.map((item) => {
                         const Icon = item.icon;
+                        const isActive = location.pathname === item.href;
                         return (
                           <Link
                             key={item.name}
                             to={item.href}
                             onClick={() => setIsOpen(false)}
-                            className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-muted transition-colors"
+                            className={cn(
+                              'flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors',
+                              isActive
+                                ? 'bg-primary text-primary-foreground'
+                                : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                            )}
                           >
                             <Icon className="h-4 w-4" />
                             {item.name}
@@ -198,7 +206,12 @@ export const Header = () => {
                         <Link
                           to="/superadmin"
                           onClick={() => setIsOpen(false)}
-                          className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md hover:bg-muted transition-colors"
+                          className={cn(
+                            'flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors',
+                            location.pathname === '/superadmin'
+                              ? 'bg-primary text-primary-foreground'
+                              : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                          )}
                         >
                           <Shield className="h-4 w-4" />
                           SuperAdmin
