@@ -274,3 +274,4 @@ SELECT public.initialize_match_availability(
   false  -- Default to disabled
 );
 
+

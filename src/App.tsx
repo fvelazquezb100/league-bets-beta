@@ -8,11 +8,15 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { MainLayout } from "./components/layout/MainLayout";
 import { Landing } from "./pages/Landing";
 import { Login } from "./pages/Login";
+import { DemoLanguage } from "./pages/DemoLanguage";
 import { Signup } from "./pages/Signup";
 import { Home } from "./pages/Home";
 import { HomeDemo } from "./pages/HomeDemo";
+import { HomeDemoMovil } from "./pages/HomeDemoMovil";
 import { BetsDemo } from "./pages/BetsDemo";
+import { BetsDemoMovil } from "./pages/BetsDemoMovil";
 import { BetHistoryDemo } from "./pages/BetHistoryDemo";
+import { BetHistoryDemoMovil } from "./pages/BetHistoryDemoMovil";
 import { ClasificacionDemo } from "./pages/ClasificacionDemo";
 import { TestDemo } from "./pages/TestDemo";
 import { Clasificacion } from "./pages/Clasificacion";
@@ -41,12 +45,16 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/demo-language" element={<DemoLanguage />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/home-demo" element={<HomeDemo />} />
+            <Route path="/home-demo-movil" element={<HomeDemoMovil />} />
             <Route path="/bets-demo" element={<BetsDemo />} />
+            <Route path="/bets-demo-movil" element={<BetsDemoMovil />} />
             <Route path="/bet-history-demo" element={<BetHistoryDemo />} />
+            <Route path="/bet-history-demo-movil" element={<BetHistoryDemoMovil />} />
             <Route path="/clasificacion-demo" element={<ClasificacionDemo />} />
             <Route path="/test-demo" element={<TestDemo />} />
             <Route path="/league-setup" element={

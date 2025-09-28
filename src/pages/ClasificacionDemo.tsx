@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Home, BarChart3, History, Calendar, Award, ArrowDown } from 'lucide-react';
+import { Home, BarChart3, History, Calendar, Award, ArrowDown, Menu, X, User, Settings, CheckCircle, LogOut } from 'lucide-react';
 import { APP_CONFIG } from '@/config/app';
+import { useDemoLanguage } from '@/hooks/useDemoLanguage';
 
 export const ClasificacionDemo = () => {
+  const navigate = useNavigate();
+  const { language } = useDemoLanguage();
   const [currentStep, setCurrentStep] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<{ id: string; name: string } | null>(null);
   const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     setIsVisible(true);
@@ -67,18 +72,24 @@ export const ClasificacionDemo = () => {
 
   const steps = [
     {
-      title: "CLASIFICACIÓN DE LA LIGA",
-      content: "Aquí puedes ver la clasificación de tu liga con todos los participantes ordenados por puntos totales. El jugador con más puntos está en la primera posición.",
+      title: language === 'es' ? "CLASIFICACIÓN DE LA LIGA" : "LEAGUE STANDINGS",
+      content: language === 'es' 
+        ? "Aquí puedes ver la clasificación de tu liga con todos los participantes ordenados por puntos totales. El jugador con más puntos está en la primera posición."
+        : "Here you can see your league standings with all participants ranked by total points. The player with the most points is in first position.",
       highlight: "clasificacion-table"
     },
     {
-      title: "VER APUESTAS DE OTROS",
-      content: "Puedes hacer clic en cualquier jugador para ver su historial de apuestas y analizar su estrategia de juego.",
+      title: language === 'es' ? "VER APUESTAS DE OTROS" : "VIEW OTHERS' BETS",
+      content: language === 'es' 
+        ? "Puedes hacer clic en cualquier jugador para ver su historial de apuestas y analizar su estrategia de juego."
+        : "You can click on any player to see their betting history and analyze their game strategy.",
       highlight: "player-row-1"
     },
     {
-      title: "¡ÚNETE A LA DIVERSIÓN!",
-      content: "¡Es hora de que todos participen! Juega con responsabilidad, evalúa los partidos cuidadosamente y, sobre todo, ¡diviértete con tus amigos! La Liga Jambol es el lugar perfecto para demostrar tus conocimientos de fútbol mientras disfrutas de la competencia amistosa.",
+      title: language === 'es' ? "¡ÚNETE A LA DIVERSIÓN!" : "JOIN THE FUN!",
+      content: language === 'es' 
+        ? "¡Es hora de que todos participen! Juega con responsabilidad, evalúa los partidos cuidadosamente y, sobre todo, ¡diviértete con tus amigos! La Liga Jambol es el lugar perfecto para demostrar tus conocimientos de fútbol mientras disfrutas de la competencia amistosa."
+        : "It's time for everyone to participate! Play responsibly, evaluate matches carefully and, above all, have fun with your friends! Jambol League is the perfect place to demonstrate your football knowledge while enjoying friendly competition.",
       highlight: null
     }
   ];
@@ -129,52 +140,100 @@ export const ClasificacionDemo = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      {/* Header móvil */}
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-3">
               <img 
                 src={APP_CONFIG.ASSETS.LOGO} 
                 alt="Jambol" 
                 className="h-8 w-auto"
               />
-              <span className="text-xl font-bold text-foreground">JAMBOL</span>
+              <span className="text-xl font-bold text-foreground">Jambol</span>
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-muted-foreground">Demo User</span>
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                → Cerrar Sesión
-              </Button>
-            </div>
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 hover:bg-muted/50 rounded-md transition-colors"
+            >
+              <Menu className="w-6 h-6 text-foreground" />
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Navigation */}
-      <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-16 z-50">
-        <div className="container mx-auto px-4">
-          <div className="flex space-x-8">
-            <div className="flex items-center py-4 px-2 text-sm font-medium border-b-2 border-transparent text-muted-foreground hover:text-[#FFC72C]">
-              <Home className="w-4 h-4 mr-2" />
-              Inicio
-            </div>
-            <div className="flex items-center py-4 px-2 text-sm font-medium border-b-2 border-[#FFC72C] text-[#FFC72C]">
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Clasificación
-            </div>
-            <div className="flex items-center py-4 px-2 text-sm font-medium border-b-2 border-transparent text-muted-foreground hover:text-[#FFC72C]">
-              $ Apostar
-            </div>
-            <div className="flex items-center py-4 px-2 text-sm font-medium border-b-2 border-transparent text-muted-foreground hover:text-[#FFC72C]">
-              <History className="w-4 h-4 mr-2" />
-              Historial
+      {/* Sidebar móvil */}
+      {sidebarOpen && (
+        <>
+          {/* Overlay */}
+          <div 
+            className="fixed inset-0 bg-black/50 z-40"
+            onClick={() => setSidebarOpen(false)}
+          />
+          
+          {/* Sidebar */}
+          <div className="fixed right-0 top-0 h-full w-80 bg-white shadow-xl z-50">
+            <div className="p-6">
+              {/* Header del sidebar */}
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-[#FFC72C] rounded-full flex items-center justify-center">
+                    <User className="w-6 h-6 text-black" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground">Demo User</h3>
+                    <p className="text-sm text-muted-foreground">1,250 pts</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="p-2 hover:bg-muted/50 rounded-md transition-colors"
+                >
+                  <X className="w-5 h-5 text-muted-foreground" />
+                </button>
+              </div>
+
+              {/* Navegación */}
+              <nav className="space-y-2">
+                <a href="#" className="flex items-center space-x-3 p-3 hover:bg-muted/50 rounded-lg transition-colors">
+                  <div className="w-6 h-6 text-muted-foreground">🏠</div>
+                  <span className="text-foreground">Inicio</span>
+                </a>
+                <a href="#" className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${currentStep >= 0 ? 'bg-[#FFC72C]/10 text-[#FFC72C] highlight-element' : 'hover:bg-muted/50'}`}>
+                  <BarChart3 className="w-6 h-6" />
+                  <span>Clasificación</span>
+                </a>
+                <a href="#" className="flex items-center space-x-3 p-3 hover:bg-muted/50 rounded-lg transition-colors">
+                  <div className="w-6 h-6 text-muted-foreground">$</div>
+                  <span className="text-foreground">Apostar</span>
+                </a>
+                <a href="#" className="flex items-center space-x-3 p-3 hover:bg-muted/50 rounded-lg transition-colors">
+                  <History className="w-6 h-6 text-muted-foreground" />
+                  <span className="text-foreground">Historial</span>
+                </a>
+                <a href="#" className="flex items-center space-x-3 p-3 hover:bg-muted/50 rounded-lg transition-colors">
+                  <Settings className="w-6 h-6 text-muted-foreground" />
+                  <span className="text-foreground">Ajustes</span>
+                </a>
+                <a href="#" className="flex items-center space-x-3 p-3 hover:bg-muted/50 rounded-lg transition-colors">
+                  <CheckCircle className="w-6 h-6 text-muted-foreground" />
+                  <span className="text-foreground">Tu Liga</span>
+                </a>
+              </nav>
+
+              {/* Logout */}
+              <div className="mt-8 pt-6 border-t">
+                <button className="flex items-center space-x-3 p-3 w-full hover:bg-muted/50 rounded-lg transition-colors">
+                  <LogOut className="w-6 h-6 text-muted-foreground" />
+                  <span className="text-foreground">Cerrar Sesión</span>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </nav>
+        </>
+      )}
 
-      <main className="container mx-auto px-4 py-8 pt-32">
+      <main className="container mx-auto px-4 py-8 pt-20">
         <div className="space-y-6">
           {/* Título de la liga */}
           <div className="text-center">
@@ -283,13 +342,15 @@ export const ClasificacionDemo = () => {
                   disabled={currentStep === 0}
                   className="bg-[#FFC72C] text-black hover:bg-[#e6b328] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ease-in-out"
                 >
-                  ← Anterior
+                  ← {language === 'es' ? 'Anterior' : 'Previous'}
                 </Button>
                       <Button
                         onClick={handleNext}
                         className="bg-[#FFC72C] text-black hover:bg-[#e6b328] transition-all duration-300 ease-in-out"
                       >
-                        {currentStep < steps.length - 1 ? 'Siguiente →' : 'Finalizar Demo'}
+                        {currentStep < steps.length - 1 
+                          ? (language === 'es' ? 'Siguiente →' : 'Next →') 
+                          : (language === 'es' ? 'Finalizar Demo' : 'Finish Demo')}
                       </Button>
               </div>
             </div>

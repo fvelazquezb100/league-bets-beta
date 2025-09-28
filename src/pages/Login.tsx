@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +13,7 @@ import { APP_CONFIG } from '@/config/app';
 export const Login = () => {
   const { signIn, user, loading } = useAuth();
   const { handleError } = useErrorHandler();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -74,6 +75,9 @@ export const Login = () => {
     }
   };
 
+  const handleStartDemo = () => {
+    navigate('/demo-language');
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -155,6 +159,20 @@ export const Login = () => {
                       Regístrate
                     </Link>
                   </p>
+                  
+                  <div className="mt-4">
+                    <p className="text-sm text-muted-foreground mb-3">
+                      ¿Quieres hacer una demostración de una liga Jambol?
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full bg-white border-[#FFC72C] text-black hover:bg-[#FFC72C] hover:text-white"
+                      onClick={handleStartDemo}
+                    >
+                      Demo Jambol
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -170,6 +188,7 @@ export const Login = () => {
           />
         </div>
       </div>
+
     </div>
   );
 };

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -7,9 +8,12 @@ import { MagicCard } from '@/components/ui/MagicCard';
 import BetSlipDemo from '@/components/BetSlipDemo';
 import MobileBetSlip from '@/components/MobileBetSlip';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useDemoLanguage } from '@/hooks/useDemoLanguage';
 import { APP_CONFIG } from '@/config/app';
 
 export const BetsDemo = () => {
+  const navigate = useNavigate();
+  const { language } = useDemoLanguage();
   const [currentStep, setCurrentStep] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [selectedLeague, setSelectedLeague] = useState<'primera' | 'champions'>('primera');
@@ -79,28 +83,38 @@ export const BetsDemo = () => {
 
   const steps = [
     {
-      title: "LIGAS DISPONIBLES",
-      content: "Aquí puedes seleccionar las ligas en las que quieres apostar. Puedes elegir múltiples ligas para tener más opciones de partidos.",
+      title: language === 'es' ? "LIGAS DISPONIBLES" : "AVAILABLE LEAGUES",
+      content: language === 'es' 
+        ? "Aquí puedes seleccionar las ligas en las que quieres apostar. Puedes elegir múltiples ligas para tener más opciones de partidos."
+        : "Here you can select the leagues you want to bet on. You can choose multiple leagues to have more match options.",
       highlight: "leagues-tabs"
     },
     {
-      title: "PARTIDOS DISPONIBLES",
-      content: "Estos son los partidos disponibles para apostar. Haz clic en un partido para ver los mercados disponibles.",
+      title: language === 'es' ? "PARTIDOS DISPONIBLES" : "AVAILABLE MATCHES",
+      content: language === 'es' 
+        ? "Estos son los partidos disponibles para apostar. Haz clic en un partido para ver los mercados disponibles."
+        : "These are the matches available for betting. Click on a match to see the available markets.",
       highlight: "first-match"
     },
     {
-      title: "MERCADOS DE APUESTAS",
-      content: "Cada partido tiene diferentes mercados. Selecciona el mercado que te interese y elige tu cuota.",
+      title: language === 'es' ? "MERCADOS DE APUESTAS" : "BETTING MARKETS",
+      content: language === 'es' 
+        ? "Cada partido tiene diferentes mercados. Selecciona el mercado que te interese y elige tu cuota."
+        : "Each match has different markets. Select the market that interests you and choose your odds.",
       highlight: "markets-section"
     },
     {
-      title: "BOLETO DE APUESTAS",
-      content: "Una vez seleccionada la cuota, aparece en tu boleto de apuestas. Aquí puedes ver el resumen de tu apuesta y el total de puntos que apostarás. Recuerda introducir la cantidad de puntos que quieres apostar.<br /><br />También puedes realizar apuestas combinadas, seleccionando más de una opción de partidos diferentes.",
+      title: language === 'es' ? "BOLETO DE APUESTAS" : "BETTING SLIP",
+      content: language === 'es' 
+        ? "Una vez seleccionada la cuota, aparece en tu boleto de apuestas. Aquí puedes ver el resumen de tu apuesta y el total de puntos que apostarás. Recuerda introducir la cantidad de puntos que quieres apostar.<br /><br />También puedes realizar apuestas combinadas, seleccionando más de una opción de partidos diferentes."
+        : "Once you select the odds, it appears in your betting slip. Here you can see the summary of your bet and the total points you will bet. Remember to enter the amount of points you want to bet.<br /><br />You can also make combined bets by selecting more than one option from different matches.",
       highlight: "bet-amount"
     },
     {
-      title: "REALIZAR APUESTA",
-      content: "¡Apuesta realizada! Apuesta simple de 100 pts realizada con éxito. Ya tienes tu apuesta registrada y podrás ver los resultados cuando termine el partido. Podrás ver tus apuestas en el historial.",
+      title: language === 'es' ? "REALIZAR APUESTA" : "PLACE BET",
+      content: language === 'es' 
+        ? "¡Apuesta realizada! Apuesta simple de 100 pts realizada con éxito. Ya tienes tu apuesta registrada y podrás ver los resultados cuando termine el partido. Podrás ver tus apuestas en el historial."
+        : "Bet placed! Simple bet of 100 pts placed successfully. Your bet is now registered and you can see the results when the match ends. You can see your bets in the history.",
       highlight: "realizar-apuesta"
     }
   ];
@@ -259,8 +273,8 @@ export const BetsDemo = () => {
       
       setCurrentStep(currentStep + 1);
     } else {
-      // Ir al historial
-      window.location.href = '/bet-history-demo';
+      // Ir al historial preservando el idioma
+      navigate(`/bet-history-demo?lang=${language}`);
     }
   };
 
@@ -318,7 +332,7 @@ export const BetsDemo = () => {
       </nav>
 
       {/* Contenido principal */}
-      <main className="container mx-auto px-4 py-8 pt-32">
+      <main className="container mx-auto px-4 py-8 pt-20">
         <div className="w-full px-2 sm:container sm:mx-auto sm:p-4">
           <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Apuestas</h1>
           
@@ -748,13 +762,15 @@ export const BetsDemo = () => {
                   disabled={currentStep === 0}
                   className="bg-[#FFC72C] text-black hover:bg-[#e6b328] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  ← Anterior
+                  ← {language === 'es' ? 'Anterior' : 'Previous'}
                 </Button>
                 <Button
                   onClick={handleNext}
                   className="bg-[#FFC72C] text-black hover:bg-[#e6b328]"
                 >
-                        {currentStep < steps.length - 1 ? 'Siguiente →' : 'Ir al Historial →'}
+                        {currentStep < steps.length - 1 
+                          ? (language === 'es' ? 'Siguiente →' : 'Next →') 
+                          : (language === 'es' ? 'Ir al Historial →' : 'Go to History →')}
                 </Button>
               </div>
             </div>
