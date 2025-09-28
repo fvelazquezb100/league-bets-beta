@@ -468,7 +468,7 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll, forceOpen = fals
                 !stake || 
                 parseFloat(stake) <= 0 || 
                 (selectedBets.length > 1 && hasDuplicateFixtures) ||
-                selectedBets.some(bet => bet.kickoff ? (new Date() >= new Date(new Date(bet.kickoff).getTime() - 15 * 60 * 1000)) : false)
+                selectedBets.some(bet => bet.kickoff ? (new Date() >= new Date(new Date(bet.kickoff).getTime() - cutoffMinutes * 60 * 1000)) : false)
               }
             >
               {isSubmitting ? 'Procesando...' : 'Realizar Apuestas'}
