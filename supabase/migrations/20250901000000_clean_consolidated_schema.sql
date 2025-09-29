@@ -628,8 +628,16 @@ BEGIN
   SET weekly_budget = weekly_budget + v_bet.stake
   WHERE id = auth.uid();
 
-  -- Delete the bet (this will cascade delete bet_selections)
-  DELETE FROM bets WHERE id = bet_id_param;
+  -- Update bet status to cancelled and set payout to 0
+  UPDATE bets 
+  SET status = 'cancelled', 
+      payout = 0
+  WHERE id = bet_id_param;
+
+  -- Update bet_selections status to cancelled
+  UPDATE bet_selections 
+  SET status = 'cancelled'
+  WHERE bet_id = bet_id_param;
 
   -- Return success response
   RETURN jsonb_build_object(

@@ -308,7 +308,7 @@ export const NewsManagement = () => {
               ) : (
                 <div className="space-y-4">
                   {news.map((item) => (
-                    <div key={item.id} className={`p-4 border rounded-lg ${item.is_frozen ? 'border-warning bg-warning/10' : ''}`}>
+                    <div key={item.id} className={`p-4 border rounded-lg ${item.is_frozen ? 'border-[#FFC72C] bg-[#FFC72C]/10' : ''}`}>
                       <div className="flex justify-between items-start gap-4">
                         <div className="flex-1">
                           <h4 className="font-medium">{item.title}</h4>

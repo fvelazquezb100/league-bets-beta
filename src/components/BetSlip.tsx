@@ -38,10 +38,10 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
   const { cutoffMinutes } = useBettingSettings();
   const queryClient = useQueryClient();
 
-  // Helper to adjust stake by 10, respecting minBet
+  // Helper to adjust stake by 10, allowing values below minBet
   const adjustStakeBy10 = (direction: 'up' | 'down') => {
     const current = parseFloat(stake) || 0;
-    const next = direction === 'up' ? current + 10 : Math.max(minBet, current - 10);
+    const next = direction === 'up' ? current + 10 : Math.max(0, current - 10);
     setStake(next.toString());
   };
 
@@ -104,12 +104,12 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
     fetchUserData();
   }, []);
 
-  // Set default stake to minimum bet when minBet changes
+  // Set default stake to minimum bet when minBet changes (only on initial load)
   useEffect(() => {
     if (minBet && !stake) {
       setStake(minBet.toString());
     }
-  }, [minBet, stake]);
+  }, [minBet]); // Removed stake dependency to prevent auto-setting
 
   const handlePlaceBet = async () => {
     if (!stake || parseFloat(stake) <= 0) {
@@ -351,7 +351,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
                     placeholder="0"
                     value={stake}
                     onChange={(e) => {
-                      const value = e.target.value.replace(/[^0-9]/g, '');
+                      const value = e.target.value.replace(/[^0-9.]/g, '');
                       setStake(value);
                     }}
                     onKeyDown={handleStakeInputKeyDown}
