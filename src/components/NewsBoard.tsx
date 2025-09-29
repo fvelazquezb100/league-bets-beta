@@ -66,7 +66,7 @@ export const NewsBoard = () => {
           </div>
         ) : (
           news.map((item) => (
-            <div key={item.id} className={`p-4 rounded-lg bg-muted/50 ${item.is_frozen ? 'border-2 border-warning bg-warning/10' : ''}`}>
+            <div key={item.id} className={`p-4 rounded-lg bg-muted/50 ${item.is_frozen ? 'border-2 border-[#FFC72C] bg-[#FFC72C]/10' : ''}`}>
               <h3 className="font-semibold text-foreground mb-2">{item.title}</h3>
               <p className="text-sm text-foreground/80 mb-2 whitespace-pre-wrap">{item.content}</p>
               <p className="text-xs text-muted-foreground">

@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { NewsManagement } from '@/components/NewsManagement';
 import { BettingSettingsControl } from '@/components/BettingSettingsControl';
 import { useMatchAvailability } from '@/hooks/useMatchAvailability';
+import { useLastProcessedMatch } from '@/hooks/useLastProcessedMatch';
 import { useNavigate } from 'react-router-dom';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
@@ -14,6 +15,7 @@ const SuperAdmin: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { data: matchAvailability = [] } = useMatchAvailability();
+  const { data: lastProcessedMatch, isLoading: loadingLastMatch } = useLastProcessedMatch();
 
   // Calculate active days count
   const activeDaysCount = matchAvailability.filter(item => item.is_live_betting_enabled).length;
@@ -223,6 +225,17 @@ const SuperAdmin: React.FC = () => {
               <p className="text-xs sm:text-sm text-muted-foreground">
                 Ejecuta manualmente el procesamiento de resultados de la última jornada.
               </p>
+              
+              {/* Último partido procesado */}
+              {loadingLastMatch ? (
+                <p className="text-xs text-muted-foreground">Cargando último partido...</p>
+              ) : lastProcessedMatch ? (
+                <p className="text-xs text-muted-foreground">
+                  Último partido: {lastProcessedMatch.home_team} vs {lastProcessedMatch.away_team} {new Date(new Date(lastProcessedMatch.finished_at).getTime() + 2 * 60 * 60 * 1000).toLocaleString('es-ES')}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">No hay partidos procesados aún</p>
+              )}
             </CardContent>
             <CardFooter className="p-3 sm:p-6">
               <Button 
