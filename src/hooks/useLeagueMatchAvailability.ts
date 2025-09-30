@@ -22,12 +22,12 @@ const getNextMonday = (): string => {
 const fetchLeagueMatchAvailability = async (leagueId: number): Promise<LeagueMatchAvailabilityData[]> => {
   try {
     const { data, error } = await supabase
-      .from('match_availability_control')
+      .from('match_availability_control' as any)
       .select('date, is_live_betting_enabled')
       .eq('league_id', leagueId)
       .gte('date', new Date().toISOString().split('T')[0])
       .lte('date', getNextMonday())
-      .order('date') as { data: { date: string; is_live_betting_enabled: boolean }[] | null; error: any };
+      .order('date');
 
     if (error) {
       console.warn('Failed to fetch league match availability:', error);
@@ -46,11 +46,11 @@ const toggleLeagueAvailability = async (leagueId: number, date: string, isEnable
   try {
     // First try to update existing record
     const { data: existingData, error: selectError } = await supabase
-      .from('match_availability_control')
+      .from('match_availability_control' as any)
       .select('id')
       .eq('date', date)
       .eq('league_id', leagueId)
-      .single() as { data: { id: number } | null; error: any };
+      .single();
 
     if (selectError && selectError.code !== 'PGRST116') {
       throw selectError;
@@ -60,24 +60,24 @@ const toggleLeagueAvailability = async (leagueId: number, date: string, isEnable
     if (existingData) {
       // Update existing record
       const { error: updateError } = await supabase
-        .from('match_availability_control')
+        .from('match_availability_control' as any)
         .update({
           is_live_betting_enabled: isEnabled,
           updated_at: new Date().toISOString()
-        })
+        } as any)
         .eq('date', date)
         .eq('league_id', leagueId);
       error = updateError;
     } else {
       // Insert new record
       const { error: insertError } = await supabase
-        .from('match_availability_control')
+        .from('match_availability_control' as any)
         .insert({
           date,
           is_live_betting_enabled: isEnabled,
           league_id: leagueId,
           updated_at: new Date().toISOString()
-        });
+        } as any);
       error = insertError;
     }
 

@@ -78,7 +78,7 @@ export const LeagueMatchAvailabilityControl = () => {
       
       // Get availability data for the next 7 days for this specific league
       const { data, error } = await supabase
-        .from('match_availability_control')
+        .from('match_availability_control' as any)
         .select('date, is_live_betting_enabled')
         .eq('league_id', userProfile?.league_id)
         .gte('date', new Date().toISOString().split('T')[0])
@@ -133,7 +133,7 @@ export const LeagueMatchAvailabilityControl = () => {
       
       // First try to update existing record
       const { data: existingData, error: selectError } = await supabase
-        .from('match_availability_control')
+        .from('match_availability_control' as any)
         .select('id')
         .eq('date', date)
         .eq('league_id', userProfile?.league_id)
@@ -147,24 +147,24 @@ export const LeagueMatchAvailabilityControl = () => {
       if (existingData) {
         // Update existing record
         const { error: updateError } = await supabase
-          .from('match_availability_control')
+          .from('match_availability_control' as any)
           .update({
             is_live_betting_enabled: isEnabled,
             updated_at: new Date().toISOString()
-          })
+          } as any)
           .eq('date', date)
           .eq('league_id', userProfile?.league_id);
         error = updateError;
       } else {
         // Insert new record
         const { error: insertError } = await supabase
-          .from('match_availability_control')
+          .from('match_availability_control' as any)
           .insert({
             date,
             is_live_betting_enabled: isEnabled,
             league_id: userProfile?.league_id,
             updated_at: new Date().toISOString()
-          });
+          } as any);
         error = insertError;
       }
 

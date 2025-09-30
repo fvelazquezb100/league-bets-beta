@@ -32,12 +32,12 @@ const fetchLeagueMatchAvailability = async (leagueId: number | null): Promise<Co
 
     // Fetch league-specific availability
     const { data: leagueData, error: leagueError } = await supabase
-      .from('match_availability_control')
+      .from('match_availability_control' as any)
       .select('date, is_live_betting_enabled')
       .eq('league_id', leagueId)
       .gte('date', today)
       .lte('date', nextMonday)
-      .order('date') as { data: { date: string; is_live_betting_enabled: boolean }[] | null; error: any };
+      .order('date');
 
     if (leagueError) {
       console.warn('Failed to fetch league match availability:', leagueError);
