@@ -8,7 +8,7 @@
 
 -- Add league_id column to existing table
 ALTER TABLE public.match_availability_control 
-ADD COLUMN IF NOT EXISTS league_id INTEGER REFERENCES public.leagues(id) ON DELETE CASCADE;
+ADD COLUMN IF NOT EXISTS league_id BIGINT REFERENCES public.leagues(id) ON DELETE CASCADE;
 
 -- Delete existing global records (league_id = NULL) since we no longer use global availability
 DELETE FROM public.match_availability_control 
@@ -40,7 +40,7 @@ CREATE OR REPLACE FUNCTION public.initialize_match_availability(
   start_date DATE,
   end_date DATE,
   default_enabled BOOLEAN DEFAULT false,
-  league_id_param INTEGER DEFAULT NULL
+  league_id_param BIGINT DEFAULT NULL
 )
 RETURNS void AS $$
 DECLARE
@@ -77,6 +77,7 @@ DECLARE
   v_result jsonb;
   v_updated_leagues INTEGER := 0;
   v_updated_availability INTEGER := 0;
+  league_record RECORD;
 BEGIN
   -- Get current date
   v_current_date := CURRENT_DATE;
@@ -409,7 +410,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.match_availability_control TO aut
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.betting_settings TO authenticated;
 
 -- Grant function execution permissions
-GRANT EXECUTE ON FUNCTION public.initialize_match_availability(DATE, DATE, BOOLEAN, INTEGER) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.initialize_match_availability(DATE, DATE, BOOLEAN, BIGINT) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_betting_settings() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_betting_cutoff_minutes() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.update_betting_cutoff_minutes(INTEGER) TO authenticated;
