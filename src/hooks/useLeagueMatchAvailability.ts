@@ -34,7 +34,7 @@ const fetchLeagueMatchAvailability = async (leagueId: number): Promise<LeagueMat
       return [];
     }
 
-    return (data as LeagueMatchAvailabilityData[]) || [];
+    return (data as any[]) || [];
   } catch (error) {
     console.warn('Error fetching league match availability:', error);
     return [];

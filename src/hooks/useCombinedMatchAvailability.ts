@@ -44,7 +44,7 @@ const fetchLeagueMatchAvailability = async (leagueId: number | null): Promise<Co
       return [];
     }
 
-    return (leagueData || []).map(item => ({
+    return (leagueData || []).map((item: any) => ({
       ...item,
       source: 'league' as const
     }));
