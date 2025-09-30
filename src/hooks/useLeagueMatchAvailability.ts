@@ -27,7 +27,7 @@ const fetchLeagueMatchAvailability = async (leagueId: number): Promise<LeagueMat
       .eq('league_id', leagueId)
       .gte('date', new Date().toISOString().split('T')[0])
       .lte('date', getNextMonday())
-      .order('date');
+      .order('date') as { data: { date: string; is_live_betting_enabled: boolean }[] | null; error: any };
 
     if (error) {
       console.warn('Failed to fetch league match availability:', error);
@@ -50,7 +50,7 @@ const toggleLeagueAvailability = async (leagueId: number, date: string, isEnable
       .select('id')
       .eq('date', date)
       .eq('league_id', leagueId)
-      .single();
+      .single() as { data: { id: number } | null; error: any };
 
     if (selectError && selectError.code !== 'PGRST116') {
       throw selectError;

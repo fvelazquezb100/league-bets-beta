@@ -37,7 +37,7 @@ const fetchLeagueMatchAvailability = async (leagueId: number | null): Promise<Co
       .eq('league_id', leagueId)
       .gte('date', today)
       .lte('date', nextMonday)
-      .order('date');
+      .order('date') as { data: { date: string; is_live_betting_enabled: boolean }[] | null; error: any };
 
     if (leagueError) {
       console.warn('Failed to fetch league match availability:', leagueError);
