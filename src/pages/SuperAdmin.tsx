@@ -6,7 +6,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { NewsManagement } from '@/components/NewsManagement';
 import { BettingSettingsControl } from '@/components/BettingSettingsControl';
-import { useMatchAvailability } from '@/hooks/useMatchAvailability';
 import { useLastProcessedMatch } from '@/hooks/useLastProcessedMatch';
 import { useNavigate } from 'react-router-dom';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -14,11 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 const SuperAdmin: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { data: matchAvailability = [] } = useMatchAvailability();
   const { data: lastProcessedMatch, isLoading: loadingLastMatch } = useLastProcessedMatch();
-
-  // Calculate active days count
-  const activeDaysCount = matchAvailability.filter(item => item.is_live_betting_enabled).length;
   
   // Caché de cuotas
   const {
@@ -296,29 +291,9 @@ const SuperAdmin: React.FC = () => {
         </div>
 
         {/* New controls at the bottom */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
           {/* Configuración de Tiempo de Apuestas */}
           <BettingSettingsControl />
-
-          {/* Control de Disponibilidad de Partidos */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base sm:text-lg">Control de Disponibilidad de Partidos</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 p-3 sm:p-6">
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                Días activos en los próximos 15 días: <strong>{activeDaysCount} días</strong>
-              </p>
-            </CardContent>
-            <CardFooter className="p-3 sm:p-6">
-              <Button 
-                onClick={() => navigate('/match-availability-control')}
-                className="jambol-button text-xs sm:text-sm"
-              >
-                Abrir Control de Disponibilidad
-              </Button>
-            </CardFooter>
-          </Card>
         </div>
       </div>
     </div>

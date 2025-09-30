@@ -14,7 +14,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMatchOdds, type MatchData, type BetValue } from '@/hooks/useMatchOdds';
 import { useUserBets, type UserBet } from '@/hooks/useUserBets';
 import { useAvailableLeagues } from '@/hooks/useAvailableLeagues';
-import { useMatchAvailability } from '@/hooks/useMatchAvailability';
+import { useCombinedMatchAvailability } from '@/hooks/useCombinedMatchAvailability';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { useBettingSettings } from '@/hooks/useBettingSettings';
 import { MagicCard } from '@/components/ui/MagicCard';
 
@@ -33,12 +34,13 @@ const Bets = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  const { data: userProfile } = useUserProfile(user?.id);
   
   // React Query hooks for data fetching
   const { data: matches = [], isLoading: matchesLoading, error: matchesError } = useMatchOdds();
   const { data: userBets = [], isLoading: userBetsLoading } = useUserBets(user?.id);
   const { data: availableLeagues = [140, 2, 3, 262], isLoading: leaguesLoading } = useAvailableLeagues(user?.id);
-  const { data: matchAvailability = [], isLoading: availabilityLoading } = useMatchAvailability();
+  const { data: matchAvailability = [], isLoading: availabilityLoading } = useCombinedMatchAvailability(userProfile?.league_id);
   
   // Derived loading and error states
   const loading = matchesLoading || userBetsLoading || leaguesLoading || availabilityLoading;
