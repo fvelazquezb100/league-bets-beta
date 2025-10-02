@@ -5,7 +5,7 @@ import { APP_CONFIG } from '@/config/app';
 export const usernameSchema = z.string()
   .min(APP_CONFIG.VALIDATION.MIN_USERNAME_LENGTH, 'Mínimo ' + APP_CONFIG.VALIDATION.MIN_USERNAME_LENGTH + ' caracteres')
   .max(APP_CONFIG.VALIDATION.MAX_USERNAME_LENGTH, 'Máximo ' + APP_CONFIG.VALIDATION.MAX_USERNAME_LENGTH + ' caracteres')
-  .regex(APP_CONFIG.VALIDATION.USERNAME_REGEX, 'Solo letras, números y guiones bajos')
+  .regex(APP_CONFIG.VALIDATION.USERNAME_REGEX, 'Solo letras sin acentos, números y guiones bajos (no se permiten tildes)')
   .refine(val => !val.startsWith('_') && !val.endsWith('_'), 
     'No puede empezar o terminar con guión bajo');
 

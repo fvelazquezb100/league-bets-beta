@@ -226,111 +226,92 @@ export const LeagueMatchAvailabilityControl = () => {
   const enabledDays = availabilityDays.filter(day => day.isEnabled).length;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
-            <Link to="/admin-liga">
-              <Button variant="outline" className="mb-4 border-[#FFC72C] bg-white hover:bg-[#FFC72C] hover:text-white">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Volver al Panel de Liga
-              </Button>
-            </Link>
-        <h1 className="text-3xl font-bold">Control de Disponibilidad de Partidos</h1>
-        <p className="text-muted-foreground mt-2">
+    <div className="container mx-auto px-4 py-4 sm:py-8">
+      <div className="mb-4 sm:mb-6">
+        <Link to="/admin-liga">
+          <Button variant="outline" className="mb-3 sm:mb-4 border-[#FFC72C] bg-white hover:bg-[#FFC72C] hover:text-white text-sm sm:text-base">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">Volver al Panel de Liga</span>
+            <span className="sm:hidden">Volver</span>
+          </Button>
+        </Link>
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Control de Disponibilidad de Partidos</h1>
+        <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">
           Gestiona la disponibilidad de apuestas en vivo para {leagueData?.name}
         </p>
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Control de Disponibilidad de Partidos
+        <CardHeader className="p-3 sm:p-6">
+          <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+            <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="hidden sm:inline">Control de Disponibilidad de Partidos</span>
+            <span className="sm:hidden">Disponibilidad</span>
           </CardTitle>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Controla qué días están disponibles para apuestas en vivo en {leagueData?.name}
           </p>
           {availabilityDays.length > 0 && (
-            <p className="text-sm text-muted-foreground">
-              Días activos en los próximos 7 días: {enabledDays} días
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              Días activos: {enabledDays} de 7
             </p>
           )}
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 sm:p-6">
           {loading ? (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               {[...Array(7)].map((_, i) => (
-                <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-muted animate-pulse rounded"></div>
-                    <div className="space-y-2">
-                      <div className="w-24 h-4 bg-muted animate-pulse rounded"></div>
-                      <div className="w-16 h-3 bg-muted animate-pulse rounded"></div>
+                <div key={i} className="flex items-center justify-between p-2 sm:p-4 border rounded-lg">
+                  <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                    <div className="w-6 h-6 sm:w-12 sm:h-12 bg-muted animate-pulse rounded flex-shrink-0"></div>
+                    <div className="flex-1 min-w-0">
+                      <div className="w-16 sm:w-24 h-3 sm:h-4 bg-muted animate-pulse rounded"></div>
                     </div>
                   </div>
-                  <div className="w-12 h-6 bg-muted animate-pulse rounded"></div>
+                  <div className="w-8 h-4 sm:w-12 sm:h-6 bg-muted animate-pulse rounded flex-shrink-0"></div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               {availabilityDays.map((day) => {
                 const isWeekend = new Date(day.date).getDay() === 0 || new Date(day.date).getDay() === 6;
                 
                 return (
                   <div
                     key={day.date}
-                    className={`flex items-center justify-between p-4 rounded-lg border ${
+                    className={`flex items-center justify-between p-2 sm:p-4 rounded-lg border ${
                       day.isToday ? 'bg-primary/10 border-primary/30' : 'bg-muted/30'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center w-12 h-12 rounded-full bg-muted/20">
-                        <Calendar className="h-5 w-5 text-muted-foreground" />
+                    <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                      <div className="flex items-center justify-center w-6 h-6 sm:w-12 sm:h-12 rounded-full bg-muted/20 flex-shrink-0">
+                        <Calendar className="h-3 w-3 sm:h-5 sm:w-5 text-muted-foreground" />
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1 sm:gap-2">
+                          <span className="font-medium text-xs sm:text-base truncate">
                             {new Date(day.date).toLocaleDateString('es-ES', { 
-                              weekday: 'long', 
+                              weekday: 'short', 
                               day: 'numeric', 
-                              month: 'long' 
+                              month: 'short' 
                             })}
                           </span>
                           {day.isToday && (
-                            <Badge variant="secondary" className="text-xs">
+                            <Badge variant="outline" className="text-xs px-1 py-0 bg-white border-[#FFC72C] text-[#FFC72C] flex-shrink-0">
                               Hoy
                             </Badge>
                           )}
-                          {isWeekend && (
-                            <Badge variant="outline" className="text-xs">
-                              Fin de semana
-                            </Badge>
-                          )}
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          {day.date}
-                        </p>
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-2">
-                        {day.isEnabled ? (
-                          <CheckCircle className="h-5 w-5 text-green-500" />
-                        ) : (
-                          <XCircle className="h-5 w-5 text-red-500" />
-                        )}
-                        <span className={`text-sm font-medium ${
-                          day.isEnabled ? 'text-green-700' : 'text-red-700'
-                        }`}>
-                          {day.isEnabled ? 'Disponible' : 'No disponible'}
-                        </span>
-                      </div>
-                      
+                    <div className="flex items-center justify-end flex-shrink-0">
                       <Switch
                         checked={day.isEnabled}
                         onCheckedChange={(checked) => toggleAvailability(day.date, checked)}
                         disabled={saving}
+                        className="scale-75 sm:scale-100"
                       />
                     </div>
                   </div>
