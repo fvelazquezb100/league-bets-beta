@@ -85,27 +85,6 @@ const SuperAdmin: React.FC = () => {
     }
   };
 
-  const recalculatePoints = async () => {
-    try {
-      // Llamar directamente a la función de base de datos
-      const { error } = await supabase.rpc('recalc_total_points');
-
-      if (error) {
-        throw error;
-      }
-
-      toast({
-        title: 'Recálculo de Puntos',
-        description: 'Puntos recalculados exitosamente',
-      });
-    } catch (error: any) {
-      toast({
-        title: 'Error en Recálculo',
-        description: error.message,
-        variant: 'destructive',
-      });
-    }
-  };
 
   const testEdgeFunctionAuth = async () => {
     try {
@@ -134,7 +113,6 @@ const SuperAdmin: React.FC = () => {
 
   const [updatingCache, setUpdatingCache] = React.useState(false);
   const [processingResults, setProcessingResults] = React.useState(false);
-  const [recalculatingPoints, setRecalculatingPoints] = React.useState(false);
   const [testingAuth, setTestingAuth] = React.useState(false);
 
   const handleUpdateCache = async () => {
@@ -155,14 +133,6 @@ const SuperAdmin: React.FC = () => {
     }
   };
 
-  const handleRecalculatePoints = async () => {
-    setRecalculatingPoints(true);
-    try {
-      await recalculatePoints();
-    } finally {
-      setRecalculatingPoints(false);
-    }
-  };
 
   const handleTestAuth = async () => {
     setTestingAuth(true);
@@ -243,31 +213,8 @@ const SuperAdmin: React.FC = () => {
           </Card>
         </div>
 
-        {/* Recalcular Puntos Totales y Test - Two columns */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recalcular Puntos Totales */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base sm:text-lg">Recalcular Puntos Totales</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 p-3 sm:p-6">
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                Ejecuta manualmente el cálculo total de puntos de todos los usuarios, según sus apuestas ganadas.
-              </p>
-            </CardContent>
-            <CardFooter className="p-3 sm:p-6">
-              <Button 
-                onClick={handleRecalculatePoints}
-                disabled={recalculatingPoints}
-                className="jambol-button text-xs sm:text-sm"
-              >
-                {recalculatingPoints ? 'Recalculando...' : 'Recalcular Puntos'}
-              </Button>
-            </CardFooter>
-          </Card>
-
-
-          {/* Test de Autenticación de Edge Functions */}
+        {/* Test de Autenticación de Edge Functions */}
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
           <Card>
             <CardHeader>
               <CardTitle className="text-base sm:text-lg">Test de Autenticación de Edge Functions</CardTitle>

@@ -39,7 +39,7 @@ const Bets = () => {
   // React Query hooks for data fetching
   const { data: matches = [], isLoading: matchesLoading, error: matchesError } = useMatchOdds();
   const { data: userBets = [], isLoading: userBetsLoading } = useUserBets(user?.id);
-  const { data: availableLeagues = [140, 2, 3, 262], isLoading: leaguesLoading } = useAvailableLeagues(user?.id);
+  const { data: availableLeagues = [], isLoading: leaguesLoading } = useAvailableLeagues(user?.id);
   const { data: matchAvailability = [], isLoading: availabilityLoading } = useCombinedMatchAvailability(userProfile?.league_id);
   
   // Derived loading and error states
@@ -536,6 +536,20 @@ const Bets = () => {
 
   const renderContent = () => {
     const availableTabs = getAvailableTabs();
+    
+    // Don't render tabs until leagues are loaded
+    if (leaguesLoading || availableTabs.length === 0) {
+      return (
+        <div className="w-full">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-10 w-full" />
+            ))}
+          </div>
+          <Skeleton className="h-96 w-full" />
+        </div>
+      );
+    }
     
     // If current selected league is not available, switch to the first available one
     if (availableTabs.length > 0 && !availableTabs.find(tab => tab.value === selectedLeague)) {
