@@ -346,7 +346,8 @@ BEGIN
     FROM public.bets
     WHERE user_id = public.profiles.id
       AND status = 'won'
-  );
+  )
+  WHERE id IS NOT NULL;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

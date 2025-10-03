@@ -87,9 +87,8 @@ const SuperAdmin: React.FC = () => {
 
   const recalculatePoints = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('admin-reset-budgets', {
-        body: { recalculate: true },
-      });
+      // Llamar directamente a la función de base de datos
+      const { error } = await supabase.rpc('recalc_total_points');
 
       if (error) {
         throw error;
