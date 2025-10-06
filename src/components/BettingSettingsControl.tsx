@@ -76,7 +76,7 @@ export const BettingSettingsControl: React.FC = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="text-base sm:text-lg flex items-center gap-2">
           <Clock className="h-5 w-5" />
           Configuración de Tiempo de Apuestas
         </CardTitle>

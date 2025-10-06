@@ -6,7 +6,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { NewsManagement } from '@/components/NewsManagement';
 import { BettingSettingsControl } from '@/components/BettingSettingsControl';
-import { useMatchAvailability } from '@/hooks/useMatchAvailability';
 import { useLastProcessedMatch } from '@/hooks/useLastProcessedMatch';
 import { useNavigate } from 'react-router-dom';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -14,11 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 const SuperAdmin: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { data: matchAvailability = [] } = useMatchAvailability();
   const { data: lastProcessedMatch, isLoading: loadingLastMatch } = useLastProcessedMatch();
-
-  // Calculate active days count
-  const activeDaysCount = matchAvailability.filter(item => item.is_live_betting_enabled).length;
   
   // Caché de cuotas
   const {
@@ -90,28 +85,7 @@ const SuperAdmin: React.FC = () => {
     }
   };
 
-  const recalculatePoints = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('admin-reset-budgets', {
-        body: { recalculate: true },
-      });
 
-      if (error) {
-        throw error;
-      }
-
-      toast({
-        title: 'Recálculo de Puntos',
-        description: 'Puntos recalculados exitosamente',
-      });
-    } catch (error: any) {
-      toast({
-        title: 'Error en Recálculo',
-        description: error.message,
-        variant: 'destructive',
-      });
-    }
-  };
 
   const testEdgeFunctionAuth = async () => {
     try {
@@ -140,7 +114,6 @@ const SuperAdmin: React.FC = () => {
 
   const [updatingCache, setUpdatingCache] = React.useState(false);
   const [processingResults, setProcessingResults] = React.useState(false);
-  const [recalculatingPoints, setRecalculatingPoints] = React.useState(false);
   const [testingAuth, setTestingAuth] = React.useState(false);
 
   const handleUpdateCache = async () => {
@@ -161,14 +134,6 @@ const SuperAdmin: React.FC = () => {
     }
   };
 
-  const handleRecalculatePoints = async () => {
-    setRecalculatingPoints(true);
-    try {
-      await recalculatePoints();
-    } finally {
-      setRecalculatingPoints(false);
-    }
-  };
 
   const handleTestAuth = async () => {
     setTestingAuth(true);
@@ -190,11 +155,38 @@ const SuperAdmin: React.FC = () => {
           </p>
         </div>
 
-        {/* News Management - Full width at top */}
-        <NewsManagement />
+        {/* News Management, Betting Settings - 3 columns on desktop */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* News Management */}
+          <div className="lg:col-span-1">
+            <NewsManagement />
+          </div>
+          
+          {/* Configuración de Tiempo de Apuestas */}
+          <div className="lg:col-span-1">
+            <BettingSettingsControl />
+          </div>
+          
+          {/* Gestión de Selecciones */}
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base sm:text-lg">Gestionar Selecciones</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 p-3 sm:p-6">
+                <p className="text-xs sm:text-sm text-muted-foreground">Configura la visibilidad y acciones para Selecciones.</p>
+              </CardContent>
+              <CardFooter className="p-3 sm:p-6">
+                <Button className="jambol-button text-xs sm:text-sm" onClick={() => navigate('/superadmin-selecciones')}>
+                  Abrir gestión de Selecciones
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
+        </div>
 
-        {/* Cache de Cuotas and Procesamiento de Resultados - Side by side */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Cache de Cuotas and Procesamiento de Resultados - 3 columns on desktop */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Caché de Cuotas */}
           <Card>
             <CardHeader>
@@ -247,31 +239,6 @@ const SuperAdmin: React.FC = () => {
               </Button>
             </CardFooter>
           </Card>
-        </div>
-
-        {/* Recalcular Puntos Totales y Test - Two columns */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recalcular Puntos Totales */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base sm:text-lg">Recalcular Puntos Totales</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 p-3 sm:p-6">
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                Ejecuta manualmente el cálculo total de puntos de todos los usuarios, según sus apuestas ganadas.
-              </p>
-            </CardContent>
-            <CardFooter className="p-3 sm:p-6">
-              <Button 
-                onClick={handleRecalculatePoints}
-                disabled={recalculatingPoints}
-                className="jambol-button text-xs sm:text-sm"
-              >
-                {recalculatingPoints ? 'Recalculando...' : 'Recalcular Puntos'}
-              </Button>
-            </CardFooter>
-          </Card>
-
 
           {/* Test de Autenticación de Edge Functions */}
           <Card>
@@ -295,31 +262,7 @@ const SuperAdmin: React.FC = () => {
           </Card>
         </div>
 
-        {/* New controls at the bottom */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Configuración de Tiempo de Apuestas */}
-          <BettingSettingsControl />
 
-          {/* Control de Disponibilidad de Partidos */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base sm:text-lg">Control de Disponibilidad de Partidos</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 p-3 sm:p-6">
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                Días activos en los próximos 15 días: <strong>{activeDaysCount} días</strong>
-              </p>
-            </CardContent>
-            <CardFooter className="p-3 sm:p-6">
-              <Button 
-                onClick={() => navigate('/match-availability-control')}
-                className="jambol-button text-xs sm:text-sm"
-              >
-                Abrir Control de Disponibilidad
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
       </div>
     </div>
   );

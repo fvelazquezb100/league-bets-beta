@@ -18,40 +18,88 @@ export const Signup = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [usernameError, setUsernameError] = useState('');
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
-  const [isUsernameTaken, setIsUsernameTaken] = useState<boolean | null>(null);
-  const [usernameMsg, setUsernameMsg] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (!username) {
-      setIsUsernameTaken(null);
-      setUsernameMsg('');
+  // Handle username change - simple for now
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUsername(e.target.value);
+    // Clear error when user starts typing
+    if (usernameError) {
+      setUsernameError('');
+    }
+  };
+
+  // Check for invalid characters
+  const checkInvalidCharacters = (text: string) => {
+    const hasAccents = /[áéíóúÁÉÍÓÚñÑüÜ]/.test(text);
+    const hasSpaces = /\s/.test(text);
+    const hasSpecialChars = /[^a-zA-Z0-9_]/.test(text);
+    
+    if (hasAccents) {
+      return 'No se permiten tildes o acentos en el nombre de usuario';
+    }
+    if (hasSpaces) {
+      return 'No se permiten espacios en el nombre de usuario';
+    }
+    if (hasSpecialChars) {
+      return 'Solo se permiten letras, números y guiones bajos';
+    }
+    return null;
+  };
+
+  // Check username availability
+  const checkUsernameAvailability = async (username: string) => {
+    if (!username.trim()) return null;
+    
+    setIsCheckingUsername(true);
+    try {
+      const { data: isAvailable, error } = await supabase.rpc('check_username_availability', {
+        username_to_check: username,
+      });
+      
+      if (error) {
+        return 'Error verificando disponibilidad del nombre de usuario';
+      }
+      
+      if (!isAvailable) {
+        return 'Este nombre de usuario ya está en uso';
+      }
+      
+      return null; // Username is available
+    } catch (err) {
+      return 'Error verificando disponibilidad del nombre de usuario';
+    } finally {
+      setIsCheckingUsername(false);
+    }
+  };
+
+  // Handle username blur - validate when user leaves the field
+  const handleUsernameBlur = async () => {
+    if (!username.trim()) {
+      setUsernameError('');
       return;
     }
 
-    const t = setTimeout(async () => {
-      setIsCheckingUsername(true);
-      const { data, error } = await supabase.rpc('check_username_availability', {
-        username_to_check: username,
-      });
-      if (error) {
-        console.error('Error verificando usuario:', error);
-        setUsernameMsg('Error verificando usuario');
-        setIsUsernameTaken(null);
-      } else {
-        const exists = data === false;
-        setIsUsernameTaken(exists);
-        setUsernameMsg(exists ? 'Este nombre de usuario ya está en uso' : '');
-      }
-      setIsCheckingUsername(false);
-    }, 400);
+    // First validation: invalid characters
+    const invalidCharsError = checkInvalidCharacters(username);
+    if (invalidCharsError) {
+      setUsernameError(invalidCharsError);
+      return;
+    }
 
-    return () => clearTimeout(t);
-  }, [username]);
+    // Second validation: username availability
+    const availabilityError = await checkUsernameAvailability(username);
+    if (availabilityError) {
+      setUsernameError(availabilityError);
+    } else {
+      setUsernameError('');
+    }
+  };
 
   if (loading) {
     return (
@@ -98,11 +146,7 @@ export const Signup = () => {
       return;
     }
 
-    if (isUsernameTaken) {
-      setError('El nombre de usuario ya está en uso');
-      setIsLoading(false);
-      return;
-    }
+    // TODO: Add validations here step by step
 
     try {
       const { error } = await signUp(email, password, username);
@@ -180,21 +224,24 @@ export const Signup = () => {
                       id="username"
                       type="text"
                       value={username}
-                      onChange={(e) => setUsername(e.target.value.trim())}
+                      onChange={handleUsernameChange}
+                      onBlur={handleUsernameBlur}
                       required
                       placeholder="elige-un-usuario"
                     />
-                    <p className={`text-xs ${isUsernameTaken ? 'text-destructive' : 'text-muted-foreground'}`}>
-                      {isCheckingUsername
-                        ? 'Verificando disponibilidad...'
-                        : isUsernameTaken === null && !username
-                        ? 'Elige un nombre único para tu perfil'
-                        : isUsernameTaken
-                        ? 'Este nombre de usuario ya está en uso'
-                        : username
-                        ? 'Disponible'
-                        : ''}
-                    </p>
+                    {usernameError ? (
+                      <p className="text-xs text-destructive">
+                        {usernameError}
+                      </p>
+                    ) : isCheckingUsername ? (
+                      <p className="text-xs text-muted-foreground">
+                        Verificando disponibilidad...
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Elige un nombre único para tu perfil
+                      </p>
+                    )}
                   </div>
                   
                   <div className="space-y-2">
@@ -237,7 +284,7 @@ export const Signup = () => {
                   <Button
                     type="submit"
                     className="w-full jambol-primary"
-                    disabled={isLoading || isCheckingUsername || isUsernameTaken === true}
+                    disabled={isLoading || isCheckingUsername || !!usernameError}
                   >
                     {isLoading ? 'Registrando...' : 'Crear Cuenta'}
                   </Button>

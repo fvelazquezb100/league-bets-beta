@@ -47,11 +47,12 @@ export interface CachedOddsData {
   response?: MatchData[];
 }
 
-// Fetch function for match odds
-const fetchMatchOdds = async (): Promise<MatchData[]> => {
+// Fetch function for match odds. Optionally pass sourceId (1 = ligas, 2 = selecciones)
+const fetchMatchOdds = async (sourceId: 1 | 2 = 1): Promise<MatchData[]> => {
   const { data: cacheData, error: cacheError } = await supabase
     .from('match_odds_cache')
     .select('data')
+    .eq('id', sourceId)
     .maybeSingle();
 
   if (cacheError) {
@@ -60,13 +61,16 @@ const fetchMatchOdds = async (): Promise<MatchData[]> => {
 
   if (!cacheData || !cacheData.data) {
     // Try to populate cache if empty
-    const { error: populateError } = await supabase.functions.invoke('secure-run-update-football-cache');
+    const { error: populateError } = await supabase.functions.invoke(
+      sourceId === 2 ? 'secure-run-update-selecciones-cache' : 'secure-run-update-football-cache'
+    );
     
     if (!populateError) {
       // Retry fetching after population
       const { data: newCacheData, error: retryError } = await supabase
         .from('match_odds_cache')
         .select('data')
+        .eq('id', sourceId)
         .maybeSingle();
       
       if (!retryError && newCacheData && newCacheData.data) {
@@ -95,11 +99,11 @@ const updateMatchOdds = async () => {
   return true;
 };
 
-// Custom hook for match odds
-export const useMatchOdds = () => {
+// Custom hook for match odds (parameterized on sourceId)
+export const useMatchOdds = (sourceId: 1 | 2 = 1) => {
   return useQuery({
-    queryKey: ['match-odds'],
-    queryFn: fetchMatchOdds,
+    queryKey: ['match-odds', sourceId],
+    queryFn: () => fetchMatchOdds(sourceId),
     staleTime: 2 * 60 * 1000, // 2 minutes - odds don't change frequently
     refetchInterval: 5 * 60 * 1000, // Auto-refresh every 5 minutes
     retry: 2,
@@ -108,14 +112,22 @@ export const useMatchOdds = () => {
 };
 
 // Mutation for updating match odds
-export const useUpdateMatchOdds = () => {
+export const useUpdateMatchOdds = (sourceId: 1 | 2 = 1) => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: updateMatchOdds,
+    mutationFn: async () => {
+      if (sourceId === 2) {
+        const { error } = await supabase.functions.invoke('secure-run-update-selecciones-cache');
+        if (error) throw error;
+      } else {
+        await updateMatchOdds();
+      }
+      return true;
+    },
     onSuccess: () => {
       // Invalidate and refetch match odds
-      queryClient.invalidateQueries({ queryKey: ['match-odds'] });
+      queryClient.invalidateQueries({ queryKey: ['match-odds', sourceId] });
     },
   });
 };

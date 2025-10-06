@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import BetSlip from '@/components/BetSlip';
 import MobileBetSlip from '@/components/MobileBetSlip';
@@ -14,9 +15,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMatchOdds, type MatchData, type BetValue } from '@/hooks/useMatchOdds';
 import { useUserBets, type UserBet } from '@/hooks/useUserBets';
 import { useAvailableLeagues } from '@/hooks/useAvailableLeagues';
-import { useMatchAvailability } from '@/hooks/useMatchAvailability';
+import { useCombinedMatchAvailability } from '@/hooks/useCombinedMatchAvailability';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { useBettingSettings } from '@/hooks/useBettingSettings';
 import { MagicCard } from '@/components/ui/MagicCard';
+import { supabase } from '@/integrations/supabase/client';
 
 // Re-export types from hooks for compatibility
 export type { Team, Fixture, Teams, BetValue, BetMarket, Bookmaker, MatchData, CachedOddsData } from '@/hooks/useMatchOdds';
@@ -26,19 +29,35 @@ const Bets = () => {
   // Local UI state
   const [selectedBets, setSelectedBets] = useState<any[]>([]);
   const { cutoffMinutes } = useBettingSettings();
-  const [selectedLeague, setSelectedLeague] = useState<'primera' | 'champions' | 'europa' | 'liga-mx'>('primera');
+  const [selectedLeague, setSelectedLeague] = useState<'primera' | 'champions' | 'europa' | 'liga-mx' | 'selecciones'>('primera');
   const [openId, setOpenId] = useState<number | null>(null);
   
   // Hooks
   const { toast } = useToast();
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  const { data: userProfile } = useUserProfile(user?.id);
   
   // React Query hooks for data fetching
-  const { data: matches = [], isLoading: matchesLoading, error: matchesError } = useMatchOdds();
+  const isSelecciones = selectedLeague === 'selecciones';
+  const { data: matches = [], isLoading: matchesLoading, error: matchesError } = useMatchOdds(isSelecciones ? 2 : 1);
   const { data: userBets = [], isLoading: userBetsLoading } = useUserBets(user?.id);
-  const { data: availableLeagues = [140, 2, 3, 262], isLoading: leaguesLoading } = useAvailableLeagues(user?.id);
-  const { data: matchAvailability = [], isLoading: availabilityLoading } = useMatchAvailability();
+  const { data: availableLeagues = [], isLoading: leaguesLoading } = useAvailableLeagues(user?.id);
+  const { data: matchAvailability = [], isLoading: availabilityLoading } = useCombinedMatchAvailability(userProfile?.league_id);
+
+  // Load SuperAdmin toggle to control Selecciones tab visibility
+  const { data: seleccionesEnabled = false, isLoading: seleccionesLoading } = useQuery({
+    queryKey: ['betting-setting', 'enable_selecciones'],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from('betting_settings' as any)
+        .select('setting_value' as any)
+        .eq('setting_key', 'enable_selecciones')
+        .maybeSingle();
+      return (((data as any)?.setting_value || 'false') === 'true');
+    },
+    staleTime: 60_000,
+  });
   
   // Derived loading and error states
   const loading = matchesLoading || userBetsLoading || leaguesLoading || availabilityLoading;
@@ -118,18 +137,23 @@ const Bets = () => {
 
 
   const handleAddToSlip = (match: MatchData, marketName: string, selection: BetValue) => {
-    // Check if match is in the future (outside allowed timeframe) - BLOCK ALL FUTURE MATCHES
-    const matchDate = new Date(match.fixture.date);
-    const nextMondayEndOfDay = getNextMondayEndOfDay();
-    
-    // For all leagues, only allow betting until Monday 23:59
-    if (matchDate > nextMondayEndOfDay) {
-      toast({
-        title: 'Apuesta no disponible',
-        description: 'Solo se pueden apostar partidos de la semana actual. Las apuestas para este partido no están disponibles aún.',
-        variant: 'destructive',
-      });
-      return;
+    // For Selecciones, allow all matches without date restrictions
+    if (selectedLeague === 'selecciones') {
+      // No date restrictions for Selecciones
+    } else {
+      // Check if match is in the future (outside allowed timeframe) - BLOCK ALL FUTURE MATCHES
+      const matchDate = new Date(match.fixture.date);
+      const nextMondayEndOfDay = getNextMondayEndOfDay();
+      
+      // For all other leagues, only allow betting until Monday 23:59
+      if (matchDate > nextMondayEndOfDay) {
+        toast({
+          title: 'Apuesta no disponible',
+          description: 'Solo se pueden apostar partidos de la semana actual. Las apuestas para este partido no están disponibles aún.',
+          variant: 'destructive',
+        });
+        return;
+      }
     }
 
     const bet = {
@@ -251,8 +275,10 @@ const Bets = () => {
       'europa': 3,
       'liga-mx': 262
     };
+    if (league === 'selecciones') {
+      return matches;
+    }
     const leagueId = leagueMap[league];
-    
     return matches.filter(match => match.teams?.league_id === leagueId);
   };
 
@@ -295,7 +321,8 @@ const Bets = () => {
   const upcomingMatches: MatchData[] = [];
   
   leagueMatches.forEach(match => {
-    if (isLiveBettingEnabled(match.fixture.date)) {
+    // For Selecciones, all matches are considered "live betting" (no availability restrictions)
+    if (selectedLeague === 'selecciones' || isLiveBettingEnabled(match.fixture.date)) {
       liveBettingMatches.push(match);
     } else {
       upcomingMatches.push(match);
@@ -528,6 +555,10 @@ const Bets = () => {
     if (availableLeagues.includes(262)) {
       tabs.push({ value: 'liga-mx', label: 'Liga MX', leagueId: 262 });
     }
+    // Add Selecciones tab only if enabled via betting_settings
+    if (seleccionesEnabled) {
+      tabs.push({ value: 'selecciones', label: 'Selecciones', leagueId: 0 });
+    }
     
     return tabs;
   };
@@ -535,13 +566,27 @@ const Bets = () => {
   const renderContent = () => {
     const availableTabs = getAvailableTabs();
     
+    // Don't render tabs until leagues are loaded
+    if (leaguesLoading || seleccionesLoading || availableTabs.length === 0) {
+      return (
+        <div className="w-full">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-10 w-full" />
+            ))}
+          </div>
+          <Skeleton className="h-96 w-full" />
+        </div>
+      );
+    }
+    
     // If current selected league is not available, switch to the first available one
     if (availableTabs.length > 0 && !availableTabs.find(tab => tab.value === selectedLeague)) {
-      setSelectedLeague(availableTabs[0].value as 'primera' | 'champions' | 'europa' | 'liga-mx');
+      setSelectedLeague(availableTabs[0].value as 'primera' | 'champions' | 'europa' | 'liga-mx' | 'selecciones');
     }
     
     return (
-      <Tabs value={selectedLeague} onValueChange={(value) => setSelectedLeague(value as 'primera' | 'champions' | 'europa' | 'liga-mx')} className="w-full">
+      <Tabs value={selectedLeague} onValueChange={(value) => setSelectedLeague(value as 'primera' | 'champions' | 'europa' | 'liga-mx' | 'selecciones')} className="w-full">
         <TabsList className={`grid w-full mb-6 gap-2 h-auto ${availableTabs.length <= 2 ? 'grid-cols-2' : availableTabs.length === 3 ? 'grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'}`}>
           {availableTabs.map((tab) => {
             const getTabStyle = (value: string) => {
@@ -586,6 +631,16 @@ const Bets = () => {
                         #006847 0%, #006847 33.33%, 
                         #FFFFFF 33.33%, #FFFFFF 66.66%, 
                         #CE1126 66.66%, #CE1126 100%
+                      )
+                    `,
+                    opacity: '0.4'
+                  };
+                case 'selecciones':
+                  return {
+                    background: `
+                      linear-gradient(45deg,
+                        #004C99 0%, #004C99 66.66%,
+                        #FFD200 66.66%, #FFD200 100%
                       )
                     `,
                     opacity: '0.4'

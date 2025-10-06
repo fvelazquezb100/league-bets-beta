@@ -6,7 +6,6 @@ import { LogOut, User, DollarSign, Trophy, Menu, Home, History, Settings, Shield
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
 import { APP_CONFIG } from '@/config/app';
-import { LdrsLoader } from '@/components/ui/ldrs-loader';
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { cn } from '@/lib/utils';
 
@@ -142,7 +141,7 @@ export const Header = () => {
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" size="sm" className="md:hidden border-[#FFC72C] text-[#FFC72C] hover:bg-[#FFC72C] hover:text-black">
-                  <LdrsLoader type="hatch" size="18" color="#FFC72C" speed="7.0" stroke="3" />
+                  <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-80">

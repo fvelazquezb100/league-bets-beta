@@ -5,9 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Copy, Settings } from 'lucide-react';
+import { Copy, Settings, Calendar } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Link } from 'react-router-dom';
 
 type ProfileRow = { league_id: number; role: string; };
 type LeagueRow = { 
@@ -516,7 +517,6 @@ const handleResetWeekManually = async () => {
           </CardContent>
         </Card>
 
-
         {userRole === 'admin_league' && (
           <>
             <Card>
@@ -621,6 +621,40 @@ const handleResetWeekManually = async () => {
               </CardFooter>
             </Card>
           </>
+        )}
+
+        {/* Control de Disponibilidad de Partidos - Solo para ligas premium */}
+        {leagueData && leagueId && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Control de Disponibilidad de Partidos
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Gestiona qué días están disponibles para apuestas en vivo en {leagueData.name}
+              </p>
+            </CardHeader>
+            <CardContent>
+              {leagueData?.type === 'free' ? (
+                <div className="text-center py-4">
+                  <p className="text-muted-foreground mb-2">
+                    <strong>⚠️ Funcionalidad Premium</strong>
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Actualiza a premium para poder tener esta funcionalidad
+                  </p>
+                </div>
+              ) : (
+                <Link to="/league-match-availability">
+                  <Button className="jambol-button w-full">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Configurar Disponibilidad de Partidos
+                  </Button>
+                </Link>
+              )}
+            </CardContent>
+          </Card>
         )}
       </div>
 

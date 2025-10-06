@@ -23,10 +23,12 @@ import { Clasificacion } from "./pages/Clasificacion";
 import Bets from "./pages/Bets";
 import { BetHistory } from "./pages/BetHistory";
 import { MatchAvailabilityControl } from "./pages/MatchAvailabilityControl";
+import LeagueMatchAvailabilityControl from "./pages/LeagueMatchAvailabilityControl";
 import NotFound from "./pages/NotFound";
 import AdminLiga from "./pages/AdminLiga";
 import { AdminRoute } from "./components/AdminRoute";
 import SuperAdmin from "./pages/SuperAdmin";
+import SuperAdminSelecciones from "./pages/SuperAdminSelecciones";
 import { SuperAdminRoute } from "./components/SuperAdminRoute";
 import { ResetPassword } from "./pages/ResetPassword";
 import { UpdatePassword } from "./pages/UpdatePassword";
@@ -118,11 +120,29 @@ const App = () => (
                 </SmartRedirect>
               </AdminRoute>
             } />
+            <Route path="/league-match-availability" element={
+              <AdminRoute>
+                <SmartRedirect>
+                  <MainLayout>
+                    <LeagueMatchAvailabilityControl />
+                  </MainLayout>
+                </SmartRedirect>
+              </AdminRoute>
+            } />
             <Route path="/superadmin" element={
               <SuperAdminRoute>
                 <SmartRedirect>
                   <MainLayout>
                     <SuperAdmin />
+                  </MainLayout>
+                </SmartRedirect>
+              </SuperAdminRoute>
+            } />
+            <Route path="/superadmin-selecciones" element={
+              <SuperAdminRoute>
+                <SmartRedirect>
+                  <MainLayout>
+                    <SuperAdminSelecciones />
                   </MainLayout>
                 </SmartRedirect>
               </SuperAdminRoute>
