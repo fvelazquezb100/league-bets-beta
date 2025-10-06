@@ -21,12 +21,12 @@ const SuperAdminSelecciones: React.FC = () => {
   React.useEffect(() => {
     (async () => {
       try {
-        const { data } = await supabase
-          .from('betting_settings')
-          .select('setting_value')
+        const { data } = await (supabase as any)
+          .from('betting_settings' as any)
+          .select('setting_value' as any)
           .eq('setting_key', 'enable_selecciones')
           .maybeSingle();
-        setEnabled((data?.setting_value || 'false') === 'true');
+        setEnabled(((data as any)?.setting_value || 'false') === 'true');
       } finally {
         setLoadingSetting(false);
       }
@@ -36,9 +36,9 @@ const SuperAdminSelecciones: React.FC = () => {
   const onToggle = async (checked: boolean) => {
     setEnabled(checked);
     try {
-      const { error } = await supabase
-        .from('betting_settings')
-        .upsert({ setting_key: 'enable_selecciones', setting_value: checked ? 'true' : 'false', description: 'Enable Selecciones view and features in app' });
+      const { error } = await (supabase as any)
+        .from('betting_settings' as any)
+        .upsert({ setting_key: 'enable_selecciones', setting_value: checked ? 'true' : 'false', description: 'Enable Selecciones view and features in app' } as any);
       if (error) throw error;
       toast({ title: 'Selecciones', description: `Mostrar partidos: ${checked ? 'Activado' : 'Desactivado'}` });
     } catch (e: any) {
@@ -51,14 +51,14 @@ const SuperAdminSelecciones: React.FC = () => {
   React.useEffect(() => {
     (async () => {
       try {
-        const { data } = await supabase
-          .from('betting_settings')
-          .select('setting_value')
+        const { data } = await (supabase as any)
+          .from('betting_settings' as any)
+          .select('setting_value' as any)
           .eq('setting_key', 'selecciones_enabled_teams')
           .maybeSingle();
-        if (data?.setting_value) {
+        if ((data as any)?.setting_value) {
           try {
-            const parsed = JSON.parse(data.setting_value);
+            const parsed = JSON.parse((data as any).setting_value);
             if (Array.isArray(parsed)) {
               setEnabledTeams(parsed);
             }
@@ -71,9 +71,9 @@ const SuperAdminSelecciones: React.FC = () => {
   const saveEnabledTeams = async (next: string[]) => {
     setEnabledTeams(next);
     try {
-      const { error } = await supabase
-        .from('betting_settings')
-        .upsert({ setting_key: 'selecciones_enabled_teams', setting_value: JSON.stringify(next), description: 'Enabled national teams for Selecciones odds' });
+      const { error } = await (supabase as any)
+        .from('betting_settings' as any)
+        .upsert({ setting_key: 'selecciones_enabled_teams', setting_value: JSON.stringify(next), description: 'Enabled national teams for Selecciones odds' } as any);
       if (error) throw error;
       toast({ title: 'Selecciones', description: 'Selecciones actualizadas' });
     } catch (e: any) {
