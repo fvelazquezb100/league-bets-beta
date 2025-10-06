@@ -27,7 +27,7 @@ const Bets = () => {
   // Local UI state
   const [selectedBets, setSelectedBets] = useState<any[]>([]);
   const { cutoffMinutes } = useBettingSettings();
-  const [selectedLeague, setSelectedLeague] = useState<'primera' | 'champions' | 'europa' | 'liga-mx'>('primera');
+  const [selectedLeague, setSelectedLeague] = useState<'primera' | 'champions' | 'europa' | 'liga-mx' | 'selecciones'>('primera');
   const [openId, setOpenId] = useState<number | null>(null);
   
   // Hooks
@@ -37,7 +37,8 @@ const Bets = () => {
   const { data: userProfile } = useUserProfile(user?.id);
   
   // React Query hooks for data fetching
-  const { data: matches = [], isLoading: matchesLoading, error: matchesError } = useMatchOdds();
+  const isSelecciones = selectedLeague === 'selecciones';
+  const { data: matches = [], isLoading: matchesLoading, error: matchesError } = useMatchOdds(isSelecciones ? 2 : 1);
   const { data: userBets = [], isLoading: userBetsLoading } = useUserBets(user?.id);
   const { data: availableLeagues = [], isLoading: leaguesLoading } = useAvailableLeagues(user?.id);
   const { data: matchAvailability = [], isLoading: availabilityLoading } = useCombinedMatchAvailability(userProfile?.league_id);
@@ -253,8 +254,10 @@ const Bets = () => {
       'europa': 3,
       'liga-mx': 262
     };
+    if (league === 'selecciones') {
+      return matches;
+    }
     const leagueId = leagueMap[league];
-    
     return matches.filter(match => match.teams?.league_id === leagueId);
   };
 
@@ -530,6 +533,8 @@ const Bets = () => {
     if (availableLeagues.includes(262)) {
       tabs.push({ value: 'liga-mx', label: 'Liga MX', leagueId: 262 });
     }
+    // Add Selecciones tab (controlled by SuperAdmin setting; for now show when settings are loaded)
+    tabs.push({ value: 'selecciones', label: 'Selecciones', leagueId: 0 });
     
     return tabs;
   };
@@ -553,11 +558,11 @@ const Bets = () => {
     
     // If current selected league is not available, switch to the first available one
     if (availableTabs.length > 0 && !availableTabs.find(tab => tab.value === selectedLeague)) {
-      setSelectedLeague(availableTabs[0].value as 'primera' | 'champions' | 'europa' | 'liga-mx');
+      setSelectedLeague(availableTabs[0].value as 'primera' | 'champions' | 'europa' | 'liga-mx' | 'selecciones');
     }
     
     return (
-      <Tabs value={selectedLeague} onValueChange={(value) => setSelectedLeague(value as 'primera' | 'champions' | 'europa' | 'liga-mx')} className="w-full">
+      <Tabs value={selectedLeague} onValueChange={(value) => setSelectedLeague(value as 'primera' | 'champions' | 'europa' | 'liga-mx' | 'selecciones')} className="w-full">
         <TabsList className={`grid w-full mb-6 gap-2 h-auto ${availableTabs.length <= 2 ? 'grid-cols-2' : availableTabs.length === 3 ? 'grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'}`}>
           {availableTabs.map((tab) => {
             const getTabStyle = (value: string) => {
@@ -602,6 +607,17 @@ const Bets = () => {
                         #006847 0%, #006847 33.33%, 
                         #FFFFFF 33.33%, #FFFFFF 66.66%, 
                         #CE1126 66.66%, #CE1126 100%
+                      )
+                    `,
+                    opacity: '0.4'
+                  };
+                case 'selecciones':
+                  return {
+                    background: `
+                      linear-gradient(45deg,
+                        #FFFFFF 0%, #FFFFFF 33.33%,
+                        #FFFFFF 33.33%, #FFFFFF 66.66%,
+                        #FFC72C 66.66%, #FFC72C 100%
                       )
                     `,
                     opacity: '0.4'

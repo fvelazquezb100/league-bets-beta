@@ -28,6 +28,7 @@ import NotFound from "./pages/NotFound";
 import AdminLiga from "./pages/AdminLiga";
 import { AdminRoute } from "./components/AdminRoute";
 import SuperAdmin from "./pages/SuperAdmin";
+import SuperAdminSelecciones from "./pages/SuperAdminSelecciones";
 import { SuperAdminRoute } from "./components/SuperAdminRoute";
 import { ResetPassword } from "./pages/ResetPassword";
 import { UpdatePassword } from "./pages/UpdatePassword";
@@ -133,6 +134,15 @@ const App = () => (
                 <SmartRedirect>
                   <MainLayout>
                     <SuperAdmin />
+                  </MainLayout>
+                </SmartRedirect>
+              </SuperAdminRoute>
+            } />
+            <Route path="/superadmin-selecciones" element={
+              <SuperAdminRoute>
+                <SmartRedirect>
+                  <MainLayout>
+                    <SuperAdminSelecciones />
                   </MainLayout>
                 </SmartRedirect>
               </SuperAdminRoute>

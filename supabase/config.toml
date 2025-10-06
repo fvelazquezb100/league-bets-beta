@@ -19,3 +19,15 @@ verify_jwt = false
 
 [functions.secure-run-update-football-cache]
 verify_jwt = false
+
+[functions.update-selecciones-cache]
+verify_jwt = false
+
+[functions.secure-run-update-selecciones-cache]
+verify_jwt = false
+
+[functions.process-selecciones-results]
+verify_jwt = false
+
+[functions.secure-run-process-selecciones-results]
+verify_jwt = false
