@@ -58,7 +58,7 @@ export const DemoLanguage = () => {
                   onClick={() => handleLanguageSelect('en')}
                   className="w-full bg-white border-[#FFC72C] text-black hover:bg-[#FFC72C] hover:text-white"
                 >
-                  I like to do the demo in English
+                  I would like to do the demo in English
                 </Button>
               </CardContent>
             </Card>
