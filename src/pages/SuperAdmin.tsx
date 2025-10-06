@@ -85,26 +85,6 @@ const SuperAdmin: React.FC = () => {
     }
   };
 
-  // Selecciones (cache id=2) controls
-  const updateSeleccionesCache = async () => {
-    try {
-      const { error } = await supabase.functions.invoke('secure-run-update-selecciones-cache');
-      if (error) throw error;
-      toast({ title: 'Selecciones', description: 'Caché de cuotas de selecciones actualizado' });
-    } catch (error: any) {
-      toast({ title: 'Error Selecciones', description: error.message, variant: 'destructive' });
-    }
-  };
-
-  const processSeleccionesResults = async () => {
-    try {
-      const { error } = await supabase.functions.invoke('secure-run-process-selecciones-results');
-      if (error) throw error;
-      toast({ title: 'Selecciones', description: 'Procesamiento de resultados de selecciones ejecutado' });
-    } catch (error: any) {
-      toast({ title: 'Error Selecciones', description: error.message, variant: 'destructive' });
-    }
-  };
 
 
   const testEdgeFunctionAuth = async () => {
@@ -175,11 +155,38 @@ const SuperAdmin: React.FC = () => {
           </p>
         </div>
 
-        {/* News Management - Full width at top */}
-        <NewsManagement />
+        {/* News Management, Betting Settings - 3 columns on desktop */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* News Management */}
+          <div className="lg:col-span-1">
+            <NewsManagement />
+          </div>
+          
+          {/* Configuración de Tiempo de Apuestas */}
+          <div className="lg:col-span-1">
+            <BettingSettingsControl />
+          </div>
+          
+          {/* Gestión de Selecciones */}
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base sm:text-lg">Gestionar Selecciones</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 p-3 sm:p-6">
+                <p className="text-xs sm:text-sm text-muted-foreground">Configura la visibilidad y acciones para Selecciones.</p>
+              </CardContent>
+              <CardFooter className="p-3 sm:p-6">
+                <Button className="jambol-button text-xs sm:text-sm" onClick={() => navigate('/superadmin-selecciones')}>
+                  Abrir gestión de Selecciones
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
+        </div>
 
-        {/* Cache de Cuotas and Procesamiento de Resultados - Side by side */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Cache de Cuotas and Procesamiento de Resultados - 3 columns on desktop */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Caché de Cuotas */}
           <Card>
             <CardHeader>
@@ -232,54 +239,8 @@ const SuperAdmin: React.FC = () => {
               </Button>
             </CardFooter>
           </Card>
-        </div>
 
-        {/* Gestión de Selecciones - Navegación a página dedicada */}
-        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base sm:text-lg">Gestionar Selecciones</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 p-3 sm:p-6">
-              <p className="text-xs sm:text-sm text-muted-foreground">Configura la visibilidad y acciones para Selecciones.</p>
-            </CardContent>
-            <CardFooter className="p-3 sm:p-6">
-              <Button className="jambol-button text-xs sm:text-sm" onClick={() => navigate('/superadmin-selecciones')}>
-                Abrir gestión de Selecciones
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
-
-        {/* Selecciones Controls */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base sm:text-lg">Selecciones - Cuotas</CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 sm:p-6">
-              <p className="text-xs sm:text-sm text-muted-foreground">Actualiza manualmente las cuotas de Selecciones (cache id=2).</p>
-            </CardContent>
-            <CardFooter className="p-3 sm:p-6">
-              <Button onClick={updateSeleccionesCache} className="jambol-button text-xs sm:text-sm">Forzar cuotas Selecciones</Button>
-            </CardFooter>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base sm:text-lg">Selecciones - Resultados</CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 sm:p-6">
-              <p className="text-xs sm:text-sm text-muted-foreground">Procesa manualmente los resultados de Selecciones.</p>
-            </CardContent>
-            <CardFooter className="p-3 sm:p-6">
-              <Button onClick={processSeleccionesResults} className="jambol-button text-xs sm:text-sm">Forzar procesamiento Selecciones</Button>
-            </CardFooter>
-          </Card>
-        </div>
-
-        {/* Test de Autenticación de Edge Functions */}
-        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
+          {/* Test de Autenticación de Edge Functions */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base sm:text-lg">Test de Autenticación de Edge Functions</CardTitle>
@@ -301,11 +262,7 @@ const SuperAdmin: React.FC = () => {
           </Card>
         </div>
 
-        {/* New controls at the bottom */}
-        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
-          {/* Configuración de Tiempo de Apuestas */}
-          <BettingSettingsControl />
-        </div>
+
       </div>
     </div>
   );

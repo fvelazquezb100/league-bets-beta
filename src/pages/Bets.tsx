@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import BetSlip from '@/components/BetSlip';
 import MobileBetSlip from '@/components/MobileBetSlip';
@@ -18,6 +19,7 @@ import { useCombinedMatchAvailability } from '@/hooks/useCombinedMatchAvailabili
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useBettingSettings } from '@/hooks/useBettingSettings';
 import { MagicCard } from '@/components/ui/MagicCard';
+import { supabase } from '@/integrations/supabase/client';
 
 // Re-export types from hooks for compatibility
 export type { Team, Fixture, Teams, BetValue, BetMarket, Bookmaker, MatchData, CachedOddsData } from '@/hooks/useMatchOdds';
@@ -42,6 +44,20 @@ const Bets = () => {
   const { data: userBets = [], isLoading: userBetsLoading } = useUserBets(user?.id);
   const { data: availableLeagues = [], isLoading: leaguesLoading } = useAvailableLeagues(user?.id);
   const { data: matchAvailability = [], isLoading: availabilityLoading } = useCombinedMatchAvailability(userProfile?.league_id);
+
+  // Load SuperAdmin toggle to control Selecciones tab visibility
+  const { data: seleccionesEnabled = false, isLoading: seleccionesLoading } = useQuery({
+    queryKey: ['betting-setting', 'enable_selecciones'],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from('betting_settings' as any)
+        .select('setting_value' as any)
+        .eq('setting_key', 'enable_selecciones')
+        .maybeSingle();
+      return (((data as any)?.setting_value || 'false') === 'true');
+    },
+    staleTime: 60_000,
+  });
   
   // Derived loading and error states
   const loading = matchesLoading || userBetsLoading || leaguesLoading || availabilityLoading;
@@ -121,18 +137,23 @@ const Bets = () => {
 
 
   const handleAddToSlip = (match: MatchData, marketName: string, selection: BetValue) => {
-    // Check if match is in the future (outside allowed timeframe) - BLOCK ALL FUTURE MATCHES
-    const matchDate = new Date(match.fixture.date);
-    const nextMondayEndOfDay = getNextMondayEndOfDay();
-    
-    // For all leagues, only allow betting until Monday 23:59
-    if (matchDate > nextMondayEndOfDay) {
-      toast({
-        title: 'Apuesta no disponible',
-        description: 'Solo se pueden apostar partidos de la semana actual. Las apuestas para este partido no están disponibles aún.',
-        variant: 'destructive',
-      });
-      return;
+    // For Selecciones, allow all matches without date restrictions
+    if (selectedLeague === 'selecciones') {
+      // No date restrictions for Selecciones
+    } else {
+      // Check if match is in the future (outside allowed timeframe) - BLOCK ALL FUTURE MATCHES
+      const matchDate = new Date(match.fixture.date);
+      const nextMondayEndOfDay = getNextMondayEndOfDay();
+      
+      // For all other leagues, only allow betting until Monday 23:59
+      if (matchDate > nextMondayEndOfDay) {
+        toast({
+          title: 'Apuesta no disponible',
+          description: 'Solo se pueden apostar partidos de la semana actual. Las apuestas para este partido no están disponibles aún.',
+          variant: 'destructive',
+        });
+        return;
+      }
     }
 
     const bet = {
@@ -300,7 +321,8 @@ const Bets = () => {
   const upcomingMatches: MatchData[] = [];
   
   leagueMatches.forEach(match => {
-    if (isLiveBettingEnabled(match.fixture.date)) {
+    // For Selecciones, all matches are considered "live betting" (no availability restrictions)
+    if (selectedLeague === 'selecciones' || isLiveBettingEnabled(match.fixture.date)) {
       liveBettingMatches.push(match);
     } else {
       upcomingMatches.push(match);
@@ -533,8 +555,10 @@ const Bets = () => {
     if (availableLeagues.includes(262)) {
       tabs.push({ value: 'liga-mx', label: 'Liga MX', leagueId: 262 });
     }
-    // Add Selecciones tab (controlled by SuperAdmin setting; for now show when settings are loaded)
-    tabs.push({ value: 'selecciones', label: 'Selecciones', leagueId: 0 });
+    // Add Selecciones tab only if enabled via betting_settings
+    if (seleccionesEnabled) {
+      tabs.push({ value: 'selecciones', label: 'Selecciones', leagueId: 0 });
+    }
     
     return tabs;
   };
@@ -543,7 +567,7 @@ const Bets = () => {
     const availableTabs = getAvailableTabs();
     
     // Don't render tabs until leagues are loaded
-    if (leaguesLoading || availableTabs.length === 0) {
+    if (leaguesLoading || seleccionesLoading || availableTabs.length === 0) {
       return (
         <div className="w-full">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
@@ -615,9 +639,8 @@ const Bets = () => {
                   return {
                     background: `
                       linear-gradient(45deg,
-                        #FFFFFF 0%, #FFFFFF 33.33%,
-                        #FFFFFF 33.33%, #FFFFFF 66.66%,
-                        #FFC72C 66.66%, #FFC72C 100%
+                        #004C99 0%, #004C99 66.66%,
+                        #FFD200 66.66%, #FFD200 100%
                       )
                     `,
                     opacity: '0.4'

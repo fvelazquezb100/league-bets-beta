@@ -31,25 +31,22 @@ Deno.serve(async (req) => {
     // Example: World Cup Qualification UEFA league = 13? We instead fetch by international friendly/qualification
     // For simplicity: use API endpoint for odds by league=??? or by teams. Here we fetch next N odds for internationals.
     // This is a placeholder approach; adjust league/filters to match desired competitions for Selecciones.
-    const nextCount = 20; // fetch next 20 matches
-    const response = await fetch(`https://v3.football.api-sports.io/odds?league=1&season=2025&next=${nextCount}`, {
-      headers: { 'x-apisports-key': footballApiKey }
+    // Build date window (today + 6 days)
+    const makeDate = (d: Date) => d.toISOString().slice(0, 10);
+    const today = new Date();
+    const dates: string[] = Array.from({ length: 7 }).map((_, i) => {
+      const d = new Date(today);
+      d.setUTCDate(d.getUTCDate() + i);
+      return makeDate(d);
     });
 
-    if (!response.ok) {
-      throw new Error(`Football API error: ${response.status} ${response.statusText}`);
-    }
-
-    const footballData = await response.json();
-
-    // Filtrar solo partidos donde participe alguna selección del top-20
-    // Load enabled teams list from betting_settings (optional override)
+    // Load enabled teams list from betting_settings (required filter)
     const { data: setting } = await supabase
       .from('betting_settings')
       .select('setting_value')
       .eq('setting_key', 'selecciones_enabled_teams')
       .maybeSingle();
-    let enabledTeams: Set<string> | null = null;
+    let enabledTeams = new Set<string>();
     if (setting?.setting_value) {
       try {
         const parsed = JSON.parse(setting.setting_value);
@@ -57,16 +54,68 @@ Deno.serve(async (req) => {
       } catch {}
     }
 
-    const allow = (name?: string) => {
-      if (!name) return false;
-      if (enabledTeams) return enabledTeams.has(name);
-      return FIFA_TOP20_NAMES.has(name);
+    // Step 1: Fetch fixtures by date, filter by World Cup Qualification leagues only
+    const isWorldCupQualification = (leagueName?: string) => {
+      if (!leagueName || typeof leagueName !== 'string') return false;
+      const n = leagueName.toLowerCase();
+      return n.includes('world cup') && n.includes('qualification');
     };
 
-    const filtered = Array.isArray(footballData?.response)
-      ? footballData.response.filter((m: any) => allow(m?.teams?.home?.name) || allow(m?.teams?.away?.name))
-      : [];
-    const payload = { ...footballData, response: filtered };
+    const allFixtures: any[] = [];
+    for (const date of dates) {
+      const url = `https://v3.football.api-sports.io/fixtures?date=${date}`;
+      const res = await fetch(url, { headers: { 'x-apisports-key': footballApiKey } });
+      if (!res.ok) continue;
+      const json = await res.json().catch(() => null);
+      const items = Array.isArray(json?.response) ? json.response : [];
+      // Filter by World Cup Qualification leagues only
+      const wcq = items.filter((it: any) => isWorldCupQualification(it?.league?.name));
+      allFixtures.push(...wcq);
+    }
+
+    // Map teams and fixture IDs
+    const teamsByFixture = new Map<number, any>();
+    const fixtureIds: number[] = [];
+    allFixtures.forEach((it: any) => {
+      const fxId = it?.fixture?.id;
+      if (fxId && it?.teams) {
+        const leagueName = it?.league?.name || 'World Cup - Qualification';
+        const fixtureDate = it?.fixture?.date || null;
+        const homeName = it?.teams?.home?.name;
+        const awayName = it?.teams?.away?.name;
+        // Pre-filter: only include fixtures where at least one team is enabled
+        if ((homeName && enabledTeams.has(homeName)) || (awayName && enabledTeams.has(awayName))) {
+          teamsByFixture.set(fxId, { ...it.teams, league_name: leagueName, fixture_date: fixtureDate });
+          fixtureIds.push(fxId);
+        }
+      }
+    });
+
+    // Step 2: Fetch odds per fixture and merge
+    const mergedOdds: any[] = [];
+    for (const fxId of fixtureIds) {
+      const oddsUrl = `https://v3.football.api-sports.io/odds?fixture=${fxId}`;
+      const oddsRes = await fetch(oddsUrl, { headers: { 'x-apisports-key': footballApiKey } });
+      if (!oddsRes.ok) {
+        // Create placeholder with date
+        const t = teamsByFixture.get(fxId);
+        mergedOdds.push({ fixture: { id: fxId, date: t?.fixture_date || null }, teams: t, bookmakers: [] });
+        continue;
+      }
+      const oddsJson = await oddsRes.json().catch(() => null);
+      if (Array.isArray(oddsJson?.response) && oddsJson.response.length > 0) {
+        const t = teamsByFixture.get(fxId);
+        oddsJson.response.forEach((entry: any) => {
+          const withDate = t ? { ...entry, teams: t, fixture: { ...(entry.fixture || {}), id: fxId, date: t?.fixture_date || entry?.fixture?.date || null } } : entry;
+          mergedOdds.push(withDate);
+        });
+      } else {
+        const t = teamsByFixture.get(fxId);
+        mergedOdds.push({ fixture: { id: fxId, date: t?.fixture_date || null }, teams: t, bookmakers: [] });
+      }
+    }
+
+    const payload = { response: mergedOdds };
 
     // Write to cache id=2 (Selecciones)
     const { error } = await supabase
@@ -74,8 +123,34 @@ Deno.serve(async (req) => {
       .upsert({ id: 2, data: payload, last_updated: new Date().toISOString() });
     if (error) throw error;
 
+    // Upsert kickoff times and team names to match_results - ONLY for fixtures we're actually caching (with enabled teams)
+    const matchResultsUpserts = allFixtures
+      .filter((fx: any) => {
+        // Only include fixtures that have enabled teams (same filter as for odds)
+        const homeName = fx?.teams?.home?.name;
+        const awayName = fx?.teams?.away?.name;
+        return fx?.fixture?.id && fx?.fixture?.date && fx?.teams && 
+               ((homeName && enabledTeams.has(homeName)) || (awayName && enabledTeams.has(awayName)));
+      })
+      .map((fx: any) => ({
+        fixture_id: fx.fixture.id,
+        kickoff_time: fx.fixture.date,
+        home_team: fx.teams.home.name,
+        away_team: fx.teams.away.name,
+      }));
+
+    if (matchResultsUpserts.length > 0) {
+      const { error: matchResultsError } = await supabase
+        .from('match_results')
+        .upsert(matchResultsUpserts, { onConflict: 'fixture_id', ignoreDuplicates: false });
+      if (matchResultsError) {
+        // Log but don't fail the whole request
+        console.warn('Selecciones: failed to upsert match_results:', matchResultsError.message);
+      }
+    }
+
     return new Response(
-      JSON.stringify({ success: true, message: 'Selecciones odds cache updated', matches_count: filtered.length }),
+      JSON.stringify({ success: true, message: 'Selecciones odds cache updated', matches_count: mergedOdds.length }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (e) {

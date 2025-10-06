@@ -5,7 +5,7 @@ declare const Deno: any;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-internal-secret',
 };
 
 Deno.serve(async (req) => {
@@ -16,14 +16,48 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const authHeader = req.headers.get('authorization') || '';
+    const internalSecret = Deno.env.get('INTERNAL_SECRET') || '';
 
-    if (!authHeader || !authHeader.toLowerCase().startsWith('bearer ')) {
-      return new Response(JSON.stringify({ error: 'missing bearer token' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const authHeader = req.headers.get('authorization') || '';
+    const internalHeader = req.headers.get('x-internal-secret') || '';
+
+    let authorized = false;
+
+    // 1) Allow calls with x-internal-secret
+    if (internalHeader && internalSecret && internalHeader === internalSecret) {
+      authorized = true;
     }
 
-    const token = authHeader.split(' ')[1];
-    if (token !== serviceKey) {
+    // 2) Allow service-role bearer or superadmin JWT
+    let userIdFromJwt: string | null = null;
+    if (!authorized && authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
+      const token = authHeader.split(' ')[1];
+      if (token === serviceKey) {
+        authorized = true;
+      } else {
+        try {
+          const parts = token.split('.');
+          if (parts.length === 3) {
+            const payloadJson = JSON.parse(atob(parts[1]));
+            userIdFromJwt = payloadJson?.sub || null;
+          }
+        } catch (_) {}
+
+        if (userIdFromJwt) {
+          const supabaseSrv = createClient(supabaseUrl, serviceKey);
+          const { data: roleRow, error: roleErr } = await supabaseSrv
+            .from('profiles')
+            .select('global_role')
+            .eq('id', userIdFromJwt)
+            .single();
+          if (!roleErr && roleRow?.global_role === 'superadmin') {
+            authorized = true;
+          }
+        }
+      }
+    }
+
+    if (!authorized) {
       return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 

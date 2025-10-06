@@ -299,11 +299,13 @@ Deno.serve(async (req) => {
     console.log('Creating/updating match_results entries with kickoff times...');
     
     const matchResultsUpserts = allFixturesData
-      .filter(fixture => fixture?.fixture?.id && fixture?.fixture?.date)
+      .filter(fixture => fixture?.fixture?.id && fixture?.fixture?.date && fixture?.teams)
       .map(fixture => ({
         fixture_id: fixture.fixture.id,
         kickoff_time: fixture.fixture.date,
-        // Don't overwrite existing result data, only set kickoff_time
+        home_team: fixture.teams.home.name,
+        away_team: fixture.teams.away.name,
+        // Don't overwrite existing result data, only set kickoff_time and team names
       }));
     
     console.log(`Upserting ${matchResultsUpserts.length} match_results entries with kickoff times`);

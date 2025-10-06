@@ -13,8 +13,8 @@ const SuperAdminSelecciones: React.FC = () => {
   const [forcingOdds, setForcingOdds] = React.useState(false);
   const [forcingResults, setForcingResults] = React.useState(false);
   const TEAMS: string[] = [
-    'España', 'Francia', 'Argentina', 'Inglaterra', 'Portugal', 'Brasil', 'Países Bajos', 'Bélgica', 'Croacia', 'Italia',
-    'Marruecos', 'Alemania', 'Colombia', 'México', 'Uruguay', 'Estados Unidos', 'Suiza', 'Senegal', 'Japón', 'Dinamarca'
+    'Spain', 'France', 'Argentina', 'England', 'Portugal', 'Brazil', 'Netherlands', 'Belgium', 'Croatia', 'Italy',
+    'Morocco', 'Germany', 'Colombia', 'Mexico', 'Uruguay', 'USA', 'Switzerland', 'Senegal', 'Japan', 'Denmark'
   ];
   const [enabledTeams, setEnabledTeams] = React.useState<string[]>(TEAMS);
 
@@ -38,7 +38,7 @@ const SuperAdminSelecciones: React.FC = () => {
     try {
       const { error } = await (supabase as any)
         .from('betting_settings' as any)
-        .upsert({ setting_key: 'enable_selecciones', setting_value: checked ? 'true' : 'false', description: 'Enable Selecciones view and features in app' } as any);
+        .upsert({ setting_key: 'enable_selecciones', setting_value: checked ? 'true' : 'false', description: 'Enable Selecciones view and features in app' } as any, { onConflict: 'setting_key' } as any);
       if (error) throw error;
       toast({ title: 'Selecciones', description: `Mostrar partidos: ${checked ? 'Activado' : 'Desactivado'}` });
     } catch (e: any) {
@@ -60,7 +60,42 @@ const SuperAdminSelecciones: React.FC = () => {
           try {
             const parsed = JSON.parse((data as any).setting_value);
             if (Array.isArray(parsed)) {
-              setEnabledTeams(parsed);
+              // Map common Spanish names to English (API returns English)
+              const ES_TO_EN: Record<string, string> = {
+                'España': 'Spain',
+                'Francia': 'France',
+                'Argentina': 'Argentina',
+                'Inglaterra': 'England',
+                'Portugal': 'Portugal',
+                'Brasil': 'Brazil',
+                'Países Bajos': 'Netherlands',
+                'Bélgica': 'Belgium',
+                'Croacia': 'Croatia',
+                'Italia': 'Italy',
+                'Marruecos': 'Morocco',
+                'Alemania': 'Germany',
+                'Colombia': 'Colombia',
+                'México': 'Mexico',
+                'Uruguay': 'Uruguay',
+                'Estados Unidos': 'USA',
+                'Suiza': 'Switzerland',
+                'Senegal': 'Senegal',
+                'Japón': 'Japan',
+                'Dinamarca': 'Denmark',
+              };
+              const mapped = parsed.map((n: string) => ES_TO_EN[n] || n);
+              setEnabledTeams(mapped);
+              // If any name changed, persist normalized list back
+              if (JSON.stringify(mapped) !== JSON.stringify(parsed)) {
+                try {
+                  const { error: normErr } = await (supabase as any)
+                    .from('betting_settings' as any)
+                    .upsert({ setting_key: 'selecciones_enabled_teams', setting_value: JSON.stringify(mapped), description: 'Enabled national teams for Selecciones odds' } as any, { onConflict: 'setting_key' } as any);
+                  if (normErr) {
+                    console.warn('Failed to normalize selecciones_enabled_teams to English:', normErr.message);
+                  }
+                } catch {}
+              }
             }
           } catch {}
         }
@@ -73,7 +108,7 @@ const SuperAdminSelecciones: React.FC = () => {
     try {
       const { error } = await (supabase as any)
         .from('betting_settings' as any)
-        .upsert({ setting_key: 'selecciones_enabled_teams', setting_value: JSON.stringify(next), description: 'Enabled national teams for Selecciones odds' } as any);
+        .upsert({ setting_key: 'selecciones_enabled_teams', setting_value: JSON.stringify(next), description: 'Enabled national teams for Selecciones odds' } as any, { onConflict: 'setting_key' } as any);
       if (error) throw error;
       toast({ title: 'Selecciones', description: 'Selecciones actualizadas' });
     } catch (e: any) {

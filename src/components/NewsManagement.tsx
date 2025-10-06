@@ -194,11 +194,11 @@ export const NewsManagement = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Gestión de Noticias</CardTitle>
+        <CardTitle className="text-base sm:text-lg">Gestión de Noticias</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex flex-col gap-2">
           <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
             <DialogTrigger asChild>
               <Button className="jambol-button flex items-center gap-2">
@@ -358,42 +358,6 @@ export const NewsManagement = () => {
           </DialogContent>
         </Dialog>
 
-        {/* News List - Only Frozen */}
-        <div className="space-y-4">
-          <h3 className="font-semibold">Noticias Congeladas</h3>
-          
-          {loading ? (
-            <p>Cargando noticias...</p>
-          ) : news.filter(item => item.is_frozen).length === 0 ? (
-            <p className="text-muted-foreground">No hay noticias congeladas</p>
-          ) : (
-            <div className="space-y-3">
-              {news.filter(item => item.is_frozen).map((item) => (
-                <div key={item.id} className={`p-4 border rounded-lg ${item.is_frozen ? 'border-warning bg-warning/10' : ''}`}>
-                  <div className="flex justify-between items-start gap-4">
-                    <div className="flex-1">
-                      <h4 className="font-medium">{item.title}</h4>
-                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{item.content}</p>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {new Date(item.created_at).toLocaleString('es-ES')}
-                      </p>
-                    </div>
-                    <div>
-                      <Button
-                        size="sm"
-                        className="jambol-button"
-                        onClick={() => handleToggleFreeze(item.id, item.is_frozen)}
-                        title={item.is_frozen ? 'Descongelar noticia' : 'Congelar noticia'}
-                      >
-                        <Snowflake className={`h-4 w-4 ${item.is_frozen ? 'text-blue-500' : ''}`} />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
       </CardContent>
     </Card>
   );
