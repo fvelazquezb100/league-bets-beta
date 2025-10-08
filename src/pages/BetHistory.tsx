@@ -150,18 +150,21 @@ export const BetHistory = () => {
         if (matchResult.match_result) {
           return null; // Match has finished, cannot cancel
         }
-        // Check if match has started
+        // Use kickoff_time from match_results if available (primary source)
         if (matchResult.kickoff_time) {
           const kickoffTime = new Date(matchResult.kickoff_time);
           if (now >= kickoffTime) {
             return null; // Match has started, cannot cancel
           }
+          // Return cutoff time based on match_results kickoff_time
+          return new Date(kickoffTime.getTime() - cutoffMinutes * 60 * 1000);
         }
       }
       
+      // Fallback to matchKickoffs from cache (for backwards compatibility)
       const kickoff = matchKickoffs[bet.fixture_id];
       if (kickoff) {
-        return new Date(kickoff.getTime() - cutoffMinutes * 60 * 1000); // Use dynamic cutoff minutes
+        return new Date(kickoff.getTime() - cutoffMinutes * 60 * 1000);
       }
     }
     
@@ -204,9 +207,19 @@ export const BetHistory = () => {
       
       bet.bet_selections.forEach((selection: any) => {
         if (selection.fixture_id) {
-          const kickoff = matchKickoffs[selection.fixture_id];
-          if (kickoff && (!earliestKickoff || kickoff < earliestKickoff)) {
-            earliestKickoff = kickoff;
+          // Try match_results first (primary source)
+          const matchResult = matchResults[selection.fixture_id];
+          if (matchResult?.kickoff_time) {
+            const kickoffTime = new Date(matchResult.kickoff_time);
+            if (!earliestKickoff || kickoffTime < earliestKickoff) {
+              earliestKickoff = kickoffTime;
+            }
+          } else {
+            // Fallback to matchKickoffs from cache
+            const kickoff = matchKickoffs[selection.fixture_id];
+            if (kickoff && (!earliestKickoff || kickoff < earliestKickoff)) {
+              earliestKickoff = kickoff;
+            }
           }
         }
       });

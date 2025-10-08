@@ -33,31 +33,34 @@ const fetchMatchResults = async (fixtureIds: number[]): Promise<Record<number, M
 };
 
 // Fetch kickoff times from match_odds_cache (fallback)
+// Searches ALL rows in match_odds_cache to support multiple cache sources (leagues, selecciones, etc.)
 const fetchKickoffTimes = async (fixtureIds: number[]): Promise<Record<number, Date>> => {
   if (fixtureIds.length === 0) {
     return {};
   }
 
-  const { data: cacheData, error } = await supabase
+  // Fetch ALL rows from match_odds_cache (not just id=1)
+  const { data: cacheRows, error } = await supabase
     .from('match_odds_cache')
-    .select('data')
-    .eq('id', 1)
-    .single();
+    .select('data');
 
-  if (error || !cacheData?.data) {
+  if (error || !cacheRows || cacheRows.length === 0) {
     return {};
   }
 
-  const data = cacheData.data as any;
   const kickoffsMap: Record<number, Date> = {};
   
-  if (data.response) {
-    data.response.forEach((match: any) => {
-      if (match.fixture?.id && match.fixture?.date && fixtureIds.includes(match.fixture.id)) {
-        kickoffsMap[match.fixture.id] = new Date(match.fixture.date);
-      }
-    });
-  }
+  // Iterate through all cache rows
+  cacheRows.forEach((row) => {
+    const data = row.data as any;
+    if (data?.response) {
+      data.response.forEach((match: any) => {
+        if (match.fixture?.id && match.fixture?.date && fixtureIds.includes(match.fixture.id)) {
+          kickoffsMap[match.fixture.id] = new Date(match.fixture.date);
+        }
+      });
+    }
+  });
 
   return kickoffsMap;
 };
