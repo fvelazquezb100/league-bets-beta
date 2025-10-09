@@ -76,36 +76,27 @@ export const LeagueMatchAvailabilityControl = () => {
     try {
       setLoading(true);
       
-      // Get availability data for the next 7 days for this specific league
+      // Get availability data - ONLY show days that exist in the database for this specific league
       const { data, error } = await supabase
         .from('match_availability_control' as any)
         .select('date, is_live_betting_enabled')
         .eq('league_id', userProfile?.league_id)
         .gte('date', new Date().toISOString().split('T')[0])
-        .lte('date', getNextMonday())
         .order('date');
 
       if (error) throw error;
 
-      // Create array of days with availability data
-      const today = new Date();
-      const days: AvailabilityDay[] = [];
-
-      // Generate next 7 days (today to next Monday)
-      for (let i = 0; i < 7; i++) {
-        const date = new Date(today);
-        date.setDate(today.getDate() + i);
-        const dateStr = date.toISOString().split('T')[0];
-        
-        const dayData = data?.find((item: any) => item.date === dateStr);
-        
-        days.push({
-          date: dateStr,
-          isEnabled: (dayData as any)?.is_live_betting_enabled ?? false,
+      // Only show days that actually exist in the database
+      const today = new Date().toISOString().split('T')[0];
+      const days: AvailabilityDay[] = (data || []).map((item: any) => {
+        const date = new Date(item.date);
+        return {
+          date: item.date,
+          isEnabled: item.is_live_betting_enabled ?? false,
           dayName: date.toLocaleDateString('es-ES', { weekday: 'short' }),
-          isToday: i === 0
-        });
-      }
+          isToday: item.date === today
+        };
+      });
 
       setAvailabilityDays(days);
     } catch (error) {
@@ -253,7 +244,7 @@ export const LeagueMatchAvailabilityControl = () => {
           </p>
           {availabilityDays.length > 0 && (
             <p className="text-xs sm:text-sm text-muted-foreground">
-              Días activos: {enabledDays} de 7
+              Días activos: {enabledDays} de {availabilityDays.length}
             </p>
           )}
         </CardHeader>
