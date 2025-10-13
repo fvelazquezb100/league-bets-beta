@@ -111,6 +111,9 @@ const fetchAvailableWeeks = async (leagueId: number): Promise<WeekOption[]> => {
     // Get unique weeks and create options
     const uniqueWeeks = [...new Set(data?.map(bet => bet.week).filter(Boolean))];
     
+    // Sort weeks numerically in descending order
+    uniqueWeeks.sort((a, b) => Number(b) - Number(a));
+    
     const weekOptions: WeekOption[] = [
       { week: 'total', label: 'Clasificación Total' }
     ];

@@ -321,8 +321,8 @@ const Bets = () => {
   const upcomingMatches: MatchData[] = [];
   
   leagueMatches.forEach(match => {
-    // For Selecciones, all matches are considered "live betting" (no availability restrictions)
-    if (selectedLeague === 'selecciones' || isLiveBettingEnabled(match.fixture.date)) {
+    // For all leagues (including Selecciones), use availability control based on match_availability_control table
+    if (isLiveBettingEnabled(match.fixture.date)) {
       liveBettingMatches.push(match);
     } else {
       upcomingMatches.push(match);

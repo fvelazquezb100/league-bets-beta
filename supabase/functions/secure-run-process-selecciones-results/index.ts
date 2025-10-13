@@ -14,17 +14,32 @@ Deno.serve(async (req) => {
   }
 
   try {
+    console.log('=== SECURE RUN PROCESS SELECCIONES RESULTS START ===');
+    const startTime = Date.now();
+    
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const internalSecret = Deno.env.get('INTERNAL_SECRET') || '';
+    const internalSecret = Deno.env.get('INTERNAL_FUNCTION_SECRET') || '';
+
+    console.log('Environment check:', {
+      supabaseUrl: !!supabaseUrl,
+      serviceKey: !!serviceKey,
+      internalSecret: !!internalSecret
+    });
 
     const authHeader = req.headers.get('authorization') || '';
     const internalHeader = req.headers.get('x-internal-secret') || '';
+
+    console.log('Headers check:', {
+      authHeader: !!authHeader,
+      internalHeader: !!internalHeader
+    });
 
     let authorized = false;
 
     // 1) Allow calls with x-internal-secret
     if (internalHeader && internalSecret && internalHeader === internalSecret) {
+      console.log('Authorized via x-internal-secret');
       authorized = true;
     }
 
@@ -58,15 +73,43 @@ Deno.serve(async (req) => {
     }
 
     if (!authorized) {
+      console.log('Authorization failed');
       return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const supabase = createClient(supabaseUrl, serviceKey);
-    const { data, error } = await supabase.functions.invoke('process-selecciones-results');
-    if (error) throw error;
+    console.log('Authorization successful, calling process-selecciones-results');
 
+    // Call the process-selecciones-results function directly with internal secret
+    const functionUrl = `${supabaseUrl}/functions/v1/process-selecciones-results`;
+    console.log('Calling function URL:', functionUrl);
+    console.log('Using internal secret:', !!internalSecret);
+    
+    const response = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-secret': internalSecret
+      }
+    });
+
+    console.log('Response status:', response.status);
+    console.log('Response ok:', response.ok);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Function call failed:', response.status, errorText);
+      throw new Error(`Function call failed: ${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();
+    const endTime = Date.now();
+    console.log('Function call successful, processing time:', endTime - startTime, 'ms');
+    
     return new Response(JSON.stringify({ ok: true, data }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (e) {
+    console.error('=== SECURE RUN PROCESS SELECCIONES RESULTS ERROR ===');
+    console.error('Error message:', e?.message || String(e));
+    console.error('Error stack:', e?.stack);
     return new Response(JSON.stringify({ error: String(e?.message || e) }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });
