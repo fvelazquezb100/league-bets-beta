@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import React from 'react';
 
 export interface HistoricalStanding {
   week: number;
@@ -10,8 +11,17 @@ export interface HistoricalStanding {
 
 export interface HistoricalStandingsData {
   [username: string]: {
-    [week: number]: number; // position for each week
+    [week: number]: {
+      position: number;
+      points: number;
+    };
   };
+}
+
+export interface HistoricalStandingsProgress {
+  totalPlayers: number;
+  loadedPlayers: number;
+  currentPlayer?: string;
 }
 
 export const useHistoricalStandings = (leagueId: number | null) => {
@@ -41,9 +51,10 @@ export const useHistoricalStandings = (leagueId: number | null) => {
 
       if (weeksError) throw weeksError;
 
-      // Obtener semanas únicas y ordenarlas
+      // Obtener semanas únicas y ordenarlas NUMÉRICAMENTE
       const uniqueWeeks = [...new Set(weeksData?.map(bet => bet.week).filter(Boolean))];
       const sortedWeeks = uniqueWeeks.sort((a, b) => Number(a) - Number(b));
+      
 
       if (sortedWeeks.length === 0) return {};
 
@@ -57,26 +68,31 @@ export const useHistoricalStandings = (leagueId: number | null) => {
 
       // Para cada semana, calcular las posiciones acumuladas
       for (const week of sortedWeeks) {
+        
         // Obtener puntos acumulados hasta esta semana para cada jugador
         const cumulativePoints: { [userId: string]: number } = {};
         
         for (const profile of profiles) {
           // Sumar todos los puntos ganados desde la semana 1 hasta la semana actual
-          const { data: betsData, error: betsError } = await supabase
+          // Obtener todas las apuestas del usuario y filtrar por semana
+          const { data: allBets, error: betsError } = await supabase
             .from('bets')
-            .select('payout')
+            .select('payout, week')
             .eq('user_id', profile.id)
-            .eq('status', 'won')
-            .lte('week', week);
+            .eq('status', 'won');
 
           if (betsError) {
-            console.warn(`Error fetching bets for user ${profile.id} up to week ${week}:`, betsError);
+            console.warn(`Error fetching bets for user ${profile.id}:`, betsError);
             cumulativePoints[profile.id] = 0;
             continue;
           }
 
+          // Filtrar manualmente por semana (comparación numérica)
+          const betsData = allBets?.filter(bet => Number(bet.week) <= Number(week)) || [];
+
           const totalPoints = betsData?.reduce((sum, bet) => sum + (bet.payout || 0), 0) || 0;
           cumulativePoints[profile.id] = totalPoints;
+          
         }
 
         // Ordenar por puntos acumulados (descendente) para obtener posiciones
@@ -88,16 +104,71 @@ export const useHistoricalStandings = (leagueId: number | null) => {
           }))
           .sort((a, b) => b.points - a.points);
 
-        // Asignar posiciones
+        // Asignar posiciones basadas en puntos acumulados
         sortedByPoints.forEach((player, index) => {
           const position = index + 1;
-          historicalData[player.username][Number(week)] = position;
+          historicalData[player.username][Number(week)] = {
+            position: position,
+            points: player.points
+          };
         });
       }
+
 
       return historicalData;
     },
     enabled: !!leagueId,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+};
+
+export const useHistoricalStandingsProgress = (leagueId: number | null) => {
+  const [progress, setProgress] = React.useState<HistoricalStandingsProgress>({ totalPlayers: 0, loadedPlayers: 0 });
+  
+  React.useEffect(() => {
+    if (!leagueId) return;
+
+    // Obtener el número total de jugadores
+    const fetchProfiles = async () => {
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .eq('league_id', leagueId);
+
+      if (profilesError || !profiles || profiles.length === 0) return;
+
+      const totalPlayers = profiles.length;
+      const target80Percent = Math.floor(totalPlayers * 0.8);
+      
+      // Inicializar con 0
+      setProgress({ totalPlayers, loadedPlayers: 0, currentPlayer: profiles[0]?.username });
+      
+      // Simular carga progresiva durante 7 segundos hasta el 80%
+      const startTime = Date.now();
+      const duration = 7000; // 7 segundos
+      
+      const updateProgress = () => {
+        const elapsed = Date.now() - startTime;
+        const progressRatio = Math.min(elapsed / duration, 0.8); // Máximo 80%
+        const loadedPlayers = Math.floor(progressRatio * totalPlayers);
+        
+        setProgress({
+          totalPlayers,
+          loadedPlayers,
+          currentPlayer: profiles[loadedPlayers]?.username
+        });
+        
+        if (progressRatio < 0.8) {
+          setTimeout(updateProgress, 50); // Actualizar cada 50ms para más suavidad
+        }
+      };
+      
+      // Empezar la animación después de un pequeño delay
+      setTimeout(updateProgress, 100);
+    };
+
+    fetchProfiles();
+  }, [leagueId]);
+
+  return { data: progress };
 };

@@ -9,6 +9,7 @@ interface HistoricalStandingsModalProps {
   data: HistoricalStandingsData;
   isLoading?: boolean;
   leagueName: string;
+  leagueId?: number | null;
 }
 
 export const HistoricalStandingsModal: React.FC<HistoricalStandingsModalProps> = ({
@@ -17,24 +18,18 @@ export const HistoricalStandingsModal: React.FC<HistoricalStandingsModalProps> =
   data,
   isLoading = false,
   leagueName,
+  leagueId,
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
-        <DialogHeader>
+      <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto w-[98vw] h-[95vh] sm:w-full sm:h-auto p-0">
+        <DialogHeader className="px-6 pt-6 pb-2">
           <DialogTitle className="text-lg sm:text-xl">
-            Evolución Histórica de Clasificación - {leagueName}
+            Evolución de la Clasificación - {leagueName}
           </DialogTitle>
         </DialogHeader>
-        <div className="mt-4">
-          <div className="mb-4 text-sm text-muted-foreground">
-            <p>
-              Esta gráfica muestra la evolución de la posición de cada jugador semana a semana.
-              La línea más baja representa la posición 1 (primer lugar), y las líneas más altas
-              representan posiciones más bajas en la clasificación.
-            </p>
-          </div>
-          <HistoricalStandingsChart data={data} isLoading={isLoading} />
+        <div className="px-2">
+          <HistoricalStandingsChart data={data} isLoading={isLoading} leagueId={leagueId} />
         </div>
       </DialogContent>
     </Dialog>

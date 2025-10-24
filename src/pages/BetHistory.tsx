@@ -384,6 +384,16 @@ export const BetHistory = () => {
     return `${market}: ${selection} @ ${odds.toFixed(2)}`;
   };
 
+  // Función para calcular la cuota total de una apuesta combinada
+  const calculateComboOdds = (betSelections: any[]): number => {
+    if (!betSelections || betSelections.length === 0) return 0;
+    
+    return betSelections.reduce((total, selection) => {
+      const odds = parseFloat(selection.odds || 0);
+      return total * odds;
+    }, 1);
+  };
+
   // ✅ versión buena: partido arriba, resultado debajo
   const getMatchResultDisplay = (matchDescription: string | null, fixtureId: number | null) => {
     const matchName = matchDescription || 'Partido';
@@ -541,7 +551,9 @@ export const BetHistory = () => {
                           </div>
                         </TableCell>
                         <TableCell></TableCell>
-                        <TableCell>{(bet.stake || 0).toFixed(0)} pts</TableCell>
+                        <TableCell>
+                          {(bet.stake || 0).toFixed(0)} pts @{calculateComboOdds(bet.bet_selections).toFixed(2)}
+                        </TableCell>
                         <TableCell>{bet.status === 'cancelled' ? '-' : `${(bet.payout || 0).toFixed(0)} pts`}</TableCell>
                         <TableCell>
                           <Badge variant={getStatusVariant(bet.status)} className={getStatusClassName(bet.status)}>{getStatusText(bet.status)}</Badge>
@@ -705,7 +717,14 @@ export const BetHistory = () => {
 
                     {/* Información financiera */}
                     <div className="flex justify-between text-sm">
-                      <span>Apostado: <span className="font-medium">{(bet.stake || 0).toFixed(0)} pts</span></span>
+                      <span>
+                        Apostado: <span className="font-medium">
+                          {(bet.stake || 0).toFixed(0)} pts
+                          {bet.bet_type === 'combo' && bet.bet_selections?.length && (
+                            <span className="text-muted-foreground"> @{calculateComboOdds(bet.bet_selections).toFixed(2)}</span>
+                          )}
+                        </span>
+                      </span>
                       <span>Ganancia: <span className="font-medium">{bet.status === 'cancelled' ? '-' : `${(bet.payout || 0).toFixed(0)} pts`}</span></span>
                     </div>
 
@@ -814,7 +833,9 @@ export const BetHistory = () => {
                             </div>
                           </TableCell>
                           <TableCell></TableCell>
-                          <TableCell>{(bet.stake || 0).toFixed(0)} pts</TableCell>
+                          <TableCell>
+                            {(bet.stake || 0).toFixed(0)} pts @{calculateComboOdds(bet.bet_selections).toFixed(2)}
+                          </TableCell>
                           <TableCell>{bet.status === 'cancelled' ? '-' : `${(bet.payout || 0).toFixed(0)} pts`}</TableCell>
                           <TableCell>
                             <Badge variant={getStatusVariant(bet.status)} className={getStatusClassName(bet.status)}>{getStatusText(bet.status)}</Badge>
@@ -905,7 +926,14 @@ export const BetHistory = () => {
 
                   {/* Información financiera */}
                   <div className="flex justify-between text-sm">
-                    <span>Apostado: <span className="font-medium">{(bet.stake || 0).toFixed(0)} pts</span></span>
+                    <span>
+                      Apostado: <span className="font-medium">
+                        {(bet.stake || 0).toFixed(0)} pts
+                        {bet.bet_type === 'combo' && bet.bet_selections?.length && (
+                          <span className="text-muted-foreground"> @{calculateComboOdds(bet.bet_selections).toFixed(2)}</span>
+                        )}
+                      </span>
+                    </span>
                     <span>Ganancia: <span className="font-medium">{bet.status === 'cancelled' ? '-' : `${(bet.payout || 0).toFixed(0)} pts`}</span></span>
                   </div>
 
