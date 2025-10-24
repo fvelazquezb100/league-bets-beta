@@ -8,7 +8,9 @@ import { PlayerBetHistory } from '@/components/PlayerBetHistory';
 import { LeagueStatisticsModal } from '@/components/LeagueStatisticsModal';
 import { useLeagueStatistics } from '@/hooks/useLeagueStatistics';
 import { useLeagueStandings, useAvailableWeeks } from '@/hooks/useLeagueStandings';
-import { Award, ArrowDown, BarChart3, Calendar } from 'lucide-react';
+import { useHistoricalStandings } from '@/hooks/useHistoricalStandings';
+import { HistoricalStandingsModal } from '@/components/HistoricalStandingsModal';
+import { Award, ArrowDown, BarChart3, Calendar, TrendingUp } from 'lucide-react';
 
 export const Clasificacion = () => {
   const { user } = useAuth();
@@ -19,6 +21,7 @@ export const Clasificacion = () => {
   const [selectedPlayer, setSelectedPlayer] = useState<{ id: string; name: string } | null>(null);
   const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
   const [isLeagueStatsModalOpen, setIsLeagueStatsModalOpen] = useState(false);
+  const [isHistoricalStandingsModalOpen, setIsHistoricalStandingsModalOpen] = useState(false);
   const [leagueId, setLeagueId] = useState<number | null>(null);
   const [leagueType, setLeagueType] = useState<'free' | 'premium' | null>(null);
   const [selectedWeek, setSelectedWeek] = useState<string>('total');
@@ -32,6 +35,9 @@ export const Clasificacion = () => {
   
   // Get available weeks
   const { data: availableWeeks, isLoading: weeksLoading } = useAvailableWeeks(leagueId);
+  
+  // Get historical standings data
+  const { data: historicalStandings, isLoading: historicalLoading } = useHistoricalStandings(leagueId);
 
   const fetchLeagueProfiles = async () => {
     if (!user) return;
@@ -192,67 +198,88 @@ export const Clasificacion = () => {
         </CardContent>
       </Card>
 
-          {/* Week Filter and League Statistics Row - Solo para ligas premium */}
-          {leagueId && leagueType === 'premium' && (
-            <div className="grid grid-cols-2 gap-4">
-              {/* Week Filter Card */}
-              <div className="relative week-filter-container">
-                <Card 
-                  className="cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:border-primary/30 h-full"
-                  onClick={() => setShowWeekFilter(!showWeekFilter)}
-                >
-                  <CardContent className="p-4 h-full flex flex-col justify-between">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Filtro por Semana</p>
-                        <p className="text-lg font-bold">{selectedWeek === 'total' ? 'Clasificación Total' : `Semana ${selectedWeek}`}</p>
-                        <p className="text-xs text-muted-foreground">Selecciona una semana</p>
-                      </div>
-                      <Calendar className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                {showWeekFilter && (
-                  <div className="absolute top-0 left-0 right-0 bg-background border rounded-lg shadow-lg z-50">
-                    <div className="py-1">
-                      {(availableWeeks || []).map((week) => (
-                        <button
-                          key={week.week}
-                          onClick={() => {
-                            setSelectedWeek(week.week);
-                            setShowWeekFilter(false);
-                          }}
-                          className={`w-full text-left px-4 py-2 text-sm hover:bg-muted/50 transition-colors ${
-                            selectedWeek === week.week ? 'bg-muted/30 font-medium' : ''
-                          }`}
-                        >
-                          {week.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+      {/* Cards Row - Desktop: 1/3 each, Mobile: stacked */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Historical Standings Card */}
+        <Card 
+          className="cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:border-primary/30"
+          onClick={() => setIsHistoricalStandingsModalOpen(true)}
+        >
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Evolución Histórica</p>
+                <p className="text-lg font-bold">Clasificación por Semanas</p>
+                <p className="text-xs text-muted-foreground">Ver evolución de posiciones</p>
               </div>
+              <TrendingUp className="h-5 w-5 text-primary" />
+            </div>
+          </CardContent>
+        </Card>
 
-              {/* League Statistics Card */}
+        {/* Week Filter and League Statistics - Solo para ligas premium */}
+        {leagueId && leagueType === 'premium' && (
+          <>
+            {/* Week Filter Card */}
+            <div className="relative week-filter-container">
               <Card 
                 className="cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:border-primary/30 h-full"
-                onClick={() => setIsLeagueStatsModalOpen(true)}
+                onClick={() => setShowWeekFilter(!showWeekFilter)}
               >
                 <CardContent className="p-4 h-full flex flex-col justify-between">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-muted-foreground">Estadísticas de {leagueName}</p>
-                      <p className="text-2xl font-bold text-primary">{statsLoading ? '...' : `${leagueStats?.winPercentage.toFixed(1) || '0.0'}%`}</p>
-                      <p className="text-xs text-muted-foreground">% de aciertos de apuestas</p>
+                      <p className="text-sm text-muted-foreground">Filtro por Semana</p>
+                      <p className="text-lg font-bold">{selectedWeek === 'total' ? 'Clasificación Total' : `Semana ${selectedWeek}`}</p>
+                      <p className="text-xs text-muted-foreground">Selecciona una semana</p>
                     </div>
-                    <BarChart3 className="h-5 w-5 text-primary" />
+                    <Calendar className="h-5 w-5 text-muted-foreground" />
                   </div>
                 </CardContent>
               </Card>
+              
+              {showWeekFilter && (
+                <div className="absolute top-0 left-0 right-0 bg-background border rounded-lg shadow-lg z-50">
+                  <div className="py-1">
+                    {(availableWeeks || []).map((week) => (
+                      <button
+                        key={week.week}
+                        onClick={() => {
+                          setSelectedWeek(week.week);
+                          setShowWeekFilter(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-muted/50 transition-colors ${
+                          selectedWeek === week.week ? 'bg-muted/30 font-medium' : ''
+                        }`}
+                      >
+                        {week.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+
+            {/* League Statistics Card */}
+            <Card 
+              className="cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:border-primary/30 h-full"
+              onClick={() => setIsLeagueStatsModalOpen(true)}
+            >
+              <CardContent className="p-4 h-full flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Estadísticas de {leagueName}</p>
+                    <p className="text-2xl font-bold text-primary">{statsLoading ? '...' : `${leagueStats?.winPercentage.toFixed(1) || '0.0'}%`}</p>
+                    <p className="text-xs text-muted-foreground">% de aciertos de apuestas</p>
+                  </div>
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
+      </div>
+
 
       {/* Player Bet History Modal */}
       <Dialog open={isPlayerModalOpen} onOpenChange={setIsPlayerModalOpen}>
@@ -298,6 +325,15 @@ export const Clasificacion = () => {
         leagueName={leagueName}
         />
       )}
+
+      {/* Historical Standings Modal */}
+      <HistoricalStandingsModal
+        isOpen={isHistoricalStandingsModalOpen}
+        onClose={() => setIsHistoricalStandingsModalOpen(false)}
+        data={historicalStandings || {}}
+        isLoading={historicalLoading}
+        leagueName={leagueName}
+      />
     </div>
   );
 };
