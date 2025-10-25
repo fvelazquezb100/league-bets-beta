@@ -32,12 +32,42 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   try {
+    console.log("=== update-coparey-cache START ===");
+    console.log("Request headers:", Object.fromEntries(req.headers.entries()));
+    
     const INTERNAL_SECRET = Deno.env.get('INTERNAL_FUNCTION_SECRET');
+    console.log("INTERNAL_SECRET from env present:", !!INTERNAL_SECRET);
+    console.log("INTERNAL_SECRET from env prefix:", INTERNAL_SECRET ? INTERNAL_SECRET.slice(0, 5) : 'none');
+    
     const body = await req.json().catch(() => ({}));
+    console.log("Body keys:", Object.keys(body));
+    console.log("Body internal_secret present:", !!body?.internal_secret);
+    console.log("Body internal_secret prefix:", body?.internal_secret ? String(body.internal_secret).slice(0, 5) : 'none');
+    
     const headerSecret = req.headers.get('x-internal-secret');
+    console.log("Header x-internal-secret present:", !!headerSecret);
+    console.log("Header x-internal-secret prefix:", headerSecret ? headerSecret.slice(0, 5) : 'none');
+    
+    const headerSecretMatches = headerSecret === INTERNAL_SECRET;
+    const bodySecretMatches = body?.internal_secret === INTERNAL_SECRET;
+    console.log("Header secret matches:", headerSecretMatches);
+    console.log("Body secret matches:", bodySecretMatches);
+    
     if (!INTERNAL_SECRET || (headerSecret !== INTERNAL_SECRET && body?.internal_secret !== INTERNAL_SECRET)) {
-      return new Response(JSON.stringify({ error: 'Unauthorized - Invalid internal secret' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      console.log("UNAUTHORIZED - Secret mismatch");
+      return new Response(JSON.stringify({ 
+        error: 'Unauthorized - Invalid internal secret',
+        debug: {
+          hasEnvSecret: !!INTERNAL_SECRET,
+          hasHeaderSecret: !!headerSecret,
+          hasBodySecret: !!body?.internal_secret,
+          headerMatch: headerSecretMatches,
+          bodyMatch: bodySecretMatches
+        }
+      }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
+    
+    console.log("AUTH OK - proceeding with odds fetch");
 
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
