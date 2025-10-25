@@ -281,11 +281,34 @@ Deno.serve(async (req) => {
     console.log(`Total matches in final cache: ${mergedOdds.length}`);
     
     const finalCacheObject = { response: mergedOdds };
+
+    // Before writing current (id=1), copy existing id=1 data to id=2 (previous)
+    try {
+      const { data: currentRow } = await supabaseAdmin
+        .from('match_odds_cache')
+        .select('data')
+        .eq('id', 1)
+        .maybeSingle();
+      if (currentRow && currentRow.data) {
+        await supabaseAdmin
+          .from('match_odds_cache')
+          .upsert({
+            id: 2,
+            data: currentRow.data,
+            info: 'Leagues - previous odds snapshot',
+            last_updated: new Date().toISOString(),
+          });
+      }
+    } catch (e) {
+      console.warn('Could not copy leagues current (id=1) to previous (id=2):', (e as Error).message);
+    }
+
     const { error: upsertError } = await supabaseAdmin
       .from('match_odds_cache')
       .upsert({
         id: 1,
-        data: finalCacheObject, 
+        data: finalCacheObject,
+        info: 'Leagues - current odds snapshot',
         last_updated: new Date().toISOString(),
       });
 

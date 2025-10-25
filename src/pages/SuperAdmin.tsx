@@ -183,6 +183,23 @@ const SuperAdmin: React.FC = () => {
               </CardFooter>
             </Card>
           </div>
+
+          {/* Gestión de Copa del Rey */}
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base sm:text-lg">Gestionar Copa del Rey</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 p-3 sm:p-6">
+                <p className="text-xs sm:text-sm text-muted-foreground">Configura la visibilidad y acciones para Copa del Rey.</p>
+              </CardContent>
+              <CardFooter className="p-3 sm:p-6">
+                <Button className="jambol-button text-xs sm:text-sm" onClick={() => navigate('/superadmin-coparey')}>
+                  Abrir gestión de Copa del Rey
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
         </div>
 
         {/* Cache de Cuotas and Procesamiento de Resultados - 3 columns on desktop */}

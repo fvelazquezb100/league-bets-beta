@@ -117,10 +117,26 @@ Deno.serve(async (req) => {
 
     const payload = { response: mergedOdds };
 
-    // Write to cache id=2 (Selecciones)
+    // Before writing current selecciones (id=3), copy existing id=3 to id=4 (previous)
+    try {
+      const { data: currentSel } = await supabase
+        .from('match_odds_cache')
+        .select('data')
+        .eq('id', 3)
+        .maybeSingle();
+      if (currentSel && currentSel.data) {
+        await supabase
+          .from('match_odds_cache')
+          .upsert({ id: 4, data: currentSel.data, info: 'Selecciones - previous odds snapshot', last_updated: new Date().toISOString() });
+      }
+    } catch (copyErr) {
+      console.warn('Selecciones: could not copy id=3 -> id=4:', (copyErr as Error).message);
+    }
+
+    // Write to cache id=3 (Selecciones current)
     const { error } = await supabase
       .from('match_odds_cache')
-      .upsert({ id: 2, data: payload, last_updated: new Date().toISOString() });
+      .upsert({ id: 3, data: payload, info: 'Selecciones - current odds snapshot', last_updated: new Date().toISOString() });
     if (error) throw error;
 
     // Upsert kickoff times and team names to match_results - ONLY for fixtures we're actually caching (with enabled teams)

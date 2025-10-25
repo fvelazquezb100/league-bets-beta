@@ -287,16 +287,19 @@ export type Database = {
         Row: {
           data: Json
           id: number
+          info: string | null
           last_updated: string | null
         }
         Insert: {
           data?: Json
           id?: number
+          info?: string | null
           last_updated?: string | null
         }
         Update: {
           data?: Json
           id?: number
+          info?: string | null
           last_updated?: string | null
         }
         Relationships: []

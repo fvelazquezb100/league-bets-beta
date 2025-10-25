@@ -29,7 +29,7 @@ const Bets = () => {
   // Local UI state
   const [selectedBets, setSelectedBets] = useState<any[]>([]);
   const { cutoffMinutes } = useBettingSettings();
-  const [selectedLeague, setSelectedLeague] = useState<'primera' | 'champions' | 'europa' | 'liga-mx' | 'selecciones'>('primera');
+  const [selectedLeague, setSelectedLeague] = useState<'primera' | 'champions' | 'europa' | 'liga-mx' | 'selecciones' | 'coparey'>('primera');
   const [openId, setOpenId] = useState<number | null>(null);
   
   // Hooks
@@ -40,7 +40,14 @@ const Bets = () => {
   
   // React Query hooks for data fetching
   const isSelecciones = selectedLeague === 'selecciones';
-  const { data: matches = [], isLoading: matchesLoading, error: matchesError } = useMatchOdds(isSelecciones ? 2 : 1);
+  const isCoparey = selectedLeague === 'coparey';
+  // Selecciones uses id=3, Copa del Rey uses id=5, main leagues use id=1
+  const getSourceId = (): 1 | 3 | 5 => {
+    if (isSelecciones) return 3;
+    if (isCoparey) return 5;
+    return 1;
+  };
+  const { data: matches = [], isLoading: matchesLoading, error: matchesError } = useMatchOdds(getSourceId());
   const { data: userBets = [], isLoading: userBetsLoading } = useUserBets(user?.id);
   const { data: availableLeagues = [], isLoading: leaguesLoading } = useAvailableLeagues(user?.id);
   const { data: matchAvailability = [], isLoading: availabilityLoading } = useCombinedMatchAvailability(userProfile?.league_id);
@@ -53,6 +60,20 @@ const Bets = () => {
         .from('betting_settings' as any)
         .select('setting_value' as any)
         .eq('setting_key', 'enable_selecciones')
+        .maybeSingle();
+      return (((data as any)?.setting_value || 'false') === 'true');
+    },
+    staleTime: 60_000,
+  });
+
+  // Load SuperAdmin toggle to control Copa del Rey tab visibility
+  const { data: copareyEnabled = false, isLoading: copareyLoading } = useQuery({
+    queryKey: ['betting-setting', 'enable_coparey'],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from('betting_settings' as any)
+        .select('setting_value' as any)
+        .eq('setting_key', 'enable_coparey')
         .maybeSingle();
       return (((data as any)?.setting_value || 'false') === 'true');
     },
@@ -137,9 +158,9 @@ const Bets = () => {
 
 
   const handleAddToSlip = (match: MatchData, marketName: string, selection: BetValue) => {
-    // For Selecciones, allow all matches without date restrictions
-    if (selectedLeague === 'selecciones') {
-      // No date restrictions for Selecciones
+    // For Selecciones and Copa del Rey, allow all matches without date restrictions
+    if (selectedLeague === 'selecciones' || selectedLeague === 'coparey') {
+      // No date restrictions for Selecciones and Copa del Rey
     } else {
       // Check if match is in the future (outside allowed timeframe) - BLOCK ALL FUTURE MATCHES
       const matchDate = new Date(match.fixture.date);
@@ -275,7 +296,7 @@ const Bets = () => {
       'europa': 3,
       'liga-mx': 262
     };
-    if (league === 'selecciones') {
+    if (league === 'selecciones' || league === 'coparey') {
       return matches;
     }
     const leagueId = leagueMap[league];
@@ -559,6 +580,10 @@ const Bets = () => {
     if (seleccionesEnabled) {
       tabs.push({ value: 'selecciones', label: 'Selecciones', leagueId: 0 });
     }
+    // Add Copa del Rey tab only if enabled via betting_settings
+    if (copareyEnabled) {
+      tabs.push({ value: 'coparey', label: 'Copa del Rey', leagueId: 143 });
+    }
     
     return tabs;
   };
@@ -567,7 +592,7 @@ const Bets = () => {
     const availableTabs = getAvailableTabs();
     
     // Don't render tabs until leagues are loaded
-    if (leaguesLoading || seleccionesLoading || availableTabs.length === 0) {
+    if (leaguesLoading || seleccionesLoading || copareyLoading || availableTabs.length === 0) {
       return (
         <div className="w-full">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
@@ -582,11 +607,11 @@ const Bets = () => {
     
     // If current selected league is not available, switch to the first available one
     if (availableTabs.length > 0 && !availableTabs.find(tab => tab.value === selectedLeague)) {
-      setSelectedLeague(availableTabs[0].value as 'primera' | 'champions' | 'europa' | 'liga-mx' | 'selecciones');
+      setSelectedLeague(availableTabs[0].value as 'primera' | 'champions' | 'europa' | 'liga-mx' | 'selecciones' | 'coparey');
     }
     
     return (
-      <Tabs value={selectedLeague} onValueChange={(value) => setSelectedLeague(value as 'primera' | 'champions' | 'europa' | 'liga-mx' | 'selecciones')} className="w-full">
+      <Tabs value={selectedLeague} onValueChange={(value) => setSelectedLeague(value as 'primera' | 'champions' | 'europa' | 'liga-mx' | 'selecciones' | 'coparey')} className="w-full">
         <TabsList className={`grid w-full mb-6 gap-2 h-auto ${availableTabs.length <= 2 ? 'grid-cols-2' : availableTabs.length === 3 ? 'grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'}`}>
           {availableTabs.map((tab) => {
             const getTabStyle = (value: string) => {
@@ -641,6 +666,17 @@ const Bets = () => {
                       linear-gradient(45deg,
                         #004C99 0%, #004C99 66.66%,
                         #FFD200 66.66%, #FFD200 100%
+                      )
+                    `,
+                    opacity: '0.4'
+                  };
+                case 'coparey':
+                  return {
+                    background: `
+                      linear-gradient(45deg,
+                        #CE1126 0%, #CE1126 33.33%,
+                        #FFD200 33.33%, #FFD200 66.66%,
+                        #CE1126 66.66%, #CE1126 100%
                       )
                     `,
                     opacity: '0.4'
