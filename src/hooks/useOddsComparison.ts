@@ -52,8 +52,8 @@ export const useOddsComparison = () => {
       console.log('Odds comparison result:', {
         hasCurrent: !!result.current,
         hasPrevious: !!result.previous,
-        currentResponse: result.current?.response?.length || 0,
-        previousResponse: result.previous?.response?.length || 0
+        currentResponse: (result.current as any)?.response?.length || 0,
+        previousResponse: (result.previous as any)?.response?.length || 0
       });
 
       return result;
