@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Minus, Plus } from 'lucide-react';
 import type { MatchData, BetValue } from '@/pages/Bets';
+import { OddsIndicator } from './OddsIndicator';
+import { useOddsComparison, findOddsForComparison } from '@/hooks/useOddsComparison';
+import { useIsPremiumLeague } from '@/hooks/useLeaguePremium';
 
 interface OverUnderSelectorProps {
   match: MatchData;
@@ -11,6 +14,8 @@ interface OverUnderSelectorProps {
 }
 
 const OverUnderSelector = ({ match, isFrozen, hasUserBetOnMarket, handleAddToSlip }: OverUnderSelectorProps) => {
+  const { data: oddsComparison } = useOddsComparison();
+  const isPremium = useIsPremiumLeague();
   const [threshold, setThreshold] = useState(2.5);
   const [underOdds, setUnderOdds] = useState<string>('0.00');
   const [overOdds, setOverOdds] = useState<string>('0.00');
@@ -123,7 +128,27 @@ const OverUnderSelector = ({ match, isFrozen, hasUserBetOnMarket, handleAddToSli
             }`}
           >
             <div className="flex flex-col items-center">
-              <span className="text-lg font-bold">{underOdds}</span>
+              <span className="text-lg font-bold flex items-center">
+                {underOdds}
+                {isPremium && underOdds !== '0.00' && oddsComparison && (
+                  <OddsIndicator 
+                    current={oddsComparison ? findOddsForComparison(
+                      oddsComparison.current,
+                      oddsComparison.previous,
+                      match.fixture.id,
+                      'Goles Más/Menos de',
+                      `Under ${threshold}`
+                    ).current : null}
+                    previous={oddsComparison ? findOddsForComparison(
+                      oddsComparison.current,
+                      oddsComparison.previous,
+                      match.fixture.id,
+                      'Goles Más/Menos de',
+                      `Under ${threshold}`
+                    ).previous : null}
+                  />
+                )}
+              </span>
             </div>
           </Button>
         </div>
@@ -175,7 +200,27 @@ const OverUnderSelector = ({ match, isFrozen, hasUserBetOnMarket, handleAddToSli
             }`}
           >
             <div className="flex flex-col items-center">
-              <span className="text-lg font-bold">{overOdds}</span>
+              <span className="text-lg font-bold flex items-center">
+                {overOdds}
+                {isPremium && overOdds !== '0.00' && oddsComparison && (
+                  <OddsIndicator 
+                    current={oddsComparison ? findOddsForComparison(
+                      oddsComparison.current,
+                      oddsComparison.previous,
+                      match.fixture.id,
+                      'Goles Más/Menos de',
+                      `Over ${threshold}`
+                    ).current : null}
+                    previous={oddsComparison ? findOddsForComparison(
+                      oddsComparison.current,
+                      oddsComparison.previous,
+                      match.fixture.id,
+                      'Goles Más/Menos de',
+                      `Over ${threshold}`
+                    ).previous : null}
+                  />
+                )}
+              </span>
             </div>
           </Button>
         </div>

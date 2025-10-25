@@ -1,5 +1,8 @@
 import { Button } from '@/components/ui/button';
 import type { MatchData, BetValue } from '@/pages/Bets';
+import { OddsIndicator } from './OddsIndicator';
+import { useOddsComparison, findOddsForComparison } from '@/hooks/useOddsComparison';
+import { useIsPremiumLeague } from '@/hooks/useLeaguePremium';
 
 interface WinnerSelectorProps {
   match: MatchData;
@@ -9,6 +12,9 @@ interface WinnerSelectorProps {
 }
 
 const WinnerSelector = ({ match, isFrozen, hasUserBetOnMarket, handleAddToSlip }: WinnerSelectorProps) => {
+  const { data: oddsComparison } = useOddsComparison();
+  const isPremium = useIsPremiumLeague();
+  
   // Find the three winner markets
   const findMarket = (marketName: string) => {
     if (!match.bookmakers || match.bookmakers.length === 0) return null;
@@ -51,6 +57,15 @@ const WinnerSelector = ({ match, isFrozen, hasUserBetOnMarket, handleAddToSlip }
               displayValue = 'Empate';
             }
 
+            // Get odds comparison data
+            const oddsData = oddsComparison ? findOddsForComparison(
+              oddsComparison.current,
+              oddsComparison.previous,
+              match.fixture.id,
+              marketName,
+              value.value
+            ) : { current: null, previous: null };
+
             return (
               <Button
                 key={value.value}
@@ -64,7 +79,15 @@ const WinnerSelector = ({ match, isFrozen, hasUserBetOnMarket, handleAddToSlip }
               >
                 <div className="flex flex-col items-center">
                   <span className="text-xs font-medium">{displayValue}</span>
-                  <span className="text-sm font-bold">{value.odd}</span>
+                              <span className="text-sm font-bold flex items-center">
+                    {value.odd}
+                                {isPremium && (
+                                  <OddsIndicator 
+                                    current={oddsData.current} 
+                                    previous={oddsData.previous} 
+                                  />
+                                )}
+                  </span>
                 </div>
               </Button>
             );

@@ -155,21 +155,21 @@ const SuperAdmin: React.FC = () => {
           </p>
         </div>
 
-        {/* News Management, Betting Settings - 3 columns on desktop */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* News Management, Betting Settings - 3 columns on desktop with equal card heights */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
           {/* News Management */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 h-full">
             <NewsManagement />
           </div>
           
           {/* Configuración de Tiempo de Apuestas */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 h-full">
             <BettingSettingsControl />
           </div>
           
           {/* Gestión de Selecciones */}
-          <div className="lg:col-span-1">
-            <Card>
+          <div className="lg:col-span-1 h-full">
+            <Card className="h-full">
               <CardHeader>
                 <CardTitle className="text-base sm:text-lg">Gestionar otras ligas</CardTitle>
               </CardHeader>
@@ -186,10 +186,10 @@ const SuperAdmin: React.FC = () => {
 
         </div>
 
-        {/* Cache de Cuotas and Procesamiento de Resultados - 3 columns on desktop */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Cache de Cuotas and Procesamiento de Resultados - 3 columns on desktop with equal card heights */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
           {/* Caché de Cuotas */}
-          <Card>
+          <Card className="h-full">
             <CardHeader>
               <CardTitle className="text-base sm:text-lg">Caché de Cuotas</CardTitle>
             </CardHeader>
@@ -210,7 +210,7 @@ const SuperAdmin: React.FC = () => {
           </Card>
 
           {/* Procesamiento de Resultados */}
-          <Card>
+          <Card className="h-full">
             <CardHeader>
               <CardTitle className="text-base sm:text-lg">Procesamiento de Resultados</CardTitle>
             </CardHeader>
@@ -242,7 +242,7 @@ const SuperAdmin: React.FC = () => {
           </Card>
 
           {/* Test de Autenticación de Edge Functions */}
-          <Card>
+          <Card className="h-full">
             <CardHeader>
               <CardTitle className="text-base sm:text-lg">Test de Autenticación de Edge Functions</CardTitle>
             </CardHeader>

@@ -350,58 +350,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // --- STEP 5: Dynamically schedule results processing 5 hours after the latest fixture ends ---
-    try {
-      // Extract latest fixture kickoff time from the fetched fixtures
-      const fixtureTimes: number[] = Array.isArray(allFixturesData)
-        ? allFixturesData
-            .map((item: any) => {
-              const iso = item?.fixture?.date;
-              const t = iso ? Date.parse(iso) : NaN;
-              return Number.isFinite(t) ? t : NaN;
-            })
-            .filter((t: number) => Number.isFinite(t))
-        : [];
-
-      if (fixtureTimes.length > 0) {
-        const latestKickoff = Math.max(...fixtureTimes);
-        const latestKickoffISO = new Date(latestKickoff).toISOString();
-        console.log('Latest fixture kickoff (UTC):', latestKickoffISO);
-
-        // Schedule 5 hours after the latest kickoff
-        const dynamicRunTime = new Date(latestKickoff + 5 * 60 * 60 * 1000);
-        console.log('Calculated job time (UTC, +5h):', dynamicRunTime.toISOString());
-
-        // Build a cron expression at the specific UTC minute/hour/day/month (one-time style)
-        const cronExpr = `${dynamicRunTime.getUTCMinutes()} ${dynamicRunTime.getUTCHours()} ${dynamicRunTime.getUTCDate()} ${dynamicRunTime.getUTCMonth() + 1} *`;
-        const jobName = `process-matchday-results-${Math.floor(dynamicRunTime.getTime() / 1000)}`;
-
-        const SUPABASE_URL_FOR_SCHEDULE = Deno.env.get('SUPABASE_URL');
-        const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
-        const scheduleUrl = `${SUPABASE_URL_FOR_SCHEDULE}/functions/v1/secure-run-process-matchday-results`;
-        const authHeader = ANON_KEY ? `Bearer ${ANON_KEY}` : '';
-
-        console.log(`Scheduling secure-run-process-matchday-results at ${dynamicRunTime.toISOString()} (cron: "${cronExpr}") with job name ${jobName}`);
-
-        const { data: jobId, error: scheduleErr } = await supabaseAdmin.rpc('schedule_one_time_http_call', {
-          job_name: jobName,
-          schedule: cronExpr,
-          url: scheduleUrl,
-          auth_header: authHeader,
-          body: JSON.stringify({ reason: 'auto-scheduled by update-football-cache', target_time: dynamicRunTime.toISOString() })
-        });
-
-        if (scheduleErr) {
-          console.warn('Failed to schedule one-time results processing job:', scheduleErr.message);
-        } else {
-          console.log('One-time results processing job scheduled with id:', jobId);
-        }
-      } else {
-        console.log('No valid fixture times found to schedule dynamic results processing.');
-      }
-    } catch (e) {
-      console.warn('Dynamic scheduling encountered an issue (continuing):', (e as Error).message);
-    }
 
     return new Response(JSON.stringify({ 
       message: 'Cache updated successfully!', 

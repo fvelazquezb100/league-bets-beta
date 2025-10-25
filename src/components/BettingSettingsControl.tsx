@@ -64,7 +64,7 @@ export const BettingSettingsControl: React.FC = () => {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="h-full">
         <CardContent className="p-6 text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FFC72C] mx-auto"></div>
           <p className="mt-4 text-muted-foreground">Cargando configuración...</p>
@@ -74,7 +74,7 @@ export const BettingSettingsControl: React.FC = () => {
   }
 
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
         <CardTitle className="text-base sm:text-lg flex items-center gap-2">
           <Clock className="h-5 w-5" />
@@ -145,11 +145,7 @@ export const BettingSettingsControl: React.FC = () => {
           </div>
         )}
 
-        <div className="text-sm text-muted-foreground space-y-1">
-          <p>• Los usuarios no podrán apostar cuando falten menos de {cutoffMinutes} minutos para el inicio del partido</p>
-          <p>• El tiempo mínimo permitido es 1 minuto y el máximo 120 minutos</p>
-          <p>• Los cambios se aplican inmediatamente para todos los usuarios</p>
-        </div>
+        {/* Descripción informativa eliminada a petición: reglas y nota de aplicación inmediata */}
       </CardContent>
     </Card>
   );

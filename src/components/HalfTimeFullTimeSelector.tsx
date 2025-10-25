@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import type { MatchData, BetValue } from '@/pages/Bets';
+import { OddsIndicator } from './OddsIndicator';
+import { useOddsComparison, findOddsForComparison } from '@/hooks/useOddsComparison';
+import { useIsPremiumLeague } from '@/hooks/useLeaguePremium';
 
 interface HalfTimeFullTimeSelectorProps {
   match: MatchData;
@@ -10,6 +13,8 @@ interface HalfTimeFullTimeSelectorProps {
 }
 
 const HalfTimeFullTimeSelector = ({ match, isFrozen, hasUserBetOnMarket, handleAddToSlip }: HalfTimeFullTimeSelectorProps) => {
+  const { data: oddsComparison } = useOddsComparison();
+  const isPremium = useIsPremiumLeague();
   const [halfTimeResult, setHalfTimeResult] = useState<string>('');
   const [fullTimeResult, setFullTimeResult] = useState<string>('');
   const [currentOdds, setCurrentOdds] = useState('0.00');
@@ -116,8 +121,30 @@ const HalfTimeFullTimeSelector = ({ match, isFrozen, hasUserBetOnMarket, handleA
               : ''
           }`}
         >
-          <span className="text-lg font-bold">
-            {currentOdds === '0.00' ? 'Selecciona ambas opciones' : `${currentOdds}`}
+          <span className="text-lg font-bold flex items-center justify-center">
+            {currentOdds === '0.00' ? 'Selecciona ambas opciones' : (
+              <>
+                {currentOdds}
+                {isPremium && currentOdds !== '0.00' && oddsComparison && (
+                  <OddsIndicator 
+                    current={oddsComparison ? findOddsForComparison(
+                      oddsComparison.current,
+                      oddsComparison.previous,
+                      match.fixture.id,
+                      'Medio Tiempo/Final',
+                      `${halfTimeResult}/${fullTimeResult}`
+                    ).current : null}
+                    previous={oddsComparison ? findOddsForComparison(
+                      oddsComparison.current,
+                      oddsComparison.previous,
+                      match.fixture.id,
+                      'Medio Tiempo/Final',
+                      `${halfTimeResult}/${fullTimeResult}`
+                    ).previous : null}
+                  />
+                )}
+              </>
+            )}
           </span>
         </Button>
       </div>
