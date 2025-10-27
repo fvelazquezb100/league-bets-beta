@@ -192,7 +192,7 @@ export const NewsManagement = () => {
   };
 
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
         <CardTitle className="text-base sm:text-lg">Gestión de Noticias</CardTitle>
       </CardHeader>

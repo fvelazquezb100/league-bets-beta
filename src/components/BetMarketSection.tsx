@@ -7,6 +7,9 @@ import OverUnderSelector from './OverUnderSelector';
 import WinnerSelector from './WinnerSelector';
 import HalfTimeFullTimeSelector from './HalfTimeFullTimeSelector';
 import ResultTotalGoalsSelector from './ResultTotalGoalsSelector';
+import { OddsIndicator } from './OddsIndicator';
+import { useOddsComparison, findOddsForComparison } from '@/hooks/useOddsComparison';
+import { useIsPremiumLeague } from '@/hooks/useLeaguePremium';
 
 interface BetMarketSectionProps {
   match: MatchData;
@@ -25,6 +28,8 @@ const BetMarketSection = ({
   hasUserBetOnMarket,
   handleAddToSlip
 }: BetMarketSectionProps) => {
+  const { data: oddsComparison } = useOddsComparison();
+  const isPremium = useIsPremiumLeague();
   // Use special selector for exact score
   if (betType.displayName === 'Resultado Exacto') {
     return (
@@ -118,6 +123,25 @@ const BetMarketSection = ({
           const isDoubleChance = betType.displayName === 'Doble Oportunidad';
           const displayText = getBettingTranslation(value.value);
           
+          // Get odds comparison data
+          const oddsData = oddsComparison ? findOddsForComparison(
+            oddsComparison.current,
+            oddsComparison.previous,
+            match.fixture.id,
+            betType.displayName,
+            value.value
+          ) : { current: null, previous: null };
+          
+          // Debug logging for winner markets
+          if (['Ganador del Partido', 'Ganador del 1er Tiempo', 'Ganador del 2do Tiempo'].includes(betType.displayName)) {
+            console.log('Winner market odds data:', {
+              marketName: betType.displayName,
+              selection: value.value,
+              oddsData,
+              hasOddsComparison: !!oddsComparison
+            });
+          }
+          
           return (
             <Button 
               key={value.value} 
@@ -139,12 +163,28 @@ const BetMarketSection = ({
                       </span>
                     )) : displayText}
                   </span>
-                  <span className="font-bold text-sm sm:text-base">{value.odd}</span>
+                  <span className="font-bold text-sm sm:text-base flex items-center">
+                    {value.odd}
+                    {isPremium && (
+                      <OddsIndicator 
+                        current={oddsData.current} 
+                        previous={oddsData.previous} 
+                      />
+                    )}
+                  </span>
                 </div>
               ) : (
                 <>
                   <span className="text-xs sm:text-sm">{displayText}</span>
-                  <span className="font-bold text-sm sm:text-base">{value.odd}</span>
+                  <span className="font-bold text-sm sm:text-base flex items-center justify-center">
+                    {value.odd}
+                    {isPremium && (
+                      <OddsIndicator 
+                        current={oddsData.current} 
+                        previous={oddsData.previous} 
+                      />
+                    )}
+                  </span>
                 </>
               )}
             </Button>

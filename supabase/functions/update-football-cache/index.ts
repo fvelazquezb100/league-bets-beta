@@ -281,11 +281,34 @@ Deno.serve(async (req) => {
     console.log(`Total matches in final cache: ${mergedOdds.length}`);
     
     const finalCacheObject = { response: mergedOdds };
+
+    // Before writing current (id=1), copy existing id=1 data to id=2 (previous)
+    try {
+      const { data: currentRow } = await supabaseAdmin
+        .from('match_odds_cache')
+        .select('data')
+        .eq('id', 1)
+        .maybeSingle();
+      if (currentRow && currentRow.data) {
+        await supabaseAdmin
+          .from('match_odds_cache')
+          .upsert({
+            id: 2,
+            data: currentRow.data,
+            info: 'Leagues - previous odds snapshot',
+            last_updated: new Date().toISOString(),
+          });
+      }
+    } catch (e) {
+      console.warn('Could not copy leagues current (id=1) to previous (id=2):', (e as Error).message);
+    }
+
     const { error: upsertError } = await supabaseAdmin
       .from('match_odds_cache')
       .upsert({
         id: 1,
-        data: finalCacheObject, 
+        data: finalCacheObject,
+        info: 'Leagues - current odds snapshot',
         last_updated: new Date().toISOString(),
       });
 
@@ -327,58 +350,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // --- STEP 5: Dynamically schedule results processing 5 hours after the latest fixture ends ---
-    try {
-      // Extract latest fixture kickoff time from the fetched fixtures
-      const fixtureTimes: number[] = Array.isArray(allFixturesData)
-        ? allFixturesData
-            .map((item: any) => {
-              const iso = item?.fixture?.date;
-              const t = iso ? Date.parse(iso) : NaN;
-              return Number.isFinite(t) ? t : NaN;
-            })
-            .filter((t: number) => Number.isFinite(t))
-        : [];
-
-      if (fixtureTimes.length > 0) {
-        const latestKickoff = Math.max(...fixtureTimes);
-        const latestKickoffISO = new Date(latestKickoff).toISOString();
-        console.log('Latest fixture kickoff (UTC):', latestKickoffISO);
-
-        // Schedule 5 hours after the latest kickoff
-        const dynamicRunTime = new Date(latestKickoff + 5 * 60 * 60 * 1000);
-        console.log('Calculated job time (UTC, +5h):', dynamicRunTime.toISOString());
-
-        // Build a cron expression at the specific UTC minute/hour/day/month (one-time style)
-        const cronExpr = `${dynamicRunTime.getUTCMinutes()} ${dynamicRunTime.getUTCHours()} ${dynamicRunTime.getUTCDate()} ${dynamicRunTime.getUTCMonth() + 1} *`;
-        const jobName = `process-matchday-results-${Math.floor(dynamicRunTime.getTime() / 1000)}`;
-
-        const SUPABASE_URL_FOR_SCHEDULE = Deno.env.get('SUPABASE_URL');
-        const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
-        const scheduleUrl = `${SUPABASE_URL_FOR_SCHEDULE}/functions/v1/secure-run-process-matchday-results`;
-        const authHeader = ANON_KEY ? `Bearer ${ANON_KEY}` : '';
-
-        console.log(`Scheduling secure-run-process-matchday-results at ${dynamicRunTime.toISOString()} (cron: "${cronExpr}") with job name ${jobName}`);
-
-        const { data: jobId, error: scheduleErr } = await supabaseAdmin.rpc('schedule_one_time_http_call', {
-          job_name: jobName,
-          schedule: cronExpr,
-          url: scheduleUrl,
-          auth_header: authHeader,
-          body: JSON.stringify({ reason: 'auto-scheduled by update-football-cache', target_time: dynamicRunTime.toISOString() })
-        });
-
-        if (scheduleErr) {
-          console.warn('Failed to schedule one-time results processing job:', scheduleErr.message);
-        } else {
-          console.log('One-time results processing job scheduled with id:', jobId);
-        }
-      } else {
-        console.log('No valid fixture times found to schedule dynamic results processing.');
-      }
-    } catch (e) {
-      console.warn('Dynamic scheduling encountered an issue (continuing):', (e as Error).message);
-    }
 
     return new Response(JSON.stringify({ 
       message: 'Cache updated successfully!', 

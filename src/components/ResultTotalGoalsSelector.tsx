@@ -4,6 +4,9 @@ import { Minus, Plus } from 'lucide-react';
 import type { MatchData, BetValue } from '@/pages/Bets';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { OddsIndicator } from './OddsIndicator';
+import { useOddsComparison, findOddsForComparison } from '@/hooks/useOddsComparison';
+import { useIsPremiumLeague } from '@/hooks/useLeaguePremium';
 
 interface ResultTotalGoalsSelectorProps {
   match: MatchData;
@@ -13,6 +16,8 @@ interface ResultTotalGoalsSelectorProps {
 }
 
 const ResultTotalGoalsSelector = ({ match, isFrozen, hasUserBetOnMarket, handleAddToSlip }: ResultTotalGoalsSelectorProps) => {
+  const { data: oddsComparison } = useOddsComparison();
+  const isPremium = useIsPremiumLeague();
   const [matchResult, setMatchResult] = useState<string>('');
   const [totalGoals, setTotalGoals] = useState<number>(2.5);
   const [overUnder, setOverUnder] = useState<'over' | 'under' | null>(null);
@@ -312,10 +317,30 @@ const ResultTotalGoalsSelector = ({ match, isFrozen, hasUserBetOnMarket, handleA
               : ''
           }`}
         >
-          <span className="text-lg font-bold">
+          <span className="text-lg font-bold flex items-center justify-center">
             {!matchResult ? 'Selecciona el resultado' : 
              !overUnder ? 'Selecciona Más/Menos' : 
-             currentOdds === '0.00' ? 'Cuotas no disponibles' : `${currentOdds}`}
+            currentOdds === '0.00' ? 'Cuotas no disponibles' : (
+              <>
+                {currentOdds}
+                {isPremium && oddsComparison && (() => {
+                  const selectionForApi = `${matchResult}/${overUnder === 'over' ? 'Over' : 'Under'} ${totalGoals}`;
+                  const oddsData = findOddsForComparison(
+                    oddsComparison.current,
+                    oddsComparison.previous,
+                    match.fixture.id,
+                    'Resultado/Total Goles',
+                    selectionForApi
+                  );
+                  return (
+                    <OddsIndicator 
+                      current={oddsData.current} 
+                      previous={oddsData.previous} 
+                    />
+                  );
+                })()}
+              </>
+            )}
           </span>
         </Button>
         

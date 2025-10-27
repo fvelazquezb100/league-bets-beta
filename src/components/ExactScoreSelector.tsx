@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Minus, Plus } from 'lucide-react';
 import type { MatchData, BetValue } from '@/pages/Bets';
+import { OddsIndicator } from './OddsIndicator';
+import { useOddsComparison, findOddsForComparison } from '@/hooks/useOddsComparison';
+import { useIsPremiumLeague } from '@/hooks/useLeaguePremium';
 
 interface ExactScoreSelectorProps {
   match: MatchData;
@@ -11,6 +14,8 @@ interface ExactScoreSelectorProps {
 }
 
 const ExactScoreSelector = ({ match, isFrozen, hasUserBetOnMarket, handleAddToSlip }: ExactScoreSelectorProps) => {
+  const { data: oddsComparison } = useOddsComparison();
+  const isPremium = useIsPremiumLeague();
   const [homeGoals, setHomeGoals] = useState(0);
   const [awayGoals, setAwayGoals] = useState(0);
   const [currentOdds, setCurrentOdds] = useState<string>('0.00');
@@ -151,7 +156,33 @@ const ExactScoreSelector = ({ match, isFrozen, hasUserBetOnMarket, handleAddToSl
               : ''
           }`}
         >
-          <span className="text-lg font-bold">{currentOdds}</span>
+          <span className="text-lg font-bold flex items-center justify-center">
+            {currentOdds}
+            {isPremium && currentOdds !== '0.00' && oddsComparison && (() => {
+              const oddsData = findOddsForComparison(
+                oddsComparison.current,
+                oddsComparison.previous,
+                match.fixture.id,
+                'Resultado Exacto',
+                `${homeGoals}:${awayGoals}`
+              );
+              
+              // Debug logging for exact score
+              console.log('Exact score odds data:', {
+                marketName: 'Resultado Exacto',
+                selection: `${homeGoals}:${awayGoals}`,
+                oddsData,
+                hasOddsComparison: !!oddsComparison
+              });
+              
+              return (
+                <OddsIndicator 
+                  current={oddsData.current} 
+                  previous={oddsData.previous} 
+                />
+              );
+            })()}
+          </span>
         </Button>
       </div>
     </div>

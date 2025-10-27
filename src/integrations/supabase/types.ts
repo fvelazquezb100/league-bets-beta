@@ -287,16 +287,19 @@ export type Database = {
         Row: {
           data: Json
           id: number
+          info: string | null
           last_updated: string | null
         }
         Insert: {
           data?: Json
           id?: number
+          info?: string | null
           last_updated?: string | null
         }
         Update: {
           data?: Json
           id?: number
+          info?: string | null
           last_updated?: string | null
         }
         Relationships: []
@@ -467,6 +470,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      betting_settings: {
+        Row: {
+          id: number
+          setting_key: string
+          setting_value: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          setting_key: string
+          setting_value: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          setting_key?: string
+          setting_value?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {

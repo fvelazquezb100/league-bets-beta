@@ -520,42 +520,6 @@ const handleResetWeekManually = async () => {
         {userRole === 'admin_league' && (
           <>
             <Card>
-              <CardHeader><CardTitle>Reseteo de la Liga</CardTitle></CardHeader>
-              <CardContent>
-                {leagueData?.type === 'free' ? (
-                  <div className="text-center py-4">
-                    <p className="text-muted-foreground mb-2">
-                      <strong>⚠️ Funcionalidad Premium</strong>
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Actualiza a premium para poder tener esta funcionalidad
-                    </p>
-                  </div>
-                ) : (
-                  <p>Esta opción reseteará tu Liga. Todos los puntos serán 0</p>
-                )}
-              </CardContent>
-              <CardFooter>
-                {leagueData?.type === 'free' ? (
-                  <Button 
-                    disabled 
-                    className="jambol-button opacity-50 cursor-not-allowed"
-                  >
-                    Resetear la Liga
-                  </Button>
-                ) : (
-                  <Button 
-                    className="jambol-button" 
-                    onClick={() => setConfirmingReset(true)} 
-                    disabled={resettingWeek}
-                  >
-                    {resettingWeek ? 'Reseteando…' : 'Resetear la Liga'}
-                  </Button>
-                )}
-              </CardFooter>
-            </Card>
-
-            <Card>
               <CardHeader>
                 <CardTitle>Reset Manual de Semana</CardTitle>
               </CardHeader>
