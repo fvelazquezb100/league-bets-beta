@@ -38,7 +38,7 @@ const NotFound = () => {
           </Link>
         </div>
         <p className="mt-8 text-xs text-muted-foreground max-w-2xl mx-auto">
-          Jambol.co es un juego de simulación. No se realizan apuestas con dinero real ni se ofrecen premios económicos. Todos los puntos y resultados son ficticios y se utilizan solo con fines recreativos.
+          Jambol ™ es un juego de simulación. No se realizan apuestas con dinero real ni se ofrecen premios económicos. Todos los puntos y resultados son ficticios y se utilizan solo con fines recreativos.
         </p>
       </div>
     </div>

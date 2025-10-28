@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { APP_CONFIG } from '@/config/app';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
+import { SiteFooter } from '@/components/layout/SiteFooter';
 
 export const Landing = () => {
   const { user, loading } = useAuth();
@@ -87,6 +88,8 @@ export const Landing = () => {
           </p>
         </div>
       </section>
+      
+      <SiteFooter />
     </main>
   );
 };

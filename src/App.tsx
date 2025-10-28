@@ -26,6 +26,8 @@ import LeagueMatchAvailabilityControl from "./pages/LeagueMatchAvailabilityContr
 import NotFound from "./pages/NotFound";
 import PoliticaCookies from "./pages/PoliticaCookies";
 import TerminosCondiciones from "./pages/TerminosCondiciones";
+import PoliticaPrivacidad from "./pages/PoliticaPrivacidad";
+import AvisoLegal from "./pages/AvisoLegal";
 import FAQ from "./pages/FAQ";
 import Reglas from "./pages/Reglas";
 import AdminLiga from "./pages/AdminLiga";
@@ -64,6 +66,8 @@ const App = () => (
             <Route path="/test-demo" element={<TestDemo />} />
             <Route path="/politica-cookies" element={<PoliticaCookies />} />
             <Route path="/terminos" element={<TerminosCondiciones />} />
+            <Route path="/politica-privacidad" element={<PoliticaPrivacidad />} />
+            <Route path="/aviso-legal" element={<AvisoLegal />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/reglas" element={
               <ProtectedRoute>

@@ -10,15 +10,15 @@ export default function FAQ() {
           alt="Jambol Logo"
           className="h-10 jambol-logo"
         />
-        <span className="text-2xl font-bold jambol-dark">jambol.co</span>
+        <span className="text-2xl font-bold jambol-dark">Jambol ™</span>
       </div>
       <h1 className="text-2xl md:text-3xl font-bold mb-4">Preguntas Frecuentes (FAQ)</h1>
 
       <div className="space-y-6">
         <section>
-          <h2 className="text-lg font-semibold">¿Qué es Jambol.co?</h2>
+          <h2 className="text-lg font-semibold">¿Qué es Jambol ™?</h2>
           <p className="text-sm md:text-base text-muted-foreground">
-            Jambol.co es un juego de simulación deportiva. No hay dinero real, no se realizan transacciones económicas ni se ofrecen premios monetarios. Los puntos, cuotas y resultados son ficticios y se usan solo con fines recreativos.
+            Jambol ™ es un juego de simulación deportiva. No hay dinero real, no se realizan transacciones económicas ni se ofrecen premios monetarios. Los puntos, cuotas y resultados son ficticios y se usan solo con fines recreativos.
           </p>
         </section>
 

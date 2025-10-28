@@ -26,7 +26,7 @@ export default function Reglas() {
           alt="Jambol Logo"
           className="h-10 jambol-logo"
         />
-        <span className="text-2xl font-bold jambol-dark">jambol.co</span>
+        <span className="text-2xl font-bold jambol-dark">Jambol ™</span>
       </div>
       <h1 className="text-2xl md:text-3xl font-bold mb-4">Reglas del Juego</h1>
 
@@ -47,7 +47,7 @@ export default function Reglas() {
       <section id="introduccion" className="scroll-mt-24">
         <h2 className="text-xl font-semibold mb-2">1. Introducción</h2>
         <p className="text-sm md:text-base text-muted-foreground">
-          Jambol es un juego de simulación: no hay dinero real ni premios económicos. Los puntos, cuotas y resultados son ficticios y se utilizan exclusivamente con fines recreativos.
+          Jambol ™ es un juego de simulación: no hay dinero real ni premios económicos. Los puntos, cuotas y resultados son ficticios y se utilizan exclusivamente con fines recreativos.
         </p>
       </section>
 

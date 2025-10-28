@@ -23,7 +23,7 @@ export default function PoliticaCookies() {
           alt="Jambol Logo"
           className="h-10 jambol-logo"
         />
-        <span className="text-2xl font-bold jambol-dark">jambol.co</span>
+        <span className="text-2xl font-bold jambol-dark">Jambol ™</span>
       </div>
       <h1 className="text-2xl md:text-3xl font-bold mb-2">Política de Cookies</h1>
 
@@ -35,9 +35,9 @@ export default function PoliticaCookies() {
 
       <hr className="my-6 border-border" />
 
-      {/* 2. ¿Qué tipos de cookies utiliza Jambol.co? */}
-      <h2 className="text-xl font-semibold mt-2 mb-3">2. ¿Qué tipos de cookies utiliza Jambol.co?</h2>
-      <p className="text-sm md:text-base text-muted-foreground mb-3">En Jambol.co utilizamos cookies propias y de terceros para distintos fines:</p>
+      {/* 2. ¿Qué tipos de cookies utiliza Jambol ™? */}
+      <h2 className="text-xl font-semibold mt-2 mb-3">2. ¿Qué tipos de cookies utiliza Jambol ™?</h2>
+      <p className="text-sm md:text-base text-muted-foreground mb-3">En Jambol ™ utilizamos cookies propias y de terceros para distintos fines:</p>
 
       <h3 className="text-base md:text-lg font-medium mt-4 mb-1">a) Cookies técnicas o necesarias</h3>
       <p className="text-sm md:text-base text-muted-foreground">Permiten que el sitio funcione correctamente y que el usuario pueda navegar por él, iniciar sesión o acceder a funciones seguras.</p>
@@ -60,7 +60,7 @@ export default function PoliticaCookies() {
       <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1">
         <li><code className="px-1 py-0.5 bg-muted rounded">_gcl_au</code>, <code className="px-1 py-0.5 bg-muted rounded">gclid</code> → permiten medir la efectividad de campañas publicitarias.</li>
       </ul>
-      <p className="mt-2 text-sm md:text-base text-muted-foreground"><span className="font-semibold">⚠️ Aviso:</span> En Jambol.co no se realizan apuestas reales ni transacciones económicas. Estas cookies publicitarias se usan únicamente para mostrar anuncios personalizados.</p>
+      <p className="mt-2 text-sm md:text-base text-muted-foreground"><span className="font-semibold">⚠️ Aviso:</span> En Jambol ™ no se realizan apuestas reales ni transacciones económicas. Estas cookies publicitarias se usan únicamente para mostrar anuncios personalizados.</p>
 
       <hr className="my-6 border-border" />
 

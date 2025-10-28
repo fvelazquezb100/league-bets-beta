@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { loginSchema, type LoginInput } from '@/schemas/validation';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { APP_CONFIG } from '@/config/app';
+import { SiteFooter } from '@/components/layout/SiteFooter';
 
 export const Login = () => {
   const { signIn, user, loading } = useAuth();
@@ -189,6 +190,7 @@ export const Login = () => {
         </div>
       </div>
 
+      <SiteFooter />
     </div>
   );
 };

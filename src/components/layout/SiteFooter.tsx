@@ -57,9 +57,9 @@ export const SiteFooter: React.FC = () => {
                     />
                     <span className="text-xl font-bold jambol-dark">Jambol</span>
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    © 2025 Jambol.co. Todos los derechos reservados.
-                  </div>
+                    <div className="text-sm text-muted-foreground">
+                      2025 Jambol ™. Todos los derechos reservados.
+                    </div>
                 </div>
               </td>
               
@@ -69,9 +69,11 @@ export const SiteFooter: React.FC = () => {
               
               {/* Columna 3: Enlaces legales */}
               <td className="align-top text-center w-1/3">
-                <div className="text-sm flex flex-col items-center gap-1">
+                <div className="text-sm grid grid-cols-2 gap-x-4 gap-y-1">
                   <Link to="/politica-cookies" className="underline">Política de Cookies</Link>
                   <Link to="/terminos" className="underline">Términos y Condiciones</Link>
+                  <Link to="/politica-privacidad" className="underline">Política de Privacidad</Link>
+                  <Link to="/aviso-legal" className="underline">Aviso Legal</Link>
                   <Link to="/reglas" className="underline">Reglas</Link>
                   <Link to="/faq" className="underline">FAQ</Link>
                 </div>
@@ -82,7 +84,7 @@ export const SiteFooter: React.FC = () => {
             <tr>
               <td colSpan={3} className="text-center">
                 <p className="mt-6 text-xs text-muted-foreground">
-                  Jambol.co es un juego de simulación. No se realizan apuestas con dinero real ni se ofrecen premios económicos. Todos los puntos y resultados son ficticios y se utilizan solo con fines recreativos.
+                  Jambol ™ es un juego de simulación. No se realizan apuestas con dinero real ni se ofrecen premios económicos. Todos los puntos y resultados son ficticios y se utilizan solo con fines recreativos.
                 </p>
               </td>
             </tr>
