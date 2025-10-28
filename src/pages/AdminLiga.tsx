@@ -9,7 +9,7 @@ import { Copy, Settings, Calendar } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Link } from 'react-router-dom';
-import { trackUserAction } from '@/utils/analytics';
+import { useCookieConsent } from '@/hooks/useCookieConsent';
 
 type ProfileRow = { league_id: number; role: string; };
 type LeagueRow = { 
@@ -34,6 +34,36 @@ type AvailableLeague = {
 
 const AdminLiga: React.FC = () => {
   const { toast } = useToast();
+  const { consent } = useCookieConsent();
+
+  React.useEffect(() => {
+    if (!consent?.analytics) {
+      return;
+    }
+
+    const script1 = document.createElement('script');
+    script1.async = true;
+    script1.src = 'https://www.googletagmanager.com/gtag/js?id=G-N8SYMCJED4';
+    document.head.appendChild(script1);
+
+    const script2 = document.createElement('script');
+    script2.innerHTML = `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-N8SYMCJED4');
+    `;
+    document.head.appendChild(script2);
+
+    return () => {
+      if (script1.parentNode) {
+        script1.parentNode.removeChild(script1);
+      }
+      if (script2.parentNode) {
+        script2.parentNode.removeChild(script2);
+      }
+    };
+  }, [consent?.analytics]);
 
   const [resettingBudgets, setResettingBudgets] = React.useState(false);
   const [currentWeek, setCurrentWeek] = React.useState<number | null>(null);
@@ -195,7 +225,6 @@ const handleResetWeek = async () => {
   if (!leagueId) return;
 
   try {
-    trackUserAction('click', 'admin_action', 'reset_week');
     setResettingWeek(true);
 
     // 1️⃣ Obtener el usuario con más y menos puntos en esta liga
@@ -262,7 +291,6 @@ const handleResetWeekManually = async () => {
   if (!leagueId) return;
 
   try {
-    trackUserAction('click', 'admin_action', 'manual_reset_week');
     setResettingWeekManually(true);
 
     // Ejecutar reset manual de semana específico para esta liga

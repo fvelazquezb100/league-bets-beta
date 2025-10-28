@@ -7,7 +7,6 @@ import { Separator } from '@/components/ui/separator';
 import { X, DollarSign } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useBettingSettings } from '@/hooks/useBettingSettings';
-import { trackBetPlaced } from '@/utils/analytics';
 import { supabase } from '@/integrations/supabase/client';
 import { getBettingTranslation } from '@/utils/bettingTranslations';
 import { betSchema, type BetInput } from '@/schemas/validation';
@@ -281,13 +280,6 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
       queryClient.invalidateQueries({ queryKey: ['user-bets'] });
       queryClient.invalidateQueries({ queryKey: ['user-profile'] });
       queryClient.invalidateQueries({ queryKey: ['user-bet-history'] });
-
-      // Track bet placement in Google Analytics
-      trackBetPlaced(
-        selectedBets.length > 1 ? 'combinada' : selectedBets[0]?.market || 'single',
-        parseFloat(stake),
-        totalOdds
-      );
 
       toast({
         title: '¡Apuesta realizada!',

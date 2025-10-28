@@ -9,7 +9,7 @@ import { NewsBoard } from '@/components/NewsBoard';
 import { useMatchOdds, type MatchData } from '@/hooks/useMatchOdds';
 import { useUserBetHistory } from '@/hooks/useUserBets';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { trackUserAction } from '@/utils/analytics';
+import { useCookieConsent } from '@/hooks/useCookieConsent';
 
 
 // Types imported from hooks - no need to redefine
@@ -26,6 +26,7 @@ const findMarket = (match: MatchData, marketName: string) => {
 export const Home = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { consent } = useCookieConsent();
   
   // React Query hooks for data fetching
   const { data: userProfile } = useUserProfile(user?.id);
@@ -46,6 +47,35 @@ export const Home = () => {
   useEffect(() => {
     document.title = 'Jambol - Inicio';
   }, []);
+
+  useEffect(() => {
+    if (!consent?.analytics) {
+      return;
+    }
+
+    const script1 = document.createElement('script');
+    script1.async = true;
+    script1.src = 'https://www.googletagmanager.com/gtag/js?id=G-N8SYMCJED4';
+    document.head.appendChild(script1);
+
+    const script2 = document.createElement('script');
+    script2.innerHTML = `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-N8SYMCJED4');
+    `;
+    document.head.appendChild(script2);
+
+    return () => {
+      if (script1.parentNode) {
+        script1.parentNode.removeChild(script1);
+      }
+      if (script2.parentNode) {
+        script2.parentNode.removeChild(script2);
+      }
+    };
+  }, [consent?.analytics]);
 
   return (
     <div className="space-y-8">
@@ -103,7 +133,6 @@ export const Home = () => {
             <Link to="/bets">
               <Button 
                 className="jambol-button w-full mt-4"
-                onClick={() => trackUserAction('click', 'navigation', 'view_all_matches')}
               >
                 Ver Todos los Partidos
               </Button>
@@ -165,7 +194,6 @@ export const Home = () => {
             <Link to="/bet-history">
               <Button 
                 className="jambol-button w-full mt-4"
-                onClick={() => trackUserAction('click', 'navigation', 'view_bet_history')}
               >
                 <History className="h-4 w-4 mr-2" />
                 Ver Historial Completo

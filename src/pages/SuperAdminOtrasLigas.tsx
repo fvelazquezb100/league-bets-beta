@@ -5,10 +5,41 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCookieConsent } from '@/hooks/useCookieConsent';
 
 const SuperAdminOtrasLigas: React.FC = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { consent } = useCookieConsent();
+
+  React.useEffect(() => {
+    if (!consent?.analytics) {
+      return;
+    }
+
+    const script1 = document.createElement('script');
+    script1.async = true;
+    script1.src = 'https://www.googletagmanager.com/gtag/js?id=G-N8SYMCJED4';
+    document.head.appendChild(script1);
+
+    const script2 = document.createElement('script');
+    script2.innerHTML = `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-N8SYMCJED4');
+    `;
+    document.head.appendChild(script2);
+
+    return () => {
+      if (script1.parentNode) {
+        script1.parentNode.removeChild(script1);
+      }
+      if (script2.parentNode) {
+        script2.parentNode.removeChild(script2);
+      }
+    };
+  }, [consent?.analytics]);
 
   const [loadingSetting, setLoadingSetting] = React.useState(true);
   const [seleccionesEnabled, setSeleccionesEnabled] = React.useState(false);

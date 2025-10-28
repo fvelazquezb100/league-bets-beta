@@ -6,11 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
-import { trackEvent } from '@/utils/analytics';
 import { supabase } from '@/integrations/supabase/client';
 import { APP_CONFIG } from '@/config/app';
 import { signupSchema, type SignupInput } from '@/schemas/validation';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { useCookieConsent } from '@/hooks/useCookieConsent';
 
 export const Signup = () => {
   const { signUp, user, loading } = useAuth();
@@ -25,6 +25,36 @@ export const Signup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const { consent } = useCookieConsent();
+
+  useEffect(() => {
+    if (!consent?.analytics) {
+      return;
+    }
+
+    const script1 = document.createElement('script');
+    script1.async = true;
+    script1.src = 'https://www.googletagmanager.com/gtag/js?id=G-N8SYMCJED4';
+    document.head.appendChild(script1);
+
+    const script2 = document.createElement('script');
+    script2.innerHTML = `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-N8SYMCJED4');
+    `;
+    document.head.appendChild(script2);
+
+    return () => {
+      if (script1.parentNode) {
+        script1.parentNode.removeChild(script1);
+      }
+      if (script2.parentNode) {
+        script2.parentNode.removeChild(script2);
+      }
+    };
+  }, [consent?.analytics]);
 
   // Handle username change - simple for now
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -154,11 +184,6 @@ export const Signup = () => {
       if (error) {
         handleError(error, { component: 'Signup', action: 'signUp' });
       } else {
-        // Track successful user registration
-        trackEvent('user_registration', {
-          username: username,
-          email_domain: email.split('@')[1]
-        });
         setSuccess(true);
       }
     } catch (err) {

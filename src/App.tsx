@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { MainLayout } from "./components/layout/MainLayout";
-import { GoogleAnalyticsScript } from "./components/GoogleAnalyticsScript";
 import { Landing } from "./pages/Landing";
 import { Login } from "./pages/Login";
 import { DemoLanguage } from "./pages/DemoLanguage";
@@ -48,7 +47,6 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <GoogleAnalyticsScript />
       <BrowserRouter>
         <AuthProvider>
           <Routes>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import BetSlip from '@/components/BetSlip';
@@ -20,6 +20,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { useBettingSettings } from '@/hooks/useBettingSettings';
 import { MagicCard } from '@/components/ui/MagicCard';
 import { supabase } from '@/integrations/supabase/client';
+import { useCookieConsent } from '@/hooks/useCookieConsent';
 
 // Re-export types from hooks for compatibility
 export type { Team, Fixture, Teams, BetValue, BetMarket, Bookmaker, MatchData, CachedOddsData } from '@/hooks/useMatchOdds';
@@ -31,6 +32,36 @@ const Bets = () => {
   const { cutoffMinutes } = useBettingSettings();
   const [selectedLeague, setSelectedLeague] = useState<'primera' | 'champions' | 'europa' | 'liga-mx' | 'selecciones' | 'coparey'>('primera');
   const [openId, setOpenId] = useState<number | null>(null);
+  const { consent } = useCookieConsent();
+
+  useEffect(() => {
+    if (!consent?.analytics) {
+      return;
+    }
+
+    const script1 = document.createElement('script');
+    script1.async = true;
+    script1.src = 'https://www.googletagmanager.com/gtag/js?id=G-N8SYMCJED4';
+    document.head.appendChild(script1);
+
+    const script2 = document.createElement('script');
+    script2.innerHTML = `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-N8SYMCJED4');
+    `;
+    document.head.appendChild(script2);
+
+    return () => {
+      if (script1.parentNode) {
+        script1.parentNode.removeChild(script1);
+      }
+      if (script2.parentNode) {
+        script2.parentNode.removeChild(script2);
+      }
+    };
+  }, [consent?.analytics]);
   
   // Hooks
   const { toast } = useToast();
