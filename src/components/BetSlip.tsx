@@ -284,7 +284,6 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
       queryClient.invalidateQueries({ queryKey: ['user-bet-history'] });
 
       // Track bet placement in Google Analytics
-      const totalOdds = selectedBets.reduce((acc, bet) => acc * bet.odds, 1);
       trackBetPlaced(
         selectedBets.length > 1 ? 'combinada' : selectedBets[0]?.market || 'single',
         parseFloat(stake),
