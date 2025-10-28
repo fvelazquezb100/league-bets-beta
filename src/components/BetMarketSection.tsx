@@ -8,7 +8,7 @@ import WinnerSelector from './WinnerSelector';
 import HalfTimeFullTimeSelector from './HalfTimeFullTimeSelector';
 import ResultTotalGoalsSelector from './ResultTotalGoalsSelector';
 import { OddsIndicator } from './OddsIndicator';
-import { useOddsComparison, findOddsForComparison } from '@/hooks/useOddsComparison';
+import { useOddsComparison, findOddsAuto } from '@/hooks/useOddsComparison';
 import { useIsPremiumLeague } from '@/hooks/useLeaguePremium';
 
 interface BetMarketSectionProps {
@@ -124,9 +124,8 @@ const BetMarketSection = ({
           const displayText = getBettingTranslation(value.value);
           
           // Get odds comparison data
-          const oddsData = oddsComparison ? findOddsForComparison(
-            oddsComparison.current,
-            oddsComparison.previous,
+          const oddsData = oddsComparison ? findOddsAuto(
+            oddsComparison,
             match.fixture.id,
             betType.displayName,
             value.value

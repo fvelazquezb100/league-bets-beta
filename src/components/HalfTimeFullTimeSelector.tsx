@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import type { MatchData, BetValue } from '@/pages/Bets';
 import { OddsIndicator } from './OddsIndicator';
-import { useOddsComparison, findOddsForComparison } from '@/hooks/useOddsComparison';
+import { useOddsComparison, findOddsAuto } from '@/hooks/useOddsComparison';
 import { useIsPremiumLeague } from '@/hooks/useLeaguePremium';
 
 interface HalfTimeFullTimeSelectorProps {
@@ -125,24 +125,20 @@ const HalfTimeFullTimeSelector = ({ match, isFrozen, hasUserBetOnMarket, handleA
             {currentOdds === '0.00' ? 'Selecciona ambas opciones' : (
               <>
                 {currentOdds}
-                {isPremium && currentOdds !== '0.00' && oddsComparison && (
-                  <OddsIndicator 
-                    current={oddsComparison ? findOddsForComparison(
-                      oddsComparison.current,
-                      oddsComparison.previous,
-                      match.fixture.id,
-                      'Medio Tiempo/Final',
-                      `${halfTimeResult}/${fullTimeResult}`
-                    ).current : null}
-                    previous={oddsComparison ? findOddsForComparison(
-                      oddsComparison.current,
-                      oddsComparison.previous,
-                      match.fixture.id,
-                      'Medio Tiempo/Final',
-                      `${halfTimeResult}/${fullTimeResult}`
-                    ).previous : null}
-                  />
-                )}
+                {isPremium && currentOdds !== '0.00' && oddsComparison && (() => {
+                  const oddsData = findOddsAuto(
+                    oddsComparison,
+                    match.fixture.id,
+                    'Medio Tiempo/Final',
+                    `${halfTimeResult}/${fullTimeResult}`
+                  );
+                  return (
+                    <OddsIndicator 
+                      current={oddsData.current}
+                      previous={oddsData.previous}
+                    />
+                  );
+                })()}
               </>
             )}
           </span>

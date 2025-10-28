@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const SuperAdminOtrasLigas: React.FC = () => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const [loadingSetting, setLoadingSetting] = React.useState(true);
   const [seleccionesEnabled, setSeleccionesEnabled] = React.useState(false);
@@ -18,6 +20,52 @@ const SuperAdminOtrasLigas: React.FC = () => {
     'Morocco', 'Germany', 'Colombia', 'Mexico', 'Uruguay', 'USA', 'Switzerland', 'Senegal', 'Japan', 'Denmark'
   ];
   const [enabledTeams, setEnabledTeams] = React.useState<string[]>(TEAMS);
+
+  // Hook para obtener la fecha de última actualización de cuotas (fila 3 de match_odds_cache)
+  const { data: lastOddsUpdate, isLoading: loadingLastUpdate } = useQuery({
+    queryKey: ['last-odds-update'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('match_odds_cache')
+        .select('last_updated')
+        .eq('id', 3) // Fila 3 corresponde a Selecciones (current)
+        .single();
+
+      if (error) {
+        console.error('Error fetching last odds update:', error);
+        return null;
+      }
+
+      return data?.last_updated;
+    },
+    staleTime: 0, // Always consider stale to get fresh data
+  });
+
+  // Función para convertir UTC a hora local y formatear
+  const formatLastUpdate = (utcDateString: string | null) => {
+    if (!utcDateString) return 'No disponible';
+    
+    try {
+      const utcDate = new Date(utcDateString);
+      
+      if (isNaN(utcDate.getTime())) {
+        return 'Fecha inválida';
+      }
+      
+      return utcDate.toLocaleString('es-ES', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Error al formatear fecha';
+    }
+  };
 
   React.useEffect(() => {
     const fetchSettings = async () => {
@@ -153,6 +201,9 @@ const SuperAdminOtrasLigas: React.FC = () => {
       if (error) {
         throw error;
       }
+
+      // Refrescar la fecha de última actualización
+      queryClient.invalidateQueries({ queryKey: ['last-odds-update'] });
 
       toast({
         title: 'Cuotas actualizadas',
@@ -296,6 +347,12 @@ const SuperAdminOtrasLigas: React.FC = () => {
               <p className="text-xs text-muted-foreground">
                 Actualiza las cuotas de Selecciones y Copa del Rey
               </p>
+              <div className="text-xs text-muted-foreground border-t pt-2">
+                <p className="font-medium">Última actualización:</p>
+                <p className="text-xs">
+                  {loadingLastUpdate ? 'Cargando...' : formatLastUpdate(lastOddsUpdate)}
+                </p>
+              </div>
             </div>
             <div className="space-y-2">
               <Button

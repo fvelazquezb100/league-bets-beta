@@ -39,24 +39,19 @@ export const useHistoricalStandings = (leagueId: number | null) => {
       if (profilesError) throw profilesError;
       if (!profiles || profiles.length === 0) return {};
 
-      // Obtener todas las semanas disponibles en esta liga
-      const { data: weeksData, error: weeksError } = await supabase
-        .from('bets')
-        .select(`
-          week,
-          profiles!inner(league_id)
-        `)
-        .eq('profiles.league_id', leagueId)
-        .not('week', 'is', null);
+      // Obtener la semana actual de la liga
+      const { data: leagueData, error: leagueError } = await supabase
+        .from('leagues')
+        .select('week')
+        .eq('id', leagueId)
+        .single();
 
-      if (weeksError) throw weeksError;
+      if (leagueError) throw leagueError;
+      if (!leagueData?.week) return {};
 
-      // Obtener semanas únicas y ordenarlas NUMÉRICAMENTE
-      const uniqueWeeks = [...new Set(weeksData?.map(bet => bet.week).filter(Boolean))];
-      const sortedWeeks = uniqueWeeks.sort((a, b) => Number(a) - Number(b));
-      
-
-      if (sortedWeeks.length === 0) return {};
+      // Generar todas las semanas desde 1 hasta la semana actual - 1
+      const currentWeek = leagueData.week;
+      const sortedWeeks = Array.from({ length: currentWeek - 1 }, (_, i) => i + 1);
 
       // Construir el objeto de datos históricos
       const historicalData: HistoricalStandingsData = {};

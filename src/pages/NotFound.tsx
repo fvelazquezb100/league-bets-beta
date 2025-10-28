@@ -32,6 +32,14 @@ const NotFound = () => {
             Volver al Inicio
           </Button>
         </Link>
+        <div className="mt-4">
+          <Link to="/politica-cookies" className="underline text-xs text-muted-foreground">
+            Política de Cookies
+          </Link>
+        </div>
+        <p className="mt-8 text-xs text-muted-foreground max-w-2xl mx-auto">
+          Jambol.co es un juego de simulación. No se realizan apuestas con dinero real ni se ofrecen premios económicos. Todos los puntos y resultados son ficticios y se utilizan solo con fines recreativos.
+        </p>
       </div>
     </div>
   );

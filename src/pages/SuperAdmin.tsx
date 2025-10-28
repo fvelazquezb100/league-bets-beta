@@ -26,8 +26,7 @@ const SuperAdmin: React.FC = () => {
       const { data, error } = await supabase
         .from('match_odds_cache')
         .select('last_updated')
-        .order('last_updated', { ascending: false })
-        .limit(1)
+        .eq('id', 1)
         .single();
 
       if (error) {

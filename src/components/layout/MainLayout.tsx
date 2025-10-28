@@ -1,5 +1,6 @@
 import { Header } from './Header';
 import { Navigation } from './Navigation';
+import { SiteFooter } from './SiteFooter';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -15,6 +16,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       <main className="container mx-auto px-6 py-8 pt-20 md:pt-8">
         {children}
       </main>
+      <SiteFooter />
     </div>
   );
 };

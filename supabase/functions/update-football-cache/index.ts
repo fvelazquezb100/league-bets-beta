@@ -282,11 +282,11 @@ Deno.serve(async (req) => {
     
     const finalCacheObject = { response: mergedOdds };
 
-    // Before writing current (id=1), copy existing id=1 data to id=2 (previous)
+    // Before writing current (id=1), copy existing id=1 data AND date to id=2 (previous)
     try {
       const { data: currentRow } = await supabaseAdmin
         .from('match_odds_cache')
-        .select('data')
+        .select('data, last_updated')
         .eq('id', 1)
         .maybeSingle();
       if (currentRow && currentRow.data) {
@@ -296,7 +296,7 @@ Deno.serve(async (req) => {
             id: 2,
             data: currentRow.data,
             info: 'Leagues - previous odds snapshot',
-            last_updated: new Date().toISOString(),
+            last_updated: currentRow.last_updated, // Copy the date from current row
           });
       }
     } catch (e) {
