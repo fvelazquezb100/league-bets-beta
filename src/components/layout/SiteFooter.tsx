@@ -1,30 +1,37 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { APP_CONFIG } from '@/config/app';
+import { useCookieConsent } from '@/hooks/useCookieConsent';
 
 export const SiteFooter: React.FC = () => {
+  const { consent, isLoading, acceptAll, rejectAll, updateConsent, hasConsent } = useCookieConsent();
   const [showBanner, setShowBanner] = React.useState(false);
-  const [consent, setConsent] = React.useState<string | null>(null);
   const [showAdvancedSettings, setShowAdvancedSettings] = React.useState(false);
   const [cookiesNecessary, setCookiesNecessary] = React.useState(true);
   const [cookiesAnalytics, setCookiesAnalytics] = React.useState(false);
   const [cookiesMarketing, setCookiesMarketing] = React.useState(false);
 
   React.useEffect(() => {
-    const stored = localStorage.getItem('cookie_consent');
-    setConsent(stored);
-    if (!stored) setShowBanner(true);
-  }, []);
+    if (!isLoading && !hasConsent) {
+      setShowBanner(true);
+    }
+  }, [isLoading, hasConsent]);
 
-  const acceptAll = () => {
-    localStorage.setItem('cookie_consent', 'all');
-    setConsent('all');
+  React.useEffect(() => {
+    if (consent) {
+      setCookiesNecessary(consent.necessary);
+      setCookiesAnalytics(consent.analytics);
+      setCookiesMarketing(consent.marketing);
+    }
+  }, [consent]);
+
+  const handleAcceptAll = () => {
+    acceptAll();
     setShowBanner(false);
   };
 
-  const rejectAll = () => {
-    localStorage.setItem('cookie_consent', 'necessary');
-    setConsent('necessary');
+  const handleRejectAll = () => {
+    rejectAll();
     setShowBanner(false);
   };
 
@@ -34,8 +41,7 @@ export const SiteFooter: React.FC = () => {
       analytics: cookiesAnalytics,
       marketing: cookiesMarketing
     };
-    localStorage.setItem('cookie_consent', JSON.stringify(preferences));
-    setConsent(JSON.stringify(preferences));
+    updateConsent(preferences);
     setShowBanner(false);
   };
 
@@ -164,10 +170,10 @@ export const SiteFooter: React.FC = () => {
                     </ul>
                   </div>
                   <div className="mt-4 flex flex-col sm:flex-row gap-2 sm:gap-3">
-                    <button onClick={rejectAll} className="border rounded px-4 py-2 text-sm">
+                    <button onClick={handleRejectAll} className="border rounded px-4 py-2 text-sm">
                       Rechazar
                     </button>
-                    <button onClick={acceptAll} className="jambol-button rounded px-4 py-2 text-sm">
+                    <button onClick={handleAcceptAll} className="jambol-button rounded px-4 py-2 text-sm">
                       Aceptar todas
                     </button>
                     <button onClick={() => setShowAdvancedSettings(true)} className="border rounded px-4 py-2 text-sm">
