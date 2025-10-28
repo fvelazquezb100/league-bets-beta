@@ -9,6 +9,7 @@ import { Copy, Settings, Calendar } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Link } from 'react-router-dom';
+import { useGoogleAnalytics } from '@/hooks/useGoogleAnalytics';
 
 type ProfileRow = { league_id: number; role: string; };
 type LeagueRow = { 
@@ -33,6 +34,7 @@ type AvailableLeague = {
 
 const AdminLiga: React.FC = () => {
   const { toast } = useToast();
+  const { trackUserAction } = useGoogleAnalytics();
 
   const [resettingBudgets, setResettingBudgets] = React.useState(false);
   const [currentWeek, setCurrentWeek] = React.useState<number | null>(null);
@@ -194,6 +196,7 @@ const handleResetWeek = async () => {
   if (!leagueId) return;
 
   try {
+    trackUserAction('click', 'admin_action', 'reset_week');
     setResettingWeek(true);
 
     // 1️⃣ Obtener el usuario con más y menos puntos en esta liga
@@ -260,6 +263,7 @@ const handleResetWeekManually = async () => {
   if (!leagueId) return;
 
   try {
+    trackUserAction('click', 'admin_action', 'manual_reset_week');
     setResettingWeekManually(true);
 
     // Ejecutar reset manual de semana específico para esta liga

@@ -13,11 +13,13 @@ import { UserStatistics } from '@/components/UserStatistics';
 import { useUserBetHistory, useCancelBet } from '@/hooks/useUserBets';
 import { useBettingSettings } from '@/hooks/useBettingSettings';
 import { useMatchResults, useKickoffTimes } from '@/hooks/useMatchResults';
+import { useGoogleAnalytics } from '@/hooks/useGoogleAnalytics';
 
 export const BetHistory = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { cutoffMinutes } = useBettingSettings();
+  const { trackUserAction } = useGoogleAnalytics();
   
   // React Query hooks
   const { data: bets = [], isLoading: betsLoading, refetch: refetchBets } = useUserBetHistory(user?.id);
@@ -96,6 +98,7 @@ export const BetHistory = () => {
     if (!betToCancel) return;
     
     try {
+      trackUserAction('click', 'bet_action', 'cancel_bet');
       await cancelBetMutation.mutateAsync(betToCancel);
       
       setCancelDialogOpen(false);
@@ -505,7 +508,10 @@ export const BetHistory = () => {
 
         <Card 
           className="cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:border-primary/30"
-          onClick={() => setShowStatistics(true)}
+          onClick={() => {
+            trackUserAction('click', 'modal', 'user_statistics');
+            setShowStatistics(true);
+          }}
         >
           <CardContent className="p-4">
             <div className="flex items-center justify-between">

@@ -7,10 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useGoogleAnalytics } from '@/hooks/useGoogleAnalytics';
 
 export const LeagueSetup = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { trackLeagueJoined } = useGoogleAnalytics();
   const [mode, setMode] = useState<'create' | 'join'>('create');
   const [leagueName, setLeagueName] = useState('');
   const [joinCode, setJoinCode] = useState('');
@@ -31,6 +33,7 @@ const handleCreate = async () => {
   setLoading(true);
 
   try {
+    trackLeagueJoined('new_league', 'created');
     // Use the RPC function that properly creates league and assigns user
     const { error } = await supabase.rpc('create_league_and_join', {
       _user_id: user.id,
@@ -58,20 +61,28 @@ const handleCreate = async () => {
     }
     setError('');
     setLoading(true);
-    const { data, error } = await supabase.rpc('join_league_with_code', {
-      _user_id: user.id,
-      _join_code: code,
-    });
-    setLoading(false);
-    if (error) {
-      setError(error.message || 'No se pudo unir a la liga');
-      return;
+    
+    try {
+      trackLeagueJoined(code, 'joined');
+      const { data, error } = await supabase.rpc('join_league_with_code', {
+        _user_id: user.id,
+        _join_code: code,
+      });
+      
+      if (error) {
+        setError(error.message || 'No se pudo unir a la liga');
+        return;
+      }
+      if (data !== true) {
+        setError('Código inválido o liga no encontrada');
+        return;
+      }
+      navigate('/home', { replace: true });
+    } catch (err: any) {
+      setError(err.message || 'Error al unirse a la liga');
+    } finally {
+      setLoading(false);
     }
-    if (data !== true) {
-      setError('Código inválido o liga no encontrada');
-      return;
-    }
-    navigate('/home', { replace: true });
   };
 
   return (

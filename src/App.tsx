@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { MainLayout } from "./components/layout/MainLayout";
+import { GoogleAnalyticsTracker } from "./components/GoogleAnalyticsTracker";
 import { Landing } from "./pages/Landing";
 import { Login } from "./pages/Login";
 import { DemoLanguage } from "./pages/DemoLanguage";
@@ -48,6 +49,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <GoogleAnalyticsTracker />
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Landing />} />

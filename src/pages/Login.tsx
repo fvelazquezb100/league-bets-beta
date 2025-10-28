@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
+import { useGoogleAnalytics } from '@/hooks/useGoogleAnalytics';
 import { loginSchema, type LoginInput } from '@/schemas/validation';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { APP_CONFIG } from '@/config/app';
@@ -14,6 +15,7 @@ import { SiteFooter } from '@/components/layout/SiteFooter';
 export const Login = () => {
   const { signIn, user, loading } = useAuth();
   const { handleError } = useErrorHandler();
+  const { trackEvent } = useGoogleAnalytics();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -68,6 +70,11 @@ export const Login = () => {
       const { error } = await signIn(email, password);
       if (error) {
         handleError(error, { component: 'Login', action: 'signIn' });
+      } else {
+        // Track successful login
+        trackEvent('user_login', {
+          email_domain: email.split('@')[1]
+        });
       }
     } catch (err) {
       handleError(err, { component: 'Login', action: 'signIn' });

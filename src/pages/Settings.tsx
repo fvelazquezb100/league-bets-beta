@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useGoogleAnalytics } from '@/hooks/useGoogleAnalytics';
 
 interface Profile {
   id: string;
@@ -26,6 +27,7 @@ interface League {
 export const Settings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { trackUserAction } = useGoogleAnalytics();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [league, setLeague] = useState<League | null>(null);
   const [loading, setLoading] = useState(true);
@@ -142,6 +144,7 @@ export const Settings = () => {
     
     setUsernameLoading(true);
     try {
+      trackUserAction('click', 'profile_update', 'username_change');
       const { data, error } = await supabase.rpc('update_username', { new_username: newUsername.trim() });
       if (error) throw error;
       if (data?.success) {
@@ -199,6 +202,7 @@ export const Settings = () => {
     
     setLeaveLeagueLoading(true);
     try {
+      trackUserAction('click', 'league_action', 'leave_league');
       const { data, error } = await supabase.functions.invoke('leave-league', {
         body: { user_id: user.id }
       });

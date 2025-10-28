@@ -10,10 +10,12 @@ import { useLeagueStatistics } from '@/hooks/useLeagueStatistics';
 import { useLeagueStandings, useAvailableWeeks } from '@/hooks/useLeagueStandings';
 import { useHistoricalStandings } from '@/hooks/useHistoricalStandings';
 import { HistoricalStandingsModal } from '@/components/HistoricalStandingsModal';
+import { useGoogleAnalytics } from '@/hooks/useGoogleAnalytics';
 import { Award, ArrowDown, BarChart3, Calendar, TrendingUp } from 'lucide-react';
 
 export const Clasificacion = () => {
   const { user } = useAuth();
+  const { trackUserAction } = useGoogleAnalytics();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [previousChampionName, setPreviousChampionName] = useState<string | null>(null);
   const [previousLastName, setPreviousLastName] = useState<string | null>(null);
@@ -116,6 +118,7 @@ export const Clasificacion = () => {
   const handlePlayerClick = (profile: any) => {
     if (profile.id === user?.id) return;
 
+    trackUserAction('click', 'player_profile', profile.username || 'Usuario');
     setSelectedPlayer({
       id: profile.id,
       name: profile.username || 'Usuario'
@@ -203,7 +206,10 @@ export const Clasificacion = () => {
         {/* Historical Standings Card */}
         <Card 
           className="cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:border-primary/30"
-          onClick={() => setIsHistoricalStandingsModalOpen(true)}
+          onClick={() => {
+            trackUserAction('click', 'modal', 'historical_standings');
+            setIsHistoricalStandingsModalOpen(true);
+          }}
         >
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -224,7 +230,10 @@ export const Clasificacion = () => {
             <div className="relative week-filter-container">
               <Card 
                 className="cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:border-primary/30 h-full"
-                onClick={() => setShowWeekFilter(!showWeekFilter)}
+                onClick={() => {
+                  trackUserAction('click', 'filter', 'week_filter');
+                  setShowWeekFilter(!showWeekFilter);
+                }}
               >
                 <CardContent className="p-4 h-full flex flex-col justify-between">
                   <div className="flex items-center justify-between">
@@ -263,7 +272,10 @@ export const Clasificacion = () => {
             {/* League Statistics Card */}
             <Card 
               className="cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:border-primary/30 h-full"
-              onClick={() => setIsLeagueStatsModalOpen(true)}
+              onClick={() => {
+                trackUserAction('click', 'modal', 'league_statistics');
+                setIsLeagueStatsModalOpen(true);
+              }}
             >
               <CardContent className="p-4 h-full flex flex-col justify-between">
                 <div className="flex items-center justify-between">

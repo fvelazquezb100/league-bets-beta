@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { X, DollarSign } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useBettingSettings } from '@/hooks/useBettingSettings';
+import { useGoogleAnalytics } from '@/hooks/useGoogleAnalytics';
 import { supabase } from '@/integrations/supabase/client';
 import { getBettingTranslation } from '@/utils/bettingTranslations';
 import { betSchema, type BetInput } from '@/schemas/validation';
@@ -36,6 +37,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
   const [minBet, setMinBet] = useState<number>(10); // Default minimum bet
   const { toast } = useToast();
   const { cutoffMinutes } = useBettingSettings();
+  const { trackBetPlaced } = useGoogleAnalytics();
   const queryClient = useQueryClient();
 
   // Helper to adjust stake by 10, allowing values below minBet
@@ -280,6 +282,14 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
       queryClient.invalidateQueries({ queryKey: ['user-bets'] });
       queryClient.invalidateQueries({ queryKey: ['user-profile'] });
       queryClient.invalidateQueries({ queryKey: ['user-bet-history'] });
+
+      // Track bet placement in Google Analytics
+      const totalOdds = selectedBets.reduce((acc, bet) => acc * bet.odds, 1);
+      trackBetPlaced(
+        selectedBets.length > 1 ? 'combinada' : selectedBets[0]?.market || 'single',
+        parseFloat(stake),
+        totalOdds
+      );
 
       toast({
         title: '¡Apuesta realizada!',

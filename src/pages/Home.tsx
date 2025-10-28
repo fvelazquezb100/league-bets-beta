@@ -9,6 +9,7 @@ import { NewsBoard } from '@/components/NewsBoard';
 import { useMatchOdds, type MatchData } from '@/hooks/useMatchOdds';
 import { useUserBetHistory } from '@/hooks/useUserBets';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useGoogleAnalytics } from '@/hooks/useGoogleAnalytics';
 
 
 // Types imported from hooks - no need to redefine
@@ -25,6 +26,7 @@ const findMarket = (match: MatchData, marketName: string) => {
 export const Home = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { trackUserAction } = useGoogleAnalytics();
   
   // React Query hooks for data fetching
   const { data: userProfile } = useUserProfile(user?.id);
@@ -100,7 +102,10 @@ export const Home = () => {
               })
             )}
             <Link to="/bets">
-              <Button className="jambol-button w-full mt-4">
+              <Button 
+                className="jambol-button w-full mt-4"
+                onClick={() => trackUserAction('click', 'navigation', 'view_all_matches')}
+              >
                 Ver Todos los Partidos
               </Button>
             </Link>
@@ -159,7 +164,10 @@ export const Home = () => {
               })
             )}
             <Link to="/bet-history">
-              <Button className="jambol-button w-full mt-4">
+              <Button 
+                className="jambol-button w-full mt-4"
+                onClick={() => trackUserAction('click', 'navigation', 'view_bet_history')}
+              >
                 <History className="h-4 w-4 mr-2" />
                 Ver Historial Completo
               </Button>

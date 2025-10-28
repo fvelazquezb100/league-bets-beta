@@ -18,6 +18,7 @@ import { useAvailableLeagues } from '@/hooks/useAvailableLeagues';
 import { useCombinedMatchAvailability } from '@/hooks/useCombinedMatchAvailability';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useBettingSettings } from '@/hooks/useBettingSettings';
+import { useGoogleAnalytics } from '@/hooks/useGoogleAnalytics';
 import { MagicCard } from '@/components/ui/MagicCard';
 import { supabase } from '@/integrations/supabase/client';
 

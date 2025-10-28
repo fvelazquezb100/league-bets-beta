@@ -91,7 +91,7 @@ const loadGoogleAnalytics = () => {
   // Load Google Analytics script
   const script = document.createElement('script');
   script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${import.meta.env.VITE_GA_MEASUREMENT_ID || 'GA_MEASUREMENT_ID'}`;
+  script.src = 'https://www.googletagmanager.com/gtag/js?id=G-N8SYMCJED4';
   document.head.appendChild(script);
 
   // Initialize gtag
@@ -101,7 +101,7 @@ const loadGoogleAnalytics = () => {
   };
   
   window.gtag('js', new Date());
-  window.gtag('config', import.meta.env.VITE_GA_MEASUREMENT_ID || 'GA_MEASUREMENT_ID', {
+  window.gtag('config', 'G-N8SYMCJED4', {
     anonymize_ip: true,
     cookie_flags: 'SameSite=None;Secure'
   });
