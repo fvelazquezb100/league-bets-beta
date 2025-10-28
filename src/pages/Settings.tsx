@@ -9,7 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useGoogleAnalytics } from '@/hooks/useGoogleAnalytics';
+import { trackUserAction } from '@/utils/analytics';
 
 interface Profile {
   id: string;
@@ -27,7 +27,6 @@ interface League {
 export const Settings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { trackUserAction } = useGoogleAnalytics();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [league, setLeague] = useState<League | null>(null);
   const [loading, setLoading] = useState(true);

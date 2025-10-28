@@ -7,7 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { X, DollarSign } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useBettingSettings } from '@/hooks/useBettingSettings';
-import { useGoogleAnalytics } from '@/hooks/useGoogleAnalytics';
+import { trackBetPlaced } from '@/utils/analytics';
 import { supabase } from '@/integrations/supabase/client';
 import { getBettingTranslation } from '@/utils/bettingTranslations';
 import { betSchema, type BetInput } from '@/schemas/validation';
@@ -37,7 +37,6 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
   const [minBet, setMinBet] = useState<number>(10); // Default minimum bet
   const { toast } = useToast();
   const { cutoffMinutes } = useBettingSettings();
-  const { trackBetPlaced } = useGoogleAnalytics();
   const queryClient = useQueryClient();
 
   // Helper to adjust stake by 10, allowing values below minBet

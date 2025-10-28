@@ -7,12 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useGoogleAnalytics } from '@/hooks/useGoogleAnalytics';
+import { trackLeagueJoined } from '@/utils/analytics';
 
 export const LeagueSetup = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { trackLeagueJoined } = useGoogleAnalytics();
   const [mode, setMode] = useState<'create' | 'join'>('create');
   const [leagueName, setLeagueName] = useState('');
   const [joinCode, setJoinCode] = useState('');

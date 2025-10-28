@@ -10,12 +10,11 @@ import { useLeagueStatistics } from '@/hooks/useLeagueStatistics';
 import { useLeagueStandings, useAvailableWeeks } from '@/hooks/useLeagueStandings';
 import { useHistoricalStandings } from '@/hooks/useHistoricalStandings';
 import { HistoricalStandingsModal } from '@/components/HistoricalStandingsModal';
-import { useGoogleAnalytics } from '@/hooks/useGoogleAnalytics';
+import { trackUserAction } from '@/utils/analytics';
 import { Award, ArrowDown, BarChart3, Calendar, TrendingUp } from 'lucide-react';
 
 export const Clasificacion = () => {
   const { user } = useAuth();
-  const { trackUserAction } = useGoogleAnalytics();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [previousChampionName, setPreviousChampionName] = useState<string | null>(null);
   const [previousLastName, setPreviousLastName] = useState<string | null>(null);

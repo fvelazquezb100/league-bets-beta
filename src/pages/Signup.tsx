@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
-import { useGoogleAnalytics } from '@/hooks/useGoogleAnalytics';
+import { trackEvent } from '@/utils/analytics';
 import { supabase } from '@/integrations/supabase/client';
 import { APP_CONFIG } from '@/config/app';
 import { signupSchema, type SignupInput } from '@/schemas/validation';
@@ -15,7 +15,6 @@ import { useErrorHandler } from '@/hooks/useErrorHandler';
 export const Signup = () => {
   const { signUp, user, loading } = useAuth();
   const { handleError } = useErrorHandler();
-  const { trackEvent } = useGoogleAnalytics();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

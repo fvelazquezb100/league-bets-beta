@@ -9,7 +9,7 @@ import { NewsBoard } from '@/components/NewsBoard';
 import { useMatchOdds, type MatchData } from '@/hooks/useMatchOdds';
 import { useUserBetHistory } from '@/hooks/useUserBets';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { useGoogleAnalytics } from '@/hooks/useGoogleAnalytics';
+import { trackUserAction } from '@/utils/analytics';
 
 
 // Types imported from hooks - no need to redefine
@@ -26,7 +26,6 @@ const findMarket = (match: MatchData, marketName: string) => {
 export const Home = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { trackUserAction } = useGoogleAnalytics();
   
   // React Query hooks for data fetching
   const { data: userProfile } = useUserProfile(user?.id);

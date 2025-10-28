@@ -13,13 +13,12 @@ import { UserStatistics } from '@/components/UserStatistics';
 import { useUserBetHistory, useCancelBet } from '@/hooks/useUserBets';
 import { useBettingSettings } from '@/hooks/useBettingSettings';
 import { useMatchResults, useKickoffTimes } from '@/hooks/useMatchResults';
-import { useGoogleAnalytics } from '@/hooks/useGoogleAnalytics';
+import { trackUserAction } from '@/utils/analytics';
 
 export const BetHistory = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { cutoffMinutes } = useBettingSettings();
-  const { trackUserAction } = useGoogleAnalytics();
   
   // React Query hooks
   const { data: bets = [], isLoading: betsLoading, refetch: refetchBets } = useUserBetHistory(user?.id);
