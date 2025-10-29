@@ -13,24 +13,29 @@ const leagueIds = [143, 32]; // Copa del Rey, Clasificación Europea Mundial
 
 function outcomeFromFixture(fx: any): "home" | "away" | "draw" | null {
   try {
-    const hg = fx?.goals?.home ?? fx?.score?.fulltime?.home ?? null;
-    const ag = fx?.goals?.away ?? fx?.score?.fulltime?.away ?? null;
-    
-    if (hg == null || ag == null) return null;
-    
-    // Log the match status for debugging
     const status = fx?.fixture?.status?.short;
-    const matchStatus = fx?.match_status; // Our custom field
+    const customStatus = fx?.match_status;
+    const matchStatus = normalizeMatchStatus(customStatus || status);
     const matchId = fx?.fixture?.id;
-    
-    if (status && (status === 'AET' || status === 'PEN')) {
-      console.log(`Match ${matchId} ended in ${status === 'AET' ? 'extra time' : 'penalties'}, final score: ${hg}-${ag}`);
-    } else if (matchStatus && (matchStatus === 'AET' || matchStatus === 'PEN')) {
-      console.log(`Match ${matchId} ended in ${matchStatus === 'AET' ? 'extra time' : 'penalties'}, final score: ${hg}-${ag}`);
+
+    const fullTimeHome = fx?.score?.fulltime?.home ?? null;
+    const fullTimeAway = fx?.score?.fulltime?.away ?? null;
+    const goalsHome = fx?.goals?.home ?? null;
+    const goalsAway = fx?.goals?.away ?? null;
+
+    const regulationHome = fullTimeHome ?? goalsHome ?? null;
+    const regulationAway = fullTimeAway ?? goalsAway ?? null;
+
+    if (regulationHome == null || regulationAway == null) return null;
+
+    if (matchStatus === 'AET' || matchStatus === 'PEN') {
+      const finalHome = goalsHome ?? regulationHome;
+      const finalAway = goalsAway ?? regulationAway;
+      console.log(`Match ${matchId} ended in ${matchStatus === 'AET' ? 'extra time' : 'penalties'}, regulation ${regulationHome}-${regulationAway}, final ${finalHome}-${finalAway}`);
     }
-    
-    if (hg > ag) return "home";
-    if (hg < ag) return "away";
+
+    if (regulationHome > regulationAway) return "home";
+    if (regulationHome < regulationAway) return "away";
     return "draw";
   } catch {
     return null;
@@ -69,25 +74,75 @@ function formatExtendedMatchResult(params: {
   const extraTimeScore = formatScore(params.extraTimeHome, params.extraTimeAway);
   const penaltyScore = formatScore(params.penaltyHome, params.penaltyAway);
 
+  if (!params.status || params.status === "FT") {
+    return finalScore || fullTimeScore;
+  }
+
   if (params.status === "AET") {
-    if (fullTimeScore && extraTimeScore) {
-      return `${fullTimeScore} (${extraTimeScore})`;
-    }
     if (fullTimeScore && finalScore) {
-      return `${fullTimeScore} (${finalScore})`;
+      return `${fullTimeScore} | ${finalScore} AET`;
     }
+    if (fullTimeScore) {
+      return `${fullTimeScore} | AET`;
+    }
+    if (finalScore) {
+      return `${finalScore} AET`;
+    }
+    return `AET`;
   }
 
   if (params.status === "PEN") {
-    if (fullTimeScore && penaltyScore) {
-      return `${fullTimeScore} (${penaltyScore})`;
+    if (fullTimeScore && finalScore && penaltyScore) {
+      const base = `${fullTimeScore} | ${finalScore} AET`;
+      return `${base} (${penaltyScore})`;
     }
-    if (fullTimeScore && extraTimeScore) {
-      return `${fullTimeScore} (${extraTimeScore})`;
+    if (finalScore && penaltyScore) {
+      return `${finalScore} AET (${penaltyScore})`;
     }
+    if (penaltyScore) {
+      return `PEN (${penaltyScore})`;
+    }
+    return `PEN`;
   }
 
   return finalScore || fullTimeScore;
+}
+
+function computeFinalGoals(params: {
+  regulation: number | null;
+  finalGoals: number | null;
+  extraTime: number | null;
+  status: "FT" | "AET" | "PEN" | null;
+}): number | null {
+  const { regulation, finalGoals, extraTime, status } = params;
+
+  if (status === "AET" && extraTime != null) {
+    const extraTotal = regulation != null && extraTime < regulation
+      ? regulation + extraTime
+      : extraTime;
+
+    if (finalGoals != null) {
+      if (finalGoals >= extraTotal) {
+        return finalGoals;
+      }
+      return extraTotal;
+    }
+
+    return extraTotal;
+  }
+
+  if (finalGoals != null) {
+    return finalGoals;
+  }
+
+  if (status === "AET" && extraTime != null) {
+    if (regulation != null && extraTime < regulation) {
+      return regulation + extraTime;
+    }
+    return extraTime;
+  }
+
+  return regulation;
 }
 
 function evaluateBet(
@@ -668,59 +723,73 @@ serve(async (req) => {
     
     for (const fx of finished) {
       const id = fx?.fixture?.id;
-      const oc = outcomeFromFixture(fx);
-      const hg = fx?.goals?.home ?? fx?.score?.fulltime?.home ?? null;
-      const ag = fx?.goals?.away ?? fx?.score?.fulltime?.away ?? null;
-      
-      // Extract halftime scores if available
-      const htHome = fx?.score?.halftime?.home ?? null;
-      const htAway = fx?.score?.halftime?.away ?? null;
-      const ftHome = fx?.score?.fulltime?.home ?? null;
-      const ftAway = fx?.score?.fulltime?.away ?? null;
-      const extraHome = fx?.score?.extratime?.home ?? null;
-      const extraAway = fx?.score?.extratime?.away ?? null;
-      const penaltyHome = fx?.score?.penalty?.home ?? null;
-      const penaltyAway = fx?.score?.penalty?.away ?? null;
       const matchStatus = normalizeMatchStatus(fx?.match_status || fx?.fixture?.status?.short);
+
+      const halftimeHomeRaw = fx?.score?.halftime?.home ?? null;
+      const halftimeAwayRaw = fx?.score?.halftime?.away ?? null;
+      const fullTimeHomeRaw = fx?.score?.fulltime?.home ?? null;
+      const fullTimeAwayRaw = fx?.score?.fulltime?.away ?? null;
+      const extraHomeRaw = fx?.score?.extratime?.home ?? null;
+      const extraAwayRaw = fx?.score?.extratime?.away ?? null;
+      const penaltyHomeRaw = fx?.score?.penalty?.home ?? null;
+      const penaltyAwayRaw = fx?.score?.penalty?.away ?? null;
+      const goalsHomeRaw = fx?.goals?.home ?? null;
+      const goalsAwayRaw = fx?.goals?.away ?? null;
+
+      const halftimeHome = halftimeHomeRaw != null ? Number(halftimeHomeRaw) : null;
+      const halftimeAway = halftimeAwayRaw != null ? Number(halftimeAwayRaw) : null;
+      const fullTimeHome = fullTimeHomeRaw != null ? Number(fullTimeHomeRaw) : null;
+      const fullTimeAway = fullTimeAwayRaw != null ? Number(fullTimeAwayRaw) : null;
+      const extraTimeHome = extraHomeRaw != null ? Number(extraHomeRaw) : null;
+      const extraTimeAway = extraAwayRaw != null ? Number(extraAwayRaw) : null;
+      const penaltyHome = penaltyHomeRaw != null ? Number(penaltyHomeRaw) : null;
+      const penaltyAway = penaltyAwayRaw != null ? Number(penaltyAwayRaw) : null;
+      const finalGoalsHome = goalsHomeRaw != null ? Number(goalsHomeRaw) : null;
+      const finalGoalsAway = goalsAwayRaw != null ? Number(goalsAwayRaw) : null;
+
+      const regulationHome = fullTimeHome ?? finalGoalsHome;
+      const regulationAway = fullTimeAway ?? finalGoalsAway;
+
+      const oc = outcomeFromFixture(fx);
       let htOutcome: "home" | "away" | "draw" | undefined = undefined;
       
-      if (htHome !== null && htAway !== null) {
-        if (htHome > htAway) htOutcome = "home";
-        else if (htHome < htAway) htOutcome = "away";
+      if (halftimeHome !== null && halftimeAway !== null) {
+        if (halftimeHome > halftimeAway) htOutcome = "home";
+        else if (halftimeHome < halftimeAway) htOutcome = "away";
         else htOutcome = "draw";
       }
 
       let secondHalfHome: number | null = null;
       let secondHalfAway: number | null = null;
 
-      if (ftHome !== null && htHome !== null) {
-        const diff = Number(ftHome) - Number(htHome);
+      if (regulationHome !== null && halftimeHome !== null) {
+        const diff = regulationHome - halftimeHome;
         if (!Number.isNaN(diff)) {
           secondHalfHome = diff;
         }
       }
 
-      if (ftAway !== null && htAway !== null) {
-        const diff = Number(ftAway) - Number(htAway);
+      if (regulationAway !== null && halftimeAway !== null) {
+        const diff = regulationAway - halftimeAway;
         if (!Number.isNaN(diff)) {
           secondHalfAway = diff;
         }
       }
       
       if (id && oc) outcomeMap.set(id, oc);
-      if (id != null && hg != null && ag != null && oc) {
+      if (id != null && regulationHome != null && regulationAway != null && oc) {
         resultsMap.set(id, { 
-          home_goals: Number(hg), 
-          away_goals: Number(ag), 
+          home_goals: regulationHome, 
+          away_goals: regulationAway, 
           outcome: oc,
-          halftime_home: htHome !== null ? Number(htHome) : undefined,
-          halftime_away: htAway !== null ? Number(htAway) : undefined,
+          halftime_home: halftimeHome ?? undefined,
+          halftime_away: halftimeAway ?? undefined,
           halftime_outcome: htOutcome,
           second_half_home: secondHalfHome !== null ? secondHalfHome : undefined,
           second_half_away: secondHalfAway !== null ? secondHalfAway : undefined,
           match_status: matchStatus ?? undefined,
-          penalty_home: penaltyHome !== null ? Number(penaltyHome) : undefined,
-          penalty_away: penaltyAway !== null ? Number(penaltyAway) : undefined,
+          penalty_home: penaltyHome ?? undefined,
+          penalty_away: penaltyAway ?? undefined,
         });
       }
     }
@@ -746,43 +815,63 @@ serve(async (req) => {
     let matchResultsInserted = 0;
     for (const fx of finished) {
       const id = fx?.fixture?.id;
-      const hg = fx?.goals?.home ?? fx?.score?.fulltime?.home ?? null;
-      const ag = fx?.goals?.away ?? fx?.score?.fulltime?.away ?? null;
       const oc = outcomeFromFixture(fx);
+      const matchStatus = normalizeMatchStatus(fx?.match_status || fx?.fixture?.status?.short);
+
+      const halftimeHomeRaw = fx?.score?.halftime?.home ?? null;
+      const halftimeAwayRaw = fx?.score?.halftime?.away ?? null;
+      const fullTimeHomeRaw = fx?.score?.fulltime?.home ?? null;
+      const fullTimeAwayRaw = fx?.score?.fulltime?.away ?? null;
+      const extraHomeRaw = fx?.score?.extratime?.home ?? null;
+      const extraAwayRaw = fx?.score?.extratime?.away ?? null;
+      const penaltyHomeRaw = fx?.score?.penalty?.home ?? null;
+      const penaltyAwayRaw = fx?.score?.penalty?.away ?? null;
+      const goalsHomeRaw = fx?.goals?.home ?? null;
+      const goalsAwayRaw = fx?.goals?.away ?? null;
+
+      const halftimeHome = halftimeHomeRaw != null ? Number(halftimeHomeRaw) : null;
+      const halftimeAway = halftimeAwayRaw != null ? Number(halftimeAwayRaw) : null;
+      const fullTimeHome = fullTimeHomeRaw != null ? Number(fullTimeHomeRaw) : null;
+      const fullTimeAway = fullTimeAwayRaw != null ? Number(fullTimeAwayRaw) : null;
+      const extraTimeHome = extraHomeRaw != null ? Number(extraHomeRaw) : null;
+      const extraTimeAway = extraAwayRaw != null ? Number(extraAwayRaw) : null;
+      const penaltyHome = penaltyHomeRaw != null ? Number(penaltyHomeRaw) : null;
+      const penaltyAway = penaltyAwayRaw != null ? Number(penaltyAwayRaw) : null;
+      const finalHomeGoals = goalsHomeRaw != null ? Number(goalsHomeRaw) : null;
+      const finalAwayGoals = goalsAwayRaw != null ? Number(goalsAwayRaw) : null;
+
+      const regulationHome = fullTimeHome ?? finalHomeGoals;
+      const regulationAway = fullTimeAway ?? finalAwayGoals;
       
-      if (id && hg !== null && ag !== null && oc && fx?.teams?.home?.name && fx?.teams?.away?.name) {
-        const htHome = fx?.score?.halftime?.home ?? null;
-        const htAway = fx?.score?.halftime?.away ?? null;
-        const ftHomeRaw = fx?.score?.fulltime?.home ?? null;
-        const ftAwayRaw = fx?.score?.fulltime?.away ?? null;
-        const extraHomeRaw = fx?.score?.extratime?.home ?? null;
-        const extraAwayRaw = fx?.score?.extratime?.away ?? null;
-        const penaltyHomeRaw = fx?.score?.penalty?.home ?? null;
-        const penaltyAwayRaw = fx?.score?.penalty?.away ?? null;
-        const matchStatus = normalizeMatchStatus(fx?.match_status || fx?.fixture?.status?.short);
+      const finalHomeTotal = computeFinalGoals({
+        regulation: regulationHome,
+        finalGoals: finalHomeGoals,
+        extraTime: extraTimeHome,
+        status: matchStatus,
+      });
+      const finalAwayTotal = computeFinalGoals({
+        regulation: regulationAway,
+        finalGoals: finalAwayGoals,
+        extraTime: extraTimeAway,
+        status: matchStatus,
+      });
 
-        const fullTimeHome = ftHomeRaw !== null ? Number(ftHomeRaw) : null;
-        const fullTimeAway = ftAwayRaw !== null ? Number(ftAwayRaw) : null;
-        const extraTimeHome = extraHomeRaw !== null ? Number(extraHomeRaw) : null;
-        const extraTimeAway = extraAwayRaw !== null ? Number(extraAwayRaw) : null;
-        const penaltyHome = penaltyHomeRaw !== null ? Number(penaltyHomeRaw) : null;
-        const penaltyAway = penaltyAwayRaw !== null ? Number(penaltyAwayRaw) : null;
-
-        const finalHomeGoals = Number(hg);
-        const finalAwayGoals = Number(ag);
+      if (id && regulationHome !== null && regulationAway !== null && oc && fx?.teams?.home?.name && fx?.teams?.away?.name) {
+        const displayFinalHome = finalHomeTotal ?? regulationHome;
+        const displayFinalAway = finalAwayTotal ?? regulationAway;
 
         let secondHalfHome: number | null = null;
         let secondHalfAway: number | null = null;
 
-        if (fullTimeHome !== null && htHome !== null) {
-          const diff = fullTimeHome - Number(htHome);
+        if (regulationHome !== null && halftimeHome !== null) {
+          const diff = regulationHome - halftimeHome;
           if (!Number.isNaN(diff)) {
             secondHalfHome = diff;
           }
         }
 
-        if (fullTimeAway !== null && htAway !== null) {
-          const diff = fullTimeAway - Number(htAway);
+        if (regulationAway !== null && halftimeAway !== null) {
+          const diff = regulationAway - halftimeAway;
           if (!Number.isNaN(diff)) {
             secondHalfAway = diff;
           }
@@ -790,15 +879,15 @@ serve(async (req) => {
 
         const formattedMatchResult = formatExtendedMatchResult({
           status: matchStatus,
-          totalHome: finalHomeGoals,
-          totalAway: finalAwayGoals,
-          fullTimeHome,
-          fullTimeAway,
+          totalHome: displayFinalHome,
+          totalAway: displayFinalAway,
+          fullTimeHome: regulationHome,
+          fullTimeAway: regulationAway,
           extraTimeHome,
           extraTimeAway,
           penaltyHome,
           penaltyAway,
-        }) ?? `${finalHomeGoals}-${finalAwayGoals}`;
+        }) ?? `${regulationHome}-${regulationAway}`;
         
         // Check if match_results entry already exists to preserve kickoff_time
         const { data: existingResult } = await sb
@@ -816,10 +905,10 @@ serve(async (req) => {
             away_team: fx.teams.away.name,
             league_id: fx.league_id || 140, // Default to La Liga if no league_id found
             season: fx.league?.season || new Date().getFullYear(),
-            home_goals: finalHomeGoals,
-            away_goals: finalAwayGoals,
-            halftime_home: htHome !== null ? Number(htHome) : 0,
-            halftime_away: htAway !== null ? Number(htAway) : 0,
+            home_goals: displayFinalHome,
+            away_goals: displayFinalAway,
+            halftime_home: halftimeHome !== null ? halftimeHome : 0,
+            halftime_away: halftimeAway !== null ? halftimeAway : 0,
             second_half_home: secondHalfHome,
             second_half_away: secondHalfAway,
             outcome: oc,

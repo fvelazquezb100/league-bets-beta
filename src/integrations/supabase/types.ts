@@ -370,6 +370,71 @@ export type Database = {
         }
         Relationships: []
       }
+      match_blocks: {
+        Row: {
+          id: number
+          blocker_user_id: string
+          blocked_user_id: string
+          league_id: number
+          fixture_id: number
+          week: number
+          status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          blocker_user_id: string
+          blocked_user_id: string
+          league_id: number
+          fixture_id: number
+          week: number
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          blocker_user_id?: string
+          blocked_user_id?: string
+          league_id?: number
+          fixture_id?: number
+          week?: number
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_blocks_blocked_user_id_fkey"
+            columns: ["blocked_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_blocks_blocker_user_id_fkey"
+            columns: ["blocker_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_blocks_fixture_id_fkey"
+            columns: ["fixture_id"]
+            isOneToOne: false
+            referencedRelation: "match_results"
+            referencedColumns: ["fixture_id"]
+          },
+          {
+            foreignKeyName: "match_blocks_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       news: {
         Row: {
           content: string
@@ -404,6 +469,8 @@ export type Database = {
         Row: {
           global_role: string | null
           id: string
+          blocks_available: number
+          blocks_received: number
           last_week_points: number | null
           league_id: number | null
           role: string
@@ -414,6 +481,8 @@ export type Database = {
         Insert: {
           global_role?: string | null
           id?: string
+          blocks_available?: number
+          blocks_received?: number
           last_week_points?: number | null
           league_id?: number | null
           role?: string
@@ -424,6 +493,8 @@ export type Database = {
         Update: {
           global_role?: string | null
           id?: string
+          blocks_available?: number
+          blocks_received?: number
           last_week_points?: number | null
           league_id?: number | null
           role?: string
