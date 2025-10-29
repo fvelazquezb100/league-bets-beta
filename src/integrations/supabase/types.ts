@@ -316,10 +316,15 @@ export type Database = {
           home_team: string | null
           kickoff_time: string | null
           league_id: number | null
+          match_status: string | null
           match_name: string | null
           match_result: string | null
           outcome: string | null
+          penalty_away: number | null
+          penalty_home: number | null
           season: number | null
+          second_half_away: number | null
+          second_half_home: number | null
         }
         Insert: {
           away_goals?: number | null
@@ -332,10 +337,15 @@ export type Database = {
           home_team?: string | null
           kickoff_time?: string | null
           league_id?: number | null
+          match_status?: string | null
           match_name?: string | null
           match_result?: string | null
           outcome?: string | null
+          penalty_away?: number | null
+          penalty_home?: number | null
           season?: number | null
+          second_half_away?: number | null
+          second_half_home?: number | null
         }
         Update: {
           away_goals?: number | null
@@ -348,10 +358,15 @@ export type Database = {
           home_team?: string | null
           kickoff_time?: string | null
           league_id?: number | null
+          match_status?: string | null
           match_name?: string | null
           match_result?: string | null
           outcome?: string | null
+          penalty_away?: number | null
+          penalty_home?: number | null
           season?: number | null
+          second_half_away?: number | null
+          second_half_home?: number | null
         }
         Relationships: []
       }

@@ -37,6 +37,59 @@ function outcomeFromFixture(fx: any): "home" | "away" | "draw" | null {
   }
 }
 
+function normalizeMatchStatus(status: string | null | undefined): "FT" | "AET" | "PEN" | null {
+  if (!status) return null;
+  const normalized = status.toUpperCase();
+  if (normalized === "FT" || normalized === "AET" || normalized === "PEN") {
+    return normalized;
+  }
+  return null;
+}
+
+function formatScore(home: number | null | undefined, away: number | null | undefined): string | null {
+  if (home === null || home === undefined) return null;
+  if (away === null || away === undefined) return null;
+  if (Number.isNaN(Number(home)) || Number.isNaN(Number(away))) return null;
+  return `${Number(home)}-${Number(away)}`;
+}
+
+function formatExtendedMatchResult(params: {
+  status: "FT" | "AET" | "PEN" | null;
+  totalHome: number | null | undefined;
+  totalAway: number | null | undefined;
+  fullTimeHome: number | null | undefined;
+  fullTimeAway: number | null | undefined;
+  extraTimeHome: number | null | undefined;
+  extraTimeAway: number | null | undefined;
+  penaltyHome: number | null | undefined;
+  penaltyAway: number | null | undefined;
+}): string | null {
+  const finalScore = formatScore(params.totalHome, params.totalAway);
+  const fullTimeScore = formatScore(params.fullTimeHome, params.fullTimeAway);
+  const extraTimeScore = formatScore(params.extraTimeHome, params.extraTimeAway);
+  const penaltyScore = formatScore(params.penaltyHome, params.penaltyAway);
+
+  if (params.status === "AET") {
+    if (fullTimeScore && extraTimeScore) {
+      return `${fullTimeScore} (${extraTimeScore})`;
+    }
+    if (fullTimeScore && finalScore) {
+      return `${fullTimeScore} (${finalScore})`;
+    }
+  }
+
+  if (params.status === "PEN") {
+    if (fullTimeScore && penaltyScore) {
+      return `${fullTimeScore} (${penaltyScore})`;
+    }
+    if (fullTimeScore && extraTimeScore) {
+      return `${fullTimeScore} (${extraTimeScore})`;
+    }
+  }
+
+  return finalScore || fullTimeScore;
+}
+
 function evaluateBet(
   bet: any,
   fr: { 
@@ -46,6 +99,11 @@ function evaluateBet(
     halftime_home?: number;
     halftime_away?: number;
     halftime_outcome?: "home" | "away" | "draw";
+    second_half_home?: number;
+    second_half_away?: number;
+    match_status?: "FT" | "AET" | "PEN";
+    penalty_home?: number;
+    penalty_away?: number;
   } | undefined,
 ): boolean {
   try {
@@ -170,17 +228,28 @@ function evaluateBet(
 
     // Second Half Winner / Ganador del 2do Tiempo
     if (marketLower === "ganador del 2do tiempo") {
-      if (fr.halftime_home !== undefined && fr.halftime_away !== undefined) {
-        const secondHalfHome = hg - fr.halftime_home;
-        const secondHalfAway = ag - fr.halftime_away;
-        
+      let secondHalfHome: number | undefined;
+      let secondHalfAway: number | undefined;
+
+      if (fr.second_half_home !== undefined && fr.second_half_home !== null &&
+          fr.second_half_away !== undefined && fr.second_half_away !== null) {
+        secondHalfHome = Number(fr.second_half_home);
+        secondHalfAway = Number(fr.second_half_away);
+      } else if (fr.halftime_home !== undefined && fr.halftime_home !== null &&
+                 fr.halftime_away !== undefined && fr.halftime_away !== null) {
+        secondHalfHome = hg - Number(fr.halftime_home);
+        secondHalfAway = ag - Number(fr.halftime_away);
+      }
+
+      if (secondHalfHome !== undefined && secondHalfAway !== undefined) {
         console.log(`Second half calculation:`, {
           fullTime: { hg, ag },
           halftime: { home: fr.halftime_home, away: fr.halftime_away },
-          secondHalf: { home: secondHalfHome, away: secondHalfAway },
+          providedSecondHalf: { home: fr.second_half_home, away: fr.second_half_away },
+          computedSecondHalf: { home: secondHalfHome, away: secondHalfAway },
           selection: selectionLower
         });
-        
+
         if (selectionLower.includes("home") || selectionLower.includes("local")) {
           const result = secondHalfHome > secondHalfAway;
           console.log(`Second half home bet: ${result} (${secondHalfHome} > ${secondHalfAway})`);
@@ -197,7 +266,12 @@ function evaluateBet(
           return result;
         }
       }
-      console.log(`No halftime data available for second half bet`);
+
+      console.log(`No second half data available for second half bet`, {
+        halftime_home: fr.halftime_home,
+        halftime_away: fr.halftime_away,
+        providedSecondHalf: { home: fr.second_half_home, away: fr.second_half_away }
+      });
       return false;
     }
 
@@ -585,6 +659,11 @@ serve(async (req) => {
       halftime_home?: number;
       halftime_away?: number;
       halftime_outcome?: "home" | "away" | "draw";
+      second_half_home?: number;
+      second_half_away?: number;
+      match_status?: "FT" | "AET" | "PEN";
+      penalty_home?: number;
+      penalty_away?: number;
     }>();
     
     for (const fx of finished) {
@@ -596,12 +675,36 @@ serve(async (req) => {
       // Extract halftime scores if available
       const htHome = fx?.score?.halftime?.home ?? null;
       const htAway = fx?.score?.halftime?.away ?? null;
+      const ftHome = fx?.score?.fulltime?.home ?? null;
+      const ftAway = fx?.score?.fulltime?.away ?? null;
+      const extraHome = fx?.score?.extratime?.home ?? null;
+      const extraAway = fx?.score?.extratime?.away ?? null;
+      const penaltyHome = fx?.score?.penalty?.home ?? null;
+      const penaltyAway = fx?.score?.penalty?.away ?? null;
+      const matchStatus = normalizeMatchStatus(fx?.match_status || fx?.fixture?.status?.short);
       let htOutcome: "home" | "away" | "draw" | undefined = undefined;
       
       if (htHome !== null && htAway !== null) {
         if (htHome > htAway) htOutcome = "home";
         else if (htHome < htAway) htOutcome = "away";
         else htOutcome = "draw";
+      }
+
+      let secondHalfHome: number | null = null;
+      let secondHalfAway: number | null = null;
+
+      if (ftHome !== null && htHome !== null) {
+        const diff = Number(ftHome) - Number(htHome);
+        if (!Number.isNaN(diff)) {
+          secondHalfHome = diff;
+        }
+      }
+
+      if (ftAway !== null && htAway !== null) {
+        const diff = Number(ftAway) - Number(htAway);
+        if (!Number.isNaN(diff)) {
+          secondHalfAway = diff;
+        }
       }
       
       if (id && oc) outcomeMap.set(id, oc);
@@ -612,7 +715,12 @@ serve(async (req) => {
           outcome: oc,
           halftime_home: htHome !== null ? Number(htHome) : undefined,
           halftime_away: htAway !== null ? Number(htAway) : undefined,
-          halftime_outcome: htOutcome
+          halftime_outcome: htOutcome,
+          second_half_home: secondHalfHome !== null ? secondHalfHome : undefined,
+          second_half_away: secondHalfAway !== null ? secondHalfAway : undefined,
+          match_status: matchStatus ?? undefined,
+          penalty_home: penaltyHome !== null ? Number(penaltyHome) : undefined,
+          penalty_away: penaltyAway !== null ? Number(penaltyAway) : undefined,
         });
       }
     }
@@ -645,6 +753,52 @@ serve(async (req) => {
       if (id && hg !== null && ag !== null && oc && fx?.teams?.home?.name && fx?.teams?.away?.name) {
         const htHome = fx?.score?.halftime?.home ?? null;
         const htAway = fx?.score?.halftime?.away ?? null;
+        const ftHomeRaw = fx?.score?.fulltime?.home ?? null;
+        const ftAwayRaw = fx?.score?.fulltime?.away ?? null;
+        const extraHomeRaw = fx?.score?.extratime?.home ?? null;
+        const extraAwayRaw = fx?.score?.extratime?.away ?? null;
+        const penaltyHomeRaw = fx?.score?.penalty?.home ?? null;
+        const penaltyAwayRaw = fx?.score?.penalty?.away ?? null;
+        const matchStatus = normalizeMatchStatus(fx?.match_status || fx?.fixture?.status?.short);
+
+        const fullTimeHome = ftHomeRaw !== null ? Number(ftHomeRaw) : null;
+        const fullTimeAway = ftAwayRaw !== null ? Number(ftAwayRaw) : null;
+        const extraTimeHome = extraHomeRaw !== null ? Number(extraHomeRaw) : null;
+        const extraTimeAway = extraAwayRaw !== null ? Number(extraAwayRaw) : null;
+        const penaltyHome = penaltyHomeRaw !== null ? Number(penaltyHomeRaw) : null;
+        const penaltyAway = penaltyAwayRaw !== null ? Number(penaltyAwayRaw) : null;
+
+        const finalHomeGoals = Number(hg);
+        const finalAwayGoals = Number(ag);
+
+        let secondHalfHome: number | null = null;
+        let secondHalfAway: number | null = null;
+
+        if (fullTimeHome !== null && htHome !== null) {
+          const diff = fullTimeHome - Number(htHome);
+          if (!Number.isNaN(diff)) {
+            secondHalfHome = diff;
+          }
+        }
+
+        if (fullTimeAway !== null && htAway !== null) {
+          const diff = fullTimeAway - Number(htAway);
+          if (!Number.isNaN(diff)) {
+            secondHalfAway = diff;
+          }
+        }
+
+        const formattedMatchResult = formatExtendedMatchResult({
+          status: matchStatus,
+          totalHome: finalHomeGoals,
+          totalAway: finalAwayGoals,
+          fullTimeHome,
+          fullTimeAway,
+          extraTimeHome,
+          extraTimeAway,
+          penaltyHome,
+          penaltyAway,
+        }) ?? `${finalHomeGoals}-${finalAwayGoals}`;
         
         // Check if match_results entry already exists to preserve kickoff_time
         const { data: existingResult } = await sb
@@ -662,13 +816,18 @@ serve(async (req) => {
             away_team: fx.teams.away.name,
             league_id: fx.league_id || 140, // Default to La Liga if no league_id found
             season: fx.league?.season || new Date().getFullYear(),
-            home_goals: Number(hg),
-            away_goals: Number(ag),
+            home_goals: finalHomeGoals,
+            away_goals: finalAwayGoals,
             halftime_home: htHome !== null ? Number(htHome) : 0,
             halftime_away: htAway !== null ? Number(htAway) : 0,
+            second_half_home: secondHalfHome,
+            second_half_away: secondHalfAway,
             outcome: oc,
             finished_at: fx.fixture?.date || new Date().toISOString(),
-            match_result: `${hg}-${ag}`,
+            match_result: formattedMatchResult,
+            match_status: matchStatus,
+            penalty_home: penaltyHome,
+            penalty_away: penaltyAway,
             // Preserve existing kickoff_time if it exists, otherwise use fixture date
             kickoff_time: existingResult?.kickoff_time || fx.fixture?.date || new Date().toISOString()
           }, {
@@ -679,7 +838,7 @@ serve(async (req) => {
           console.error(`Error upserting match result for fixture ${id}:`, insertError);
         } else {
           matchResultsInserted++;
-          console.log(`✅ Upserted match result: ${fx.teams.home.name} vs ${fx.teams.away.name} (${hg}-${ag})`);
+          console.log(`✅ Upserted match result: ${fx.teams.home.name} vs ${fx.teams.away.name} (${formattedMatchResult})${matchStatus ? ` [${matchStatus}]` : ''}`);
         }
       }
     }
