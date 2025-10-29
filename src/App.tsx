@@ -40,6 +40,7 @@ import { UpdatePassword } from "./pages/UpdatePassword";
 import { LeagueSetup } from "./pages/LeagueSetup";
 import { Settings } from "./pages/Settings";
 import { SmartRedirect } from "./components/SmartRedirect";
+import AnalyticsLoader from "./components/AnalyticsLoader";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -48,6 +49,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <AnalyticsLoader />
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Landing />} />

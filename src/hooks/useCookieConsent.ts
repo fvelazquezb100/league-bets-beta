@@ -16,20 +16,28 @@ export const useCookieConsent = () => {
     if (stored) {
       try {
         if (stored === 'all') {
-          setConsent({ necessary: true, analytics: true, marketing: true });
+          const persistedConsent = { necessary: true, analytics: true, marketing: true };
+          setConsent(persistedConsent);
+          loadScriptsBasedOnConsent(persistedConsent);
         } else if (stored === 'necessary') {
-          setConsent({ necessary: true, analytics: false, marketing: false });
+          const persistedConsent = { necessary: true, analytics: false, marketing: false };
+          setConsent(persistedConsent);
+          loadScriptsBasedOnConsent(persistedConsent);
         } else {
           const parsed = JSON.parse(stored);
-          setConsent({
+          const persistedConsent = {
             necessary: parsed.necessary ?? true,
             analytics: parsed.analytics ?? false,
             marketing: parsed.marketing ?? false
-          });
+          };
+          setConsent(persistedConsent);
+          loadScriptsBasedOnConsent(persistedConsent);
         }
       } catch (error) {
         console.error('Error parsing cookie consent:', error);
-        setConsent({ necessary: true, analytics: false, marketing: false });
+        const fallbackConsent = { necessary: true, analytics: false, marketing: false };
+        setConsent(fallbackConsent);
+        loadScriptsBasedOnConsent(fallbackConsent);
       }
     } else {
       setConsent(null); // No consent given yet
@@ -68,60 +76,12 @@ export const useCookieConsent = () => {
 
 // Function to load/unload scripts based on consent
 const loadScriptsBasedOnConsent = (consent: CookieConsent) => {
-  // Google Analytics
-  if (consent.analytics) {
-    loadGoogleAnalytics();
-  } else {
-    unloadGoogleAnalytics();
-  }
-
   // Google AdSense
   if (consent.marketing) {
     loadGoogleAdSense();
   } else {
     unloadGoogleAdSense();
   }
-};
-
-// Google Analytics functions
-const loadGoogleAnalytics = () => {
-  // Check if already loaded
-  if (window.gtag) return;
-
-  // Load Google Analytics script
-  const script = document.createElement('script');
-  script.async = true;
-  script.src = 'https://www.googletagmanager.com/gtag/js?id=G-N8SYMCJED4';
-  document.head.appendChild(script);
-
-  // Initialize gtag
-  window.dataLayer = window.dataLayer || [];
-  window.gtag = function() {
-    window.dataLayer.push(arguments);
-  };
-  
-  window.gtag('js', new Date());
-  window.gtag('config', 'G-N8SYMCJED4', {
-    anonymize_ip: true,
-    cookie_flags: 'SameSite=None;Secure'
-  });
-
-  console.log('Google Analytics loaded with consent');
-};
-
-const unloadGoogleAnalytics = () => {
-  // Remove Google Analytics cookies
-  const cookies = ['_ga', '_ga_*', '_gid', '_gat'];
-  cookies.forEach(cookie => {
-    document.cookie = `${cookie}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-  });
-  
-  // Clear dataLayer
-  if (window.dataLayer) {
-    window.dataLayer = [];
-  }
-  
-  console.log('Google Analytics unloaded');
 };
 
 // Google AdSense functions
@@ -154,11 +114,3 @@ const unloadGoogleAdSense = () => {
   
   console.log('Google AdSense unloaded');
 };
-
-// TypeScript declarations
-declare global {
-  interface Window {
-    gtag: (...args: any[]) => void;
-    dataLayer: any[];
-  }
-}
