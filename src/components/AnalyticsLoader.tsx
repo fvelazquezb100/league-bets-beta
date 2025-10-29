@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useCookieConsent } from '@/hooks/useCookieConsent';
 
-const GA_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-N8SYMCJED4';
+const GA_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-S6ZT37VDX1';
 const GA_SRC = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
 
 type ScriptRefs = {
@@ -120,4 +120,5 @@ export const AnalyticsLoader = () => {
 };
 
 export default AnalyticsLoader;
+
 
