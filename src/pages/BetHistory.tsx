@@ -13,12 +13,43 @@ import { UserStatistics } from '@/components/UserStatistics';
 import { useUserBetHistory, useCancelBet } from '@/hooks/useUserBets';
 import { useBettingSettings } from '@/hooks/useBettingSettings';
 import { useMatchResults, useKickoffTimes } from '@/hooks/useMatchResults';
+import { useCookieConsent } from '@/hooks/useCookieConsent';
 
 export const BetHistory = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { cutoffMinutes } = useBettingSettings();
+  const { consent } = useCookieConsent();
   
+  useEffect(() => {
+    if (!consent?.analytics) {
+      return;
+    }
+
+    const script1 = document.createElement('script');
+    script1.async = true;
+    script1.src = 'https://www.googletagmanager.com/gtag/js?id=G-N8SYMCJED4';
+    document.head.appendChild(script1);
+
+    const script2 = document.createElement('script');
+    script2.innerHTML = `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-N8SYMCJED4');
+    `;
+    document.head.appendChild(script2);
+
+    return () => {
+      if (script1.parentNode) {
+        script1.parentNode.removeChild(script1);
+      }
+      if (script2.parentNode) {
+        script2.parentNode.removeChild(script2);
+      }
+    };
+  }, [consent?.analytics]);
+
   // React Query hooks
   const { data: bets = [], isLoading: betsLoading, refetch: refetchBets } = useUserBetHistory(user?.id);
   const cancelBetMutation = useCancelBet();
@@ -505,7 +536,9 @@ export const BetHistory = () => {
 
         <Card 
           className="cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:border-primary/30"
-          onClick={() => setShowStatistics(true)}
+          onClick={() => {
+            setShowStatistics(true);
+          }}
         >
           <CardContent className="p-4">
             <div className="flex items-center justify-between">

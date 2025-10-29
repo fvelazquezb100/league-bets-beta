@@ -24,6 +24,12 @@ import Bets from "./pages/Bets";
 import { BetHistory } from "./pages/BetHistory";
 import LeagueMatchAvailabilityControl from "./pages/LeagueMatchAvailabilityControl";
 import NotFound from "./pages/NotFound";
+import PoliticaCookies from "./pages/PoliticaCookies";
+import TerminosCondiciones from "./pages/TerminosCondiciones";
+import PoliticaPrivacidad from "./pages/PoliticaPrivacidad";
+import AvisoLegal from "./pages/AvisoLegal";
+import FAQ from "./pages/FAQ";
+import Reglas from "./pages/Reglas";
 import AdminLiga from "./pages/AdminLiga";
 import { AdminRoute } from "./components/AdminRoute";
 import SuperAdmin from "./pages/SuperAdmin";
@@ -34,6 +40,7 @@ import { UpdatePassword } from "./pages/UpdatePassword";
 import { LeagueSetup } from "./pages/LeagueSetup";
 import { Settings } from "./pages/Settings";
 import { SmartRedirect } from "./components/SmartRedirect";
+import AnalyticsLoader from "./components/AnalyticsLoader";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -42,6 +49,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <AnalyticsLoader />
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Landing />} />
@@ -58,6 +66,20 @@ const App = () => (
             <Route path="/bet-history-demo-movil" element={<BetHistoryDemoMovil />} />
             <Route path="/clasificacion-demo" element={<ClasificacionDemo />} />
             <Route path="/test-demo" element={<TestDemo />} />
+            <Route path="/politica-cookies" element={<PoliticaCookies />} />
+            <Route path="/terminos" element={<TerminosCondiciones />} />
+            <Route path="/politica-privacidad" element={<PoliticaPrivacidad />} />
+            <Route path="/aviso-legal" element={<AvisoLegal />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/reglas" element={
+              <ProtectedRoute>
+                <SmartRedirect>
+                  <MainLayout>
+                    <Reglas />
+                  </MainLayout>
+                </SmartRedirect>
+              </ProtectedRoute>
+            } />
             <Route path="/league-setup" element={
               <ProtectedRoute>
                 <MainLayout>

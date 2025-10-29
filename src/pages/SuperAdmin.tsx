@@ -9,12 +9,43 @@ import { BettingSettingsControl } from '@/components/BettingSettingsControl';
 import { useLastProcessedMatch } from '@/hooks/useLastProcessedMatch';
 import { useNavigate } from 'react-router-dom';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useCookieConsent } from '@/hooks/useCookieConsent';
 
 const SuperAdmin: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { consent } = useCookieConsent();
   const { data: lastProcessedMatch, isLoading: loadingLastMatch } = useLastProcessedMatch();
   
+  React.useEffect(() => {
+    if (!consent?.analytics) {
+      return;
+    }
+
+    const script1 = document.createElement('script');
+    script1.async = true;
+    script1.src = 'https://www.googletagmanager.com/gtag/js?id=G-N8SYMCJED4';
+    document.head.appendChild(script1);
+
+    const script2 = document.createElement('script');
+    script2.innerHTML = `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-N8SYMCJED4');
+    `;
+    document.head.appendChild(script2);
+
+    return () => {
+      if (script1.parentNode) {
+        script1.parentNode.removeChild(script1);
+      }
+      if (script2.parentNode) {
+        script2.parentNode.removeChild(script2);
+      }
+    };
+  }, [consent?.analytics]);
+
   // Caché de cuotas
   const {
     data: lastUpdated,
@@ -26,8 +57,7 @@ const SuperAdmin: React.FC = () => {
       const { data, error } = await supabase
         .from('match_odds_cache')
         .select('last_updated')
-        .order('last_updated', { ascending: false })
-        .limit(1)
+        .eq('id', 1)
         .single();
 
       if (error) {

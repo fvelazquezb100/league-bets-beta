@@ -1,11 +1,44 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { APP_CONFIG } from '@/config/app';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
+import { SiteFooter } from '@/components/layout/SiteFooter';
+import { useCookieConsent } from '@/hooks/useCookieConsent';
 
 export const Landing = () => {
   const { user, loading } = useAuth();
+  const { consent } = useCookieConsent();
+
+  useEffect(() => {
+    if (!consent?.analytics) {
+      return;
+    }
+
+    const script1 = document.createElement('script');
+    script1.async = true;
+    script1.src = 'https://www.googletagmanager.com/gtag/js?id=G-N8SYMCJED4';
+    document.head.appendChild(script1);
+
+    const script2 = document.createElement('script');
+    script2.innerHTML = `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-N8SYMCJED4');
+    `;
+    document.head.appendChild(script2);
+
+    return () => {
+      if (script1.parentNode) {
+        script1.parentNode.removeChild(script1);
+      }
+      if (script2.parentNode) {
+        script2.parentNode.removeChild(script2);
+      }
+    };
+  }, [consent?.analytics]);
 
   if (loading) {
     return (
@@ -87,6 +120,8 @@ export const Landing = () => {
           </p>
         </div>
       </section>
+      
+      <SiteFooter />
     </main>
   );
 };

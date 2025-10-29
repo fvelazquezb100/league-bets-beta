@@ -5,7 +5,7 @@ import type { MatchData, BetValue } from '@/pages/Bets';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { OddsIndicator } from './OddsIndicator';
-import { useOddsComparison, findOddsForComparison } from '@/hooks/useOddsComparison';
+import { useOddsComparison, findOddsAuto } from '@/hooks/useOddsComparison';
 import { useIsPremiumLeague } from '@/hooks/useLeaguePremium';
 
 interface ResultTotalGoalsSelectorProps {
@@ -325,9 +325,8 @@ const ResultTotalGoalsSelector = ({ match, isFrozen, hasUserBetOnMarket, handleA
                 {currentOdds}
                 {isPremium && oddsComparison && (() => {
                   const selectionForApi = `${matchResult}/${overUnder === 'over' ? 'Over' : 'Under'} ${totalGoals}`;
-                  const oddsData = findOddsForComparison(
-                    oddsComparison.current,
-                    oddsComparison.previous,
+                  const oddsData = findOddsAuto(
+                    oddsComparison,
                     match.fixture.id,
                     'Resultado/Total Goles',
                     selectionForApi

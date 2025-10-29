@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import type { MatchData, BetValue } from '@/pages/Bets';
 import { OddsIndicator } from './OddsIndicator';
-import { useOddsComparison, findOddsForComparison } from '@/hooks/useOddsComparison';
+import { useOddsComparison, findOddsAuto } from '@/hooks/useOddsComparison';
 import { useIsPremiumLeague } from '@/hooks/useLeaguePremium';
 
 interface WinnerSelectorProps {
@@ -58,9 +58,8 @@ const WinnerSelector = ({ match, isFrozen, hasUserBetOnMarket, handleAddToSlip }
             }
 
             // Get odds comparison data
-            const oddsData = oddsComparison ? findOddsForComparison(
-              oddsComparison.current,
-              oddsComparison.previous,
+            const oddsData = oddsComparison ? findOddsAuto(
+              oddsComparison,
               match.fixture.id,
               marketName,
               value.value

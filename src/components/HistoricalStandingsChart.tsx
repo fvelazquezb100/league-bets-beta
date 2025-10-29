@@ -11,6 +11,8 @@ import {
 } from 'recharts';
 import { HistoricalStandingsData } from '@/hooks/useHistoricalStandings';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 
 interface HistoricalStandingsChartProps {
   data: HistoricalStandingsData;
@@ -26,12 +28,13 @@ export const HistoricalStandingsChart: React.FC<HistoricalStandingsChartProps> =
   const [isLeftToRight, setIsLeftToRight] = React.useState(true);
   const isMobile = useIsMobile();
 
+
   // Convertir los datos al formato que necesita Recharts (semanas invertidas)
   const chartData = React.useMemo(() => {
     const usernames = Object.keys(data);
     if (usernames.length === 0) return [];
 
-    // Obtener todas las semanas disponibles
+    // Obtener todas las semanas disponibles de los datos
     const allWeeks = new Set<number>();
     usernames.forEach(username => {
       Object.keys(data[username]).forEach(week => {
@@ -42,11 +45,8 @@ export const HistoricalStandingsChart: React.FC<HistoricalStandingsChartProps> =
     // Ordenar semanas de mayor a menor (semana 5 a la izquierda)
     const weeks = Array.from(allWeeks).sort((a, b) => b - a);
     
-    // Excluir la semana en curso (la más alta) de ambas versiones
-    const weeksWithoutCurrent = weeks.slice(1); // Excluir la primera (más alta)
-    
-    // En móvil, limitar a las últimas 8 jornadas (sin la semana en curso)
-    const limitedWeeks = isMobile ? weeksWithoutCurrent.slice(0, 8) : weeksWithoutCurrent;
+    // En móvil, limitar a las últimas 8 jornadas
+    const limitedWeeks = isMobile ? weeks.slice(0, 8) : weeks;
 
     // Crear datos para cada semana
     return limitedWeeks.map(week => {
@@ -68,7 +68,7 @@ export const HistoricalStandingsChart: React.FC<HistoricalStandingsChartProps> =
     const usernames = Object.keys(data);
     if (usernames.length === 0) return [];
 
-    // Obtener todas las semanas disponibles
+    // Obtener todas las semanas disponibles de los datos
     const allWeeks = new Set<number>();
     usernames.forEach(username => {
       Object.keys(data[username]).forEach(week => {
@@ -79,11 +79,8 @@ export const HistoricalStandingsChart: React.FC<HistoricalStandingsChartProps> =
     // Ordenar semanas de menor a mayor (semana 1 a la izquierda)
     const weeks = Array.from(allWeeks).sort((a, b) => a - b);
     
-    // Excluir la semana en curso (la más alta) de ambas versiones
-    const weeksWithoutCurrent = weeks.slice(0, -1); // Excluir la última (más alta)
-    
-    // En móvil, limitar a las últimas 8 jornadas (sin la semana en curso)
-    const limitedWeeks = isMobile ? weeksWithoutCurrent.slice(-8) : weeksWithoutCurrent;
+    // En móvil, limitar a las últimas 8 jornadas
+    const limitedWeeks = isMobile ? weeks.slice(-8) : weeks;
 
     // Crear datos para cada semana
     return limitedWeeks.map(week => {

@@ -11,9 +11,11 @@ import { useLeagueStandings, useAvailableWeeks } from '@/hooks/useLeagueStanding
 import { useHistoricalStandings } from '@/hooks/useHistoricalStandings';
 import { HistoricalStandingsModal } from '@/components/HistoricalStandingsModal';
 import { Award, ArrowDown, BarChart3, Calendar, TrendingUp } from 'lucide-react';
+import { useCookieConsent } from '@/hooks/useCookieConsent';
 
 export const Clasificacion = () => {
   const { user } = useAuth();
+  const { consent } = useCookieConsent();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [previousChampionName, setPreviousChampionName] = useState<string | null>(null);
   const [previousLastName, setPreviousLastName] = useState<string | null>(null);
@@ -96,6 +98,35 @@ export const Clasificacion = () => {
     document.title = 'Jambol - Clasificación';
   }, []);
 
+  useEffect(() => {
+    if (!consent?.analytics) {
+      return;
+    }
+
+    const script1 = document.createElement('script');
+    script1.async = true;
+    script1.src = 'https://www.googletagmanager.com/gtag/js?id=G-N8SYMCJED4';
+    document.head.appendChild(script1);
+
+    const script2 = document.createElement('script');
+    script2.innerHTML = `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-N8SYMCJED4');
+    `;
+    document.head.appendChild(script2);
+
+    return () => {
+      if (script1.parentNode) {
+        script1.parentNode.removeChild(script1);
+      }
+      if (script2.parentNode) {
+        script2.parentNode.removeChild(script2);
+      }
+    };
+  }, [consent?.analytics]);
+
   // Close week filter dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -126,6 +157,18 @@ export const Clasificacion = () => {
   const closePlayerModal = () => {
     setIsPlayerModalOpen(false);
     setSelectedPlayer(null);
+  };
+
+  const toggleWeekFilter = () => {
+    setShowWeekFilter(!showWeekFilter);
+  };
+
+  const openHistoricalModal = () => {
+    setIsHistoricalStandingsModalOpen(true);
+  };
+
+  const openLeagueStatsModal = () => {
+    setIsLeagueStatsModalOpen(true);
   };
 
   return (
@@ -203,7 +246,7 @@ export const Clasificacion = () => {
         {/* Historical Standings Card */}
         <Card 
           className="cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:border-primary/30"
-          onClick={() => setIsHistoricalStandingsModalOpen(true)}
+          onClick={openHistoricalModal}
         >
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -224,7 +267,7 @@ export const Clasificacion = () => {
             <div className="relative week-filter-container">
               <Card 
                 className="cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:border-primary/30 h-full"
-                onClick={() => setShowWeekFilter(!showWeekFilter)}
+                onClick={toggleWeekFilter}
               >
                 <CardContent className="p-4 h-full flex flex-col justify-between">
                   <div className="flex items-center justify-between">
@@ -263,7 +306,7 @@ export const Clasificacion = () => {
             {/* League Statistics Card */}
             <Card 
               className="cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:border-primary/30 h-full"
-              onClick={() => setIsLeagueStatsModalOpen(true)}
+              onClick={openLeagueStatsModal}
             >
               <CardContent className="p-4 h-full flex flex-col justify-between">
                 <div className="flex items-center justify-between">

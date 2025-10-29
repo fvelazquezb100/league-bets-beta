@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useCookieConsent } from '@/hooks/useCookieConsent';
 
 export const LeagueSetup = () => {
   const { user } = useAuth();
@@ -16,38 +17,68 @@ export const LeagueSetup = () => {
   const [joinCode, setJoinCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { consent } = useCookieConsent();
 
   useEffect(() => {
     document.title = 'Jambol - Configurar Liga';
   }, []);
 
-const handleCreate = async () => {
-  if (!user) return;
-  if (!leagueName.trim()) {
-    setError('El nombre de la liga es obligatorio');
-    return;
-  }
-  setError('');
-  setLoading(true);
+  useEffect(() => {
+    if (!consent?.analytics) {
+      return;
+    }
 
-  try {
-    // Use the RPC function that properly creates league and assigns user
-    const { error } = await supabase.rpc('create_league_and_join', {
-      _user_id: user.id,
-      _league_name: leagueName.trim()
-    });
+    const script1 = document.createElement('script');
+    script1.async = true;
+    script1.src = 'https://www.googletagmanager.com/gtag/js?id=G-N8SYMCJED4';
+    document.head.appendChild(script1);
 
-    if (error) throw error;
+    const script2 = document.createElement('script');
+    script2.innerHTML = `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-N8SYMCJED4');
+    `;
+    document.head.appendChild(script2);
 
-    // Success! Navigate to the homepage.
-    navigate('/home', { replace: true });
+    return () => {
+      if (script1.parentNode) {
+        script1.parentNode.removeChild(script1);
+      }
+      if (script2.parentNode) {
+        script2.parentNode.removeChild(script2);
+      }
+    };
+  }, [consent?.analytics]);
 
-  } catch (err: any) {
-    setError(err.message || 'No se pudo crear la liga.');
-  } finally {
-    setLoading(false);
-  }
-};
+  const handleCreate = async () => {
+    if (!user) return;
+    if (!leagueName.trim()) {
+      setError('El nombre de la liga es obligatorio');
+      return;
+    }
+    setError('');
+    setLoading(true);
+
+    try {
+      // Use the RPC function that properly creates league and assigns user
+      const { error } = await supabase.rpc('create_league_and_join', {
+        _user_id: user.id,
+        _league_name: leagueName.trim()
+      });
+
+      if (error) throw error;
+
+      // Success! Navigate to the homepage.
+      navigate('/home', { replace: true });
+    } catch (error) {
+      console.error('Error creating or joining league:', error);
+      setError('No se pudo crear la liga. Inténtalo nuevamente');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleJoin = async () => {
     if (!user) return;
@@ -58,20 +89,27 @@ const handleCreate = async () => {
     }
     setError('');
     setLoading(true);
-    const { data, error } = await supabase.rpc('join_league_with_code', {
-      _user_id: user.id,
-      _join_code: code,
-    });
-    setLoading(false);
-    if (error) {
-      setError(error.message || 'No se pudo unir a la liga');
-      return;
+    
+    try {
+      const { data, error } = await supabase.rpc('join_league_with_code', {
+        _user_id: user.id,
+        _join_code: code,
+      });
+      
+      if (error) {
+        setError(error.message || 'No se pudo unir a la liga');
+        return;
+      }
+      if (data !== true) {
+        setError('Código inválido o liga no encontrada');
+        return;
+      }
+      navigate('/home', { replace: true });
+    } catch (err: any) {
+      setError(err.message || 'Error al unirse a la liga');
+    } finally {
+      setLoading(false);
     }
-    if (data !== true) {
-      setError('Código inválido o liga no encontrada');
-      return;
-    }
-    navigate('/home', { replace: true });
   };
 
   return (

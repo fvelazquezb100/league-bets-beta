@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Minus, Plus } from 'lucide-react';
 import type { MatchData, BetValue } from '@/pages/Bets';
 import { OddsIndicator } from './OddsIndicator';
-import { useOddsComparison, findOddsForComparison } from '@/hooks/useOddsComparison';
+import { useOddsComparison, findOddsAuto } from '@/hooks/useOddsComparison';
 import { useIsPremiumLeague } from '@/hooks/useLeaguePremium';
 
 interface ExactScoreSelectorProps {
@@ -159,9 +159,8 @@ const ExactScoreSelector = ({ match, isFrozen, hasUserBetOnMarket, handleAddToSl
           <span className="text-lg font-bold flex items-center justify-center">
             {currentOdds}
             {isPremium && currentOdds !== '0.00' && oddsComparison && (() => {
-              const oddsData = findOddsForComparison(
-                oddsComparison.current,
-                oddsComparison.previous,
+              const oddsData = findOddsAuto(
+                oddsComparison,
                 match.fixture.id,
                 'Resultado Exacto',
                 `${homeGoals}:${awayGoals}`

@@ -166,33 +166,43 @@ Deno.serve(async (req) => {
     const seleccionesPayload = { response: mergedOdds };
     const copaPayload = { response: copaMergedOdds };
 
-    // Before writing current selecciones (id=3), copy existing id=3 to id=4 (previous)
+    // Before writing current selecciones (id=3), copy existing id=3 data AND date to id=4 (previous)
     try {
       const { data: currentSel } = await supabase
         .from('match_odds_cache')
-        .select('data')
+        .select('data, last_updated')
         .eq('id', 3)
         .maybeSingle();
       if (currentSel && currentSel.data) {
         await supabase
           .from('match_odds_cache')
-          .upsert({ id: 4, data: currentSel.data, info: 'Selecciones - previous odds snapshot', last_updated: new Date().toISOString() });
+          .upsert({ 
+            id: 4, 
+            data: currentSel.data, 
+            info: 'Selecciones - previous odds snapshot', 
+            last_updated: currentSel.last_updated // Copy the date from current row
+          });
       }
     } catch (copyErr) {
       console.warn('Selecciones: could not copy id=3 -> id=4:', (copyErr as Error).message);
     }
 
-    // Before writing current copa (id=5), copy existing id=5 to id=6 (previous)
+    // Before writing current copa (id=5), copy existing id=5 data AND date to id=6 (previous)
     try {
       const { data: currentCopa } = await supabase
         .from('match_odds_cache')
-        .select('data')
+        .select('data, last_updated')
         .eq('id', 5)
         .maybeSingle();
       if (currentCopa && currentCopa.data) {
         await supabase
           .from('match_odds_cache')
-          .upsert({ id: 6, data: currentCopa.data, info: 'Copa del Rey - previous odds snapshot', last_updated: new Date().toISOString() });
+          .upsert({ 
+            id: 6, 
+            data: currentCopa.data, 
+            info: 'Copa del Rey - previous odds snapshot', 
+            last_updated: currentCopa.last_updated // Copy the date from current row
+          });
       }
     } catch (copyErr) {
       console.warn('Copa del Rey: could not copy id=5 -> id=6:', (copyErr as Error).message);
