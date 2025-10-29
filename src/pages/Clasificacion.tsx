@@ -1,5 +1,5 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,8 +10,10 @@ import { useLeagueStatistics } from '@/hooks/useLeagueStatistics';
 import { useLeagueStandings, useAvailableWeeks } from '@/hooks/useLeagueStandings';
 import { useHistoricalStandings } from '@/hooks/useHistoricalStandings';
 import { HistoricalStandingsModal } from '@/components/HistoricalStandingsModal';
-import { Award, ArrowDown, BarChart3, Calendar, TrendingUp } from 'lucide-react';
+import { Award, ArrowDown, BarChart3, Calendar, TrendingUp, Target, DollarSign, Ban } from 'lucide-react';
 import { useCookieConsent } from '@/hooks/useCookieConsent';
+import { Button } from '@/components/ui/button';
+import { BlockMatchesModal } from '@/components/BlockMatchesModal';
 
 export const Clasificacion = () => {
   const { user } = useAuth();
@@ -22,12 +24,14 @@ export const Clasificacion = () => {
   const [leagueName, setLeagueName] = useState<string>('Jambo');
   const [selectedPlayer, setSelectedPlayer] = useState<{ id: string; name: string } | null>(null);
   const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false);
+  const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
   const [isLeagueStatsModalOpen, setIsLeagueStatsModalOpen] = useState(false);
   const [isHistoricalStandingsModalOpen, setIsHistoricalStandingsModalOpen] = useState(false);
   const [leagueId, setLeagueId] = useState<number | null>(null);
   const [leagueType, setLeagueType] = useState<'free' | 'premium' | null>(null);
   const [selectedWeek, setSelectedWeek] = useState<string>('total');
   const [showWeekFilter, setShowWeekFilter] = useState(false);
+  const [playerStats, setPlayerStats] = useState<{ successRate: number; stakeSuccessRate: number } | null>(null);
 
   // Get league statistics
   const { data: leagueStats, isLoading: statsLoading } = useLeagueStatistics(leagueId);
@@ -152,11 +156,69 @@ export const Clasificacion = () => {
       name: profile.username || 'Usuario'
     });
     setIsPlayerModalOpen(true);
+    
+    // Fetch player statistics
+    fetchPlayerStats(profile.id);
   };
+
+  const fetchPlayerStats = async (playerId: string) => {
+    try {
+      // Fetch all bets for the player (won and lost)
+      const { data: betsData, error: betsError } = await supabase
+        .from('bets')
+        .select('*')
+        .eq('user_id', playerId)
+        .in('status', ['won', 'lost'])
+        .not('week', 'eq', 0);
+
+      if (betsError) {
+        console.error('Error fetching player bets:', betsError);
+        setPlayerStats(null);
+        return;
+      }
+
+      if (!betsData || betsData.length === 0) {
+        setPlayerStats({ successRate: 0, stakeSuccessRate: 0 });
+        return;
+      }
+
+      // Calculate success rate (percentage of won bets)
+      const wonBets = betsData.filter(bet => bet.status === 'won').length;
+      const successRate = (wonBets / betsData.length) * 100;
+
+      // Calculate stake-based success rate
+      const totalStake = betsData.reduce((sum, bet) => sum + (parseFloat(String(bet.stake)) || 0), 0);
+      const wonBetsStake = betsData
+        .filter(bet => bet.status === 'won')
+        .reduce((sum, bet) => sum + (parseFloat(String(bet.stake)) || 0), 0);
+      
+      const stakeSuccessRate = totalStake > 0 ? (wonBetsStake / totalStake) * 100 : 0;
+
+      setPlayerStats({ successRate, stakeSuccessRate });
+    } catch (error) {
+      console.error('Error calculating player stats:', error);
+      setPlayerStats(null);
+    }
+  };
+  const openBlockModal = () => {
+    setIsBlockModalOpen(true);
+  };
+
+  const closeBlockModal = () => {
+    setIsBlockModalOpen(false);
+  };
+
+  useEffect(() => {
+    if (!isPlayerModalOpen) {
+      setIsBlockModalOpen(false);
+    }
+  }, [isPlayerModalOpen]);
+
 
   const closePlayerModal = () => {
     setIsPlayerModalOpen(false);
     setSelectedPlayer(null);
+    setIsBlockModalOpen(false);
   };
 
   const toggleWeekFilter = () => {
@@ -328,16 +390,65 @@ export const Clasificacion = () => {
       <Dialog open={isPlayerModalOpen} onOpenChange={setIsPlayerModalOpen}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
           <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl">Historial de Apuestas</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl">{selectedPlayer ? `Perfil de ${selectedPlayer.name}` : 'Historial de Apuestas'}</DialogTitle>
           </DialogHeader>
+          
           {selectedPlayer && (
-            <PlayerBetHistory 
-              playerId={selectedPlayer.id} 
-              playerName={selectedPlayer.name}
-            />
+            <div className="space-y-4">
+              {/* Statistics Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => {/* TODO: % Acierto de Apuestas */}}>
+                  <CardHeader className="pb-2 pt-4">
+                    <CardTitle className="text-base flex items-center justify-center gap-2">
+                      <Target className="w-4 h-4 text-indigo-500" />
+                      % Acierto de Apuestas
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-center pb-4">
+                    <div className="text-xl font-bold">{playerStats ? `${playerStats.successRate.toFixed(1)}%` : '-'}</div>
+                  </CardContent>
+                </Card>
+
+                <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => {/* TODO: Basado en stakes */}}>
+                  <CardHeader className="pb-2 pt-4">
+                    <CardTitle className="text-base flex items-center justify-center gap-2">
+                      <DollarSign className="w-4 h-4 text-green-500" />
+                      Basado en Stakes
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-center pb-4">
+                    <div className="text-xl font-bold">{playerStats ? `${playerStats.stakeSuccessRate.toFixed(1)}%` : '-'}</div>
+                  </CardContent>
+                </Card>
+
+                {leagueType === 'premium' && selectedPlayer.id !== user?.id && (
+                  <Card className="cursor-pointer hover:bg-muted/50 transition-colors flex items-center justify-center min-h-[100px]" onClick={openBlockModal}>
+                    <CardHeader className="pb-2 pt-4">
+                      <CardTitle className="text-base flex items-center justify-center gap-2">
+                        <Ban className="w-4 h-4 text-red-500" />
+                        Bloquear Partidos
+                      </CardTitle>
+                    </CardHeader>
+                  </Card>
+                )}
+              </div>
+
+              <PlayerBetHistory 
+                playerId={selectedPlayer.id} 
+                playerName={selectedPlayer.name}
+              />
+            </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {selectedPlayer && leagueType === 'premium' && (
+        <BlockMatchesModal
+          isOpen={isBlockModalOpen}
+          onClose={closeBlockModal}
+          blockedUser={selectedPlayer}
+        />
+      )}
 
       {/* League Statistics Modal - Solo para ligas premium */}
       {leagueType === 'premium' && (

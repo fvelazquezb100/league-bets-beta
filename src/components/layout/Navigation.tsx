@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Home, DollarSign, History, Shield, Settings, Trophy, Award, Menu, LogOut, User, Ban } from 'lucide-react';
+import { Home, DollarSign, History, Shield, Settings, Trophy, Award, Menu, LogOut, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { useIsPremiumLeague } from '@/hooks/useLeaguePremium';
 
 const navigationItems = [
   {
@@ -44,7 +43,6 @@ const navigationItems = [
 export const Navigation = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const isPremium = useIsPremiumLeague();
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [league, setLeague] = useState<any>(null);
@@ -108,12 +106,7 @@ export const Navigation = () => {
       <nav className="bg-card border-b border-border/50 hidden md:block bg-background">
         <div className="container mx-auto px-6">
           <div className="flex space-x-8">
-            {navigationItems.map(item => (
-              <React.Fragment key={item.name}>
-                {renderLink(item.name, item.href, item.icon)}
-                {item.href === '/bets' && isPremium && renderLink('Bloqueos', '/bloqueos', Ban)}
-              </React.Fragment>
-            ))}
+            {navigationItems.map(item => renderLink(item.name, item.href, item.icon))}
             {isSuperAdmin && renderLink('SuperAdmin', '/superadmin', Shield)}
           </div>
         </div>

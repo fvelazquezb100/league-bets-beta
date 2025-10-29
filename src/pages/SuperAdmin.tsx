@@ -224,23 +224,11 @@ const SuperAdmin: React.FC = () => {
 
       if (error2) throw error2;
 
-      // Execute reset function to apply values to all users
-      const { data: resetResult, error: resetError } = await supabase.rpc('reset_block_counters');
-
-      if (resetError) throw resetError;
-
-      const result = resetResult as { success?: boolean; error?: string; updated_profiles?: number };
-      
-      if (result && result.success === false) {
-        throw new Error(result.error || 'Error al resetear contadores');
-      }
-
       await refetchBlockStats();
 
-      const updatedCount = result?.updated_profiles ?? 0;
       toast({
-        title: 'Bloqueos actualizados',
-        description: `Los valores se actualizaron y aplicaron a ${updatedCount} usuarios correctamente.`,
+        title: 'Configuración actualizada',
+        description: 'Se guardaron los nuevos valores en betting_settings.',
       });
 
       setBlockResetDialogOpen(false);
@@ -456,7 +444,7 @@ const SuperAdmin: React.FC = () => {
                   <AlertDialogHeader>
                     <AlertDialogTitle>Aplicar nueva configuración global</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Se actualizarán los valores de configuración y se aplicarán inmediatamente a todos los usuarios del sistema.
+                      Se actualizarán los valores de configuración de bloqueos en betting_settings.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
