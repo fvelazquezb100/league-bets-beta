@@ -1,13 +1,15 @@
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-import { LogOut, User, DollarSign, Trophy, Menu, Home, History, Settings, Shield, Award } from 'lucide-react';
+import { LogOut, User, DollarSign, Trophy, Menu, Home, History, Settings, Shield, Award, Ban } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
 import { APP_CONFIG } from '@/config/app';
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { cn } from '@/lib/utils';
+import { useIsPremiumLeague } from '@/hooks/useLeaguePremium';
 
 const navigationItems = [
   {
@@ -46,6 +48,7 @@ const navigationItems = [
 export const Header = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const isPremium = useIsPremiumLeague();
   const [profile, setProfile] = useState<any>(null);
   const [league, setLeague] = useState<any>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -182,23 +185,38 @@ export const Header = () => {
                         const Icon = item.icon;
                         const isActive = location.pathname === item.href;
                         return (
-                          <Link
-                            key={item.name}
-                            to={item.href}
-                            onClick={() => setIsOpen(false)}
-                            className={cn(
-                              'flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors',
-                              isActive
-                                ? 'bg-primary text-primary-foreground'
-                                : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                          <React.Fragment key={item.name}>
+                            <Link
+                              to={item.href}
+                              onClick={() => setIsOpen(false)}
+                              className={cn(
+                                'flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors',
+                                isActive
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                              )}
+                            >
+                              <Icon className="h-4 w-4" />
+                              {item.name}
+                            </Link>
+                            {item.href === '/bets' && isPremium && (
+                              <Link
+                                to="/bloqueos"
+                                onClick={() => setIsOpen(false)}
+                                className={cn(
+                                  'flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors',
+                                  location.pathname === '/bloqueos'
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                                )}
+                              >
+                                <Ban className="h-4 w-4" />
+                                Bloqueos
+                              </Link>
                             )}
-                          >
-                            <Icon className="h-4 w-4" />
-                            {item.name}
-                          </Link>
+                          </React.Fragment>
                         );
                       })}
-                      
 
                       {/* SuperAdmin */}
                       {profile?.global_role === 'superadmin' && (

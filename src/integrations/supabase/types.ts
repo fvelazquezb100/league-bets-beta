@@ -684,6 +684,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      reset_block_counters: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       schedule_one_time_http_call: {
         Args: {
           auth_header: string

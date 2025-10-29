@@ -39,6 +39,7 @@ import { ResetPassword } from "./pages/ResetPassword";
 import { UpdatePassword } from "./pages/UpdatePassword";
 import { LeagueSetup } from "./pages/LeagueSetup";
 import { Settings } from "./pages/Settings";
+import { Bloqueos } from "./pages/Bloqueos";
 import { SmartRedirect } from "./components/SmartRedirect";
 import AnalyticsLoader from "./components/AnalyticsLoader";
 const queryClient = new QueryClient();
@@ -128,6 +129,15 @@ const App = () => (
                 <SmartRedirect>
                   <MainLayout>
                     <Settings />
+                  </MainLayout>
+                </SmartRedirect>
+              </ProtectedRoute>
+            } />
+            <Route path="/bloqueos" element={
+              <ProtectedRoute>
+                <SmartRedirect>
+                  <MainLayout>
+                    <Bloqueos />
                   </MainLayout>
                 </SmartRedirect>
               </ProtectedRoute>

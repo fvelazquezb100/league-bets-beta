@@ -10,6 +10,8 @@ import { useLastProcessedMatch } from '@/hooks/useLastProcessedMatch';
 import { useNavigate } from 'react-router-dom';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useCookieConsent } from '@/hooks/useCookieConsent';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const SuperAdmin: React.FC = () => {
   const { toast } = useToast();
@@ -65,6 +67,32 @@ const SuperAdmin: React.FC = () => {
       }
 
       return data?.last_updated;
+    },
+  });
+
+  const {
+    data: blockSettings,
+    isLoading: loadingBlockStats,
+    refetch: refetchBlockStats,
+  } = useQuery({
+    queryKey: ['block-settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('betting_settings')
+        .select('setting_key, setting_value')
+        .in('setting_key', ['blocks_available_per_user', 'blocks_received_max_per_user']);
+
+      if (error) {
+        throw error;
+      }
+
+      const availableSetting = data?.find(s => s.setting_key === 'blocks_available_per_user');
+      const blockedSetting = data?.find(s => s.setting_key === 'blocks_received_max_per_user');
+
+      return {
+        blocksAvailable: availableSetting ? parseInt(availableSetting.setting_value, 10) : 1,
+        blocksReceived: blockedSetting ? parseInt(blockedSetting.setting_value, 10) : 3,
+      };
     },
   });
 
@@ -145,6 +173,87 @@ const SuperAdmin: React.FC = () => {
   const [updatingCache, setUpdatingCache] = React.useState(false);
   const [processingResults, setProcessingResults] = React.useState(false);
   const [testingAuth, setTestingAuth] = React.useState(false);
+  const [blockResetDialogOpen, setBlockResetDialogOpen] = React.useState(false);
+  const [blocksAvailableInput, setBlocksAvailableInput] = React.useState<number>(0);
+  const [blocksBlockedInput, setBlocksBlockedInput] = React.useState<number>(0);
+  const [updatingBlockSettings, setUpdatingBlockSettings] = React.useState(false);
+
+  React.useEffect(() => {
+    if (blockSettings) {
+      setBlocksAvailableInput(blockSettings.blocksAvailable ?? 1);
+      setBlocksBlockedInput(blockSettings.blocksReceived ?? 3);
+    }
+  }, [blockSettings]);
+
+  const handleBlockDialogOpenChange = (open: boolean) => {
+    if (updatingBlockSettings) return;
+    setBlockResetDialogOpen(open);
+  };
+
+  const handleApplyBlockSettings = async () => {
+    try {
+      setUpdatingBlockSettings(true);
+
+      const availableValue = Math.max(0, Math.floor(blocksAvailableInput));
+      const receivedValue = Math.max(0, Math.floor(blocksBlockedInput));
+
+      // Update both settings using upsert
+      const { error: error1 } = await supabase
+        .from('betting_settings')
+        .upsert({
+          setting_key: 'blocks_available_per_user',
+          setting_value: availableValue.toString(),
+          description: 'Number of matches each user can block per week',
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'setting_key',
+        });
+
+      if (error1) throw error1;
+
+      const { error: error2 } = await supabase
+        .from('betting_settings')
+        .upsert({
+          setting_key: 'blocks_received_max_per_user',
+          setting_value: receivedValue.toString(),
+          description: 'Maximum number of blocks a user can receive from others',
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'setting_key',
+        });
+
+      if (error2) throw error2;
+
+      // Execute reset function to apply values to all users
+      const { data: resetResult, error: resetError } = await supabase.rpc('reset_block_counters');
+
+      if (resetError) throw resetError;
+
+      const result = resetResult as { success?: boolean; error?: string; updated_profiles?: number };
+      
+      if (result && result.success === false) {
+        throw new Error(result.error || 'Error al resetear contadores');
+      }
+
+      await refetchBlockStats();
+
+      const updatedCount = result?.updated_profiles ?? 0;
+      toast({
+        title: 'Bloqueos actualizados',
+        description: `Los valores se actualizaron y aplicaron a ${updatedCount} usuarios correctamente.`,
+      });
+
+      setBlockResetDialogOpen(false);
+    } catch (error: any) {
+      toast({
+        title: 'Error al actualizar bloqueos',
+        description: error?.message ?? 'No se pudo completar la actualización.',
+        variant: 'destructive',
+      });
+    } finally {
+      setUpdatingBlockSettings(false);
+    }
+  };
 
   const handleUpdateCache = async () => {
     setUpdatingCache(true);
@@ -289,6 +398,79 @@ const SuperAdmin: React.FC = () => {
               >
                 {testingAuth ? 'Probando...' : 'Test Edge Function Auth'}
               </Button>
+            </CardFooter>
+          </Card>
+
+          <Card className="h-full">
+            <CardHeader>
+              <CardTitle className="text-base sm:text-lg">Bloqueo de Partidos</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 p-3 sm:p-6">
+              {loadingBlockStats ? (
+                 <p className="text-xs sm:text-sm text-muted-foreground">Cargando estadísticas...</p>
+               ) : (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-4">
+                    <Label htmlFor="blocks-available-input" className="text-xs sm:text-sm text-muted-foreground">
+                      Partidos para bloquear
+                    </Label>
+                    <Input
+                      id="blocks-available-input"
+                      type="number"
+                      min={0}
+                      value={blocksAvailableInput}
+                      onChange={(event) => setBlocksAvailableInput(Number(event.target.value || 0))}
+                      disabled={loadingBlockStats || updatingBlockSettings}
+                      className="w-20 h-8 text-right"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <Label htmlFor="blocks-blocked-input" className="text-xs sm:text-sm text-muted-foreground">
+                      Máx. partidos bloqueados
+                    </Label>
+                    <Input
+                      id="blocks-blocked-input"
+                      type="number"
+                      min={0}
+                      value={blocksBlockedInput}
+                      onChange={(event) => setBlocksBlockedInput(Number(event.target.value || 0))}
+                      disabled={loadingBlockStats || updatingBlockSettings}
+                      className="w-20 h-8 text-right"
+                    />
+                  </div>
+                </div>
+              )}
+            </CardContent>
+            <CardFooter className="p-3 sm:p-6">
+              <AlertDialog open={blockResetDialogOpen} onOpenChange={handleBlockDialogOpenChange}>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    className="jambol-button text-xs sm:text-sm"
+                    onClick={() => setBlockResetDialogOpen(true)}
+                    disabled={loadingBlockStats}
+                  >
+                    Forzar actualización
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Aplicar nueva configuración global</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Se actualizarán los valores de configuración y se aplicarán inmediatamente a todos los usuarios del sistema.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={updatingBlockSettings}>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="jambol-button"
+                      onClick={handleApplyBlockSettings}
+                      disabled={updatingBlockSettings}
+                    >
+                      {updatingBlockSettings ? 'Actualizando...' : 'Aceptar'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </CardFooter>
           </Card>
         </div>
