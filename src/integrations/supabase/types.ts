@@ -440,6 +440,7 @@ export type Database = {
           content: string
           created_at: string
           created_by: string
+          league_id: number
           id: number
           is_active: boolean
           is_frozen: boolean
@@ -449,6 +450,7 @@ export type Database = {
           content: string
           created_at?: string
           created_by: string
+          league_id?: number
           id?: number
           is_active?: boolean
           is_frozen?: boolean
@@ -458,6 +460,7 @@ export type Database = {
           content?: string
           created_at?: string
           created_by?: string
+          league_id?: number
           id?: number
           is_active?: boolean
           is_frozen?: boolean
@@ -685,6 +688,10 @@ export type Database = {
         Returns: undefined
       }
       reset_block_counters: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      generate_block_news: {
         Args: Record<PropertyKey, never>
         Returns: Json
       }

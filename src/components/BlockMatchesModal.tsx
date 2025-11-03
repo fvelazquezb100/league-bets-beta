@@ -108,6 +108,25 @@ export const BlockMatchesModal: React.FC<BlockMatchesModalProps> = ({ isOpen, on
     },
   });
 
+  // Check if current user has already blocked this user
+  const { data: userHasBlocked = false, isLoading: userBlockedLoading } = useQuery({
+    queryKey: ['user-has-blocked', user?.id, blockedUser?.id, leagueId, currentWeek],
+    enabled: isOpen && !!user?.id && !!blockedUser?.id && !!leagueId && !!currentWeek,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('match_blocks')
+        .select('id')
+        .eq('blocker_user_id', user!.id)
+        .eq('blocked_user_id', blockedUser!.id)
+        .eq('league_id', leagueId!)
+        .eq('week', currentWeek!)
+        .eq('status', 'active')
+        .maybeSingle();
+      if (error) throw error;
+      return !!data;
+    },
+  });
+
   // Matches from all sources
   const { data: ligasMatches = [], isLoading: ligasLoading } = useMatchOdds(1);
   const { data: seleccionesMatches = [], isLoading: seleccionesLoading } = useMatchOdds(3);
@@ -167,7 +186,8 @@ export const BlockMatchesModal: React.FC<BlockMatchesModalProps> = ({ isOpen, on
     return leagues;
   }, [availableLeagueIds, seleccionesEnabled, copareyEnabled]);
 
-  const availableMatches = React.useMemo(() => {
+  // All available matches (without league filter) for minimum matches calculation
+  const allAvailableMatches = React.useMemo(() => {
     if (!matches.length || !leagueId) return [];
     if (!blockedUser?.id) return [];
     const now = new Date();
@@ -176,18 +196,13 @@ export const BlockMatchesModal: React.FC<BlockMatchesModalProps> = ({ isOpen, on
       if (!match.fixture?.id || !match.fixture?.date) return false;
 
       const matchWithSource = match as MatchData & { matchSource?: string };
+      const source = matchWithSource.matchSource || '';
 
-      if (selectedLeagueFilter !== 'all' && matchWithSource.matchSource !== selectedLeagueFilter) {
-        return false;
-      }
-
-      if (selectedLeagueFilter === 'all') {
-        const source = matchWithSource.matchSource || '';
-        if (source !== 'selecciones' && source !== 'coparey') {
-          const numericId = parseInt(source, 10);
-          if (!isNaN(numericId) && !availableLeagueIds.includes(numericId)) {
-            return false;
-          }
+      // Filter by available leagues (only if it's a numeric league, not selecciones/coparey)
+      if (source !== 'selecciones' && source !== 'coparey') {
+        const numericId = parseInt(source, 10);
+        if (!isNaN(numericId) && !availableLeagueIds.includes(numericId)) {
+          return false;
         }
       }
 
@@ -206,7 +221,18 @@ export const BlockMatchesModal: React.FC<BlockMatchesModalProps> = ({ isOpen, on
 
       return matchDate > now;
     });
-  }, [matches, selectedLeagueFilter, availableLeagueIds, leagueId, matchAvailability, cutoffMinutes, blockedUser?.id]);
+  }, [matches, availableLeagueIds, leagueId, matchAvailability, cutoffMinutes, blockedUser?.id]);
+
+  const availableMatches = React.useMemo(() => {
+    if (selectedLeagueFilter === 'all') {
+      return allAvailableMatches;
+    }
+
+    return allAvailableMatches.filter(match => {
+      const matchWithSource = match as MatchData & { matchSource?: string };
+      return matchWithSource.matchSource === selectedLeagueFilter;
+    });
+  }, [allAvailableMatches, selectedLeagueFilter]);
 
   const { data: blockedUserProfile } = useQuery({
     queryKey: ['blocked-user-profile', blockedUser?.id],
@@ -228,6 +254,23 @@ export const BlockMatchesModal: React.FC<BlockMatchesModalProps> = ({ isOpen, on
     mutationFn: async () => {
       if (!user || !blockedUser || !selectedFixtureId || !leagueId || !currentWeek) {
         throw new Error('Datos incompletos');
+      }
+
+      // Check if user has already blocked this user
+      const { data: existingUserBlock, error: userBlockError } = await supabase
+        .from('match_blocks')
+        .select('id')
+        .eq('blocker_user_id', user.id)
+        .eq('blocked_user_id', blockedUser.id)
+        .eq('league_id', leagueId)
+        .eq('week', currentWeek)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (userBlockError) throw userBlockError;
+
+      if (existingUserBlock) {
+        throw new Error('Ya le has bloqueado 1 partido a este jugador.');
       }
 
       const { data: blockerProfile } = await supabase
@@ -301,6 +344,7 @@ export const BlockMatchesModal: React.FC<BlockMatchesModalProps> = ({ isOpen, on
       queryClient.invalidateQueries({ queryKey: ['blocked-fixtures-target'] });
       queryClient.invalidateQueries({ queryKey: ['user-blocks'] });
       queryClient.invalidateQueries({ queryKey: ['blocked-user-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['user-has-blocked'] });
     },
     onError: (error: Error) => {
       toast({
@@ -313,6 +357,24 @@ export const BlockMatchesModal: React.FC<BlockMatchesModalProps> = ({ isOpen, on
 
   const handleBlockClick = (fixtureId: number) => {
     if (!blockedUser?.id) return;
+
+    if (hasMinimumMatches) {
+      toast({
+        title: 'Mínimo de partidos alcanzado',
+        description: 'El jugador solo tiene 3 partidos, no se le puede bloquear más.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (userHasBlocked) {
+      toast({
+        title: 'Ya has bloqueado este jugador',
+        description: 'Ya le has bloqueado 1 partido a este jugador.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     if (userBlocksAvailable !== undefined && userBlocksAvailable <= 0) {
       toast({
@@ -342,6 +404,19 @@ export const BlockMatchesModal: React.FC<BlockMatchesModalProps> = ({ isOpen, on
     return existingBlocks.length >= maxBlocksAllowed;
   }, [blockedUser?.id, maxBlocksAllowed, existingBlocks.length, leagueId, currentWeek]);
 
+  // Calculate available matches for the blocked user (total matches - already blocked)
+  const availableMatchesForBlockedUser = React.useMemo(() => {
+    if (!blockedUser?.id) return 0;
+    const totalAvailable = allAvailableMatches.length;
+    const alreadyBlocked = existingBlocks.length;
+    return totalAvailable - alreadyBlocked;
+  }, [allAvailableMatches.length, existingBlocks.length, blockedUser?.id]);
+
+  // Check if blocked user has minimum 3 matches available
+  const hasMinimumMatches = React.useMemo(() => {
+    return availableMatchesForBlockedUser <= 3;
+  }, [availableMatchesForBlockedUser]);
+
   React.useEffect(() => {
     if (!isOpen) {
       setSelectedFixtureId(null);
@@ -358,7 +433,7 @@ export const BlockMatchesModal: React.FC<BlockMatchesModalProps> = ({ isOpen, on
       );
     }
 
-    if (matchesLoading || existingBlocksLoading) {
+    if (matchesLoading || existingBlocksLoading || userBlockedLoading) {
       return (
         <div className="space-y-2">
           <Skeleton className="h-16 w-full" />
@@ -414,7 +489,7 @@ export const BlockMatchesModal: React.FC<BlockMatchesModalProps> = ({ isOpen, on
                   <Button
                     size="sm"
                     onClick={() => handleBlockClick(match.fixture?.id ?? 0)}
-                    disabled={(userBlocksAvailable !== undefined && userBlocksAvailable <= 0) || isLimitReached}
+                    disabled={(userBlocksAvailable !== undefined && userBlocksAvailable <= 0) || isLimitReached || userHasBlocked || hasMinimumMatches}
                     className="jambol-button text-xs"
                   >
                     Bloquear
@@ -461,7 +536,19 @@ export const BlockMatchesModal: React.FC<BlockMatchesModalProps> = ({ isOpen, on
             </div>
           </div>
 
-          {isLimitReached && (
+          {hasMinimumMatches && (
+            <div className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded p-2">
+              El jugador solo tiene 3 partidos, no se le puede bloquear más.
+            </div>
+          )}
+
+          {userHasBlocked && !hasMinimumMatches && (
+            <div className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded p-2">
+              Ya le has bloqueado 1 partido a este jugador.
+            </div>
+          )}
+
+          {isLimitReached && !userHasBlocked && !hasMinimumMatches && (
             <div className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded p-2">
               Este usuario ya alcanzó el máximo de partidos bloqueados para esta semana.
             </div>
