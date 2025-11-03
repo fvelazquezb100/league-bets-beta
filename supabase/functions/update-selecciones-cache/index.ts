@@ -75,12 +75,22 @@ Deno.serve(async (req) => {
       const json = await res.json().catch(() => null);
       const items = Array.isArray(json?.response) ? json.response : [];
       
-      // Filter by World Cup Qualification leagues
-      const wcq = items.filter((it: any) => isWorldCupQualification(it?.league?.name));
+      // Filter by World Cup Qualification leagues AND exclude finished matches
+      const wcq = items.filter((it: any) => 
+        isWorldCupQualification(it?.league?.name) &&
+        it?.fixture?.status?.short !== 'FT' &&
+        it?.fixture?.status?.short !== 'AET' &&
+        it?.fixture?.status?.short !== 'PEN'
+      );
       allFixtures.push(...wcq);
       
-      // Filter by Copa del Rey
-      const copa = items.filter((it: any) => isCopaDelRey(it?.league?.id));
+      // Filter by Copa del Rey AND exclude finished matches
+      const copa = items.filter((it: any) => 
+        isCopaDelRey(it?.league?.id) &&
+        it?.fixture?.status?.short !== 'FT' &&
+        it?.fixture?.status?.short !== 'AET' &&
+        it?.fixture?.status?.short !== 'PEN'
+      );
       copaFixtures.push(...copa);
     }
 

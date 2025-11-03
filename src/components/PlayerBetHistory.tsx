@@ -201,9 +201,9 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
 
   return (
     <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-foreground">
-          Historial de Apuestas de {playerName}
+      <div className="text-left">
+        <h2 className="text-lg font-semibold text-foreground">
+          Historial de {playerName}
         </h2>
       </div>
 

@@ -1,7 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 interface NewsItem {
   id: number;
@@ -9,18 +11,28 @@ interface NewsItem {
   content: string;
   created_at: string;
   is_frozen: boolean;
+  league_id: number;
 }
 
 export const NewsBoard = () => {
+  const { user } = useAuth();
+  const { data: userProfile } = useUserProfile(user?.id);
+  const leagueId = userProfile?.league_id ?? null;
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchNews = async () => {
+  const fetchNews = useCallback(async () => {
     try {
+      setLoading(true);
+
+      const targetLeagueIds =
+        leagueId && leagueId !== 0 ? [0, leagueId] : [0];
+
       const { data, error } = await supabase
         .from('news')
-        .select('id, title, content, created_at, is_frozen')
+        .select('id, title, content, created_at, is_frozen, league_id')
         .eq('is_active', true)
+        .in('league_id', targetLeagueIds)
         .order('is_frozen', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(10);
@@ -35,11 +47,11 @@ export const NewsBoard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [leagueId]);
 
   useEffect(() => {
     fetchNews();
-  }, []);
+  }, [fetchNews]);
 
   return (
     <Card className="shadow-lg">

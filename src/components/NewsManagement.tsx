@@ -16,6 +16,7 @@ interface NewsItem {
   created_at: string;
   is_active: boolean;
   is_frozen: boolean;
+  league_id: number;
 }
 
 export const NewsManagement = () => {
@@ -86,7 +87,8 @@ export const NewsManagement = () => {
           title: title.trim(),
           content: content.trim(),
           created_by: user.id,
-          is_active: true
+          is_active: true,
+          league_id: 0,
         });
 
       if (error) throw error;
