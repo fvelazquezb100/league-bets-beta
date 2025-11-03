@@ -83,6 +83,39 @@ const Bets = () => {
   const { data: availableLeagues = [], isLoading: leaguesLoading } = useAvailableLeagues(user?.id);
   const { data: matchAvailability = [], isLoading: availabilityLoading } = useCombinedMatchAvailability(userProfile?.league_id);
 
+  // Get current week from league
+  const { data: currentWeek } = useQuery({
+    queryKey: ['league-week', userProfile?.league_id],
+    enabled: !!userProfile?.league_id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('leagues')
+        .select('week')
+        .eq('id', userProfile!.league_id)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.week ?? 1;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Get blocked fixtures for current user
+  const { data: blockedFixtures = [] } = useQuery<number[]>({
+    queryKey: ['blocked-fixtures', user?.id, userProfile?.league_id, currentWeek],
+    enabled: !!user?.id && !!userProfile?.league_id && !!currentWeek,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('match_blocks')
+        .select('fixture_id')
+        .eq('blocked_user_id', user!.id)
+        .eq('league_id', userProfile!.league_id)
+        .eq('week', currentWeek!)
+        .eq('status', 'active');
+      if (error) throw error;
+      return data?.map(b => b.fixture_id) ?? [];
+    },
+  });
+
   // Load SuperAdmin toggle to control Selecciones tab visibility
   const { data: seleccionesEnabled = false, isLoading: seleccionesLoading } = useQuery({
     queryKey: ['betting-setting', 'enable_selecciones'],
@@ -459,6 +492,16 @@ const Bets = () => {
                         <div className="text-center py-8 text-muted-foreground">
                           <p className="text-lg font-medium mb-2">Próximos encuentros</p>
                           <p>Las apuestas para este partido estarán disponibles próximamente.</p>
+                        </div>
+                      );
+                    }
+                    
+                    // Check if this match is blocked for the user
+                    if (blockedFixtures.includes(match.fixture.id)) {
+                      return (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <p className="text-lg font-medium mb-2 text-red-500">Te han bloqueado este partido</p>
+                          <p>No puedes apostar en este partido porque otro usuario de tu liga lo ha bloqueado.</p>
                         </div>
                       );
                     }
