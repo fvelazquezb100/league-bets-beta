@@ -84,6 +84,40 @@ export default function FAQ() {
             Revisa los <Link to="/terminos" className="underline">Términos y Condiciones</Link> y la <Link to="/politica-cookies" className="underline">Política de Cookies</Link> para conocer el detalle del servicio y consentimiento.
           </p>
         </section>
+
+        <section>
+          <h2 className="text-lg font-semibold">¿Qué son los bloqueos de partidos?</h2>
+          <p className="text-sm md:text-base text-muted-foreground">
+            Los bloqueos de partidos son una funcionalidad exclusiva para ligas premium que te permite bloquear un partido específico a otro jugador de tu liga, impidiendo que apueste en ese partido. Los puntos de bloqueo se reinician cada martes automáticamente.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold">¿Cuáles son las reglas de bloqueo de partidos?</h2>
+          <p className="text-sm md:text-base text-muted-foreground">
+            Las reglas son las siguientes:
+          </p>
+          <ul className="list-disc ml-6 mt-2 space-y-1">
+            <li>Cada jugador solo puede bloquear 1 partido a otro jugador por jornada.</li>
+            <li>Cada jugador solo puede bloquear un máximo de 2 partidos en total, es decir, puede bloquear 2 partidos a otros dos usuarios.</li>
+            <li>Cada jugador solo puede tener bloqueado un máximo de 3 partidos en total por otros jugadores.</li>
+            <li>Los puntos de bloqueos se reinician los martes.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold">¿Qué pasa si me bloquean un partido?</h2>
+          <p className="text-sm md:text-base text-muted-foreground">
+            Si otro jugador bloquea un partido para ti, no podrás interactuar con ese partido. Si ya tenías una apuesta previa en ese partido, no podrás cancelarla. Si es una combinada que incluye un partido bloqueado, tampoco podrás realizar ninguna acción sobre esa apuesta.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold">¿Cómo puedo bloquear un partido a otro jugador?</h2>
+          <p className="text-sm md:text-base text-muted-foreground">
+            Para bloquear un partido: entra en la página de Clasificación, busca al jugador que quieras bloquear y haz clic en su nombre. En la ventana que se abre, selecciona la liga y busca el partido que deseas bloquear. No podrás bloquear el partido si ya lo tienes bloqueado o si a ese jugador le quedarían menos de 3 partidos disponibles para apostar.
+          </p>
+        </section>
       </div>
 
       <div className="mt-8">

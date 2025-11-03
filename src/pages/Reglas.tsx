@@ -13,6 +13,7 @@ export default function Reglas() {
     { id: 'resultados', title: 'Resultados y posibles retrasos' },
     { id: 'clasificacion', title: 'Clasificación y desempates' },
     { id: 'juego-limpio', title: 'Juego limpio' },
+    { id: 'bloqueos', title: 'Bloqueos de partidos' },
     { id: 'cambios', title: 'Cambios en estas reglas' },
     { id: 'ayuda', title: 'Ayuda' },
   ];
@@ -149,9 +150,36 @@ export default function Reglas() {
 
       <hr className="my-6 border-border" />
 
-      {/* 11. Cambios en estas reglas */}
+      {/* 11. Bloqueos de partidos */}
+      <section id="bloqueos" className="scroll-mt-24">
+        <h2 className="text-xl font-semibold mb-2">11. Bloqueos de partidos</h2>
+        <p className="text-sm md:text-base text-muted-foreground mb-2">
+          Los bloqueos de partidos son una funcionalidad exclusiva para ligas premium que permite a los jugadores bloquear partidos específicos a otros jugadores de su liga.
+        </p>
+        <h3 className="text-lg font-semibold mt-4 mb-2">Reglas de bloqueo:</h3>
+        <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1">
+          <li>Cada jugador solo puede bloquear 1 partido a otro jugador por jornada.</li>
+          <li>Cada jugador solo puede bloquear un máximo de 2 partidos en total, es decir, puede bloquear 2 partidos a otros dos usuarios.</li>
+          <li>Cada jugador solo puede tener bloqueado un máximo de 3 partidos en total por otros jugadores.</li>
+          <li>Los puntos de bloqueos se reinician los martes automáticamente.</li>
+        </ul>
+        <h3 className="text-lg font-semibold mt-4 mb-2">Interacción con partidos bloqueados:</h3>
+        <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1">
+          <li>Si otro jugador bloquea un partido para ti, no podrás interactuar con ese partido.</li>
+          <li>Si ya tenías una apuesta previa en ese partido, no podrás cancelarla.</li>
+          <li>Si es una combinada que incluye un partido bloqueado, tampoco podrás realizar ninguna acción sobre esa apuesta.</li>
+        </ul>
+        <h3 className="text-lg font-semibold mt-4 mb-2">Cómo bloquear un partido:</h3>
+        <p className="text-sm md:text-base text-muted-foreground">
+          Entra en la página de Clasificación, busca al jugador que quieras bloquear y haz clic en su nombre. En la ventana que se abre, selecciona la liga y busca el partido que deseas bloquear. No podrás bloquear el partido si ya lo tienes bloqueado o si a ese jugador le quedarían menos de 3 partidos disponibles para apostar.
+        </p>
+      </section>
+
+      <hr className="my-6 border-border" />
+
+      {/* 12. Cambios en estas reglas */}
       <section id="cambios" className="scroll-mt-24">
-        <h2 className="text-xl font-semibold mb-2">11. Cambios en estas reglas</h2>
+        <h2 className="text-xl font-semibold mb-2">12. Cambios en estas reglas</h2>
         <p className="text-sm md:text-base text-muted-foreground">
           Podemos actualizar las reglas. Avisaremos de la fecha de actualización.
         </p>
@@ -159,9 +187,9 @@ export default function Reglas() {
 
       <hr className="my-6 border-border" />
 
-      {/* 12. Ayuda */}
+      {/* 13. Ayuda */}
       <section id="ayuda" className="scroll-mt-24">
-        <h2 className="text-xl font-semibold mb-2">12. Ayuda</h2>
+        <h2 className="text-xl font-semibold mb-2">13. Ayuda</h2>
         <p className="text-sm md:text-base text-muted-foreground">
           ¿Dudas? Escríbenos a <a href="mailto:contact@jambol.co" className="underline">contact@jambol.co</a>.
         </p>

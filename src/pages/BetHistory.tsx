@@ -7,6 +7,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Calendar, TrendingDown, TrendingUp, Trophy, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { getBettingTranslation } from '@/utils/bettingTranslations';
 import { UserStatistics } from '@/components/UserStatistics';
@@ -14,6 +15,8 @@ import { useUserBetHistory, useCancelBet } from '@/hooks/useUserBets';
 import { useBettingSettings } from '@/hooks/useBettingSettings';
 import { useMatchResults, useKickoffTimes } from '@/hooks/useMatchResults';
 import { useCookieConsent } from '@/hooks/useCookieConsent';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { supabase } from '@/integrations/supabase/client';
 
 export const BetHistory = () => {
   const { user } = useAuth();
@@ -53,6 +56,7 @@ export const BetHistory = () => {
   // React Query hooks
   const { data: bets = [], isLoading: betsLoading, refetch: refetchBets } = useUserBetHistory(user?.id);
   const cancelBetMutation = useCancelBet();
+const { data: userProfile } = useUserProfile(user?.id);
   
   // Extract fixture IDs from bets for related data
   const fixtureIds = useMemo(() => {
@@ -73,8 +77,46 @@ export const BetHistory = () => {
   }, [bets]);
   
   // Fetch related data
-  const { data: matchResults = {} } = useMatchResults(fixtureIds);
-  const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
+const { data: matchResults = {} } = useMatchResults(fixtureIds);
+const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
+
+  const leagueId = userProfile?.league_id ?? null;
+
+  const { data: currentWeek } = useQuery({
+    queryKey: ['league-week', leagueId],
+    enabled: !!leagueId,
+    queryFn: async () => {
+      if (!leagueId) return 1;
+      const { data, error } = await supabase
+        .from('leagues')
+        .select('week')
+        .eq('id', leagueId)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.week ?? 1;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: blockedFixtures = [] } = useQuery<number[]>({
+    queryKey: ['blocked-fixtures-history', user?.id, leagueId, currentWeek],
+    enabled: !!user?.id && !!leagueId && !!currentWeek,
+    queryFn: async () => {
+      if (!user?.id || !leagueId || !currentWeek) return [];
+      const week = currentWeek as number;
+      const { data, error } = await supabase
+        .from('match_blocks')
+        .select('fixture_id')
+        .eq('blocked_user_id', user!.id)
+        .eq('league_id', leagueId)
+        .eq('week', week)
+        .eq('status', 'active');
+      if (error) throw error;
+      return data?.map((row) => row.fixture_id) ?? [];
+    },
+  });
+
+  const blockedFixturesSet = useMemo(() => new Set(blockedFixtures), [blockedFixtures]);
   
   // Local UI state
   const [now, setNow] = useState<Date>(new Date());
@@ -116,7 +158,7 @@ export const BetHistory = () => {
       
       return hasChanges ? newTimeLeft : prevTimeLeft;
     });
-  }, [now, bets, matchKickoffs, matchResults]);
+  }, [now, bets, matchKickoffs, matchResults, blockedFixtures]);
 
   const handleCancelClick = (betId: number) => {
     setBetToCancel(betId);
@@ -153,6 +195,25 @@ export const BetHistory = () => {
     setBetToCancel(null);
   };
 
+  const isBetBlocked = (bet: any): boolean => {
+    if (blockedFixturesSet.size === 0) return false;
+    if (bet.bet_type === 'single' && bet.fixture_id) {
+      return blockedFixturesSet.has(bet.fixture_id);
+    }
+    if (bet.bet_type === 'combo' && Array.isArray(bet.bet_selections)) {
+      return bet.bet_selections.some(
+        (selection: any) => selection.fixture_id && blockedFixturesSet.has(selection.fixture_id)
+      );
+    }
+    return false;
+  };
+
+  const renderBlockedTag = () => (
+    <div className="rounded-md border border-[#FFC72C] bg-[#FFC72C]/15 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[#FFC72C]">
+      Partido bloqueado
+    </div>
+  );
+
   // Filter out cancelled bets from statistics
   const activeBets = bets.filter((bet) => bet.status !== 'cancelled');
   
@@ -172,6 +233,7 @@ export const BetHistory = () => {
 
   // Function to get the cutoff time for a bet
   const getBetCutoffTime = (bet: any): Date | null => {
+    if (isBetBlocked(bet)) return null;
     // For single bets
     if (bet.bet_type === 'single' && bet.fixture_id) {
       // Check if match has already started by looking at match_results
@@ -266,6 +328,7 @@ export const BetHistory = () => {
   // Function to check if a bet can be cancelled (using dynamic cutoff minutes before kickoff and no matches finished)
   const canCancelBet = (bet: any): boolean => {
     if (bet.status !== 'pending') return false;
+    if (isBetBlocked(bet)) return false;
     
     // For single bets - check if match has already started
     if (bet.bet_type === 'single' && bet.fixture_id) {
@@ -575,6 +638,7 @@ export const BetHistory = () => {
               {filteredBets.length > 0 ? (
                 filteredBets.map((bet) => {
                   if (bet.bet_type === 'combo' && bet.bet_selections?.length) {
+                    const betBlocked = isBetBlocked(bet);
                     return [
                       <TableRow key={bet.id} className="bg-muted/30">
                         <TableCell className="font-medium">
@@ -592,7 +656,9 @@ export const BetHistory = () => {
                           <Badge variant={getStatusVariant(bet.status)} className={getStatusClassName(bet.status)}>{getStatusText(bet.status)}</Badge>
                         </TableCell>
                         <TableCell>
-                          {canCancelBet(bet) && (
+                          {betBlocked ? (
+                            <div className="flex justify-end">{renderBlockedTag()}</div>
+                          ) : canCancelBet(bet) ? (
                             <div className="flex flex-col items-end gap-1">
                               <Button
                                 variant="destructive"
@@ -610,7 +676,7 @@ export const BetHistory = () => {
                                 {timeLeft[bet.id] || 'Calculando...'}
                               </span>
                             </div>
-                          )}
+                          ) : null}
                         </TableCell>
                       </TableRow>,
                       ...bet.bet_selections.map((selection: any, index: number) => (
@@ -640,6 +706,7 @@ export const BetHistory = () => {
                       )),
                     ];
                   } else {
+                    const betBlocked = isBetBlocked(bet);
                     return (
                        <TableRow key={bet.id}>
                          <TableCell className="font-medium">
@@ -666,7 +733,9 @@ export const BetHistory = () => {
                           <Badge variant={getStatusVariant(bet.status)} className={getStatusClassName(bet.status)}>{getStatusText(bet.status)}</Badge>
                         </TableCell>
                         <TableCell>
-                          {canCancelBet(bet) && (
+                          {betBlocked ? (
+                            <div className="flex justify-end">{renderBlockedTag()}</div>
+                          ) : canCancelBet(bet) ? (
                             <div className="flex flex-col items-end gap-1">
                               <Button
                                 variant="destructive"
@@ -684,7 +753,7 @@ export const BetHistory = () => {
                                 {timeLeft[bet.id] || 'Calculando...'}
                               </span>
                             </div>
-                          )}
+                          ) : null}
                         </TableCell>
                       </TableRow>
                     );
@@ -715,8 +784,10 @@ export const BetHistory = () => {
         </div>
         <div className="space-y-4">
             {filteredBets.length > 0 ? (
-              filteredBets.map((bet) => (
-                <Card key={bet.id} className="p-4">
+              filteredBets.map((bet) => {
+                const betBlocked = isBetBlocked(bet);
+                return (
+                  <Card key={bet.id} className="p-4">
                   <div className="space-y-3">
                     {/* Header: Tipo + Semana + Botón Cancelar */}
                     <div className="flex items-center justify-between">
@@ -731,7 +802,9 @@ export const BetHistory = () => {
                           Semana {bet.week || 'N/A'}
                         </span>
                       </div>
-                      {canCancelBet(bet) && (
+                      {betBlocked ? (
+                        <div className="flex flex-col items-end">{renderBlockedTag()}</div>
+                      ) : canCancelBet(bet) ? (
                         <div className="flex flex-col items-end gap-1">
                           <Button
                             variant="destructive"
@@ -745,7 +818,7 @@ export const BetHistory = () => {
                             {timeLeft[bet.id] || 'Calculando...'}
                           </span>
                         </div>
-                      )}
+                      ) : null}
                     </div>
 
                     {/* Información financiera */}
@@ -810,8 +883,9 @@ export const BetHistory = () => {
                       )}
                     </div>
                   </div>
-                </Card>
-              ))
+                  </Card>
+              );
+              })
             ) : (
               <div className="text-center text-muted-foreground py-8">
                 {activeFilter === 'won' 
