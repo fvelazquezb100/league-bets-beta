@@ -61,9 +61,9 @@ export const SiteFooter: React.FC = () => {
                       alt="Jambol Logo"
                       className="h-8 jambol-logo"
                     />
-                    <span className="text-xl font-bold jambol-dark">Jambol</span>
+                    <span className="text-xl font-bold text-foreground">Jambol</span>
                   </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-foreground">
                       2025 Jambol ™. Todos los derechos reservados.
                     </div>
                 </div>
@@ -76,12 +76,12 @@ export const SiteFooter: React.FC = () => {
               {/* Columna 3: Enlaces legales */}
               <td className="align-top text-center w-1/3">
                 <div className="text-sm grid grid-cols-2 gap-x-4 gap-y-1">
-                  <Link to="/politica-cookies" className="underline">Política de Cookies</Link>
-                  <Link to="/terminos" className="underline">Términos y Condiciones</Link>
-                  <Link to="/politica-privacidad" className="underline">Política de Privacidad</Link>
-                  <Link to="/aviso-legal" className="underline">Aviso Legal</Link>
-                  <Link to="/reglas" className="underline">Reglas</Link>
-                  <Link to="/faq" className="underline">FAQ</Link>
+                  <Link to="/politica-cookies" className="text-foreground hover:text-[#FFC72C] transition-colors">Política de Cookies</Link>
+                  <Link to="/terminos" className="text-foreground hover:text-[#FFC72C] transition-colors">Términos y Condiciones</Link>
+                  <Link to="/politica-privacidad" className="text-foreground hover:text-[#FFC72C] transition-colors">Política de Privacidad</Link>
+                  <Link to="/aviso-legal" className="text-foreground hover:text-[#FFC72C] transition-colors">Aviso Legal</Link>
+                  <Link to="/reglas" className="text-foreground hover:text-[#FFC72C] transition-colors">Reglas</Link>
+                  <Link to="/faq" className="text-foreground hover:text-[#FFC72C] transition-colors">FAQ</Link>
                 </div>
               </td>
             </tr>
@@ -89,7 +89,7 @@ export const SiteFooter: React.FC = () => {
             {/* Segunda fila - una columna con el disclaimer */}
             <tr>
               <td colSpan={3} className="text-center">
-                <p className="mt-6 text-xs text-muted-foreground">
+                <p className="mt-6 text-xs text-foreground">
                   Jambol ™ es un juego de simulación. No se realizan apuestas con dinero real ni se ofrecen premios económicos. Todos los puntos y resultados son ficticios y se utilizan solo con fines recreativos.
                 </p>
               </td>
@@ -179,7 +179,7 @@ export const SiteFooter: React.FC = () => {
                     <button onClick={() => setShowAdvancedSettings(true)} className="border rounded px-4 py-2 text-sm">
                       Configurar
                     </button>
-                    <Link to="/politica-cookies" className="underline text-sm sm:ml-auto">
+                    <Link to="/politica-cookies" className="text-sm sm:ml-auto text-foreground hover:text-[#FFC72C] transition-colors">
                       Más información
                     </Link>
                   </div>
