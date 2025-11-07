@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { APP_CONFIG } from '@/config/app';
 import { useCookieConsent } from '@/hooks/useCookieConsent';
 
+const ENABLE_COOKIE_BANNER = false;
+
 export const SiteFooter: React.FC = () => {
   const { consent, isLoading, acceptAll, rejectAll, updateConsent, hasConsent } = useCookieConsent();
   const [showBanner, setShowBanner] = React.useState(false);
@@ -12,6 +14,9 @@ export const SiteFooter: React.FC = () => {
   const [cookiesMarketing, setCookiesMarketing] = React.useState(false);
 
   React.useEffect(() => {
+    if (!ENABLE_COOKIE_BANNER) {
+      return;
+    }
     if (!isLoading && !hasConsent) {
       setShowBanner(true);
     }
@@ -98,7 +103,7 @@ export const SiteFooter: React.FC = () => {
         </table>
       </div>
 
-      {showBanner && (
+      {ENABLE_COOKIE_BANNER && showBanner && (
         <div className="fixed inset-x-0 bottom-0 z-50">
           <div className="container mx-auto px-6 pb-6">
             <div className="rounded-lg border bg-background shadow-md p-4 md:p-5">
