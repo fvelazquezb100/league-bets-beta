@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import BetSlip from '@/components/BetSlip';
@@ -81,7 +81,10 @@ const Bets = () => {
   const { data: matches = [], isLoading: matchesLoading, error: matchesError } = useMatchOdds(getSourceId());
   const { data: userBets = [], isLoading: userBetsLoading } = useUserBets(user?.id);
   const { data: availableLeagues = [], isLoading: leaguesLoading } = useAvailableLeagues(user?.id);
-  const { data: matchAvailability = [], isLoading: availabilityLoading } = useCombinedMatchAvailability(userProfile?.league_id);
+  const { data: matchAvailability = [], isLoading: availabilityLoading } = useCombinedMatchAvailability(
+    userProfile?.league_id,
+    isSelecciones ? null : 10
+  );
 
   // Get current week from league
   const { data: currentWeek } = useQuery({
@@ -148,6 +151,16 @@ const Bets = () => {
   const loading = matchesLoading || userBetsLoading || leaguesLoading || availabilityLoading;
   const error = matchesError ? 'Failed to fetch or parse live betting data. Please try again later.' : null;
 
+  const availabilityMap = useMemo(() => {
+    const map = new Map<string, boolean>();
+    (matchAvailability || []).forEach(item => {
+      if (item?.date) {
+        map.set(item.date, item.is_live_betting_enabled);
+      }
+    });
+    return map;
+  }, [matchAvailability]);
+
   // Helper function to check if live betting is enabled for a specific date
   const isLiveBettingEnabled = (matchDate: string): boolean => {
     try {
@@ -165,8 +178,10 @@ const Bets = () => {
       }
       
       const dateStr = date.toISOString().split('T')[0];
-      const availability = matchAvailability.find(item => item.date === dateStr);
-      return availability?.is_live_betting_enabled ?? false;
+      if (!availabilityMap.has(dateStr)) {
+        return false;
+      }
+      return availabilityMap.get(dateStr) ?? false;
     } catch (error) {
       console.error('Error in isLiveBettingEnabled:', error, 'matchDate:', matchDate);
       return false;
@@ -406,8 +421,24 @@ const Bets = () => {
   const upcomingMatches: MatchData[] = [];
   
   leagueMatches.forEach(match => {
-    // For all leagues (including Selecciones), use availability control based on match_availability_control table
-    if (isLiveBettingEnabled(match.fixture.date)) {
+    const date = new Date(match.fixture.date);
+    if (isNaN(date.getTime())) {
+      return;
+    }
+
+    const dateStr = date.toISOString().split('T')[0];
+    const hasAvailability = availabilityMap.has(dateStr);
+    const isEnabled = availabilityMap.get(dateStr) ?? false;
+
+    if (isSelecciones) {
+      if (!hasAvailability || !isEnabled) {
+        return;
+      }
+      liveBettingMatches.push(match);
+      return;
+    }
+
+    if (isEnabled) {
       liveBettingMatches.push(match);
     } else {
       upcomingMatches.push(match);

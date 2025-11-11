@@ -7,23 +7,20 @@ export interface CombinedMatchAvailabilityData {
   source: 'global' | 'league';
 }
 
-// Helper function to get next Monday
-const getNextMonday = (): string => {
-  const today = new Date();
-  const nextMonday = new Date(today);
-  
-  // Find next Monday
-  const daysUntilMonday = (1 - today.getDay() + 7) % 7;
-  nextMonday.setDate(today.getDate() + (daysUntilMonday === 0 ? 7 : daysUntilMonday));
-  
-  return nextMonday.toISOString().split('T')[0];
+// Helper function to get a future date N days ahead (inclusive)
+const getDateNDaysAhead = (daysAhead: number): string => {
+  const future = new Date();
+  future.setDate(future.getDate() + daysAhead);
+  return future.toISOString().split('T')[0];
 };
 
 // Fetch league-specific match availability
-const fetchLeagueMatchAvailability = async (leagueId: number | null): Promise<CombinedMatchAvailabilityData[]> => {
+const fetchLeagueMatchAvailability = async (
+  leagueId: number | null,
+  rangeDays: number | null = 10
+): Promise<CombinedMatchAvailabilityData[]> => {
   try {
     const today = new Date().toISOString().split('T')[0];
-    const nextMonday = getNextMonday();
     
     // If no league specified, return empty array
     if (!leagueId) {
@@ -31,13 +28,19 @@ const fetchLeagueMatchAvailability = async (leagueId: number | null): Promise<Co
     }
 
     // Fetch league-specific availability
-    const { data: leagueData, error: leagueError } = await supabase
+    let query = supabase
       .from('match_availability_control' as any)
       .select('date, is_live_betting_enabled')
       .eq('league_id', leagueId)
       .gte('date', today)
-      .lte('date', nextMonday)
       .order('date');
+
+    if (rangeDays !== null) {
+      const rangeEnd = getDateNDaysAhead(rangeDays);
+      query = query.lte('date', rangeEnd);
+    }
+
+    const { data: leagueData, error: leagueError } = await query;
 
     if (leagueError) {
       console.warn('Failed to fetch league match availability:', leagueError);
@@ -55,10 +58,13 @@ const fetchLeagueMatchAvailability = async (leagueId: number | null): Promise<Co
 };
 
 // Custom hook for league match availability
-export const useCombinedMatchAvailability = (leagueId: number | null) => {
+export const useCombinedMatchAvailability = (
+  leagueId: number | null,
+  rangeDays: number | null = 10
+) => {
   return useQuery({
-    queryKey: ['league-match-availability', leagueId],
-    queryFn: () => fetchLeagueMatchAvailability(leagueId),
+    queryKey: ['league-match-availability', leagueId, rangeDays],
+    queryFn: () => fetchLeagueMatchAvailability(leagueId, rangeDays),
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });

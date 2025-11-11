@@ -31,10 +31,10 @@ Deno.serve(async (req) => {
     // Example: World Cup Qualification UEFA league = 13? We instead fetch by international friendly/qualification
     // For simplicity: use API endpoint for odds by league=??? or by teams. Here we fetch next N odds for internationals.
     // This is a placeholder approach; adjust league/filters to match desired competitions for Selecciones.
-    // Build date window (today + 6 days)
+    // Build date window (today + 9 days)
     const makeDate = (d: Date) => d.toISOString().slice(0, 10);
     const today = new Date();
-    const dates: string[] = Array.from({ length: 7 }).map((_, i) => {
+    const dates: string[] = Array.from({ length: 10 }).map((_, i) => {
       const d = new Date(today);
       d.setUTCDate(d.getUTCDate() + i);
       return makeDate(d);
