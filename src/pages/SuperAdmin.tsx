@@ -20,6 +20,10 @@ const SuperAdmin: React.FC = () => {
   const { data: lastProcessedMatch, isLoading: loadingLastMatch } = useLastProcessedMatch();
   
   React.useEffect(() => {
+    document.title = 'Jambol — Superadministrador';
+  }, []);
+
+  React.useEffect(() => {
     if (!consent?.analytics) {
       return;
     }

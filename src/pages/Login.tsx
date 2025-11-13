@@ -24,6 +24,10 @@ export const Login = () => {
   const { consent } = useCookieConsent();
 
   useEffect(() => {
+    document.title = 'Jambol — Iniciar Sesión';
+  }, []);
+
+  useEffect(() => {
     if (!consent?.analytics) {
       return;
     }

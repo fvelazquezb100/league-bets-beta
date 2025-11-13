@@ -305,7 +305,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
   return (
     <Card className="h-fit">
       <CardHeader>
-        <CardTitle className="text-xl">Boleto de Apuestas</CardTitle>
+        <CardTitle className="text-xl">Boleto</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {selectedBets.length === 0 ? (
@@ -386,7 +386,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
 
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span>Cuota Total:</span>
+                  <span>Multiplicador</span>
                   <span className="font-semibold">{totalOdds.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">

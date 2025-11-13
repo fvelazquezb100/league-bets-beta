@@ -363,7 +363,7 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll, forceOpen = fals
 
       {/* Sheet Content */}
       <SheetContent side="bottom" className="max-h-[85vh] flex flex-col p-0">
-        <SheetTitle className="sr-only">Boleto de Apuestas</SheetTitle>
+        <SheetTitle className="sr-only">Boleto</SheetTitle>
         {/* Overlay to block interactions when forceOpen is active */}
         {forceOpen && (
           <div 
@@ -445,7 +445,7 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll, forceOpen = fals
 
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span>Cuota Total:</span>
+                  <span>Multiplicador</span>
                   <span className="font-semibold">{totalOdds.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">

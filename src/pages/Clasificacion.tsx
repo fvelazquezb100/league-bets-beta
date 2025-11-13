@@ -99,7 +99,73 @@ export const Clasificacion = () => {
   }, [user]);
 
   useEffect(() => {
-    document.title = 'Jambol - Clasificación';
+    const pageTitle = 'Jambol — Clasificación';
+    const description = 'Consulta la clasificación actual de tu liga Jambol. Ve las posiciones de todos los jugadores, estadísticas y evolución histórica.';
+    const keywords = 'jambol, clasificación, ranking, liga, posiciones, estadísticas, jugadores, puntos';
+
+    document.title = pageTitle;
+
+    const metaDefinitions = [
+      {
+        selector: 'meta[name="description"]',
+        attributes: { name: 'description' },
+        content: description,
+      },
+      {
+        selector: 'meta[name="keywords"]',
+        attributes: { name: 'keywords' },
+        content: keywords,
+      },
+      {
+        selector: 'meta[property="og:title"]',
+        attributes: { property: 'og:title' },
+        content: pageTitle,
+      },
+      {
+        selector: 'meta[property="og:description"]',
+        attributes: { property: 'og:description' },
+        content: description,
+      },
+      {
+        selector: 'meta[name="twitter:title"]',
+        attributes: { name: 'twitter:title' },
+        content: pageTitle,
+      },
+      {
+        selector: 'meta[name="twitter:description"]',
+        attributes: { name: 'twitter:description' },
+        content: description,
+      },
+    ];
+
+    const managedMeta = metaDefinitions.map(({ selector, attributes, content }) => {
+      let element = document.querySelector(selector) as HTMLMetaElement | null;
+      let created = false;
+
+      if (!element) {
+        element = document.createElement('meta');
+        Object.entries(attributes).forEach(([attribute, value]) => {
+          element?.setAttribute(attribute, value);
+        });
+        document.head.appendChild(element);
+        created = true;
+      }
+
+      const previousContent = element.getAttribute('content') ?? undefined;
+      element.setAttribute('content', content);
+
+      return { element, previousContent, created };
+    });
+
+    return () => {
+      managedMeta.forEach(({ element, previousContent, created }) => {
+        if (created && element.parentNode) {
+          element.parentNode.removeChild(element);
+        } else if (!created && typeof previousContent === 'string') {
+          element.setAttribute('content', previousContent);
+        }
+      });
+    };
   }, []);
 
   useEffect(() => {
@@ -375,7 +441,7 @@ export const Clasificacion = () => {
                   <div>
                     <p className="text-sm text-muted-foreground">Estadísticas de {leagueName}</p>
                     <p className="text-2xl font-bold text-primary">{statsLoading ? '...' : `${leagueStats?.winPercentage.toFixed(1) || '0.0'}%`}</p>
-                    <p className="text-xs text-muted-foreground">% de aciertos de apuestas</p>
+                    <p className="text-xs text-muted-foreground">% de aciertos</p>
                   </div>
                   <BarChart3 className="h-5 w-5 text-primary" />
                 </div>
@@ -390,18 +456,18 @@ export const Clasificacion = () => {
       <Dialog open={isPlayerModalOpen} onOpenChange={setIsPlayerModalOpen}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
           <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl">{selectedPlayer ? `Perfil de ${selectedPlayer.name}` : 'Historial de Apuestas'}</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl">{selectedPlayer ? `Perfil de ${selectedPlayer.name}` : 'Historial'}</DialogTitle>
           </DialogHeader>
           
           {selectedPlayer && (
             <div className="space-y-4">
               {/* Statistics Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => {/* TODO: % Acierto de Apuestas */}}>
+                <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => {/* TODO: % Acierto */}}>
                   <CardHeader className="pb-2 pt-4">
                     <CardTitle className="text-base flex items-center justify-center gap-2">
                       <Target className="w-4 h-4 text-indigo-500" />
-                      % Acierto de Apuestas
+                      % Acierto
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="text-center pb-4">

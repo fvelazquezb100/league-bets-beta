@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 export const TestDemo = () => {
+  useEffect(() => {
+    document.title = 'Jambol — Demo';
+  }, []);
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="text-center">

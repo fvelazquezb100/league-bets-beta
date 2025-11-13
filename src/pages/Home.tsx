@@ -45,7 +45,73 @@ export const Home = () => {
   // No more manual useEffect needed!
 
   useEffect(() => {
-    document.title = 'Jambol - Inicio';
+    const pageTitle = 'Jambol — Inicio';
+    const description = 'Panel principal de tu liga Jambol. Mantente al día con las últimas noticias, partidos disponibles y tu actividad reciente.';
+    const keywords = 'jambol, inicio, liga, noticias, partidos, actividad, dashboard';
+
+    document.title = pageTitle;
+
+    const metaDefinitions = [
+      {
+        selector: 'meta[name="description"]',
+        attributes: { name: 'description' },
+        content: description,
+      },
+      {
+        selector: 'meta[name="keywords"]',
+        attributes: { name: 'keywords' },
+        content: keywords,
+      },
+      {
+        selector: 'meta[property="og:title"]',
+        attributes: { property: 'og:title' },
+        content: pageTitle,
+      },
+      {
+        selector: 'meta[property="og:description"]',
+        attributes: { property: 'og:description' },
+        content: description,
+      },
+      {
+        selector: 'meta[name="twitter:title"]',
+        attributes: { name: 'twitter:title' },
+        content: pageTitle,
+      },
+      {
+        selector: 'meta[name="twitter:description"]',
+        attributes: { name: 'twitter:description' },
+        content: description,
+      },
+    ];
+
+    const managedMeta = metaDefinitions.map(({ selector, attributes, content }) => {
+      let element = document.querySelector(selector) as HTMLMetaElement | null;
+      let created = false;
+
+      if (!element) {
+        element = document.createElement('meta');
+        Object.entries(attributes).forEach(([attribute, value]) => {
+          element?.setAttribute(attribute, value);
+        });
+        document.head.appendChild(element);
+        created = true;
+      }
+
+      const previousContent = element.getAttribute('content') ?? undefined;
+      element.setAttribute('content', content);
+
+      return { element, previousContent, created };
+    });
+
+    return () => {
+      managedMeta.forEach(({ element, previousContent, created }) => {
+        if (created && element.parentNode) {
+          element.parentNode.removeChild(element);
+        } else if (!created && typeof previousContent === 'string') {
+          element.setAttribute('content', previousContent);
+        }
+      });
+    };
   }, []);
 
   useEffect(() => {
@@ -94,7 +160,7 @@ export const Home = () => {
           <CardHeader>
             <CardTitle>Próximos Partidos</CardTitle>
             <CardDescription>
-              Encuentra los mejores partidos para apostar hoy
+              Encuentra los mejores partidos para participar hoy
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -144,7 +210,7 @@ export const Home = () => {
           <CardHeader>
             <CardTitle>Actividad Reciente</CardTitle>
             <CardDescription>
-              Tus últimas apuestas y resultados
+              Tus últimas boletos y resultados
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -160,7 +226,7 @@ export const Home = () => {
                 </div>
               </>
             ) : recentBets.length === 0 ? (
-              <p className="text-muted-foreground">Aún no has realizado ninguna apuesta.</p>
+              <p className="text-muted-foreground">Aún no has realizado ningún boleto.</p>
             ) : (
               recentBets.map((bet) => {
                 const status = String(bet.status || 'pending');
@@ -182,7 +248,7 @@ export const Home = () => {
                   <div key={bet.id} className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
                     <div>
                       <p className={`font-semibold ${isWon ? 'text-primary' : isLost ? 'text-destructive' : ''}`}>{betDescription}</p>
-                      <p className="text-sm text-muted-foreground">{isWon ? 'Ganaste' : isLost ? 'Perdiste' : 'Apuesta pendiente'}</p>
+                      <p className="text-sm text-muted-foreground">{isWon ? 'Ganaste' : isLost ? 'Perdiste' : 'Boleto pendiente'}</p>
                     </div>
                     <div className={`font-bold ${isWon ? 'text-primary' : isLost ? 'text-destructive' : 'text-foreground'}`}>
                       {isWon ? `+${net.toFixed(2)}` : isLost ? `-${stake.toFixed(2)}` : '—'}

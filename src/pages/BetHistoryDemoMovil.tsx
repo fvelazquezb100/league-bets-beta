@@ -16,6 +16,10 @@ export const BetHistoryDemoMovil = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
+    document.title = 'Jambol — Demo';
+  }, []);
+
+  useEffect(() => {
     setIsVisible(true);
   }, []);
 

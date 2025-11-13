@@ -14,6 +14,10 @@ export const HomeDemo = () => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    document.title = 'Jambol — Demo';
+  }, []);
+
+  useEffect(() => {
     setIsVisible(true);
   }, []);
 

@@ -1,7 +1,11 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { APP_CONFIG } from '@/config/app';
 
 export default function PoliticaCookies() {
+  useEffect(() => {
+    document.title = 'Jambol — Política de Cookies';
+  }, []);
 
   return (
     <div className="container mx-auto px-6 py-8">

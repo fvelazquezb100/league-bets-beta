@@ -20,7 +20,7 @@ export const LeagueSetup = () => {
   const { consent } = useCookieConsent();
 
   useEffect(() => {
-    document.title = 'Jambol - Configurar Liga';
+    document.title = 'Jambol — Configurar Liga';
   }, []);
 
   useEffect(() => {

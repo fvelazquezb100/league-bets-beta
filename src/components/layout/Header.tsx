@@ -22,7 +22,7 @@ const navigationItems = [
     icon: Trophy,
   },
   {
-    name: 'Apostar',
+    name: 'Partidos',
     href: '/bets',
     icon: DollarSign,
   },

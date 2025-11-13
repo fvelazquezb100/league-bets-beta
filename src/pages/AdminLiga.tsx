@@ -37,6 +37,76 @@ const AdminLiga: React.FC = () => {
   const { consent } = useCookieConsent();
 
   React.useEffect(() => {
+    const pageTitle = 'Jambol — Tu Liga';
+    const description = 'Panel de administración de tu liga Jambol. Gestiona la configuración, miembros, disponibilidad de partidos y configuración avanzada.';
+    const keywords = 'jambol, tu liga, administración, configuración, gestión, liga privada, panel admin';
+
+    document.title = pageTitle;
+
+    const metaDefinitions = [
+      {
+        selector: 'meta[name="description"]',
+        attributes: { name: 'description' },
+        content: description,
+      },
+      {
+        selector: 'meta[name="keywords"]',
+        attributes: { name: 'keywords' },
+        content: keywords,
+      },
+      {
+        selector: 'meta[property="og:title"]',
+        attributes: { property: 'og:title' },
+        content: pageTitle,
+      },
+      {
+        selector: 'meta[property="og:description"]',
+        attributes: { property: 'og:description' },
+        content: description,
+      },
+      {
+        selector: 'meta[name="twitter:title"]',
+        attributes: { name: 'twitter:title' },
+        content: pageTitle,
+      },
+      {
+        selector: 'meta[name="twitter:description"]',
+        attributes: { name: 'twitter:description' },
+        content: description,
+      },
+    ];
+
+    const managedMeta = metaDefinitions.map(({ selector, attributes, content }) => {
+      let element = document.querySelector(selector) as HTMLMetaElement | null;
+      let created = false;
+
+      if (!element) {
+        element = document.createElement('meta');
+        Object.entries(attributes).forEach(([attribute, value]) => {
+          element?.setAttribute(attribute, value);
+        });
+        document.head.appendChild(element);
+        created = true;
+      }
+
+      const previousContent = element.getAttribute('content') ?? undefined;
+      element.setAttribute('content', content);
+
+      return { element, previousContent, created };
+    });
+
+    return () => {
+      managedMeta.forEach(({ element, previousContent, created }) => {
+        if (created && element.parentNode) {
+          element.parentNode.removeChild(element);
+        } else if (!created && typeof previousContent === 'string') {
+          element.setAttribute('content', previousContent);
+        }
+      });
+    };
+  }, []);
+
+  React.useEffect(() => {
     if (!consent?.analytics) {
       return;
     }
@@ -348,8 +418,8 @@ const handleResetWeekManually = async () => {
                   <p><span className="font-semibold mr-2">Nombre:</span>{leagueData.name} ({leagueData.type})</p>
                   <p className="flex items-center gap-2"><span className="font-semibold">Código:</span><Button className="jambol-button" size="sm" onClick={() => handleCopyCode(leagueData.join_code)}>{leagueData.join_code} <Copy size={16} /></Button></p>
                   <p><span className="font-semibold mr-2">Presupuesto:</span>{leagueData.budget} ({leagueData.reset_budget})</p>
-                  <p><span className="font-semibold mr-2">Apuesta mínima:</span>{leagueData.min_bet}</p>
-                  <p><span className="font-semibold mr-2">Apuesta máxima:</span>{leagueData.max_bet}</p>
+                  <p><span className="font-semibold mr-2">Puntos invertidos minimos:</span>{leagueData.min_bet}</p>
+                  <p><span className="font-semibold mr-2">Puntos invertidos máximos:</span>{leagueData.max_bet}</p>
                   <p><span className="font-semibold mr-2">Semana:</span>{leagueData.week}</p>
                   <p><span className="font-semibold mr-2">Temporada:</span>{leagueData.league_season}</p>
                   <p><span className="font-semibold mr-2">Ligas disponibles:</span>
@@ -399,11 +469,11 @@ const handleResetWeekManually = async () => {
                                     <p className="text-gray-800">{leagueData?.budget}</p>
                                   </div>
                                   <div>
-                                    <span className="font-medium text-gray-600">Apuesta Mín:</span>
+                                    <span className="font-medium text-gray-600">Puntos invertidos mínimos:</span>
                                     <p className="text-gray-800">{leagueData?.min_bet}</p>
                                   </div>
                                   <div>
-                                    <span className="font-medium text-gray-600">Apuesta Máx:</span>
+                                    <span className="font-medium text-gray-600">Puntos invertidos máximos:</span>
                                     <p className="text-gray-800">{leagueData?.max_bet}</p>
                                   </div>
                                   <div className="col-span-2">
@@ -440,7 +510,7 @@ const handleResetWeekManually = async () => {
                               </div>
                               
                               <div className="space-y-2">
-                                <Label>Apuesta Mínima: {editMinBet}</Label>
+                                <Label>Puntos invertidos mínimos: {editMinBet}</Label>
                                 <input
                                   type="range"
                                   min={1}
@@ -453,7 +523,7 @@ const handleResetWeekManually = async () => {
                               </div>
                               
                               <div className="space-y-2">
-                                <Label>Apuesta Máxima: {editMaxBet}</Label>
+                                <Label>Puntos invertidos máximos: {editMaxBet}</Label>
                                 <input
                                   type="range"
                                   min={editMinBet}
@@ -627,7 +697,7 @@ const handleResetWeekManually = async () => {
                 Control de Disponibilidad de Partidos
               </CardTitle>
               <p className="text-sm text-muted-foreground">
-                Gestiona qué días están disponibles para apuestas en vivo en {leagueData.name}
+                Gestiona qué días están disponibles los partidos en vivo en {leagueData.name}
               </p>
             </CardHeader>
             <CardContent>

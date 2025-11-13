@@ -19,7 +19,7 @@ export const UpdatePassword = () => {
 
   useEffect(() => {
     // SEO: title, description, canonical
-    const title = "Jambol - Establecer Nueva Contraseña";
+    const title = "Jambol — Actualizar Contraseña";
     const description = "Establece una nueva contraseña de forma segura.";
     document.title = title;
 

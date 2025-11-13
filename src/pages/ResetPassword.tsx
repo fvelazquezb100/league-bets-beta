@@ -16,7 +16,7 @@ export const ResetPassword = () => {
 
   useEffect(() => {
     // SEO: title, description, canonical
-    const title = 'Jambol - Restablecer Contraseña';
+    const title = 'Jambol — Restablecer Contraseña';
     const description = 'Restablece tu contraseña de Jambol de forma segura.';
     document.title = title;
 

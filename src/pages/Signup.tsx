@@ -28,6 +28,10 @@ export const Signup = () => {
   const { consent } = useCookieConsent();
 
   useEffect(() => {
+    document.title = 'Jambol — Registro';
+  }, []);
+
+  useEffect(() => {
     if (!consent?.analytics) {
       return;
     }

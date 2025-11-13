@@ -69,7 +69,7 @@ export const LeagueMatchAvailabilityControl: React.FC<LeagueMatchAvailabilityCon
           Control de Disponibilidad de Partidos
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Controla qué días están disponibles para apuestas en vivo en {leagueName}
+          Controla qué días están disponibles los partidos en vivo en {leagueName}
         </p>
         {availabilityData && availabilityData.length > 0 && (
           <p className="text-sm text-muted-foreground">
@@ -147,7 +147,7 @@ export const LeagueMatchAvailabilityControl: React.FC<LeagueMatchAvailabilityCon
               <div className="text-xs text-muted-foreground">
                 <p className="font-medium mb-1">Información:</p>
                 <ul className="space-y-1">
-                  <li>• Los días marcados como "Disponible" aparecerán en "Cuotas en Vivo"</li>
+                  <li>• Los días marcados como "Disponible" aparecerán en "Partidos disponibles"</li>
                   <li>• Los días marcados como "No disponible" aparecerán en "Próximos Encuentros"</li>
                   <li>• Los cambios se aplican inmediatamente para todos los usuarios de la liga</li>
                   <li>• Las fechas se actualizan automáticamente cada martes</li>

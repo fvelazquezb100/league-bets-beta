@@ -1,7 +1,11 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { APP_CONFIG } from '@/config/app';
 
 export default function Reglas() {
+  useEffect(() => {
+    document.title = 'Jambol — Reglas del Juego';
+  }, []);
   const sections = [
     { id: 'introduccion', title: 'Introducción' },
     { id: 'tipos-ligas', title: 'Tipos de ligas' },

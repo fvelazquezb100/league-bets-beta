@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +6,9 @@ import { APP_CONFIG } from '@/config/app';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 export const DemoLanguage = () => {
+  useEffect(() => {
+    document.title = 'Jambol — Demo';
+  }, []);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [selectedLanguage, setSelectedLanguage] = useState<'es' | 'en' | null>(null);

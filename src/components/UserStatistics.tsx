@@ -649,14 +649,14 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                   <CardContent className="p-4 text-center">
                     <BarChart3 className="w-6 h-6 mx-auto mb-2 text-blue-500" />
                     <div className="text-2xl font-bold">{stats.totalBets}</div>
-                    <div className="text-sm text-muted-foreground">Total Apuestas</div>
+                    <div className="text-sm text-muted-foreground">Total</div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4 text-center">
                     <DollarSign className="w-6 h-6 mx-auto mb-2 text-green-500" />
                     <div className="text-2xl font-bold">{stats.totalStake.toFixed(0)}</div>
-                    <div className="text-sm text-muted-foreground">Total Apostado</div>
+                    <div className="text-sm text-muted-foreground">Total de puntos invertidos</div>
                   </CardContent>
                 </Card>
                 <Card>
@@ -670,7 +670,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                   <CardContent className="p-4 text-center">
                     <Target className="w-6 h-6 mx-auto mb-2 text-purple-500" />
                     <div className="text-2xl font-bold">{stats.successRate.toFixed(1)}%</div>
-                    <div className="text-sm text-muted-foreground">% Acierto de Apuestas</div>
+                    <div className="text-sm text-muted-foreground">% Acierto</div>
                   </CardContent>
                 </Card>
               </div>
@@ -681,19 +681,19 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                   className={`jambol-button px-4 sm:px-6 text-sm sm:text-base ${betTypeFilter === 'all' ? 'bg-[#FFC72C] text-[#2D2D2D]' : ''}`}
                   onClick={() => handleFilterChange('all')}
                 >
-                  Todas las Apuestas
+                  Todas
                 </Button>
                 <Button
                   className={`jambol-button px-4 sm:px-6 text-sm sm:text-base ${betTypeFilter === 'single' ? 'bg-[#FFC72C] text-[#2D2D2D]' : ''}`}
                   onClick={() => handleFilterChange('single')}
                 >
-                  Apuestas Simples
+                  Simples
                 </Button>
                 <Button
                   className={`jambol-button px-4 sm:px-6 text-sm sm:text-base ${betTypeFilter === 'combo' ? 'bg-[#FFC72C] text-[#2D2D2D]' : ''}`}
                   onClick={() => handleFilterChange('combo')}
                 >
-                  Apuestas Combinadas
+                  Combinadas
                 </Button>
               </div>
 

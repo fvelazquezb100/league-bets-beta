@@ -31,6 +31,10 @@ export const Settings = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [league, setLeague] = useState<League | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    document.title = 'Jambol — Ajustes';
+  }, []);
   
   // Username form state
   const [newUsername, setNewUsername] = useState('');

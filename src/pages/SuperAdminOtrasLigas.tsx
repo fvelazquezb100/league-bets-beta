@@ -13,6 +13,10 @@ const SuperAdminOtrasLigas: React.FC = () => {
   const { consent } = useCookieConsent();
 
   React.useEffect(() => {
+    document.title = 'Jambol — Gestionar Otras Ligas';
+  }, []);
+
+  React.useEffect(() => {
     if (!consent?.analytics) {
       return;
     }
