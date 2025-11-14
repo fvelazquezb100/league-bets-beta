@@ -625,7 +625,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Apostado</p>
+                <p className="text-sm text-muted-foreground">Total en Boletos</p>
                 <p className="text-2xl font-bold">{Math.ceil(totalBetAmount)}</p>
               </div>
               <TrendingDown className="h-5 w-5 text-muted-foreground" />
@@ -894,7 +894,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                     {/* Información financiera */}
                     <div className="flex justify-between text-sm">
                       <span>
-                        Apostado: <span className="font-medium">
+                        En boleto: <span className="font-medium">
                           {(bet.stake || 0).toFixed(0)} pts
                           {bet.bet_type === 'combo' && bet.bet_selections?.length && (
                             <span className="text-muted-foreground"> @{calculateComboOdds(bet.bet_selections).toFixed(2)}</span>

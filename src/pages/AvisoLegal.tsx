@@ -45,7 +45,7 @@ export default function AvisoLegal() {
             Jambol ™ ofrece un servicio de entretenimiento basado en simulación deportiva y ligas privadas entre usuarios.
           </p>
           <p className="text-sm md:text-base text-muted-foreground mt-2">
-            No se realizan apuestas con dinero real ni se otorgan premios económicos. Todos los puntos, resultados y clasificaciones tienen carácter lúdico.
+            No se realizan selecciones con dinero real ni se otorgan premios económicos. Todos los puntos, resultados y clasificaciones tienen carácter lúdico.
           </p>
         </div>
 
@@ -92,7 +92,7 @@ export default function AvisoLegal() {
           <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1 mt-2">
             <li>la disponibilidad ininterrumpida del servicio,</li>
             <li>la ausencia de errores técnicos,</li>
-            <li>ni la exactitud total de los datos mostrados (por ejemplo: resultados, valoraciones, clasificaciones o cuotas simuladas).</li>
+            <li>ni la exactitud total de los datos mostrados (por ejemplo: resultados, valoraciones, clasificaciones o multiplicadores simulados).</li>
           </ul>
           <p className="text-sm md:text-base text-muted-foreground mt-2">
             El uso de la información publicada en el Sitio es responsabilidad exclusiva del usuario.

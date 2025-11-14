@@ -551,7 +551,7 @@ const handleResetWeekManually = async () => {
                           )}
                           
                           <div className="space-y-2">
-                            <Label>Ligas disponibles para apostar</Label>
+                            <Label>Ligas disponibles para participar</Label>
                             {leagueData?.type === 'free' ? (
                               <>
                                 <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-3">

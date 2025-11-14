@@ -107,24 +107,24 @@ export const LeagueStatisticsModal: React.FC<LeagueStatisticsModalProps> = ({
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <BarChart3 className="h-5 w-5" />
-                  Estadísticas de Apuestas
+                  Estadísticas de Boletos
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center p-4 bg-muted/50 rounded-lg">
                     <div className="text-2xl font-bold text-primary">{statistics?.totalBets || 0}</div>
-                    <div className="text-sm text-muted-foreground">Total Apuestas</div>
+                    <div className="text-sm text-muted-foreground">Total Boletos</div>
                   </div>
                   
                   <div className="text-center p-4 bg-muted/50 rounded-lg">
                     <div className="text-2xl font-bold text-green-600">{statistics?.totalWonBets || 0}</div>
-                    <div className="text-sm text-muted-foreground">Apuestas Ganadas</div>
+                    <div className="text-sm text-muted-foreground">Boletos Ganados</div>
                   </div>
                   
                   <div className="text-center p-4 bg-muted/50 rounded-lg">
                     <div className="text-2xl font-bold text-red-600">{statistics?.totalLostBets || 0}</div>
-                    <div className="text-sm text-muted-foreground">Apuestas Perdidas</div>
+                    <div className="text-sm text-muted-foreground">Boletos Perdidos</div>
                   </div>
                   
                   <div className="text-center p-4 bg-muted/50 rounded-lg">
@@ -149,7 +149,7 @@ export const LeagueStatisticsModal: React.FC<LeagueStatisticsModalProps> = ({
                   <span className="text-sm font-medium">Mercado Favorito:</span>
                   <div className="text-right">
                     <div className="text-sm text-foreground">{statistics?.mostPopularMarket || 'N/A'}</div>
-                    <div className="text-xs text-muted-foreground">{statistics?.mostPopularMarketBets || 0} apuestas</div>
+                    <div className="text-xs text-muted-foreground">{statistics?.mostPopularMarketBets || 0} boletos</div>
                   </div>
                 </div>
                 
@@ -157,12 +157,12 @@ export const LeagueStatisticsModal: React.FC<LeagueStatisticsModalProps> = ({
                   <span className="text-sm font-medium">Equipo Favorito:</span>
                   <div className="text-right">
                     <div className="text-sm text-foreground">{statistics?.mostPopularTeam || 'N/A'}</div>
-                    <div className="text-xs text-muted-foreground">{statistics?.mostPopularTeamBets || 0} apuestas</div>
+                    <div className="text-xs text-muted-foreground">{statistics?.mostPopularTeamBets || 0} boletos</div>
                   </div>
                 </div>
                 
                 <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                  <span className="text-sm font-medium">Cuota Promedio:</span>
+                  <span className="text-sm font-medium">Multiplicador Promedio:</span>
                   <span className="text-sm text-foreground">{statistics?.averageOdds.toFixed(2) || '0.00'}</span>
                 </div>
               </div>
@@ -195,7 +195,7 @@ export const LeagueStatisticsModal: React.FC<LeagueStatisticsModalProps> = ({
                 </div>
                 
                 <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                  <span className="text-sm font-medium">Más Apuestas:</span>
+                  <span className="text-sm font-medium">Más Boletos:</span>
                   <div className="flex items-center gap-2">
                     <BarChart3 className="h-4 w-4 text-blue-500" />
                     <span className="text-sm font-medium">{statistics?.topPlayerByBets.username || 'N/A'}</span>
@@ -213,7 +213,7 @@ export const LeagueStatisticsModal: React.FC<LeagueStatisticsModalProps> = ({
                 </div>
                 
                 <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                  <span className="text-sm font-medium">Mayor Victoria (Cuota):</span>
+                  <span className="text-sm font-medium">Mayor Victoria (Multiplicador):</span>
                   <div className="flex items-center gap-2">
                     <Trophy className="h-4 w-4 text-purple-500" />
                     <span className="text-sm font-medium">{statistics?.topPlayerByHighestOdds.username || 'N/A'}</span>

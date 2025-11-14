@@ -10,7 +10,7 @@ export default function Reglas() {
     { id: 'introduccion', title: 'Introducción' },
     { id: 'tipos-ligas', title: 'Tipos de ligas' },
     { id: 'calendario', title: 'Calendario y reinicios' },
-    { id: 'disponibilidad', title: 'Disponibilidad y cierre de apuestas' },
+    { id: 'disponibilidad', title: 'Disponibilidad y cierre de selecciones' },
     { id: 'presupuesto', title: 'Presupuesto y límites' },
     { id: 'mercados', title: 'Mercados disponibles' },
     { id: 'puntuacion', title: 'Cómo se puntúa' },
@@ -52,7 +52,7 @@ export default function Reglas() {
       <section id="introduccion" className="scroll-mt-24">
         <h2 className="text-xl font-semibold mb-2">1. Introducción</h2>
         <p className="text-sm md:text-base text-muted-foreground">
-          Jambol ™ es un juego de simulación: no hay dinero real ni premios económicos. Los puntos, cuotas y resultados son ficticios y se utilizan exclusivamente con fines recreativos.
+          Jambol ™ es un juego de simulación: no hay dinero real ni premios económicos. Los puntos, multiplicadores y resultados son ficticios y se utilizan exclusivamente con fines recreativos.
         </p>
       </section>
 
@@ -80,11 +80,11 @@ export default function Reglas() {
 
       <hr className="my-6 border-border" />
 
-      {/* 4. Disponibilidad y cierre de apuestas */}
+      {/* 4. Disponibilidad y cierre de selecciones */}
       <section id="disponibilidad" className="scroll-mt-24">
-        <h2 className="text-xl font-semibold mb-2">4. Disponibilidad y cierre de apuestas</h2>
+        <h2 className="text-xl font-semibold mb-2">4. Disponibilidad y cierre de selecciones</h2>
         <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1">
-          <li>No podrás apostar cuando falten pocos minutos para que empiece el partido.</li>
+          <li>No podrás hacer selecciones cuando falten pocos minutos para que empiece el partido.</li>
           <li>En ocasiones un administrador puede congelar temporalmente la disponibilidad de partidos.</li>
         </ul>
       </section>
@@ -95,7 +95,7 @@ export default function Reglas() {
       <section id="presupuesto" className="scroll-mt-24">
         <h2 className="text-xl font-semibold mb-2">5. Presupuesto y límites</h2>
         <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1">
-          <li>Tienes un presupuesto de puntos para apostar; se recupera al iniciar cada semana (Weekly) o cada jornada (Daily).</li>
+          <li>Tienes un presupuesto de puntos para hacer selecciones; se recupera al iniciar cada semana (Weekly) o cada jornada (Daily).</li>
           <li>Las combinadas suman selecciones; si falla una, falla la combinada.</li>
         </ul>
       </section>
@@ -116,8 +116,8 @@ export default function Reglas() {
       <section id="puntuacion" className="scroll-mt-24">
         <h2 className="text-xl font-semibold mb-2">7. Cómo se puntúa</h2>
         <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1">
-          <li>Apuesta simple: puntos ganados = puntos apostados × cuota.</li>
-          <li>Combinadas: se multiplican las cuotas de las selecciones acertadas.</li>
+          <li>Boleto simple: puntos ganados = puntos en boleto × multiplicador.</li>
+          <li>Combinadas: se multiplican los multiplicadores de las selecciones acertadas.</li>
           <li>Cuándo recibes los puntos: Weekly los martes; Daily (Premium) cada día tras cerrar la jornada.</li>
         </ul>
       </section>
@@ -138,7 +138,7 @@ export default function Reglas() {
       <section id="clasificacion" className="scroll-mt-24">
         <h2 className="text-xl font-semibold mb-2">9. Clasificación y desempates</h2>
         <p className="text-sm md:text-base text-muted-foreground">
-          Se ordena por puntos de mayor a menor. Si hay empate, cuentan más aciertos; si persiste, la cuota más alta acertada; después, la fecha del primer acierto.
+          Se ordena por puntos de mayor a menor. Si hay empate, cuentan más aciertos; si persiste, el multiplicador más alto acertado; después, la fecha del primer acierto.
         </p>
       </section>
 
@@ -170,12 +170,12 @@ export default function Reglas() {
         <h3 className="text-lg font-semibold mt-4 mb-2">Interacción con partidos bloqueados:</h3>
         <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1">
           <li>Si otro jugador bloquea un partido para ti, no podrás interactuar con ese partido.</li>
-          <li>Si ya tenías una apuesta previa en ese partido, no podrás cancelarla.</li>
-          <li>Si es una combinada que incluye un partido bloqueado, tampoco podrás realizar ninguna acción sobre esa apuesta.</li>
+          <li>Si ya tenías un boleto previo en ese partido, no podrás cancelarlo.</li>
+          <li>Si es una combinada que incluye un partido bloqueado, tampoco podrás realizar ninguna acción sobre ese boleto.</li>
         </ul>
         <h3 className="text-lg font-semibold mt-4 mb-2">Cómo bloquear un partido:</h3>
         <p className="text-sm md:text-base text-muted-foreground">
-          Entra en la página de Clasificación, busca al jugador que quieras bloquear y haz clic en su nombre. En la ventana que se abre, selecciona la liga y busca el partido que deseas bloquear. No podrás bloquear el partido si ya lo tienes bloqueado o si a ese jugador le quedarían menos de 3 partidos disponibles para apostar.
+          Entra en la página de Clasificación, busca al jugador que quieras bloquear y haz clic en su nombre. En la ventana que se abre, selecciona la liga y busca el partido que deseas bloquear. No podrás bloquear el partido si ya lo tienes bloqueado o si a ese jugador le quedarían menos de 3 partidos disponibles para hacer selecciones.
         </p>
       </section>
 

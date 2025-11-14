@@ -52,7 +52,7 @@ const SuperAdmin: React.FC = () => {
     };
   }, [consent?.analytics]);
 
-  // Caché de cuotas
+  // Caché de multiplicadores
   const {
     data: lastUpdated,
     isLoading: loadingLastUpdated,
@@ -110,7 +110,7 @@ const SuperAdmin: React.FC = () => {
 
       toast({
         title: 'Actualización de Caché',
-        description: 'Caché de cuotas actualizado exitosamente',
+        description: 'Caché de multiplicadores actualizado exitosamente',
       });
       
       // Refetch the last updated time
@@ -293,7 +293,7 @@ const SuperAdmin: React.FC = () => {
             <NewsManagement />
           </div>
           
-          {/* Configuración de Tiempo de Apuestas */}
+          {/* Configuración de Tiempo de Selecciones */}
           <div className="lg:col-span-1 h-full">
             <BettingSettingsControl />
           </div>
@@ -317,12 +317,12 @@ const SuperAdmin: React.FC = () => {
 
         </div>
 
-        {/* Cache de Cuotas and Procesamiento de Resultados - 3 columns on desktop with equal card heights */}
+        {/* Cache de Multiplicadores and Procesamiento de Resultados - 3 columns on desktop with equal card heights */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-          {/* Caché de Cuotas */}
+          {/* Caché de Multiplicadores */}
           <Card className="h-full">
             <CardHeader>
-              <CardTitle className="text-base sm:text-lg">Caché de Cuotas</CardTitle>
+              <CardTitle className="text-base sm:text-lg">Caché de Multiplicadores</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 p-3 sm:p-6">
               <p className="text-xs sm:text-sm text-muted-foreground">
@@ -335,7 +335,7 @@ const SuperAdmin: React.FC = () => {
                 disabled={updatingCache}
                 className="jambol-button text-xs sm:text-sm"
               >
-                {updatingCache ? 'Actualizando...' : 'Forzar actualización de cuotas'}
+                {updatingCache ? 'Actualizando...' : 'Forzar actualización de multiplicadores'}
               </Button>
             </CardFooter>
           </Card>

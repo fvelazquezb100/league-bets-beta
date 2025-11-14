@@ -24,7 +24,7 @@ export default function TerminosCondiciones() {
 
       <h2 className="text-xl font-semibold mt-6 mb-2">1. Naturaleza del servicio</h2>
       <p className="text-sm md:text-base text-muted-foreground">
-        Jambol ™ es un juego de simulación deportiva sin dinero real. No se realizan apuestas, transacciones económicas ni se otorgan premios monetarios. Todos los puntos, cuotas y resultados son ficticios y se utilizan exclusivamente con fines recreativos y de entretenimiento entre los usuarios registrados.
+        Jambol ™ es un juego de simulación deportiva sin dinero real. No se realizan selecciones, transacciones económicas ni se otorgan premios monetarios. Todos los puntos, multiplicadores y resultados son ficticios y se utilizan exclusivamente con fines recreativos y de entretenimiento entre los usuarios registrados.
       </p>
 
       <h2 className="text-xl font-semibold mt-6 mb-2">2. Registro y cuenta de usuario</h2>
@@ -33,7 +33,7 @@ export default function TerminosCondiciones() {
       <h2 className="text-xl font-semibold mt-6 mb-2">3. Reglas de juego y funcionamiento</h2>
       <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1">
         <li>Los puntos no tienen valor económico ni pueden canjearse.</li>
-        <li>Las cuotas, resultados y clasificaciones son simulaciones generadas a partir de datos deportivos públicos o de terceros.</li>
+        <li>Los multiplicadores, resultados y clasificaciones son simulaciones generadas a partir de datos deportivos públicos o de terceros.</li>
         <li>Jambol ™ puede modificar o corregir errores evidentes en datos o cálculos sin previo aviso.</li>
         <li>El objetivo del servicio es el entretenimiento y la competencia amistosa.</li>
       </ul>

@@ -26,21 +26,21 @@ export const OddsIndicator: React.FC<OddsIndicatorProps> = ({
   if (Math.abs(difference) < tolerance) {
     // Equal - show yellow equals sign
     return (
-      <span className={`inline-flex items-center ${className}`} title="Cuota sin cambios">
+      <span className={`inline-flex items-center ${className}`} title="Multiplicador sin cambios">
         <span className="text-yellow-600 text-sm font-bold">=</span>
       </span>
     );
   } else if (difference > 0) {
     // Increased - show green triangle up
     return (
-      <span className={`inline-flex items-center ${className}`} title="Cuota aumentó">
+      <span className={`inline-flex items-center ${className}`} title="Multiplicador aumentó">
         <span className="text-green-600 text-sm font-bold">▲</span>
       </span>
     );
   } else {
     // Decreased - show red triangle down
     return (
-      <span className={`inline-flex items-center ${className}`} title="Cuota disminuyó">
+      <span className={`inline-flex items-center ${className}`} title="Multiplicador disminuyó">
         <span className="text-red-600 text-sm font-bold">▼</span>
       </span>
     );

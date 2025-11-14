@@ -242,7 +242,7 @@ export const Signup = () => {
               <CardHeader className="text-center">
                 <CardTitle className="text-2xl">Crear Cuenta</CardTitle>
                 <CardDescription>
-                  Regístrate para empezar a apostar
+                  Regístrate para empezar a participar
                 </CardDescription>
               </CardHeader>
               <CardContent>

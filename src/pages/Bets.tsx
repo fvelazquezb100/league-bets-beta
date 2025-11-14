@@ -602,7 +602,7 @@ const Bets = () => {
                       return (
                         <div className="text-center py-8 text-muted-foreground">
                           <p className="text-lg font-medium mb-2 text-red-500">Te han bloqueado este partido</p>
-                          <p>No puedes apostar en este partido porque otro usuario de tu liga lo ha bloqueado.</p>
+                          <p>No puedes hacer selecciones en este partido porque otro usuario de tu liga lo ha bloqueado.</p>
                         </div>
                       );
                     }

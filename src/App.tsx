@@ -41,6 +41,7 @@ import { LeagueSetup } from "./pages/LeagueSetup";
 import { Settings } from "./pages/Settings";
 import { SmartRedirect } from "./components/SmartRedirect";
 import AnalyticsLoader from "./components/AnalyticsLoader";
+import { ScrollToTop } from "./components/ScrollToTop";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -49,6 +50,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <ScrollToTop />
         <AnalyticsLoader />
         <AuthProvider>
           <Routes>
@@ -71,15 +73,7 @@ const App = () => (
             <Route path="/politica-privacidad" element={<PoliticaPrivacidad />} />
             <Route path="/aviso-legal" element={<AvisoLegal />} />
             <Route path="/faq" element={<FAQ />} />
-            <Route path="/reglas" element={
-              <ProtectedRoute>
-                <SmartRedirect>
-                  <MainLayout>
-                    <Reglas />
-                  </MainLayout>
-                </SmartRedirect>
-              </ProtectedRoute>
-            } />
+            <Route path="/reglas" element={<Reglas />} />
             <Route path="/league-setup" element={
               <ProtectedRoute>
                 <MainLayout>

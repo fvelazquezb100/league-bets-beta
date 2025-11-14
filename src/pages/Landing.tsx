@@ -51,7 +51,7 @@ const COMMUNITY_QUOTES = [
     author: 'Jerb',
   },
   {
-    quote: '“Me encanta la estrategia que requiere cada apuesta. No es solo suerte.”',
+    quote: '“Me encanta la estrategia que requiere cada selección. No es solo suerte.”',
     author: 'Ferro',
   },
   {
@@ -93,11 +93,34 @@ const COMMUNITY_QUOTES = [
 ] as const;
 
 const SCREENSHOT_IMAGES = [
-  'https://lflxrkkzudsecvdfdxwl.supabase.co/storage/v1/object/public/media/screenshot%20landing%20page/Admin%20Liga.png',
-  'https://lflxrkkzudsecvdfdxwl.supabase.co/storage/v1/object/public/media/screenshot%20landing%20page/Estadisticas.png',
-  'https://lflxrkkzudsecvdfdxwl.supabase.co/storage/v1/object/public/media/screenshot%20landing%20page/Historial.png',
-  'https://lflxrkkzudsecvdfdxwl.supabase.co/storage/v1/object/public/media/screenshot%20landing%20page/Partidos.png',
-  'https://lflxrkkzudsecvdfdxwl.supabase.co/storage/v1/object/public/media/screenshot%20landing%20page/Perfil.png',
+  {
+    url: 'https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/landingpage/bloqueo.png',
+    name: 'Bloqueo de Partidos',
+  },
+  {
+    url: 'https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/landingpage/clasificacion.png',
+    name: 'Clasificación',
+  },
+  {
+    url: 'https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/landingpage/ests.png',
+    name: 'Estadísticas',
+  },
+  {
+    url: 'https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/landingpage/historial.png',
+    name: 'Historial',
+  },
+  {
+    url: 'https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/landingpage/liga.png',
+    name: 'Administración de Liga',
+  },
+  {
+    url: 'https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/landingpage/partidos.png',
+    name: 'Partidos',
+  },
+  {
+    url: 'https://sbfgxxdpppgtgiclmctc.supabase.co/storage/v1/object/public/media/landingpage/perfil.png',
+    name: 'Perfil',
+  },
 ] as const;
 
 export const Landing = () => {
@@ -109,11 +132,11 @@ export const Landing = () => {
   const [isImageTransitioning, setIsImageTransitioning] = useState(false);
 
   useEffect(() => {
-    const pageTitle = 'Jambol — Liga de Apuestas Simuladas';
+    const pageTitle = 'Jambol — Predice, Compite y Domina';
     const description =
       'Jambol es tu fantasy estratégico: pronostica partidos, crea ligas privadas y escala la clasificación con puntos virtuales.';
     const keywords =
-      'jambol, apuestas simuladas, fantasy fútbol, ligas privadas, pronósticos deportivos, puntos virtuales, clasificaciones en vivo';
+      'jambol, pronósticos simulados, fantasy fútbol, ligas privadas, selecciones deportivas, puntos virtuales, clasificaciones en vivo';
     const image = APP_CONFIG.ASSETS.LOGO;
     const currentUrl = window.location.origin + window.location.pathname;
 
@@ -207,26 +230,57 @@ export const Landing = () => {
     canonicalLink.setAttribute('href', currentUrl);
 
     // Structured Data (JSON-LD)
-    const structuredData = {
-      '@context': 'https://schema.org',
-      '@type': 'WebApplication',
-      name: 'Jambol',
-      description:
-        'Jambol es tu fantasy estratégico: pronostica partidos, crea ligas privadas y escala la clasificación con puntos virtuales.',
-      url: window.location.origin,
-      applicationCategory: 'GameApplication',
-      operatingSystem: 'Web',
-      offers: {
-        '@type': 'Offer',
-        price: '0',
-        priceCurrency: 'EUR',
+    const structuredData = [
+      // WebApplication
+      {
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        name: 'Jambol',
+        description:
+          'Jambol es tu fantasy estratégico: pronostica partidos, crea ligas privadas y escala la clasificación con puntos virtuales.',
+        url: window.location.origin,
+        applicationCategory: 'GameApplication',
+        operatingSystem: 'Web',
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'EUR',
+        },
+        aggregateRating: {
+          '@type': 'AggregateRating',
+          ratingValue: '4.5',
+          ratingCount: '120',
+        },
+        publisher: {
+          '@type': 'Organization',
+          name: 'Jambol',
+          url: window.location.origin,
+        },
       },
-      aggregateRating: {
-        '@type': 'AggregateRating',
-        ratingValue: '4.5',
-        ratingCount: '120',
+      // Organization
+      {
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: 'Jambol',
+        url: window.location.origin,
+        logo: image,
+        description:
+          'Jambol es tu fantasy estratégico: pronostica partidos, crea ligas privadas y escala la clasificación con puntos virtuales.',
       },
-    };
+      // BreadcrumbList
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Inicio',
+            item: window.location.origin,
+          },
+        ],
+      },
+    ];
 
     let scriptTag = document.querySelector('script[type="application/ld+json"]');
     const previousScriptContent = scriptTag?.textContent ?? undefined;
@@ -319,6 +373,8 @@ export const Landing = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const currentScreenshot = SCREENSHOT_IMAGES[currentImageIndex];
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -368,16 +424,16 @@ export const Landing = () => {
             </h1>
             <p className="mt-6 text-xl text-muted-foreground max-w-2xl">
               Jambol es la experiencia fantasy para gente que piensa: pronostica partidos, optimiza tus
-              puntos virtuales y escala las clasificaciones públicas o privadas sin apostar dinero real.
+              puntos virtuales y escala las clasificaciones públicas o privadas sin usar dinero real.
             </p>
 
             <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
-              <Link to="/signup" className="w-full sm:w-auto">
+              <Link to="/signup" className="w-full sm:w-auto" aria-label="Crear cuenta en Jambol y empezar a jugar">
                 <Button size="lg" className="jambol-button w-full text-lg px-10 py-4">
                   Empezar ahora
                 </Button>
               </Link>
-              <Link to="/login" className="w-full sm:w-auto">
+              <Link to="/login" className="w-full sm:w-auto" aria-label="Iniciar sesión en tu cuenta de Jambol">
                 <Button size="lg" className="jambol-button w-full text-lg px-10 py-4">
                   Ya tengo cuenta
                 </Button>
@@ -405,9 +461,9 @@ export const Landing = () => {
               <p className="text-sm font-semibold uppercase tracking-[0.3em] text-white/80">
                 Tu estrategia, tu liga
               </p>
-              <h3 className="mt-4 text-3xl font-semibold leading-snug">
+              <h2 className="mt-4 text-3xl font-semibold leading-snug">
                 Diseña jugadas, comparte picks y celebra cada acierto en comunidad.
-              </h3>
+              </h2>
               <p className="mt-4 text-white/90">
                 Configura ligas cerradas, ajusta puntos iniciales y vive cada jornada como si fueras el
                 director deportivo de tu grupo.
@@ -461,20 +517,35 @@ export const Landing = () => {
               ))}
             </div>
 
-            {/* Right side: Image carousel */}
+            {/* Right side: Image carousel with browser frame */}
             <div className="relative lg:sticky lg:top-24 h-[600px] lg:h-[700px]">
-              <img
-                src={SCREENSHOT_IMAGES[currentImageIndex]}
-                alt={`Screenshot ${currentImageIndex + 1}`}
-                className={`w-full h-full object-contain transition-opacity duration-500 ${
-                  isImageTransitioning ? 'opacity-0' : 'opacity-100'
-                }`}
-              />
+              <div className="browser-frame rounded-xl border-2 border-[#2D2D2D] bg-white shadow-2xl overflow-hidden">
+                {/* Browser header */}
+                <div className="browser-header bg-[#2D2D2D] px-4 py-2 flex items-center">
+                  {/* Browser controls */}
+                  <div className="flex gap-2">
+                    <div className="w-3 h-3 rounded-full bg-[#ff5f56]"></div>
+                    <div className="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
+                    <div className="w-3 h-3 rounded-full bg-[#27c93f]"></div>
+                  </div>
+                </div>
+                {/* Browser content */}
+                <div className="browser-content bg-white">
+                  <img
+                    src={currentScreenshot.url}
+                    alt={`Captura de pantalla de Jambol mostrando ${currentScreenshot.name}`}
+                    className={`w-full h-full object-contain transition-opacity duration-500 ${
+                      isImageTransitioning ? 'opacity-0' : 'opacity-100'
+                    }`}
+                    style={{ maxHeight: 'calc(100% - 48px)' }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
           <p className="mt-10 text-center text-lg text-muted-foreground">
-            Un sistema <span className="text-[#FFC72C] font-semibold">sencillo</span>, <span className="text-[#FFC72C] font-semibold">dinámico</span> y 100 % basado en <span className="text-[#FFC72C] font-semibold">habilidad</span>.
+            Un sistema <span className="text-[#FFC72C] font-semibold">sencillo</span>, <span className="text-[#FFC72C] font-semibold">dinámico</span> y basado en <span className="text-[#FFC72C] font-semibold">habilidad</span>.
           </p>
         </div>
       </section>
@@ -488,7 +559,7 @@ export const Landing = () => {
             Más que un fantasy. Una prueba de inteligencia deportiva.
           </h2>
           <p className="mx-auto mt-4 max-w-3xl text-center text-lg text-muted-foreground">
-            Lo importante no es apostar más, sino pensar mejor. Diseñamos Jambol para que cada jornada sea
+            Lo importante no es hacer más selecciones, sino pensar mejor. Diseñamos Jambol para que cada jornada sea
             una oportunidad estratégica y social.
           </p>
 
@@ -544,35 +615,6 @@ export const Landing = () => {
               </li>
             </ul>
 
-            <div className="mt-10 rounded-2xl border-2 border-[#2D2D2D] bg-gradient-to-br from-[#FFC72C]/20 to-white p-6 shadow-lg">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="text-2xl font-bold text-[#FFC72C]">✨</span>
-                <h3 className="text-2xl font-bold text-foreground">Ligas Premium</h3>
-              </div>
-              <p className="mb-6 text-muted-foreground">
-                Potencia tu liga con funcionalidades avanzadas para una experiencia de juego más dinámica y estratégica.
-              </p>
-              <ul className="space-y-3 text-foreground">
-                <li className="flex items-start gap-3">
-                  <span className="text-[#FFC72C] font-bold mt-1">•</span>
-                  <span>
-                    <strong className="text-foreground">Modifica los puntos</strong> en tiempo real para ajustar la dificultad y estrategia.
-                  </span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-[#FFC72C] font-bold mt-1">•</span>
-                  <span>
-                    <strong className="text-foreground">Estadísticas avanzadas</strong> personales y de liga para analizar el rendimiento detallado.
-                  </span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-[#FFC72C] font-bold mt-1">•</span>
-                  <span>
-                    <strong className="text-foreground">Bloquea partidos</strong> para el resto de usuarios y añade capas extra de estrategia y dinamismo.
-                  </span>
-                </li>
-              </ul>
-            </div>
           </div>
           <div className="flex items-start justify-center lg:justify-start">
             <div className="rounded-xl border-2 border-[#2D2D2D] bg-white/80 p-4 shadow-xl relative overflow-hidden max-w-sm w-full">
@@ -591,6 +633,133 @@ export const Landing = () => {
               >
                 — {COMMUNITY_QUOTES[currentQuoteIndex].author}
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="funcionalidad-premium" className="bg-[#2D2D2D] py-24">
+        <div className="container mx-auto px-6">
+          <div className="flex justify-center mb-6">
+            <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#FFC72C] to-[#E6B328] px-4 py-2 text-sm font-semibold text-[#2D2D2D] border-2 border-[#2D2D2D] shadow-lg">
+              <span className="h-2 w-2 rounded-full bg-[#2D2D2D]" />
+              Funcionalidad Premium
+            </div>
+          </div>
+          
+          <h2 className="text-4xl md:text-5xl font-bold text-center text-white mb-4">
+            Lleva tu liga al siguiente nivel
+          </h2>
+          <p className="text-lg text-center text-white/80 max-w-3xl mx-auto mb-12">
+            Desbloquea herramientas avanzadas que transforman tu liga en una experiencia competitiva única. Control total, análisis profundo y estrategias que marcan la diferencia.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Actualizar puntos */}
+            <div className="rounded-2xl border-2 border-[#FFC72C] bg-[#2D2D2D] p-6 shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:border-[#FFC72C]/80 cursor-pointer group">
+              <div className="mb-4 flex items-center justify-center w-12 h-12 rounded-full bg-[#FFC72C]/20 group-hover:bg-[#FFC72C]/30 transition-colors">
+                <svg className="w-6 h-6 text-[#FFC72C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Actualizar puntos</h3>
+              <p className="text-white/80 text-sm leading-relaxed">
+                Ajusta los puntos de los jugadores en cualquier momento. Corrige errores, aplica bonificaciones especiales o adapta el sistema a tus reglas personalizadas. Control total sobre la clasificación.
+              </p>
+            </div>
+
+            {/* Evolución de multiplicadores */}
+            <div className="rounded-2xl border-2 border-[#FFC72C] bg-[#2D2D2D] p-6 shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:border-[#FFC72C]/80 cursor-pointer group">
+              <div className="mb-4 flex items-center justify-center w-12 h-12 rounded-full bg-[#FFC72C]/20 group-hover:bg-[#FFC72C]/30 transition-colors">
+                <svg className="w-6 h-6 text-[#FFC72C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Evolución de multiplicadores</h3>
+              <p className="text-white/80 text-sm leading-relaxed">
+                Visualiza cómo cambian los multiplicadores en tiempo real. Flechas que indican subidas y bajadas te ayudan a tomar decisiones estratégicas en el momento perfecto. Información que marca la diferencia.
+              </p>
+            </div>
+
+            {/* Bloqueos de partidos */}
+            <div className="rounded-2xl border-2 border-[#FFC72C] bg-[#2D2D2D] p-6 shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:border-[#FFC72C]/80 cursor-pointer group">
+              <div className="mb-4 flex items-center justify-center w-12 h-12 rounded-full bg-[#FFC72C]/20 group-hover:bg-[#FFC72C]/30 transition-colors">
+                <svg className="w-6 h-6 text-[#FFC72C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Bloqueos de partidos</h3>
+              <p className="text-white/80 text-sm leading-relaxed">
+                La herramienta definitiva de estrategia. Bloquea partidos específicos a tus rivales para limitar sus opciones y ganar ventaja competitiva. Cada bloqueo cuenta, cada movimiento importa.
+              </p>
+            </div>
+
+            {/* Más estadísticas */}
+            <div className="rounded-2xl border-2 border-[#FFC72C] bg-[#2D2D2D] p-6 shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:border-[#FFC72C]/80 cursor-pointer group">
+              <div className="mb-4 flex items-center justify-center w-12 h-12 rounded-full bg-[#FFC72C]/20 group-hover:bg-[#FFC72C]/30 transition-colors">
+                <svg className="w-6 h-6 text-[#FFC72C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Más estadísticas</h3>
+              <p className="text-white/80 text-sm leading-relaxed">
+                Análisis profundo del rendimiento de cada jugador. Gráficos detallados, tendencias históricas y métricas avanzadas que te ayudan a entender quién realmente domina la liga. Datos que revelan la verdad.
+              </p>
+            </div>
+
+            {/* Selecciones de otras ligas */}
+            <div className="rounded-2xl border-2 border-[#FFC72C] bg-[#2D2D2D] p-6 shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:border-[#FFC72C]/80 cursor-pointer group">
+              <div className="mb-4 flex items-center justify-center w-12 h-12 rounded-full bg-[#FFC72C]/20 group-hover:bg-[#FFC72C]/30 transition-colors">
+                <svg className="w-6 h-6 text-[#FFC72C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Selecciones de otras ligas</h3>
+              <p className="text-white/80 text-sm leading-relaxed">
+                Espía las estrategias de otras ligas premium. Descubre qué partidos eligen los mejores jugadores y aprende de sus decisiones. La información es poder, y aquí la tienes toda.
+              </p>
+            </div>
+
+            {/* Liga Premium - Card destacada */}
+            <div className="rounded-2xl border-2 border-[#FFC72C] bg-gradient-to-br from-[#2D2D2D] via-[#3a3a2a] to-[#4a4a3a] p-6 shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:scale-105 cursor-pointer group relative overflow-hidden">
+              {/* Degradado de fondo jambol gold a jambol grey */}
+              <div className="absolute inset-0 bg-gradient-to-br from-[#FFC72C]/20 via-[#FFC72C]/10 to-[#2D2D2D] opacity-60 rounded-2xl"></div>
+              <div className="relative z-10 flex flex-col items-center text-center">
+                {/* Icono cuadrado con fondo dorado */}
+                <div className="mb-6 flex items-center justify-center w-16 h-16 rounded-xl bg-[#FFC72C] shadow-lg">
+                  <svg className="w-10 h-10 text-[#2D2D2D]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                    {/* Estrella principal de 4 puntas */}
+                    <path d="M12 2 L14 9 L21 9 L15 14 L17 21 L12 17 L7 21 L9 14 L3 9 L10 9 Z" />
+                    {/* Destellos pequeños */}
+                    <circle cx="8" cy="6" r="1" fill="currentColor" />
+                    <circle cx="16" cy="6" r="1" fill="currentColor" />
+                  </svg>
+                </div>
+                <h3 className="text-3xl font-bold text-white mb-3">Liga Premium</h3>
+                <p className="text-white/90 mb-6 text-base">
+                  Todo lo que necesitas para dominar la competición
+                </p>
+                <ul className="space-y-3 text-white text-sm w-full text-left">
+                  <li className="flex items-center gap-3">
+                    <svg className="w-5 h-5 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Control total de puntos</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <svg className="w-5 h-5 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Análisis avanzado</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <svg className="w-5 h-5 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Herramientas estratégicas</span>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
@@ -618,10 +787,10 @@ export const Landing = () => {
             ].map((item) => (
               <div
                 key={item}
-                className="rounded-3xl border-2 border-[#2D2D2D] bg-white/5 p-6 shadow-lg backdrop-blur relative overflow-hidden"
+                className="rounded-3xl border-2 border-[#FFC72C] bg-[#2D2D2D] p-6 shadow-lg relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:scale-105 hover:border-[#FFC72C]/90 cursor-pointer group"
               >
-                <div className="absolute top-0 right-0 w-16 h-16 bg-[#FFC72C] opacity-20 rounded-bl-full"></div>
-                <p className="text-lg text-white/90 relative z-10">{item}</p>
+                <div className="absolute top-0 right-0 w-16 h-16 bg-[#FFC72C] opacity-20 rounded-bl-full transition-opacity duration-300 group-hover:opacity-30"></div>
+                <p className="text-lg text-white/90 relative z-10 transition-colors duration-300 group-hover:text-white">{item}</p>
               </div>
             ))}
           </div>
@@ -639,12 +808,12 @@ export const Landing = () => {
           </p>
 
           <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:justify-center">
-            <Link to="/signup" className="w-full sm:w-auto">
+            <Link to="/signup" className="w-full sm:w-auto" aria-label="Crear cuenta en Jambol y empezar a jugar">
               <Button size="lg" className="jambol-button w-full text-lg px-10 py-4">
                 Empezar ahora
               </Button>
             </Link>
-            <Link to="/login" className="w-full sm:w-auto">
+            <Link to="/login" className="w-full sm:w-auto" aria-label="Iniciar sesión en tu cuenta de Jambol">
               <Button size="lg" className="jambol-button w-full text-lg px-10 py-4">
                 Ya tengo cuenta
               </Button>

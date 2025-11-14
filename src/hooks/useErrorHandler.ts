@@ -20,9 +20,9 @@ const ERROR_MESSAGES = {
   // Betting errors
   'insufficient_budget': 'Presupuesto insuficiente',
   'duplicate_fixture_in_combo': 'No se pueden combinar múltiples selecciones del mismo partido',
-  'bet_closed': 'Las apuestas están cerradas para este partido',
-  'invalid_odds': 'Cuotas inválidas',
-  'selection_missing_odds': 'Faltan cuotas para la selección',
+  'bet_closed': 'Las selecciones están cerradas para este partido',
+  'invalid_odds': 'Multiplicadores inválidos',
+  'selection_missing_odds': 'Faltan multiplicadores para la selección',
   
   // Database errors
   'duplicate key value': 'El valor ya existe',
