@@ -502,16 +502,16 @@ export const Landing = () => {
           <div className="mt-12 grid gap-8 lg:grid-cols-2">
             {/* Left side: Steps list */}
             <div className="space-y-6">
-              {HOW_IT_WORKS_STEPS.map((step, index) => (
+            {HOW_IT_WORKS_STEPS.map((step, index) => (
                 <div
-                  key={step}
+                key={step}
                   className="rounded-xl border-2 border-[#2D2D2D] bg-white p-6 shadow-md transition hover:shadow-lg"
-                >
-                  <div className="flex items-start gap-4">
+              >
+                <div className="flex items-start gap-4">
                     <span className="text-4xl font-black text-[#FFC72C]">{index + 1}</span>
                     <p className="text-lg leading-relaxed text-foreground">
-                      <em>{step}</em>
-                    </p>
+                    <em>{step}</em>
+                  </p>
                   </div>
                 </div>
               ))}
@@ -619,20 +619,20 @@ export const Landing = () => {
           <div className="flex items-start justify-center lg:justify-start">
             <div className="rounded-xl border-2 border-[#2D2D2D] bg-white/80 p-4 shadow-xl relative overflow-hidden max-w-sm w-full">
               <div className="absolute top-0 left-0 w-1 h-full bg-[#FFC72C]"></div>
-              <p
+            <p
                 className={`text-sm italic text-foreground transition-opacity duration-300 leading-relaxed ${
-                  isTransitioning ? 'opacity-0' : 'opacity-100'
-                }`}
-              >
-                {COMMUNITY_QUOTES[currentQuoteIndex].quote}
-              </p>
-              <p
+                isTransitioning ? 'opacity-0' : 'opacity-100'
+              }`}
+            >
+              {COMMUNITY_QUOTES[currentQuoteIndex].quote}
+            </p>
+            <p
                 className={`mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#FFC72C] transition-opacity duration-300 ${
-                  isTransitioning ? 'opacity-0' : 'opacity-100'
-                }`}
-              >
-                — {COMMUNITY_QUOTES[currentQuoteIndex].author}
-              </p>
+                isTransitioning ? 'opacity-0' : 'opacity-100'
+              }`}
+            >
+              — {COMMUNITY_QUOTES[currentQuoteIndex].author}
+            </p>
             </div>
           </div>
         </div>

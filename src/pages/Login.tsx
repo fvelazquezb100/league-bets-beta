@@ -11,6 +11,7 @@ import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { APP_CONFIG } from '@/config/app';
 import { SiteFooter } from '@/components/layout/SiteFooter';
 import { useCookieConsent } from '@/hooks/useCookieConsent';
+import { SEO } from "@/components/SEO";
 
 export const Login = () => {
   const { signIn, user, loading } = useAuth();
@@ -60,9 +61,9 @@ export const Login = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <img 
-            src={APP_CONFIG.ASSETS.LOGO} 
-            alt="Jambol Logo" 
+          <img
+            src={APP_CONFIG.ASSETS.LOGO}
+            alt="Jambol Logo"
             className="h-20 jambol-logo-loading"
           />
           <span className="text-lg font-semibold jambol-dark">Cargando...</span>
@@ -123,9 +124,9 @@ export const Login = () => {
           <div className="w-full max-w-md">
             <div className="text-center mb-8">
               <Link to="/" className="flex flex-col items-center gap-4">
-                <img 
-                  src={APP_CONFIG.ASSETS.LOGO} 
-                  alt="Jambol Logo" 
+                <img
+                  src={APP_CONFIG.ASSETS.LOGO}
+                  alt="Jambol Logo"
                   className="h-16 jambol-logo"
                 />
                 <span className="text-3xl font-bold jambol-dark">
@@ -133,7 +134,7 @@ export const Login = () => {
                 </span>
               </Link>
             </div>
-            
+
             <Card className="shadow-xl border-border/50">
               <CardHeader className="text-center">
                 <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
@@ -148,7 +149,7 @@ export const Login = () => {
                       <AlertDescription>{error}</AlertDescription>
                     </Alert>
                   )}
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="email">Correo Electrónico</Label>
                     <Input
@@ -160,7 +161,7 @@ export const Login = () => {
                       placeholder="tu@ejemplo.com"
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="password">Contraseña</Label>
                     <Input
@@ -172,7 +173,7 @@ export const Login = () => {
                       placeholder="••••••••"
                     />
                   </div>
-                  
+
                   <div className="text-right">
                     <Link to="/reset-password" className="text-sm text-primary hover:underline">
                       ¿Olvidaste tu contraseña?
@@ -186,8 +187,8 @@ export const Login = () => {
                     {isLoading ? 'Iniciando...' : 'Iniciar Sesión'}
                   </Button>
                 </form>
-                
-                
+
+
                 <div className="mt-6 text-center">
                   <p className="text-sm text-muted-foreground">
                     ¿No tienes cuenta?{' '}
@@ -195,7 +196,7 @@ export const Login = () => {
                       Regístrate
                     </Link>
                   </p>
-                  
+
                   <div className="mt-4">
                     <p className="text-sm text-muted-foreground mb-3">
                       ¿Quieres hacer una demostración de una liga Jambol?
@@ -217,9 +218,9 @@ export const Login = () => {
 
         {/* Right side - Header Logo (Desktop only) */}
         <div className="hidden lg:flex lg:flex-1 lg:relative lg:bg-gradient-to-br lg:from-primary/10 lg:to-accent/10">
-          <img 
-            src={APP_CONFIG.ASSETS.HEADER_LOGO} 
-            alt="Jambol Header" 
+          <img
+            src={APP_CONFIG.ASSETS.HEADER_LOGO}
+            alt="Jambol Header"
             className="w-full h-full object-cover object-center"
           />
         </div>
