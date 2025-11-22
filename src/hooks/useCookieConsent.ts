@@ -12,7 +12,7 @@ export const useCookieConsent = () => {
 
   useEffect(() => {
     const stored = localStorage.getItem('cookie_consent');
-    
+
     if (stored) {
       try {
         if (stored === 'all') {
@@ -42,14 +42,14 @@ export const useCookieConsent = () => {
     } else {
       setConsent(null); // No consent given yet
     }
-    
+
     setIsLoading(false);
   }, []);
 
   const updateConsent = (newConsent: CookieConsent) => {
     setConsent(newConsent);
     localStorage.setItem('cookie_consent', JSON.stringify(newConsent));
-    
+
     // Load/unload scripts based on new consent
     loadScriptsBasedOnConsent(newConsent);
   };
@@ -90,10 +90,11 @@ const loadGoogleAdSense = () => {
   if (document.querySelector('script[src*="adsbygoogle.js"]')) return;
 
   // Load Google AdSense script
+  const clientId = import.meta.env.VITE_ADSENSE_CLIENT_ID || 'ca-pub-7909629244250843';
   const script = document.createElement('script');
   script.async = true;
-  script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
-  script.setAttribute('data-ad-client', import.meta.env.VITE_ADSENSE_CLIENT_ID || 'ca-pub-XXXXXXXXXX');
+  script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${clientId}`;
+  script.crossOrigin = 'anonymous';
   document.head.appendChild(script);
 
   console.log('Google AdSense loaded with consent');
@@ -105,12 +106,12 @@ const unloadGoogleAdSense = () => {
   cookies.forEach(cookie => {
     document.cookie = `${cookie}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
   });
-  
+
   // Remove AdSense script
   const adsenseScript = document.querySelector('script[src*="adsbygoogle.js"]');
   if (adsenseScript) {
     adsenseScript.remove();
   }
-  
+
   console.log('Google AdSense unloaded');
 };
