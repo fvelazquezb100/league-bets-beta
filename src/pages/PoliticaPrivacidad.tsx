@@ -1,14 +1,19 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { APP_CONFIG } from '@/config/app';
+import { SEO } from "@/components/SEO";
 
 export default function PoliticaPrivacidad() {
   useEffect(() => {
-    document.title = 'Jambol — Política de Privacidad';
+    // document.title = 'Jambol — Política de Privacidad'; // SEO component handles this
   }, []);
 
   return (
     <div className="container mx-auto px-6 py-8">
+      <SEO
+        title="Política de Privacidad - Jambol"
+        description="Conoce cómo tratamos tus datos personales en Jambol."
+      />
       <div className="flex items-center gap-3 mb-4">
         <img
           src={APP_CONFIG.ASSETS.LOGO}

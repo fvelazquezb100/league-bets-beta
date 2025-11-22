@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { APP_CONFIG } from '@/config/app';
+import { SEO } from "@/components/SEO";
 
 export default function FAQ() {
   useEffect(() => {
     document.title = 'Jambol — Preguntas Frecuentes';
-    
+
     // FAQPage Structured Data (JSON-LD)
     const faqStructuredData = {
       '@context': 'https://schema.org',
@@ -65,8 +66,12 @@ export default function FAQ() {
 
   return (
     <div className="container mx-auto px-6 py-8">
+      <SEO
+        title="Preguntas Frecuentes - Jambol"
+        description="Resuelve tus dudas sobre cómo funciona Jambol, las ligas, las apuestas y más."
+      />
       <div className="flex items-center gap-3 mb-4">
-        <img 
+        <img
           src={APP_CONFIG.ASSETS.LOGO}
           alt="Jambol Logo"
           className="h-10 jambol-logo"

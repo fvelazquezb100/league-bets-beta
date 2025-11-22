@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { APP_CONFIG } from '@/config/app';
+import { SEO } from "@/components/SEO";
 
 export default function Reglas() {
   useEffect(() => {
-    document.title = 'Jambol — Reglas del Juego';
+    // document.title = 'Jambol — Reglas del Juego'; // SEO component handles this
   }, []);
   const sections = [
     { id: 'introduccion', title: 'Introducción' },
@@ -24,9 +25,12 @@ export default function Reglas() {
 
   return (
     <div className="container mx-auto px-6 py-8">
-      {/* Encabezado */}
+      <SEO
+        title="Reglas del Juego - Jambol"
+        description="Conoce las reglas de Jambol: cómo puntuar, cómo funcionan las ligas y los premios."
+      />
       <div className="flex items-center gap-3 mb-4">
-        <img 
+        <img
           src={APP_CONFIG.ASSETS.LOGO}
           alt="Jambol Logo"
           className="h-10 jambol-logo"

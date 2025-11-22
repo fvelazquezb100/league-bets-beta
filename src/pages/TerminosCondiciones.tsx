@@ -1,16 +1,21 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { APP_CONFIG } from '@/config/app';
+import { SEO } from "@/components/SEO";
 
 export default function TerminosCondiciones() {
   useEffect(() => {
-    document.title = 'Jambol — Términos y Condiciones';
+    // document.title = 'Jambol — Términos y Condiciones'; // SEO component handles this
   }, []);
 
   return (
     <div className="container mx-auto px-6 py-8">
+      <SEO
+        title="Términos y Condiciones - Jambol"
+        description="Lee los términos y condiciones de uso de la plataforma Jambol."
+      />
       <div className="flex items-center gap-3 mb-4">
-        <img 
+        <img
           src={APP_CONFIG.ASSETS.LOGO}
           alt="Jambol Logo"
           className="h-10 jambol-logo"
@@ -91,5 +96,3 @@ export default function TerminosCondiciones() {
     </div>
   );
 }
-
-

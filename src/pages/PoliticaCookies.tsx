@@ -1,16 +1,21 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { APP_CONFIG } from '@/config/app';
+import { SEO } from "@/components/SEO";
 
 export default function PoliticaCookies() {
   useEffect(() => {
-    document.title = 'Jambol — Política de Cookies';
+    // document.title = 'Jambol — Política de Cookies'; // SEO component will handle this
   }, []);
 
   return (
     <div className="container mx-auto px-6 py-8">
+      <SEO
+        title="Política de Cookies - Jambol"
+        description="Información sobre el uso de cookies en Jambol."
+      />
       <div className="flex items-center gap-3 mb-4">
-        <img 
+        <img
           src={APP_CONFIG.ASSETS.LOGO}
           alt="Jambol Logo"
           className="h-10 jambol-logo"
@@ -106,5 +111,3 @@ export default function PoliticaCookies() {
     </div>
   );
 }
-
-

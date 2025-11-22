@@ -1,14 +1,19 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { APP_CONFIG } from '@/config/app';
+import { SEO } from "@/components/SEO";
 
 export default function AvisoLegal() {
   useEffect(() => {
-    document.title = 'Jambol — Aviso Legal';
+    // document.title = 'Jambol — Aviso Legal'; // SEO component handles this
   }, []);
 
   return (
     <div className="container mx-auto px-6 py-8">
+      <SEO
+        title="Aviso Legal - Jambol"
+        description="Información legal sobre Jambol y sus condiciones de uso."
+      />
       <div className="flex items-center gap-3 mb-4">
         <img
           src={APP_CONFIG.ASSETS.LOGO}

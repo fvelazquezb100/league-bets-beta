@@ -68,5 +68,13 @@
     <priority>0.5</priority>
   </url>
   
+  <!-- Reglas -->
+  <url>
+    <loc>https://jambol.co/reglas</loc>
+    <lastmod>2025-01-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
 </urlset>
 
