@@ -130,6 +130,18 @@ export const Landing = () => {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImageTransitioning, setIsImageTransitioning] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [autoPlay, setAutoPlay] = useState(true);
+
+  const handleImageSelect = (index: number) => {
+    if (index === currentImageIndex) return;
+    setAutoPlay(false); // Stop auto-play on manual interaction
+    setIsImageTransitioning(true);
+    setTimeout(() => {
+      setCurrentImageIndex(index);
+      setIsImageTransitioning(false);
+    }, 300);
+  };
 
   useEffect(() => {
     const pageTitle = 'Jambol — Predice, Compite y Domina';
@@ -230,57 +242,57 @@ export const Landing = () => {
     canonicalLink.setAttribute('href', currentUrl);
 
     // Structured Data (JSON-LD)
-    const structuredData = [
-      // WebApplication
-      {
-        '@context': 'https://schema.org',
-        '@type': 'WebApplication',
-        name: 'Jambol',
-        description:
-          'Jambol es tu fantasy estratégico: pronostica partidos, crea ligas privadas y escala la clasificación con puntos virtuales.',
-        url: window.location.origin,
-        applicationCategory: 'GameApplication',
-        operatingSystem: 'Web',
-        offers: {
-          '@type': 'Offer',
-          price: '0',
-          priceCurrency: 'EUR',
+    const structuredData = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        // WebApplication
+        {
+          '@type': 'WebApplication',
+          name: 'Jambol',
+          description:
+            'Jambol es tu fantasy estratégico: pronostica partidos, crea ligas privadas y escala la clasificación con puntos virtuales.',
+          url: window.location.origin,
+          applicationCategory: 'GameApplication',
+          operatingSystem: 'Web',
+          offers: {
+            '@type': 'Offer',
+            price: '0',
+            priceCurrency: 'EUR',
+          },
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: '4.5',
+            ratingCount: '120',
+          },
+          publisher: {
+            '@type': 'Organization',
+            name: 'Jambol',
+            url: window.location.origin,
+          },
         },
-        aggregateRating: {
-          '@type': 'AggregateRating',
-          ratingValue: '4.5',
-          ratingCount: '120',
-        },
-        publisher: {
+        // Organization
+        {
           '@type': 'Organization',
           name: 'Jambol',
           url: window.location.origin,
+          logo: image,
+          description:
+            'Jambol es tu fantasy estratégico: pronostica partidos, crea ligas privadas y escala la clasificación con puntos virtuales.',
         },
-      },
-      // Organization
-      {
-        '@context': 'https://schema.org',
-        '@type': 'Organization',
-        name: 'Jambol',
-        url: window.location.origin,
-        logo: image,
-        description:
-          'Jambol es tu fantasy estratégico: pronostica partidos, crea ligas privadas y escala la clasificación con puntos virtuales.',
-      },
-      // BreadcrumbList
-      {
-        '@context': 'https://schema.org',
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          {
-            '@type': 'ListItem',
-            position: 1,
-            name: 'Inicio',
-            item: window.location.origin,
-          },
-        ],
-      },
-    ];
+        // BreadcrumbList
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            {
+              '@type': 'ListItem',
+              position: 1,
+              name: 'Inicio',
+              item: window.location.origin,
+            },
+          ],
+        },
+      ]
+    };
 
     let scriptTag = document.querySelector('script[type="application/ld+json"]');
     const previousScriptContent = scriptTag?.textContent ?? undefined;
@@ -362,6 +374,8 @@ export const Landing = () => {
   }, []);
 
   useEffect(() => {
+    if (!autoPlay) return;
+
     const interval = setInterval(() => {
       setIsImageTransitioning(true);
       setTimeout(() => {
@@ -371,7 +385,7 @@ export const Landing = () => {
     }, 3000); // Cambia cada 3 segundos
 
     return () => clearInterval(interval);
-  }, []);
+  }, [autoPlay]);
 
   const currentScreenshot = SCREENSHOT_IMAGES[currentImageIndex];
 
@@ -502,24 +516,27 @@ export const Landing = () => {
           <div className="mt-12 grid gap-8 lg:grid-cols-2">
             {/* Left side: Steps list */}
             <div className="space-y-6">
-            {HOW_IT_WORKS_STEPS.map((step, index) => (
+              {HOW_IT_WORKS_STEPS.map((step, index) => (
                 <div
-                key={step}
+                  key={step}
                   className="rounded-xl border-2 border-[#2D2D2D] bg-white p-6 shadow-md transition hover:shadow-lg"
-              >
-                <div className="flex items-start gap-4">
+                >
+                  <div className="flex items-start gap-4">
                     <span className="text-4xl font-black text-[#FFC72C]">{index + 1}</span>
                     <p className="text-lg leading-relaxed text-foreground">
-                    <em>{step}</em>
-                  </p>
+                      <em>{step}</em>
+                    </p>
                   </div>
                 </div>
               ))}
             </div>
 
             {/* Right side: Image carousel with browser frame */}
-            <div className="relative lg:sticky lg:top-24 h-[600px] lg:h-[700px]">
-              <div className="browser-frame rounded-xl border-2 border-[#2D2D2D] bg-white shadow-2xl overflow-hidden">
+            <div className="relative lg:sticky lg:top-24 h-[600px] lg:h-[700px] flex flex-col gap-4">
+              <div
+                className="browser-frame rounded-xl border-2 border-[#2D2D2D] bg-white shadow-2xl overflow-hidden cursor-zoom-in transition-transform hover:scale-[1.02]"
+                onClick={() => setIsLightboxOpen(true)}
+              >
                 {/* Browser header */}
                 <div className="browser-header bg-[#2D2D2D] px-4 py-2 flex items-center">
                   {/* Browser controls */}
@@ -530,18 +547,66 @@ export const Landing = () => {
                   </div>
                 </div>
                 {/* Browser content */}
-                <div className="browser-content bg-white">
+                <div className="browser-content bg-white h-full">
                   <img
                     src={currentScreenshot.url}
                     alt={`Captura de pantalla de Jambol mostrando ${currentScreenshot.name}`}
-                    className={`w-full h-full object-contain transition-opacity duration-500 ${
-                      isImageTransitioning ? 'opacity-0' : 'opacity-100'
-                    }`}
+                    className={`w-full h-full object-contain transition-opacity duration-500 ${isImageTransitioning ? 'opacity-0' : 'opacity-100'
+                      }`}
                     style={{ maxHeight: 'calc(100% - 48px)' }}
                   />
                 </div>
               </div>
+
+              {/* Navigation Dots */}
+              <div className="flex flex-wrap justify-center gap-2 px-4">
+                {SCREENSHOT_IMAGES.map((img, index) => (
+                  <button
+                    key={img.name}
+                    onClick={() => handleImageSelect(index)}
+                    className={`group relative flex items-center justify-center rounded-full transition-all duration-300 ${currentImageIndex === index
+                      ? 'w-8 h-2 bg-[#FFC72C]'
+                      : 'w-2 h-2 bg-gray-300 hover:bg-[#FFC72C]/50'
+                      }`}
+                    aria-label={`Ver captura de ${img.name}`}
+                  >
+                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#2D2D2D] text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                      {img.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
+
+            {/* Lightbox Modal */}
+            {isLightboxOpen && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm animate-in fade-in duration-200"
+                onClick={() => setIsLightboxOpen(false)}
+              >
+                <div className="relative max-w-7xl w-full max-h-[90vh] flex flex-col items-center">
+                  <button
+                    onClick={() => setIsLightboxOpen(false)}
+                    className="absolute -top-12 right-0 text-white hover:text-[#FFC72C] transition-colors"
+                  >
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+
+                  <img
+                    src={currentScreenshot.url}
+                    alt={`Captura de pantalla de Jambol mostrando ${currentScreenshot.name}`}
+                    className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+
+                  <p className="mt-4 text-white text-lg font-medium">
+                    {currentScreenshot.name}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           <p className="mt-10 text-center text-lg text-muted-foreground">
@@ -619,20 +684,18 @@ export const Landing = () => {
           <div className="flex items-start justify-center lg:justify-start">
             <div className="rounded-xl border-2 border-[#2D2D2D] bg-white/80 p-4 shadow-xl relative overflow-hidden max-w-sm w-full">
               <div className="absolute top-0 left-0 w-1 h-full bg-[#FFC72C]"></div>
-            <p
-                className={`text-sm italic text-foreground transition-opacity duration-300 leading-relaxed ${
-                isTransitioning ? 'opacity-0' : 'opacity-100'
-              }`}
-            >
-              {COMMUNITY_QUOTES[currentQuoteIndex].quote}
-            </p>
-            <p
-                className={`mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#FFC72C] transition-opacity duration-300 ${
-                isTransitioning ? 'opacity-0' : 'opacity-100'
-              }`}
-            >
-              — {COMMUNITY_QUOTES[currentQuoteIndex].author}
-            </p>
+              <p
+                className={`text-sm italic text-foreground transition-opacity duration-300 leading-relaxed ${isTransitioning ? 'opacity-0' : 'opacity-100'
+                  }`}
+              >
+                {COMMUNITY_QUOTES[currentQuoteIndex].quote}
+              </p>
+              <p
+                className={`mt-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#FFC72C] transition-opacity duration-300 ${isTransitioning ? 'opacity-0' : 'opacity-100'
+                  }`}
+              >
+                — {COMMUNITY_QUOTES[currentQuoteIndex].author}
+              </p>
             </div>
           </div>
         </div>
@@ -646,7 +709,7 @@ export const Landing = () => {
               Funcionalidad Premium
             </div>
           </div>
-          
+
           <h2 className="text-4xl md:text-5xl font-bold text-center text-white mb-4">
             Lleva tu liga al siguiente nivel
           </h2>
