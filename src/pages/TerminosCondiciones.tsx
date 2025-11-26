@@ -1,11 +1,21 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { APP_CONFIG } from '@/config/app';
+import { SEO } from "@/components/SEO";
 
 export default function TerminosCondiciones() {
+  useEffect(() => {
+    // document.title = 'Jambol — Términos y Condiciones'; // SEO component handles this
+  }, []);
+
   return (
     <div className="container mx-auto px-6 py-8">
+      <SEO
+        title="Términos y Condiciones - Jambol"
+        description="Lee los términos y condiciones de uso de la plataforma Jambol."
+      />
       <div className="flex items-center gap-3 mb-4">
-        <img 
+        <img
           src={APP_CONFIG.ASSETS.LOGO}
           alt="Jambol Logo"
           className="h-10 jambol-logo"
@@ -19,7 +29,7 @@ export default function TerminosCondiciones() {
 
       <h2 className="text-xl font-semibold mt-6 mb-2">1. Naturaleza del servicio</h2>
       <p className="text-sm md:text-base text-muted-foreground">
-        Jambol ™ es un juego de simulación deportiva sin dinero real. No se realizan apuestas, transacciones económicas ni se otorgan premios monetarios. Todos los puntos, cuotas y resultados son ficticios y se utilizan exclusivamente con fines recreativos y de entretenimiento entre los usuarios registrados.
+        Jambol ™ es un juego de simulación deportiva sin dinero real. No se realizan selecciones, transacciones económicas ni se otorgan premios monetarios. Todos los puntos, multiplicadores y resultados son ficticios y se utilizan exclusivamente con fines recreativos y de entretenimiento entre los usuarios registrados.
       </p>
 
       <h2 className="text-xl font-semibold mt-6 mb-2">2. Registro y cuenta de usuario</h2>
@@ -28,7 +38,7 @@ export default function TerminosCondiciones() {
       <h2 className="text-xl font-semibold mt-6 mb-2">3. Reglas de juego y funcionamiento</h2>
       <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1">
         <li>Los puntos no tienen valor económico ni pueden canjearse.</li>
-        <li>Las cuotas, resultados y clasificaciones son simulaciones generadas a partir de datos deportivos públicos o de terceros.</li>
+        <li>Los multiplicadores, resultados y clasificaciones son simulaciones generadas a partir de datos deportivos públicos o de terceros.</li>
         <li>Jambol ™ puede modificar o corregir errores evidentes en datos o cálculos sin previo aviso.</li>
         <li>El objetivo del servicio es el entretenimiento y la competencia amistosa.</li>
       </ul>
@@ -49,7 +59,7 @@ export default function TerminosCondiciones() {
       <p className="text-sm md:text-base text-muted-foreground">La gestión de datos personales se realiza conforme a nuestra Política de Privacidad. Los usuarios pueden ejercer sus derechos de acceso, rectificación, cancelación, oposición, portabilidad y limitación del tratamiento contactando a <a href="mailto:contact@jambol.co" className="underline">contact@jambol.co</a>. Consulta también nuestra <Link to="/politica-cookies" className="underline">Política de Cookies</Link> para conocer cómo gestionamos el consentimiento de cookies y tecnologías similares.</p>
 
       <h2 className="text-xl font-semibold mt-6 mb-2">7. Publicidad y monetización</h2>
-      <p className="text-sm md:text-base text-muted-foreground">Jambol ™ puede mostrar anuncios de terceros, como Google AdSense, para financiar el servicio. Estos anuncios se mostrarán conforme al consentimiento otorgado por el usuario en el banner de cookies. No tenemos control sobre el contenido de los anuncios mostrados por terceros.</p>
+      <p className="text-sm md:text-base text-muted-foreground">Jambol ™ puede mostrar anuncios de terceros para financiar el servicio. Estos anuncios se mostrarán conforme al consentimiento otorgado por el usuario en el banner de cookies. No tenemos control sobre el contenido de los anuncios mostrados por terceros.</p>
 
       <h2 className="text-xl font-semibold mt-6 mb-2">8. Propiedad intelectual</h2>
       <p className="text-sm md:text-base text-muted-foreground">El diseño, código, logotipo, textos y demás elementos del sitio web son propiedad de Jambol ™ o de sus legítimos titulares, y están protegidos por la legislación sobre derechos de autor y propiedad industrial. No se concede ninguna licencia de uso o reproducción salvo las permitidas por la ley. La marca “Jambol” se encuentra registrada o en proceso de registro ante la OEPM (España).</p>
@@ -86,5 +96,3 @@ export default function TerminosCondiciones() {
     </div>
   );
 }
-
-

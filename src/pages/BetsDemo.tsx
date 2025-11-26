@@ -23,6 +23,10 @@ export const BetsDemo = () => {
   const isMobile = useIsMobile();
 
   useEffect(() => {
+    document.title = 'Jambol — Demo';
+  }, []);
+
+  useEffect(() => {
     setIsVisible(true);
   }, []);
 

@@ -13,6 +13,10 @@ const SuperAdminOtrasLigas: React.FC = () => {
   const { consent } = useCookieConsent();
 
   React.useEffect(() => {
+    document.title = 'Jambol — Gestionar Otras Ligas';
+  }, []);
+
+  React.useEffect(() => {
     if (!consent?.analytics) {
       return;
     }
@@ -52,7 +56,7 @@ const SuperAdminOtrasLigas: React.FC = () => {
   ];
   const [enabledTeams, setEnabledTeams] = React.useState<string[]>(TEAMS);
 
-  // Hook para obtener la fecha de última actualización de cuotas (fila 3 de match_odds_cache)
+  // Hook para obtener la fecha de última actualización de multiplicadores (fila 3 de match_odds_cache)
   const { data: lastOddsUpdate, isLoading: loadingLastUpdate } = useQuery({
     queryKey: ['last-odds-update'],
     queryFn: async () => {
@@ -237,14 +241,14 @@ const SuperAdminOtrasLigas: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['last-odds-update'] });
 
       toast({
-        title: 'Cuotas actualizadas',
-        description: 'Se han actualizado las cuotas de Selecciones y Copa del Rey',
+        title: 'Multiplicadores actualizados',
+        description: 'Se han actualizado los multiplicadores de Selecciones y Copa del Rey',
       });
     } catch (error) {
       console.error('Error forcing odds:', error);
       toast({
         title: 'Error',
-        description: 'No se pudieron actualizar las cuotas',
+        description: 'No se pudieron actualizar los multiplicadores',
         variant: 'destructive',
       });
     } finally {
@@ -337,7 +341,7 @@ const SuperAdminOtrasLigas: React.FC = () => {
               <div>
                 <h3 className="text-lg font-medium">Selecciones</h3>
                 <p className="text-sm text-muted-foreground">
-                  Activa la visibilidad de partidos de Selecciones en la página de apuestas
+                  Activa la visibilidad de partidos de Selecciones en la página de partidos
                 </p>
               </div>
               <Switch
@@ -350,7 +354,7 @@ const SuperAdminOtrasLigas: React.FC = () => {
               <div>
                 <h3 className="text-lg font-medium">Copa del Rey</h3>
                 <p className="text-sm text-muted-foreground">
-                  Activa la visibilidad de partidos de Copa del Rey en la página de apuestas
+                  Activa la visibilidad de partidos de Copa del Rey en la página de partidos
                 </p>
               </div>
               <Switch
@@ -373,10 +377,10 @@ const SuperAdminOtrasLigas: React.FC = () => {
                 disabled={forcingOdds}
                 className="w-full jambol-button"
               >
-                {forcingOdds ? 'Actualizando cuotas...' : 'Forzar cuotas'}
+                {forcingOdds ? 'Actualizando multiplicadores...' : 'Forzar multiplicadores'}
               </Button>
               <p className="text-xs text-muted-foreground">
-                Actualiza las cuotas de Selecciones y Copa del Rey
+                Actualiza los multiplicadores de Selecciones y Copa del Rey
               </p>
               <div className="text-xs text-muted-foreground border-t pt-2">
                 <p className="font-medium">Última actualización:</p>

@@ -447,7 +447,7 @@ export const BlockMatchesModal: React.FC<BlockMatchesModalProps> = ({ isOpen, on
       return (
         <div className="flex items-center justify-center h-32 border border-dashed rounded-lg">
           <p className="text-sm text-muted-foreground text-center px-2">
-            No hay partidos disponibles en este momento.\nLos partidos deben tener cuotas en vivo (live betting habilitado).
+            No hay partidos disponibles en este momento.\nLos partidos deben tener multiplicadores en vivo (live betting habilitado).
           </p>
         </div>
       );
@@ -516,7 +516,7 @@ export const BlockMatchesModal: React.FC<BlockMatchesModalProps> = ({ isOpen, on
             Bloquear partidos a {blockedUser?.name || ''}
           </DialogTitle>
           <DialogDescription>
-            Selecciona la liga y el partido que deseas bloquear esta semana. Solo se muestran partidos con cuotas en vivo.
+            Selecciona la liga y el partido que deseas bloquear esta semana. Solo se muestran partidos con multiplicadores en vivo.
           </DialogDescription>
         </DialogHeader>
 

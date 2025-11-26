@@ -320,7 +320,7 @@ const ResultTotalGoalsSelector = ({ match, isFrozen, hasUserBetOnMarket, handleA
           <span className="text-lg font-bold flex items-center justify-center">
             {!matchResult ? 'Selecciona el resultado' : 
              !overUnder ? 'Selecciona Más/Menos' : 
-            currentOdds === '0.00' ? 'Cuotas no disponibles' : (
+            currentOdds === '0.00' ? 'Multiplicadores no disponibles' : (
               <>
                 {currentOdds}
                 {isPremium && oddsComparison && (() => {
@@ -347,7 +347,7 @@ const ResultTotalGoalsSelector = ({ match, isFrozen, hasUserBetOnMarket, handleA
         {isCalculatedOdds && isSuperAdmin && (
           <div className="mt-1 text-center">
             <p className="text-xs text-muted-foreground">
-              Cuota calculada
+              Multiplicador calculado
             </p>
           </div>
         )}

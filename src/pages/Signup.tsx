@@ -11,6 +11,7 @@ import { APP_CONFIG } from '@/config/app';
 import { signupSchema, type SignupInput } from '@/schemas/validation';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { useCookieConsent } from '@/hooks/useCookieConsent';
+import { SEO } from "@/components/SEO";
 
 export const Signup = () => {
   const { signUp, user, loading } = useAuth();
@@ -26,6 +27,10 @@ export const Signup = () => {
   const [success, setSuccess] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const { consent } = useCookieConsent();
+
+  useEffect(() => {
+    document.title = 'Jambol — Registro';
+  }, []);
 
   useEffect(() => {
     if (!consent?.analytics) {
@@ -70,7 +75,7 @@ export const Signup = () => {
     const hasAccents = /[áéíóúÁÉÍÓÚñÑüÜ]/.test(text);
     const hasSpaces = /\s/.test(text);
     const hasSpecialChars = /[^a-zA-Z0-9_]/.test(text);
-    
+
     if (hasAccents) {
       return 'No se permiten tildes o acentos en el nombre de usuario';
     }
@@ -86,21 +91,21 @@ export const Signup = () => {
   // Check username availability
   const checkUsernameAvailability = async (username: string) => {
     if (!username.trim()) return null;
-    
+
     setIsCheckingUsername(true);
     try {
       const { data: isAvailable, error } = await supabase.rpc('check_username_availability', {
         username_to_check: username,
       });
-      
+
       if (error) {
         return 'Error verificando disponibilidad del nombre de usuario';
       }
-      
+
       if (!isAvailable) {
         return 'Este nombre de usuario ya está en uso';
       }
-      
+
       return null; // Username is available
     } catch (err) {
       return 'Error verificando disponibilidad del nombre de usuario';
@@ -136,9 +141,9 @@ export const Signup = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <img 
-            src={APP_CONFIG.ASSETS.LOGO} 
-            alt="Jambol Logo" 
+          <img
+            src={APP_CONFIG.ASSETS.LOGO}
+            alt="Jambol Logo"
             className="h-20 jambol-logo-loading"
           />
           <span className="text-lg font-semibold jambol-dark">Cargando...</span>
@@ -196,6 +201,10 @@ export const Signup = () => {
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-6">
+        <SEO
+          title="Registro Exitoso - Jambol"
+          description="Tu cuenta en Jambol ha sido creada exitosamente. Revisa tu correo para confirmar."
+        />
         <Card className="w-full max-w-md shadow-xl border-border/50">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl text-primary">¡Registro Exitoso!</CardTitle>
@@ -223,9 +232,9 @@ export const Signup = () => {
           <div className="w-full max-w-md">
             <div className="text-center mb-8">
               <Link to="/" className="flex flex-col items-center gap-4">
-                <img 
-                  src={APP_CONFIG.ASSETS.LOGO} 
-                  alt="Jambol Logo" 
+                <img
+                  src={APP_CONFIG.ASSETS.LOGO}
+                  alt="Jambol Logo"
                   className="h-16 jambol-logo"
                 />
                 <span className="text-3xl font-bold jambol-dark">
@@ -233,12 +242,12 @@ export const Signup = () => {
                 </span>
               </Link>
             </div>
-            
+
             <Card className="shadow-xl border-border/50">
               <CardHeader className="text-center">
                 <CardTitle className="text-2xl">Crear Cuenta</CardTitle>
                 <CardDescription>
-                  Regístrate para empezar a apostar
+                  Regístrate para empezar a participar
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -248,7 +257,7 @@ export const Signup = () => {
                       <AlertDescription>{error}</AlertDescription>
                     </Alert>
                   )}
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="username">Nombre de Usuario</Label>
                     <Input
@@ -274,7 +283,7 @@ export const Signup = () => {
                       </p>
                     )}
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="email">Correo Electrónico</Label>
                     <Input
@@ -286,7 +295,7 @@ export const Signup = () => {
                       placeholder="tu@ejemplo.com"
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="password">Contraseña</Label>
                     <Input
@@ -299,7 +308,7 @@ export const Signup = () => {
                       minLength={6}
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
                     <Input
@@ -320,7 +329,7 @@ export const Signup = () => {
                     {isLoading ? 'Registrando...' : 'Crear Cuenta'}
                   </Button>
                 </form>
-                
+
                 <div className="mt-6 text-center">
                   <p className="text-sm text-muted-foreground">
                     ¿Ya tienes cuenta?{' '}
@@ -336,9 +345,9 @@ export const Signup = () => {
 
         {/* Right side - Header Logo (Desktop only) */}
         <div className="hidden lg:flex lg:flex-1 lg:relative lg:bg-gradient-to-br lg:from-primary/10 lg:to-accent/10">
-          <img 
-            src={APP_CONFIG.ASSETS.HEADER_LOGO} 
-            alt="Jambol Header" 
+          <img
+            src={APP_CONFIG.ASSETS.HEADER_LOGO}
+            alt="Jambol Header"
             className="w-full h-full object-cover object-center"
           />
         </div>

@@ -511,7 +511,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
         const payout = parseFloat(bet.payout) || 0;
         if (payout > biggestWin) {
           biggestWin = payout;
-          biggestWinMatch = 'Apuesta Combinada';
+          biggestWinMatch = 'Boleto Combinado';
           biggestWinResult = '';
         }
       });
@@ -527,7 +527,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
               biggestWinResult = matchResults[bet.fixture_id];
             }
           } else {
-            biggestWinMatch = 'Apuesta Combinada';
+            biggestWinMatch = 'Boleto Combinado';
             biggestWinResult = '';
           }
         }
@@ -649,14 +649,14 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                   <CardContent className="p-4 text-center">
                     <BarChart3 className="w-6 h-6 mx-auto mb-2 text-blue-500" />
                     <div className="text-2xl font-bold">{stats.totalBets}</div>
-                    <div className="text-sm text-muted-foreground">Total Apuestas</div>
+                    <div className="text-sm text-muted-foreground">Total</div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4 text-center">
                     <DollarSign className="w-6 h-6 mx-auto mb-2 text-green-500" />
                     <div className="text-2xl font-bold">{stats.totalStake.toFixed(0)}</div>
-                    <div className="text-sm text-muted-foreground">Total Apostado</div>
+                    <div className="text-sm text-muted-foreground">Total de puntos invertidos</div>
                   </CardContent>
                 </Card>
                 <Card>
@@ -670,30 +670,30 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                   <CardContent className="p-4 text-center">
                     <Target className="w-6 h-6 mx-auto mb-2 text-purple-500" />
                     <div className="text-2xl font-bold">{stats.successRate.toFixed(1)}%</div>
-                    <div className="text-sm text-muted-foreground">% Acierto de Apuestas</div>
+                    <div className="text-sm text-muted-foreground">% Acierto</div>
                   </CardContent>
                 </Card>
               </div>
 
-              {/* Filtros de Tipo de Apuesta */}
+              {/* Filtros de Tipo de Boleto */}
               <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 mb-6">
                 <Button
                   className={`jambol-button px-4 sm:px-6 text-sm sm:text-base ${betTypeFilter === 'all' ? 'bg-[#FFC72C] text-[#2D2D2D]' : ''}`}
                   onClick={() => handleFilterChange('all')}
                 >
-                  Todas las Apuestas
+                  Todas
                 </Button>
                 <Button
                   className={`jambol-button px-4 sm:px-6 text-sm sm:text-base ${betTypeFilter === 'single' ? 'bg-[#FFC72C] text-[#2D2D2D]' : ''}`}
                   onClick={() => handleFilterChange('single')}
                 >
-                  Apuestas Simples
+                  Simples
                 </Button>
                 <Button
                   className={`jambol-button px-4 sm:px-6 text-sm sm:text-base ${betTypeFilter === 'combo' ? 'bg-[#FFC72C] text-[#2D2D2D]' : ''}`}
                   onClick={() => handleFilterChange('combo')}
                 >
-                  Apuestas Combinadas
+                  Combinadas
                 </Button>
               </div>
 
@@ -722,7 +722,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                       <CardContent>
                         <div className="text-2xl font-bold mb-1">{stats.favoriteMarket}</div>
                         <div className="text-sm text-muted-foreground">
-                          {stats.marketStats.find(m => m.market === stats.favoriteMarket)?.bets || 0} apuestas
+                          {stats.marketStats.find(m => m.market === stats.favoriteMarket)?.bets || 0} boletos
                         </div>
                       </CardContent>
                     </Card>
@@ -752,7 +752,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                       <CardContent>
                         <div className="text-2xl font-bold mb-1">{stats.favoriteLeague}</div>
                         <div className="text-sm text-muted-foreground">
-                          {stats.favoriteLeagueBets} apuestas
+                          {stats.favoriteLeagueBets} boletos
                         </div>
                       </CardContent>
                     </Card>
@@ -767,7 +767,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                       <CardContent>
                         <div className="text-2xl font-bold mb-1">{stats.favoriteTeam}</div>
                         <div className="text-sm text-muted-foreground">
-                          {stats.teamStats.find(t => t.team === stats.favoriteTeam)?.bets || 0} apuestas
+                          {stats.teamStats.find(t => t.team === stats.favoriteTeam)?.bets || 0} boletos
                         </div>
                       </CardContent>
                     </Card>
@@ -807,12 +807,12 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                       <CardHeader className="pb-3">
                         <CardTitle className="text-lg flex items-center gap-2">
                           <BarChart3 className="w-5 h-5 text-cyan-500" />
-                          Media de Apuestas en la Combinada
+                          Media de Boletos en la Combinada
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="text-2xl font-bold mb-1">{stats.averageSelectionsPerCombo.toFixed(1)}</div>
-                        <div className="text-sm text-muted-foreground">Apuestas por combinada</div>
+                        <div className="text-sm text-muted-foreground">Boletos por combinada</div>
                       </CardContent>
                     </Card>
 
@@ -825,12 +825,12 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                       </CardHeader>
                       <CardContent>
                         <div className="text-2xl font-bold mb-1">{stats.biggestComboSelections}</div>
-                        <div className="text-sm text-muted-foreground">Apuestas simples</div>
+                        <div className="text-sm text-muted-foreground">Boletos simples</div>
                       </CardContent>
                     </Card>
                   </>
                 ) : (
-                  // Tarjetas para simples y todas las apuestas
+                  // Tarjetas para simples y todos los boletos
                   <>
                     <Card>
                       <CardHeader className="pb-3">
@@ -842,7 +842,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                       <CardContent>
                         <div className="text-2xl font-bold mb-1">{stats.favoriteMarket}</div>
                         <div className="text-sm text-muted-foreground">
-                          {stats.marketStats.find(m => m.market === stats.favoriteMarket)?.bets || 0} apuestas
+                          {stats.marketStats.find(m => m.market === stats.favoriteMarket)?.bets || 0} boletos
                         </div>
                       </CardContent>
                     </Card>
@@ -872,7 +872,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                       <CardContent>
                         <div className="text-2xl font-bold mb-1">{stats.favoriteLeague}</div>
                         <div className="text-sm text-muted-foreground">
-                          {stats.favoriteLeagueBets} apuestas
+                          {stats.favoriteLeagueBets} boletos
                         </div>
                       </CardContent>
                     </Card>
@@ -887,7 +887,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                       <CardContent>
                         <div className="text-2xl font-bold mb-1">{stats.favoriteTeam}</div>
                         <div className="text-sm text-muted-foreground">
-                          {stats.teamStats.find(t => t.team === stats.favoriteTeam)?.bets || 0} apuestas
+                          {stats.teamStats.find(t => t.team === stats.favoriteTeam)?.bets || 0} boletos
                         </div>
                       </CardContent>
                     </Card>
@@ -938,7 +938,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                         <div className="flex items-center justify-between">
                           <span className="font-medium">{market.market}</span>
                           <div className="flex items-center gap-2">
-                            <Badge className="bg-white border-[#FFC72C] text-[#2D2D2D] border-2 cursor-default hover:bg-white hover:border-[#FFC72C] hover:text-[#2D2D2D]">{market.bets} apuestas</Badge>
+                            <Badge className="bg-white border-[#FFC72C] text-[#2D2D2D] border-2 cursor-default hover:bg-white hover:border-[#FFC72C] hover:text-[#2D2D2D]">{market.bets} boletos</Badge>
                             <Badge className="bg-white border-[#FFC72C] text-[#2D2D2D] border-2 cursor-default hover:bg-white hover:border-[#FFC72C] hover:text-[#2D2D2D]">
                               {market.successRate.toFixed(1)}%
                             </Badge>
@@ -963,7 +963,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                         <div className="flex items-center justify-between">
                           <span className="font-medium">{team.team}</span>
                           <div className="flex items-center gap-2">
-                            <Badge className="bg-white border-[#FFC72C] text-[#2D2D2D] border-2 cursor-default hover:bg-white hover:border-[#FFC72C] hover:text-[#2D2D2D]">{team.bets} apuestas</Badge>
+                            <Badge className="bg-white border-[#FFC72C] text-[#2D2D2D] border-2 cursor-default hover:bg-white hover:border-[#FFC72C] hover:text-[#2D2D2D]">{team.bets} boletos</Badge>
                             <Badge className="bg-white border-[#FFC72C] text-[#2D2D2D] border-2 cursor-default hover:bg-white hover:border-[#FFC72C] hover:text-[#2D2D2D]">
                               {team.successRate.toFixed(1)}%
                             </Badge>
@@ -987,7 +987,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                       <div key={week.week} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                         <div>
                           <div className="font-medium">{week.week}</div>
-                          <div className="text-sm text-muted-foreground">{week.bets} apuestas</div>
+                          <div className="text-sm text-muted-foreground">{week.bets} boletos</div>
                         </div>
                         <div className={`text-lg font-bold ${week.profit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                           {week.profit >= 0 ? '+' : ''}{week.profit.toFixed(0)} pts

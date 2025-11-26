@@ -141,7 +141,7 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll, forceOpen = fals
     if (selectedBets.length > 1 && hasDuplicateFixtures) {
       toast({
         title: 'Error',
-        description: 'No se pueden incluir múltiples selecciones del mismo partido en una apuesta combinada.',
+        description: 'No se pueden incluir múltiples selecciones del mismo partido en un boleto combinado.',
         variant: 'destructive',
       });
       return;
@@ -155,7 +155,7 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll, forceOpen = fals
     });
     if (isAnyFrozen) {
       toast({
-        title: 'Apuestas cerradas',
+        title: 'Selecciones cerradas',
         description: `Al menos una selección está cerrada (${cutoffMinutes} min antes del inicio).`,
         variant: 'destructive',
       });
@@ -169,7 +169,7 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll, forceOpen = fals
       if (!user) {
         toast({
           title: 'Error',
-          description: 'Debes iniciar sesión para realizar apuestas.',
+          description: 'Debes iniciar sesión para realizar selecciones.',
           variant: 'destructive',
         });
         return;
@@ -193,17 +193,17 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll, forceOpen = fals
         return;
       }
 
-      // Validación: mínimo por apuesta según la liga
+      // Validación: mínimo por boleto según la liga
       if (stakeAmount < minBet) {
         toast({
           title: 'Error',
-          description: `La apuesta mínima en esta liga es de ${minBet}.`,
+          description: `El boleto mínimo en esta liga es de ${minBet}.`,
           variant: 'destructive',
         });
         return;
       }  
 
-      // Nueva validación: maximo por apuesta según la liga
+      // Nueva validación: máximo por boleto según la liga
       if (profile.league_id) {
         const { data: maxBetLeague, error: maxBetLeagueError } = await supabase
           .from('leagues')
@@ -219,7 +219,7 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll, forceOpen = fals
           if (stakeAmount > maxBet) {
             toast({
               title: 'Error',
-              description: `La apuesta máxima en esta liga es de ${maxBet}.`,
+              description: `El boleto máximo en esta liga es de ${maxBet}.`,
               variant: 'destructive',
             });
             return;
@@ -277,8 +277,8 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll, forceOpen = fals
       setWeeklyBudget(profile.weekly_budget - stakeAmount);
 
       toast({
-        title: '¡Apuesta realizada!',
-        description: `Apuesta ${selectedBets.length > 1 ? 'combinada' : ''} de ${stake} pts realizada con éxito.`,
+        title: '¡Boleto realizado!',
+        description: `Boleto ${selectedBets.length > 1 ? 'combinado' : ''} de ${stake} pts realizado con éxito.`,
       });
 
       // Clear the bet slip and close sheet
@@ -290,7 +290,7 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll, forceOpen = fals
       console.error('Error placing bet:', error);
       toast({
         title: 'Error',
-        description: 'No se pudo realizar la apuesta. Inténtalo de nuevo.',
+        description: 'No se pudo realizar el boleto. Inténtalo de nuevo.',
         variant: 'destructive',
       });
     } finally {
@@ -345,7 +345,7 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll, forceOpen = fals
                   </span>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  Cuota: {totalOdds.toFixed(2)}
+                  Multiplicador: {totalOdds.toFixed(2)}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -363,7 +363,7 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll, forceOpen = fals
 
       {/* Sheet Content */}
       <SheetContent side="bottom" className="max-h-[85vh] flex flex-col p-0">
-        <SheetTitle className="sr-only">Boleto de Apuestas</SheetTitle>
+        <SheetTitle className="sr-only">Boleto</SheetTitle>
         {/* Overlay to block interactions when forceOpen is active */}
         {forceOpen && (
           <div 
@@ -445,7 +445,7 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll, forceOpen = fals
 
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span>Cuota Total:</span>
+                  <span>Multiplicador</span>
                   <span className="font-semibold">{totalOdds.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
@@ -471,7 +471,7 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll, forceOpen = fals
                 selectedBets.some(bet => bet.kickoff ? (new Date() >= new Date(new Date(bet.kickoff).getTime() - cutoffMinutes * 60 * 1000)) : false)
               }
             >
-              {isSubmitting ? 'Procesando...' : 'Realizar Apuestas'}
+              {isSubmitting ? 'Procesando...' : 'Realizar Boletos'}
             </Button>
             <Button
               variant="outline"

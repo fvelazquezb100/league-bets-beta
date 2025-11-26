@@ -22,6 +22,10 @@ export const BetsDemoMovil = () => {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   useEffect(() => {
+    document.title = 'Jambol — Demo';
+  }, []);
+
+  useEffect(() => {
     setIsVisible(true);
   }, []);
 

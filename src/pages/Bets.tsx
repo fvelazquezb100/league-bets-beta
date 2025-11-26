@@ -35,6 +35,76 @@ const Bets = () => {
   const { consent } = useCookieConsent();
 
   useEffect(() => {
+    const pageTitle = 'Jambol — Partidos';
+    const description = 'Explora los mejores partidos disponibles en Jambol. Participa en partidos de La Liga, Champions League, Europa League y más ligas.';
+    const keywords = 'jambol, partidos, ligas, la liga, champions league, europa league, liga mx, selecciones, copa del rey, participar';
+
+    document.title = pageTitle;
+
+    const metaDefinitions = [
+      {
+        selector: 'meta[name="description"]',
+        attributes: { name: 'description' },
+        content: description,
+      },
+      {
+        selector: 'meta[name="keywords"]',
+        attributes: { name: 'keywords' },
+        content: keywords,
+      },
+      {
+        selector: 'meta[property="og:title"]',
+        attributes: { property: 'og:title' },
+        content: pageTitle,
+      },
+      {
+        selector: 'meta[property="og:description"]',
+        attributes: { property: 'og:description' },
+        content: description,
+      },
+      {
+        selector: 'meta[name="twitter:title"]',
+        attributes: { name: 'twitter:title' },
+        content: pageTitle,
+      },
+      {
+        selector: 'meta[name="twitter:description"]',
+        attributes: { name: 'twitter:description' },
+        content: description,
+      },
+    ];
+
+    const managedMeta = metaDefinitions.map(({ selector, attributes, content }) => {
+      let element = document.querySelector(selector) as HTMLMetaElement | null;
+      let created = false;
+
+      if (!element) {
+        element = document.createElement('meta');
+        Object.entries(attributes).forEach(([attribute, value]) => {
+          element?.setAttribute(attribute, value);
+        });
+        document.head.appendChild(element);
+        created = true;
+      }
+
+      const previousContent = element.getAttribute('content') ?? undefined;
+      element.setAttribute('content', content);
+
+      return { element, previousContent, created };
+    });
+
+    return () => {
+      managedMeta.forEach(({ element, previousContent, created }) => {
+        if (created && element.parentNode) {
+          element.parentNode.removeChild(element);
+        } else if (!created && typeof previousContent === 'string') {
+          element.setAttribute('content', previousContent);
+        }
+      });
+    };
+  }, []);
+
+  useEffect(() => {
     if (!consent?.analytics) {
       return;
     }
@@ -248,8 +318,8 @@ const Bets = () => {
       // For all other leagues, only allow betting until Monday 23:59
       if (matchDate > nextMondayEndOfDay) {
         toast({
-          title: 'Apuesta no disponible',
-          description: 'Solo se pueden apostar partidos de la semana actual. Las apuestas para este partido no están disponibles aún.',
+          title: 'Partido no disponible',
+          description: 'Solo se pueden participar en partidos de la semana actual. Las opciones para este partido no están disponibles aún.',
           variant: 'destructive',
         });
         return;
@@ -281,7 +351,7 @@ const Bets = () => {
     if (selectedBets.some(b => b.fixtureId === bet.fixtureId)) {
       toast({
         title: 'Error',
-        description: 'Solo puedes añadir una selección por partido en una apuesta combinada.',
+        description: 'Solo puedes añadir una selección por partido en un boleto combinado.',
         variant: 'destructive',
       });
       return;
@@ -353,7 +423,7 @@ const Bets = () => {
         }
         // For combo bets with selections, use the market from bet_selections
         const selection = bet.bet_selections?.[0];
-        return selection ? selection.market : 'Apuesta';
+        return selection ? selection.market : 'Boleto';
       }
     }).join(', ');
   };
@@ -490,7 +560,7 @@ const Bets = () => {
                     <div className="flex items-center gap-2">
                       {getBetsForFixture(match.fixture.id).length > 0 && (
                         <Badge variant="secondary" className="ml-2 bg-white text-black border-2 border-[#FFC72C] hover:bg-white focus:bg-white focus:ring-0 focus:ring-offset-0 cursor-default pointer-events-none">
-                          {getBetsForFixture(match.fixture.id).length} apuesta{getBetsForFixture(match.fixture.id).length > 1 ? 's' : ''}
+                          {getBetsForFixture(match.fixture.id).length} boleto{getBetsForFixture(match.fixture.id).length > 1 ? 's' : ''}
                         </Badge>
                       )}
                       <svg
@@ -507,7 +577,7 @@ const Bets = () => {
                   </div>
                   {getBetPreview(match.fixture.id) && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      Tus apuestas: {getBetPreview(match.fixture.id)}
+                      Tus boletos: {getBetPreview(match.fixture.id)}
                     </p>
                   )}
                 </div>
@@ -522,7 +592,7 @@ const Bets = () => {
                       return (
                         <div className="text-center py-8 text-muted-foreground">
                           <p className="text-lg font-medium mb-2">Próximos encuentros</p>
-                          <p>Las apuestas para este partido estarán disponibles próximamente.</p>
+                          <p>Las opciones para este partido estarán disponibles próximamente.</p>
                         </div>
                       );
                     }
@@ -532,7 +602,7 @@ const Bets = () => {
                       return (
                         <div className="text-center py-8 text-muted-foreground">
                           <p className="text-lg font-medium mb-2 text-red-500">Te han bloqueado este partido</p>
-                          <p>No puedes apostar en este partido porque otro usuario de tu liga lo ha bloqueado.</p>
+                          <p>No puedes hacer selecciones en este partido porque otro usuario de tu liga lo ha bloqueado.</p>
                         </div>
                       );
                     }
@@ -542,7 +612,7 @@ const Bets = () => {
                       return (
                         <div className="text-center py-8 text-muted-foreground">
                           <p className="text-lg font-medium mb-2">Próximos encuentros</p>
-                          <p>Las apuestas para este partido estarán disponibles próximamente.</p>
+                          <p>Las opciones para este partido estarán disponibles próximamente.</p>
                         </div>
                       );
                     }
@@ -552,7 +622,7 @@ const Bets = () => {
                     if (!match.bookmakers || match.bookmakers.length === 0) {
                       return (
                         <div className="text-center py-8 text-muted-foreground">
-                          <p>No hay mercados de apuestas disponibles para este partido.</p>
+                          <p>No hay opciones disponibles para este partido.</p>
                         </div>
                       );
                     }
@@ -595,7 +665,7 @@ const Bets = () => {
                         
                         {getBetTypesSorted().every(betType => !findMarket(match, betType.apiName)) && (
                           <div className="text-center py-8 text-muted-foreground">
-                            <p>No hay mercados de apuestas disponibles para este partido.</p>
+                            <p>No hay opciones disponibles para este partido.</p>
                           </div>
                         )}
                       </>
@@ -638,7 +708,7 @@ const Bets = () => {
     if (leagueMatches.length === 0) {
       return (
         <div className="flex-grow text-center p-8 bg-card rounded-lg shadow">
-          <p className="text-muted-foreground">No hay partidos con cuotas disponibles en esta liga en este momento.</p>
+          <p className="text-muted-foreground">No hay partidos disponibles en esta liga en este momento.</p>
         </div>
       );
     }
@@ -647,7 +717,7 @@ const Bets = () => {
       <div className="flex-grow space-y-8">
         {/* Main section: matches up to next Monday 23:59 */}
         <div>
-          <h2 className="text-2xl font-semibold mb-4 text-foreground">Cuotas en Vivo</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-foreground">Partidos disponibles</h2>
           {renderMatchesSection(liveBettingMatches, 'live-betting', true)}
         </div>
 
@@ -821,7 +891,7 @@ const Bets = () => {
 
   return (
     <div className="w-full px-2 sm:container sm:mx-auto sm:p-4">
-      <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Apuestas</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Ligas</h1>
       
       {/* Desktop Layout */}
       {!isMobile ? (

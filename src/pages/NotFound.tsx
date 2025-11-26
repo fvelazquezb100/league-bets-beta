@@ -8,6 +8,7 @@ const NotFound = () => {
   const location = useLocation();
 
   useEffect(() => {
+    document.title = 'Jambol — Página no encontrada';
     console.error(
       "404 Error: User attempted to access non-existent route:",
       location.pathname
@@ -38,7 +39,7 @@ const NotFound = () => {
           </Link>
         </div>
         <p className="mt-8 text-xs text-muted-foreground max-w-2xl mx-auto">
-          Jambol ™ es un juego de simulación. No se realizan apuestas con dinero real ni se ofrecen premios económicos. Todos los puntos y resultados son ficticios y se utilizan solo con fines recreativos.
+          Jambol ™ es un juego de simulación. No se realizan selecciones con dinero real ni se ofrecen premios económicos. Todos los puntos y resultados son ficticios y se utilizan solo con fines recreativos.
         </p>
       </div>
     </div>

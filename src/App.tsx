@@ -41,137 +41,135 @@ import { LeagueSetup } from "./pages/LeagueSetup";
 import { Settings } from "./pages/Settings";
 import { SmartRedirect } from "./components/SmartRedirect";
 import AnalyticsLoader from "./components/AnalyticsLoader";
+import { ScrollToTop } from "./components/ScrollToTop";
 const queryClient = new QueryClient();
+
+import { HelmetProvider } from 'react-helmet-async';
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <AnalyticsLoader />
-        <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/demo-language" element={<DemoLanguage />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/update-password" element={<UpdatePassword />} />
-            <Route path="/home-demo" element={<HomeDemo />} />
-            <Route path="/home-demo-movil" element={<HomeDemoMovil />} />
-            <Route path="/bets-demo" element={<BetsDemo />} />
-            <Route path="/bets-demo-movil" element={<BetsDemoMovil />} />
-            <Route path="/bet-history-demo" element={<BetHistoryDemo />} />
-            <Route path="/bet-history-demo-movil" element={<BetHistoryDemoMovil />} />
-            <Route path="/clasificacion-demo" element={<ClasificacionDemo />} />
-            <Route path="/test-demo" element={<TestDemo />} />
-            <Route path="/politica-cookies" element={<PoliticaCookies />} />
-            <Route path="/terminos" element={<TerminosCondiciones />} />
-            <Route path="/politica-privacidad" element={<PoliticaPrivacidad />} />
-            <Route path="/aviso-legal" element={<AvisoLegal />} />
-            <Route path="/faq" element={<FAQ />} />
-            <Route path="/reglas" element={
-              <ProtectedRoute>
-                <SmartRedirect>
+      <HelmetProvider>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <ScrollToTop />
+          <AnalyticsLoader />
+          <AuthProvider>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/demo-language" element={<DemoLanguage />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/update-password" element={<UpdatePassword />} />
+              <Route path="/home-demo" element={<HomeDemo />} />
+              <Route path="/home-demo-movil" element={<HomeDemoMovil />} />
+              <Route path="/bets-demo" element={<BetsDemo />} />
+              <Route path="/bets-demo-movil" element={<BetsDemoMovil />} />
+              <Route path="/bet-history-demo" element={<BetHistoryDemo />} />
+              <Route path="/bet-history-demo-movil" element={<BetHistoryDemoMovil />} />
+              <Route path="/clasificacion-demo" element={<ClasificacionDemo />} />
+              <Route path="/test-demo" element={<TestDemo />} />
+              <Route path="/politica-cookies" element={<PoliticaCookies />} />
+              <Route path="/terminos" element={<TerminosCondiciones />} />
+              <Route path="/politica-privacidad" element={<PoliticaPrivacidad />} />
+              <Route path="/aviso-legal" element={<AvisoLegal />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/reglas" element={<Reglas />} />
+              <Route path="/league-setup" element={
+                <ProtectedRoute>
                   <MainLayout>
-                    <Reglas />
+                    <LeagueSetup />
                   </MainLayout>
-                </SmartRedirect>
-              </ProtectedRoute>
-            } />
-            <Route path="/league-setup" element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <LeagueSetup />
-                </MainLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/home" element={
-              <ProtectedRoute>
-                <SmartRedirect>
-                  <MainLayout>
-                    <Home />
-                  </MainLayout>
-                </SmartRedirect>
-              </ProtectedRoute>
-            } />
-            <Route path="/clasificacion" element={
-              <ProtectedRoute>
-                <SmartRedirect>
-                  <MainLayout>
-                    <Clasificacion />
-                  </MainLayout>
-                </SmartRedirect>
-              </ProtectedRoute>
-            } />
-            <Route path="/bets" element={
-              <ProtectedRoute>
-                <SmartRedirect>
-                  <MainLayout>
-                    <Bets />
-                  </MainLayout>
-                </SmartRedirect>
-              </ProtectedRoute>
-            } />
-            <Route path="/bet-history" element={
-              <ProtectedRoute>
-                <SmartRedirect>
-                  <MainLayout>
-                    <BetHistory />
-                  </MainLayout>
-                </SmartRedirect>
-              </ProtectedRoute>
-            } />
-            <Route path="/settings" element={
-              <ProtectedRoute>
-                <SmartRedirect>
-                  <MainLayout>
-                    <Settings />
-                  </MainLayout>
-                </SmartRedirect>
-              </ProtectedRoute>
-            } />
-            <Route path="/admin-liga" element={
-              <AdminRoute>
-                <SmartRedirect>
-                  <MainLayout>
-                    <AdminLiga />
-                  </MainLayout>
-                </SmartRedirect>
-              </AdminRoute>
-            } />
-            <Route path="/league-match-availability" element={
-              <AdminRoute>
-                <SmartRedirect>
-                  <MainLayout>
-                    <LeagueMatchAvailabilityControl />
-                  </MainLayout>
-                </SmartRedirect>
-              </AdminRoute>
-            } />
-            <Route path="/superadmin" element={
-              <SuperAdminRoute>
-                <SmartRedirect>
-                  <MainLayout>
-                    <SuperAdmin />
-                  </MainLayout>
-                </SmartRedirect>
-              </SuperAdminRoute>
-            } />
-            <Route path="/superadmin-otras-ligas" element={
-              <SuperAdminRoute>
-                <SmartRedirect>
-                  <MainLayout>
-                    <SuperAdminOtrasLigas />
-                  </MainLayout>
-                </SmartRedirect>
-              </SuperAdminRoute>
-            } />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
+                </ProtectedRoute>
+              } />
+              <Route path="/home" element={
+                <ProtectedRoute>
+                  <SmartRedirect>
+                    <MainLayout>
+                      <Home />
+                    </MainLayout>
+                  </SmartRedirect>
+                </ProtectedRoute>
+              } />
+              <Route path="/clasificacion" element={
+                <ProtectedRoute>
+                  <SmartRedirect>
+                    <MainLayout>
+                      <Clasificacion />
+                    </MainLayout>
+                  </SmartRedirect>
+                </ProtectedRoute>
+              } />
+              <Route path="/bets" element={
+                <ProtectedRoute>
+                  <SmartRedirect>
+                    <MainLayout>
+                      <Bets />
+                    </MainLayout>
+                  </SmartRedirect>
+                </ProtectedRoute>
+              } />
+              <Route path="/bet-history" element={
+                <ProtectedRoute>
+                  <SmartRedirect>
+                    <MainLayout>
+                      <BetHistory />
+                    </MainLayout>
+                  </SmartRedirect>
+                </ProtectedRoute>
+              } />
+              <Route path="/settings" element={
+                <ProtectedRoute>
+                  <SmartRedirect>
+                    <MainLayout>
+                      <Settings />
+                    </MainLayout>
+                  </SmartRedirect>
+                </ProtectedRoute>
+              } />
+              <Route path="/admin-liga" element={
+                <AdminRoute>
+                  <SmartRedirect>
+                    <MainLayout>
+                      <AdminLiga />
+                    </MainLayout>
+                  </SmartRedirect>
+                </AdminRoute>
+              } />
+              <Route path="/league-match-availability" element={
+                <AdminRoute>
+                  <SmartRedirect>
+                    <MainLayout>
+                      <LeagueMatchAvailabilityControl />
+                    </MainLayout>
+                  </SmartRedirect>
+                </AdminRoute>
+              } />
+              <Route path="/superadmin" element={
+                <SuperAdminRoute>
+                  <SmartRedirect>
+                    <MainLayout>
+                      <SuperAdmin />
+                    </MainLayout>
+                  </SmartRedirect>
+                </SuperAdminRoute>
+              } />
+              <Route path="/superadmin-otras-ligas" element={
+                <SuperAdminRoute>
+                  <SmartRedirect>
+                    <MainLayout>
+                      <SuperAdminOtrasLigas />
+                    </MainLayout>
+                  </SmartRedirect>
+                </SuperAdminRoute>
+              } />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </HelmetProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

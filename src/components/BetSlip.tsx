@@ -134,7 +134,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
     if (selectedBets.length > 1 && hasDuplicateFixtures) {
       toast({
         title: 'Error',
-        description: 'No se pueden incluir múltiples selecciones del mismo partido en una apuesta combinada.',
+        description: 'No se pueden incluir múltiples selecciones del mismo partido en un boleto combinado.',
         variant: 'destructive',
       });
       return;
@@ -154,7 +154,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
     
     if (isAnyFrozen) {
       toast({
-        title: 'Apuestas cerradas',
+        title: 'Selecciones cerradas',
         description: `Al menos una selección está cerrada (${cutoffMinutes} min antes del inicio).`,
         variant: 'destructive',
       });
@@ -168,7 +168,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
       if (!user) {
         toast({
           title: 'Error',
-          description: 'Debes iniciar sesión para realizar apuestas.',
+          description: 'Debes iniciar sesión para realizar selecciones.',
           variant: 'destructive',
         });
         return;
@@ -192,17 +192,17 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
         return;
       }
 
-      // Validación: mínimo por apuesta según la liga
+      // Validación: mínimo por boleto según la liga
       if (stakeAmount < minBet) {
         toast({
           title: 'Error',
-          description: `La apuesta mínima en esta liga es de ${minBet}.`,
+          description: `El boleto mínimo en esta liga es de ${minBet}.`,
           variant: 'destructive',
         });
         return;
       }  
 
-  // Nueva validación: maximo por apuesta según la liga
+  // Nueva validación: máximo por boleto según la liga
       if (profile.league_id) {
         const { data: maxBetLeague, error: maxBetLeagueError } = await supabase
           .from('leagues')
@@ -218,7 +218,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
           if (stakeAmount > maxBet) {
             toast({
               title: 'Error',
-              description: `La apuesta máxima en esta liga es de ${maxBet}.`,
+              description: `El boleto máximo en esta liga es de ${maxBet}.`,
               variant: 'destructive',
             });
             return;
@@ -282,8 +282,8 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
       queryClient.invalidateQueries({ queryKey: ['user-bet-history'] });
 
       toast({
-        title: '¡Apuesta realizada!',
-        description: `Apuesta ${selectedBets.length > 1 ? 'combinada' : ''} de ${stake} pts realizada con éxito.`,
+        title: '¡Boleto realizado!',
+        description: `Boleto ${selectedBets.length > 1 ? 'combinado' : ''} de ${stake} pts realizado con éxito.`,
       });
 
       // Clear the bet slip
@@ -294,7 +294,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
       console.error('Error placing bet:', error);
       toast({
         title: 'Error',
-        description: 'No se pudo realizar la apuesta. Inténtalo de nuevo.',
+        description: 'No se pudo realizar el boleto. Inténtalo de nuevo.',
         variant: 'destructive',
       });
     } finally {
@@ -305,12 +305,12 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
   return (
     <Card className="h-fit">
       <CardHeader>
-        <CardTitle className="text-xl">Boleto de Apuestas</CardTitle>
+        <CardTitle className="text-xl">Boleto</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {selectedBets.length === 0 ? (
           <p className="text-muted-foreground text-center py-8">
-            Haz clic en una cuota para añadirla a tu boleto.
+            Haz clic en un multiplicador para añadirlo a tu boleto.
           </p>
         ) : (
           <>
@@ -386,7 +386,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
 
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span>Cuota Total:</span>
+                  <span>Multiplicador</span>
                   <span className="font-semibold">{totalOdds.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
@@ -408,7 +408,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
                   }
                   className="w-full"
                 >
-                  {isSubmitting ? 'Procesando...' : 'Realizar Apuestas'}
+                  {isSubmitting ? 'Procesando...' : 'Realizar Boletos'}
                 </Button>
                 <Button
                   variant="outline"

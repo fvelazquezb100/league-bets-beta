@@ -9,7 +9,7 @@ import { NewsBoard } from '@/components/NewsBoard';
 import { useMatchOdds, type MatchData } from '@/hooks/useMatchOdds';
 import { useUserBetHistory } from '@/hooks/useUserBets';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { useCookieConsent } from '@/hooks/useCookieConsent';
+
 
 
 // Types imported from hooks - no need to redefine
@@ -26,17 +26,17 @@ const findMarket = (match: MatchData, marketName: string) => {
 export const Home = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { consent } = useCookieConsent();
-  
+
+
   // React Query hooks for data fetching
   const { data: userProfile } = useUserProfile(user?.id);
   const { data: allMatches = [], isLoading: matchesLoading } = useMatchOdds();
   const { data: allBets = [], isLoading: betsLoading } = useUserBetHistory(user?.id);
-  
+
   // Derived data
   const upcoming = allMatches.slice(0, 2); // Top 2 matches
   const recentBets = allBets.slice(0, 3); // Latest 3 bets
-  
+
   // Loading states
   const loadingUpcoming = matchesLoading;
   const loadingActivity = betsLoading;
@@ -45,37 +45,76 @@ export const Home = () => {
   // No more manual useEffect needed!
 
   useEffect(() => {
-    document.title = 'Jambol - Inicio';
-  }, []);
+    const pageTitle = 'Jambol — Inicio';
+    const description = 'Panel principal de tu liga Jambol. Mantente al día con las últimas noticias, partidos disponibles y tu actividad reciente.';
+    const keywords = 'jambol, inicio, liga, noticias, partidos, actividad, dashboard';
 
-  useEffect(() => {
-    if (!consent?.analytics) {
-      return;
-    }
+    document.title = pageTitle;
 
-    const script1 = document.createElement('script');
-    script1.async = true;
-    script1.src = 'https://www.googletagmanager.com/gtag/js?id=G-N8SYMCJED4';
-    document.head.appendChild(script1);
+    const metaDefinitions = [
+      {
+        selector: 'meta[name="description"]',
+        attributes: { name: 'description' },
+        content: description,
+      },
+      {
+        selector: 'meta[name="keywords"]',
+        attributes: { name: 'keywords' },
+        content: keywords,
+      },
+      {
+        selector: 'meta[property="og:title"]',
+        attributes: { property: 'og:title' },
+        content: pageTitle,
+      },
+      {
+        selector: 'meta[property="og:description"]',
+        attributes: { property: 'og:description' },
+        content: description,
+      },
+      {
+        selector: 'meta[name="twitter:title"]',
+        attributes: { name: 'twitter:title' },
+        content: pageTitle,
+      },
+      {
+        selector: 'meta[name="twitter:description"]',
+        attributes: { name: 'twitter:description' },
+        content: description,
+      },
+    ];
 
-    const script2 = document.createElement('script');
-    script2.innerHTML = `
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-N8SYMCJED4');
-    `;
-    document.head.appendChild(script2);
+    const managedMeta = metaDefinitions.map(({ selector, attributes, content }) => {
+      let element = document.querySelector(selector) as HTMLMetaElement | null;
+      let created = false;
+
+      if (!element) {
+        element = document.createElement('meta');
+        Object.entries(attributes).forEach(([attribute, value]) => {
+          element?.setAttribute(attribute, value);
+        });
+        document.head.appendChild(element);
+        created = true;
+      }
+
+      const previousContent = element.getAttribute('content') ?? undefined;
+      element.setAttribute('content', content);
+
+      return { element, previousContent, created };
+    });
 
     return () => {
-      if (script1.parentNode) {
-        script1.parentNode.removeChild(script1);
-      }
-      if (script2.parentNode) {
-        script2.parentNode.removeChild(script2);
-      }
+      managedMeta.forEach(({ element, previousContent, created }) => {
+        if (created && element.parentNode) {
+          element.parentNode.removeChild(element);
+        } else if (!created && typeof previousContent === 'string') {
+          element.setAttribute('content', previousContent);
+        }
+      });
     };
-  }, [consent?.analytics]);
+  }, []);
+
+
 
   return (
     <div className="space-y-8">
@@ -94,7 +133,7 @@ export const Home = () => {
           <CardHeader>
             <CardTitle>Próximos Partidos</CardTitle>
             <CardDescription>
-              Encuentra los mejores partidos para apostar hoy
+              Encuentra los mejores partidos para participar hoy
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -131,7 +170,7 @@ export const Home = () => {
               })
             )}
             <Link to="/bets">
-              <Button 
+              <Button
                 className="jambol-button w-full mt-4"
               >
                 Ver Todos los Partidos
@@ -144,7 +183,7 @@ export const Home = () => {
           <CardHeader>
             <CardTitle>Actividad Reciente</CardTitle>
             <CardDescription>
-              Tus últimas apuestas y resultados
+              Tus últimas boletos y resultados
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -160,7 +199,7 @@ export const Home = () => {
                 </div>
               </>
             ) : recentBets.length === 0 ? (
-              <p className="text-muted-foreground">Aún no has realizado ninguna apuesta.</p>
+              <p className="text-muted-foreground">Aún no has realizado ningún boleto.</p>
             ) : (
               recentBets.map((bet) => {
                 const status = String(bet.status || 'pending');
@@ -169,7 +208,7 @@ export const Home = () => {
                 const net = payout - stake;
                 const isWon = status === 'won';
                 const isLost = status === 'lost';
-                
+
                 // Get bet description based on type and stake
                 let betDescription;
                 if (bet.bet_type === 'combo') {
@@ -177,12 +216,12 @@ export const Home = () => {
                 } else {
                   betDescription = `${bet.match_description || 'Partido'} @ €${stake.toFixed(0)}`;
                 }
-                
+
                 return (
                   <div key={bet.id} className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
                     <div>
                       <p className={`font-semibold ${isWon ? 'text-primary' : isLost ? 'text-destructive' : ''}`}>{betDescription}</p>
-                      <p className="text-sm text-muted-foreground">{isWon ? 'Ganaste' : isLost ? 'Perdiste' : 'Apuesta pendiente'}</p>
+                      <p className="text-sm text-muted-foreground">{isWon ? 'Ganaste' : isLost ? 'Perdiste' : 'Boleto pendiente'}</p>
                     </div>
                     <div className={`font-bold ${isWon ? 'text-primary' : isLost ? 'text-destructive' : 'text-foreground'}`}>
                       {isWon ? `+${net.toFixed(2)}` : isLost ? `-${stake.toFixed(2)}` : '—'}
@@ -192,7 +231,7 @@ export const Home = () => {
               })
             )}
             <Link to="/bet-history">
-              <Button 
+              <Button
                 className="jambol-button w-full mt-4"
               >
                 <History className="h-4 w-4 mr-2" />

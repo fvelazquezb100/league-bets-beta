@@ -25,6 +25,76 @@ export const BetHistory = () => {
   const { consent } = useCookieConsent();
   
   useEffect(() => {
+    const pageTitle = 'Jambol — Historial';
+    const description = 'Revisa tu historial completo de boletos y resultados en Jambol. Consulta tus estadísticas personales, rendimiento y actividad reciente.';
+    const keywords = 'jambol, historial, boletos, resultados, estadísticas, rendimiento, actividad, puntos';
+
+    document.title = pageTitle;
+
+    const metaDefinitions = [
+      {
+        selector: 'meta[name="description"]',
+        attributes: { name: 'description' },
+        content: description,
+      },
+      {
+        selector: 'meta[name="keywords"]',
+        attributes: { name: 'keywords' },
+        content: keywords,
+      },
+      {
+        selector: 'meta[property="og:title"]',
+        attributes: { property: 'og:title' },
+        content: pageTitle,
+      },
+      {
+        selector: 'meta[property="og:description"]',
+        attributes: { property: 'og:description' },
+        content: description,
+      },
+      {
+        selector: 'meta[name="twitter:title"]',
+        attributes: { name: 'twitter:title' },
+        content: pageTitle,
+      },
+      {
+        selector: 'meta[name="twitter:description"]',
+        attributes: { name: 'twitter:description' },
+        content: description,
+      },
+    ];
+
+    const managedMeta = metaDefinitions.map(({ selector, attributes, content }) => {
+      let element = document.querySelector(selector) as HTMLMetaElement | null;
+      let created = false;
+
+      if (!element) {
+        element = document.createElement('meta');
+        Object.entries(attributes).forEach(([attribute, value]) => {
+          element?.setAttribute(attribute, value);
+        });
+        document.head.appendChild(element);
+        created = true;
+      }
+
+      const previousContent = element.getAttribute('content') ?? undefined;
+      element.setAttribute('content', content);
+
+      return { element, previousContent, created };
+    });
+
+    return () => {
+      managedMeta.forEach(({ element, previousContent, created }) => {
+        if (created && element.parentNode) {
+          element.parentNode.removeChild(element);
+        } else if (!created && typeof previousContent === 'string') {
+          element.setAttribute('content', previousContent);
+        }
+      });
+    };
+  }, []);
+
+  useEffect(() => {
     if (!consent?.analytics) {
       return;
     }
@@ -175,7 +245,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
       setBetToCancel(null);
       
       toast({
-        title: 'Apuesta cancelada',
+        title: 'Boleto cancelado',
         description: 'Se ha reembolsado tu importe al presupuesto semanal.',
       });
     } catch (error: any) {
@@ -184,7 +254,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
       console.error('Error canceling bet:', error);
       toast({ 
         title: 'Error', 
-        description: error?.message || 'Ha ocurrido un error al cancelar la apuesta.',
+        description: error?.message || 'Ha ocurrido un error al cancelar el boleto.',
         variant: 'destructive'
       });
     }
@@ -478,7 +548,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
     return `${market}: ${selection} @ ${odds.toFixed(2)}`;
   };
 
-  // Función para calcular la cuota total de una apuesta combinada
+  // Función para calcular el multiplicador total de un boleto combinado
   const calculateComboOdds = (betSelections: any[]): number => {
     if (!betSelections || betSelections.length === 0) return 0;
     
@@ -506,7 +576,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
     return matchDescription || 'Partido no disponible';
   };
 
-  // Función para filtrar apuestas (excluyendo semana 0)
+  // Función para filtrar boletos (excluyendo semana 0)
   const getFilteredBets = () => {
     const nonHistoricalBets = bets.filter(bet => Number(bet.week) !== 0);
     
@@ -520,7 +590,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
     }
   };
 
-  // Apuestas históricas (semana 0)
+  // Boletos históricos (semana 0)
   const getHistoricalBets = () => {
     const historicalBets = bets.filter(bet => Number(bet.week) === 0);
     
@@ -540,8 +610,8 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h1 className="text-4xl font-bold text-foreground mb-4">Mi Historial de Apuestas</h1>
-        <p className="text-xl text-muted-foreground">Revisa tu rendimiento y estadísticas de apuestas</p>
+        <h1 className="text-4xl font-bold text-foreground mb-4">Mi Historial</h1>
+        <p className="text-xl text-muted-foreground">Revisa tu rendimiento y estadísticas</p>
       </div>
 
       {/* Stats Cards */}
@@ -555,7 +625,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Apostado</p>
+                <p className="text-sm text-muted-foreground">Total en Boletos</p>
                 <p className="text-2xl font-bold">{Math.ceil(totalBetAmount)}</p>
               </div>
               <TrendingDown className="h-5 w-5 text-muted-foreground" />
@@ -589,7 +659,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Apuestas Pendientes</p>
+                <p className="text-sm text-muted-foreground">Boletos Pendientes</p>
                 <p className="text-2xl font-bold text-primary">{pendingBets}</p>
               </div>
               <Calendar className="h-5 w-5 text-primary" />
@@ -608,7 +678,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
               <div>
                 <p className="text-sm text-muted-foreground">Estadísticas Personales</p>
                 <p className="text-2xl font-bold text-primary">{successPercentage}%</p>
-                <p className="text-xs text-muted-foreground">% de aciertos de apuestas</p>
+                <p className="text-xs text-muted-foreground">% de aciertos</p>
               </div>
               <Trophy className="h-5 w-5 text-primary" />
             </div>
@@ -619,15 +689,15 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
       {/* Desktop Bets Table */}
       <Card className="shadow-lg hidden sm:block">
         <CardHeader>
-          <CardTitle>Mis Apuestas</CardTitle>
-          <CardDescription>Historial completo de todas tus apuestas</CardDescription>
+          <CardTitle>Mis Boletos</CardTitle>
+          <CardDescription>Historial completo de todos tus boletos</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Partido</TableHead>
-                <TableHead>Apuesta</TableHead>
+                <TableHead>Boleto</TableHead>
                 <TableHead>Importe</TableHead>
                 <TableHead>Ganancia</TableHead>
                 <TableHead>Resultado</TableHead>
@@ -644,7 +714,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="text-xs">COMBO</Badge>
-                            <span className="text-sm">Apuesta Combinada</span>
+                            <span className="text-sm">Boleto Combinado</span>
                           </div>
                         </TableCell>
                         <TableCell></TableCell>
@@ -666,7 +736,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                                 onClick={() => handleCancelClick(bet.id)}
                                 disabled={cancelingId === bet.id}
                               >
-                                {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
+                                {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Boleto'}
                               </Button>
                               <span className={`text-xs font-mono ${
                                 timeLeft[bet.id]?.includes('s') && !timeLeft[bet.id]?.includes('m') 
@@ -743,7 +813,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                                 onClick={() => handleCancelClick(bet.id)}
                                 disabled={cancelingId === bet.id}
                               >
-                                {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Apuesta'}
+                                {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Boleto'}
                               </Button>
                               <span className={`text-xs font-mono ${
                                 timeLeft[bet.id]?.includes('s') && !timeLeft[bet.id]?.includes('m') 
@@ -763,10 +833,10 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                 <TableRow>
                   <TableCell colSpan={6} className="text-center text-muted-foreground">
                     {activeFilter === 'won' 
-                      ? 'No tienes apuestas ganadas todavía.'
+                      ? 'No tienes boletos ganados todavía.'
                       : activeFilter === 'pending'
-                      ? 'No tienes apuestas pendientes.'
-                      : 'No tienes apuestas todavía. ¡Ve a la sección de apuestas para empezar!'
+                      ? 'No tienes boletos pendientes.'
+                      : 'No tienes boletos todavía. ¡Ve a la sección de partidos para empezar!'
                     }
                   </TableCell>
                 </TableRow>
@@ -779,8 +849,8 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
       {/* Mobile Bets View - Sin marco */}
       <div className="block sm:hidden">
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-foreground mb-2">Mis Apuestas</h2>
-          <p className="text-muted-foreground">Historial completo de todas tus apuestas</p>
+          <h2 className="text-2xl font-bold text-foreground mb-2">Mis Boletos</h2>
+          <p className="text-muted-foreground">Historial completo de todos tus boletos</p>
         </div>
         <div className="space-y-4">
             {filteredBets.length > 0 ? (
@@ -824,7 +894,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                     {/* Información financiera */}
                     <div className="flex justify-between text-sm">
                       <span>
-                        Apostado: <span className="font-medium">
+                        En boleto: <span className="font-medium">
                           {(bet.stake || 0).toFixed(0)} pts
                           {bet.bet_type === 'combo' && bet.bet_selections?.length && (
                             <span className="text-muted-foreground"> @{calculateComboOdds(bet.bet_selections).toFixed(2)}</span>
@@ -834,7 +904,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                       <span>Ganancia: <span className="font-medium">{bet.status === 'cancelled' ? '-' : `${(bet.payout || 0).toFixed(0)} pts`}</span></span>
                     </div>
 
-                    {/* Detalles de la apuesta */}
+                    {/* Detalles del boleto */}
                     <div className="space-y-3">
                       {bet.bet_type === 'combo' && bet.bet_selections?.length ? (
                         bet.bet_selections.map((selection: any, index: number) => (
@@ -850,7 +920,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                                 </div>
                               )}
                             </div>
-                            {/* Apuesta justo debajo */}
+                            {/* Boleto justo debajo */}
                             <div className="flex items-center gap-2 text-sm font-medium text-foreground border-l-2 border-muted pl-2">
                               {getStatusIcon(selection.status)}
                               <span>{getBettingTranslation(selection.market)}: {getBettingTranslation(selection.selection)} @ {selection.odds}</span>
@@ -870,7 +940,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                               </div>
                             )}
                           </div>
-                          {/* Apuesta justo debajo */}
+                          {/* Boleto justo debajo */}
                           <div className="text-sm font-medium text-foreground border-l-2 border-muted pl-2">
                             {(() => {
                               const parts = bet.bet_selection?.split(' @ ') || [];
@@ -889,10 +959,10 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
             ) : (
               <div className="text-center text-muted-foreground py-8">
                 {activeFilter === 'won' 
-                  ? 'No tienes apuestas ganadas todavía.'
+                  ? 'No tienes boletos ganados todavía.'
                   : activeFilter === 'pending'
-                  ? 'No tienes apuestas pendientes.'
-                  : 'No tienes apuestas todavía. ¡Ve a la sección de apuestas para empezar!'
+                  ? 'No tienes boletos pendientes.'
+                  : 'No tienes boletos todavía. ¡Ve a la sección de partidos para empezar!'
                 }
               </div>
             )}
@@ -905,7 +975,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
           <div className="flex items-center gap-4 my-8">
             <div className="flex-1 border-t border-border"></div>
             <div className="px-4 py-2 bg-muted rounded-lg">
-              <span className="text-sm font-medium text-muted-foreground">Apuestas Históricas</span>
+              <span className="text-sm font-medium text-muted-foreground">Boletos Históricos</span>
             </div>
             <div className="flex-1 border-t border-border"></div>
           </div>
@@ -913,15 +983,15 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
           {/* Desktop Historical Bets Table */}
           <Card className="shadow-lg hidden sm:block">
             <CardHeader>
-              <CardTitle>Apuestas Históricas (Temporadas Anteriores)</CardTitle>
-              <CardDescription>Historial de apuestas de temporadas pasadas</CardDescription>
+              <CardTitle>Boletos Históricos (Temporadas Anteriores)</CardTitle>
+              <CardDescription>Historial de boletos de temporadas pasadas</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Partido</TableHead>
-                    <TableHead>Apuesta</TableHead>
+                    <TableHead>Boleto</TableHead>
                     <TableHead>Importe</TableHead>
                     <TableHead>Ganancia</TableHead>
                     <TableHead>Resultado</TableHead>
@@ -936,7 +1006,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-2">
                               <Badge variant="outline" className="text-xs">COMBO</Badge>
-                              <span className="text-sm">Apuesta Combinada</span>
+                              <span className="text-sm">Boleto Combinado</span>
                             </div>
                           </TableCell>
                           <TableCell></TableCell>
@@ -1044,7 +1114,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                     <span>Ganancia: <span className="font-medium">{bet.status === 'cancelled' ? '-' : `${(bet.payout || 0).toFixed(0)} pts`}</span></span>
                   </div>
 
-                  {/* Detalles de la apuesta */}
+                  {/* Detalles del boleto */}
                   <div className="space-y-3">
                     {bet.bet_type === 'combo' && bet.bet_selections?.length ? (
                       bet.bet_selections.map((selection: any, index: number) => (
@@ -1060,7 +1130,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                               </div>
                             )}
                           </div>
-                          {/* Apuesta justo debajo */}
+                          {/* Boleto justo debajo */}
                           <div className="flex items-center gap-2 text-sm font-medium text-foreground border-l-2 border-muted pl-2">
                             {getStatusIcon(selection.status)}
                             <span>{getBettingTranslation(selection.market)}: {getBettingTranslation(selection.selection)} @ {selection.odds}</span>
@@ -1080,7 +1150,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                             </div>
                           )}
                         </div>
-                        {/* Apuesta justo debajo */}
+                        {/* Boleto justo debajo */}
                         <div className="text-sm font-medium text-foreground border-l-2 border-muted pl-2">
                           {(() => {
                             const parts = bet.bet_selection?.split(' @ ') || [];
@@ -1111,18 +1181,18 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
           <AlertDialogHeader>
             <AlertDialogTitle>¿Confirmar cancelación?</AlertDialogTitle>
             <AlertDialogDescription>
-              ¿Estás seguro de que quieres cancelar esta apuesta? Esta acción no se puede deshacer y se reembolsará tu importe al presupuesto semanal.
+              ¿Estás seguro de que quieres cancelar este boleto? Esta acción no se puede deshacer y se reembolsará tu importe al presupuesto semanal.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleCancelDialogClose}>
-              No, mantener apuesta
+              No, mantener boleto
             </AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleCancelConfirm}
               className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             >
-              Sí, cancelar apuesta
+              Sí, cancelar boleto
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

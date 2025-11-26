@@ -28,6 +28,10 @@ export const LeagueMatchAvailabilityControl = () => {
   const [isLeagueAdmin, setIsLeagueAdmin] = useState(false);
   const [leagueData, setLeagueData] = useState<any>(null);
 
+  useEffect(() => {
+    document.title = 'Jambol — Control de Disponibilidad';
+  }, []);
+
   // Check if user is league admin
   useEffect(() => {
     const checkRole = async () => {
@@ -228,7 +232,7 @@ export const LeagueMatchAvailabilityControl = () => {
         </Link>
         <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Control de Disponibilidad de Partidos</h1>
         <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">
-          Gestiona la disponibilidad de apuestas en vivo para {leagueData?.name}
+          Gestiona la disponibilidad de partidos en vivo para {leagueData?.name}
         </p>
       </div>
 
@@ -240,7 +244,7 @@ export const LeagueMatchAvailabilityControl = () => {
             <span className="sm:hidden">Disponibilidad</span>
           </CardTitle>
           <p className="text-xs sm:text-sm text-muted-foreground">
-            Controla qué días están disponibles para apuestas en vivo en {leagueData?.name}
+            Controla qué días están disponibles los partidos en vivo en {leagueData?.name}
           </p>
           {availabilityDays.length > 0 && (
             <p className="text-xs sm:text-sm text-muted-foreground">
@@ -318,7 +322,7 @@ export const LeagueMatchAvailabilityControl = () => {
                 <div className="text-xs text-muted-foreground">
                   <p className="font-medium mb-1">Información:</p>
                   <ul className="space-y-1">
-                    <li>• Los días marcados como "Disponible" aparecerán en "Cuotas en Vivo"</li>
+                    <li>• Los días marcados como "Disponible" aparecerán en "Partidos disponibles"</li>
                     <li>• Los días marcados como "No disponible" aparecerán en "Próximos Encuentros"</li>
                     <li>• Los cambios se aplican inmediatamente para todos los usuarios de la liga</li>
                     <li>• Las fechas se actualizan automáticamente cada martes</li>

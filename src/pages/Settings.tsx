@@ -31,6 +31,10 @@ export const Settings = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [league, setLeague] = useState<League | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    document.title = 'Jambol — Ajustes';
+  }, []);
   
   // Username form state
   const [newUsername, setNewUsername] = useState('');
@@ -240,7 +244,7 @@ export const Settings = () => {
       if (data.success) {
         toast({
           title: 'Liga abandonada',
-          description: 'Has salido de la liga exitosamente. Tus puntos y apuestas han sido reseteados.',
+          description: 'Has salido de la liga exitosamente. Tus puntos y boletos han sido reseteados.',
         });
         
         // Refresh user data
@@ -481,7 +485,7 @@ export const Settings = () => {
                   <p className="text-sm font-medium">Acción irreversible</p>
                   <p className="text-sm text-muted-foreground">
                     Al salir de la liga, se resetearán todos tus puntos (totales y de la última semana) a cero, 
-                    y todas tus apuestas se marcarán como semana 0. Esta acción no se puede deshacer.
+                    y todos tus boletos se marcarán como semana 0. Esta acción no se puede deshacer.
                   </p>
                 </div>
               </div>
@@ -507,7 +511,7 @@ export const Settings = () => {
                         <li>Todos tus puntos totales se resetearán a <strong>0</strong></li>
                         <li>Tus puntos de la última semana se resetearán a <strong>0</strong></li>
                         <li>Serás removido de la liga actual</li>
-                        <li>Todas tus apuestas se marcarán como semana <strong>0</strong></li>
+                        <li>Todos tus boletos se marcarán como semana <strong>0</strong></li>
                       </ul>
                       <p className="font-medium text-amber-600">
                         ¿Estás completamente seguro de que quieres continuar?
