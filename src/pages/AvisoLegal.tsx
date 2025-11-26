@@ -124,7 +124,7 @@ export default function AvisoLegal() {
         <div>
           <h2 className="text-xl font-semibold mb-2">7. Publicidad y monetización</h2>
           <p className="text-sm md:text-base text-muted-foreground">
-            El Sitio puede incluir espacios publicitarios y contenidos patrocinados gestionados directamente o a través de plataformas de terceros como Google AdSense.
+            El Sitio puede incluir espacios publicitarios y contenidos patrocinados gestionados directamente o a través de plataformas de terceros.
           </p>
           <p className="text-sm md:text-base text-muted-foreground mt-2">
             La visualización de publicidad puede basarse en tu actividad de navegación y preferencias, de acuerdo con lo establecido en la <Link to="/politica-cookies" className="underline">Política de Cookies</Link> y sujeto al consentimiento que otorgues en el banner de cookies.

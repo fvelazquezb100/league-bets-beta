@@ -55,7 +55,7 @@ export default function PoliticaPrivacidad() {
             <li>Datos técnicos y de navegación: dirección IP, tipo de navegador, dispositivo, sistema operativo y páginas visitadas.</li>
             <li>Datos derivados del uso: actividad dentro de la plataforma, como participación en ligas o clasificación.</li>
             <li>Datos de cookies: preferencias, comportamiento de navegación y anuncios mostrados o clicados.</li>
-            <li>Datos de terceros: información proporcionada por proveedores como Google LLC (Analytics y AdSense), Supabase (autenticación y base de datos) y Vercel (alojamiento web).</li>
+            <li>Datos de terceros: información proporcionada por proveedores como Google LLC (Analytics), Supabase (autenticación y base de datos) y Vercel (alojamiento web).</li>
           </ul>
         </div>
 
@@ -68,7 +68,7 @@ export default function PoliticaPrivacidad() {
             <li>Permitir el acceso y uso de las funciones de la plataforma.</li>
             <li>Gestionar cuentas de usuario y preferencias.</li>
             <li>Analizar el tráfico y el rendimiento del sitio web.</li>
-            <li>Mostrar publicidad personalizada mediante Google AdSense.</li>
+            <li>Mostrar publicidad personalizada.</li>
             <li>Prevenir usos indebidos o fraudulentos del servicio.</li>
             <li>Atender consultas enviadas al correo de contacto.</li>
           </ul>
@@ -104,7 +104,7 @@ export default function PoliticaPrivacidad() {
           <h2 className="text-xl font-semibold mb-2">6. Comunicación de datos a terceros</h2>
           <p className="text-sm md:text-base text-muted-foreground">Podemos compartir datos personales con:</p>
           <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1 mt-2">
-            <li>Google LLC (Analytics y AdSense), con sede en Estados Unidos, bajo cláusulas contractuales tipo aprobadas por la Comisión Europea.</li>
+            <li>Google LLC (Analytics), con sede en Estados Unidos, bajo cláusulas contractuales tipo aprobadas por la Comisión Europea.</li>
             <li>Supabase Inc., como proveedor de base de datos y autenticación.</li>
             <li>Vercel Inc., responsable del alojamiento y despliegue web.</li>
             <li>Autoridades públicas o judiciales, cuando exista obligación legal.</li>
@@ -157,7 +157,7 @@ export default function PoliticaPrivacidad() {
         <div>
           <h2 className="text-xl font-semibold mb-2">10. Uso de cookies</h2>
           <p className="text-sm md:text-base text-muted-foreground">
-            Utilizamos cookies propias y de terceros (Google Analytics y Google AdSense) para analizar el tráfico, personalizar la experiencia y mostrar anuncios relevantes. Puedes gestionar o revocar tu consentimiento en cualquier momento desde el banner de cookies o visitando nuestra <Link to="/politica-cookies" className="underline">Política de Cookies</Link>.
+            Utilizamos cookies propias y de terceros (Google Analytics y redes publicitarias) para analizar el tráfico, personalizar la experiencia y mostrar anuncios relevantes. Puedes gestionar o revocar tu consentimiento en cualquier momento desde el banner de cookies o visitando nuestra <Link to="/politica-cookies" className="underline">Política de Cookies</Link>.
           </p>
         </div>
 
