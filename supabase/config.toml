@@ -6,7 +6,7 @@ project_id = "sbfgxxdpppgtgiclmctc"
 project_id = "sbfgxxdpppgtgiclmctc"
 
 [remotes.staging.auth]
-site_url = "https://staging.jambol.co"
+site_url = "https://staging.jambol.co/"
 additional_redirect_urls = [
   "https://staging.jambol.co/**",
   "https://jambol.co/**",
@@ -18,7 +18,7 @@ additional_redirect_urls = [
 project_id = "lflxrkkzudsecvdfdxwl"
 
 [remotes.production.auth]
-site_url = "https://jambol.co"
+site_url = "https://jambol.co/"
 additional_redirect_urls = [
   "https://jambol.co/**",
   "https://staging.jambol.co/**",
@@ -28,7 +28,7 @@ additional_redirect_urls = [
 
 # Default auth for local development
 [auth]
-site_url = "http://localhost:5173"
+site_url = "http://localhost:5173/"
 additional_redirect_urls = [
   "https://staging.jambol.co/**",
   "https://jambol.co/**",
