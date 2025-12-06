@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import type { Session } from "@supabase/supabase-js";
 import { APP_CONFIG } from '@/config/app';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,11 +10,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 
 export const UpdatePassword = () => {
+  const location = useLocation();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [hasRecoverySession, setHasRecoverySession] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [success, setSuccess] = useState<string>("");
   const [recoverySession, setRecoverySession] = useState<Session | null>(null);
 
@@ -39,16 +42,34 @@ export const UpdatePassword = () => {
     }
     canonical.setAttribute("href", `${window.location.origin}/update-password`);
 
-    // Listen for Supabase PASSWORD_RECOVERY event and store session state
+    // Check if we came from the auth callback with a recovery session
+    const fromRecovery = location.state?.fromRecovery === true;
+    
+    // Check for existing session on mount (in case PASSWORD_RECOVERY already fired)
+    const checkExistingSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // If we have a session and came from recovery flow, enable password update
+      if (session && fromRecovery) {
+        setHasRecoverySession(true);
+        setRecoverySession(session);
+      }
+      setIsCheckingSession(false);
+    };
+    
+    checkExistingSession();
+
+    // Also listen for PASSWORD_RECOVERY event (for direct link access)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") {
         setHasRecoverySession(!!session);
         setRecoverySession(session);
+        setIsCheckingSession(false);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [location.state]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,6 +137,10 @@ export const UpdatePassword = () => {
               <Alert className="mb-4">
                 <AlertDescription>{success}</AlertDescription>
               </Alert>
+            ) : isCheckingSession ? (
+              <div className="text-center py-4">
+                <p className="text-muted-foreground">Verificando sesión...</p>
+              </div>
             ) : (
               <>
                 {!hasRecoverySession && (

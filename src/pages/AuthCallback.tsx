@@ -39,8 +39,8 @@ export const AuthCallback = () => {
         // Redirect based on type
         switch (type) {
           case 'recovery':
-            // PASSWORD_RECOVERY event will be triggered, redirect to update password
-            navigate('/update-password');
+            // Pass state to indicate we came from a valid recovery flow
+            navigate('/update-password', { state: { fromRecovery: true }, replace: true });
             break;
           case 'signup':
           case 'email':
