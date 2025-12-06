@@ -37,6 +37,7 @@ import SuperAdminOtrasLigas from "./pages/SuperAdminOtrasLigas";
 import { SuperAdminRoute } from "./components/SuperAdminRoute";
 import { ResetPassword } from "./pages/ResetPassword";
 import { UpdatePassword } from "./pages/UpdatePassword";
+import { AuthCallback } from "./pages/AuthCallback";
 import { LeagueSetup } from "./pages/LeagueSetup";
 import { Settings } from "./pages/Settings";
 import { SmartRedirect } from "./components/SmartRedirect";
@@ -63,6 +64,7 @@ const App = () => (
               <Route path="/signup" element={<Signup />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/update-password" element={<UpdatePassword />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/home-demo" element={<HomeDemo />} />
               <Route path="/home-demo-movil" element={<HomeDemoMovil />} />
               <Route path="/bets-demo" element={<BetsDemo />} />

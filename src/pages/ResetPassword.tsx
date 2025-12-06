@@ -43,7 +43,7 @@ export const ResetPassword = () => {
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'https://betadonas.lovable.app/update-password',
+        redirectTo: `${window.location.origin}/auth/callback`,
       });
       if (error) {
         setError(error.message);
