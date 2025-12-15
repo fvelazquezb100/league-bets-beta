@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { NewsManagement } from '@/components/NewsManagement';
 import { BettingSettingsControl } from '@/components/BettingSettingsControl';
+import { DeveloperModeControl } from '@/components/DeveloperModeControl';
 import { useLastProcessedMatch } from '@/hooks/useLastProcessedMatch';
 import { useNavigate } from 'react-router-dom';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -18,7 +19,7 @@ const SuperAdmin: React.FC = () => {
   const navigate = useNavigate();
   const { consent } = useCookieConsent();
   const { data: lastProcessedMatch, isLoading: loadingLastMatch } = useLastProcessedMatch();
-  
+
   React.useEffect(() => {
     document.title = 'Jambol — Superadministrador';
   }, []);
@@ -112,7 +113,7 @@ const SuperAdmin: React.FC = () => {
         title: 'Actualización de Caché',
         description: 'Caché de multiplicadores actualizado exitosamente',
       });
-      
+
       // Refetch the last updated time
       refetch();
     } catch (error: any) {
@@ -292,12 +293,12 @@ const SuperAdmin: React.FC = () => {
           <div className="lg:col-span-1 h-full">
             <NewsManagement />
           </div>
-          
+
           {/* Configuración de Tiempo de Selecciones */}
           <div className="lg:col-span-1 h-full">
             <BettingSettingsControl />
           </div>
-          
+
           {/* Gestión de Selecciones */}
           <div className="lg:col-span-1 h-full">
             <Card className="h-full">
@@ -330,7 +331,7 @@ const SuperAdmin: React.FC = () => {
               </p>
             </CardContent>
             <CardFooter className="p-3 sm:p-6">
-              <Button 
+              <Button
                 onClick={handleUpdateCache}
                 disabled={updatingCache}
                 className="jambol-button text-xs sm:text-sm"
@@ -349,7 +350,7 @@ const SuperAdmin: React.FC = () => {
               <p className="text-xs sm:text-sm text-muted-foreground">
                 Ejecuta manualmente el procesamiento de resultados de la última jornada.
               </p>
-              
+
               {/* Último partido procesado */}
               {loadingLastMatch ? (
                 <p className="text-xs text-muted-foreground">Cargando último partido...</p>
@@ -362,7 +363,7 @@ const SuperAdmin: React.FC = () => {
               )}
             </CardContent>
             <CardFooter className="p-3 sm:p-6">
-              <Button 
+              <Button
                 onClick={handleProcessResults}
                 disabled={processingResults}
                 className="jambol-button text-xs sm:text-sm"
@@ -383,9 +384,9 @@ const SuperAdmin: React.FC = () => {
               </p>
             </CardContent>
             <CardFooter className="p-3 sm:p-6">
-              <Button 
-                onClick={handleTestAuth} 
-                disabled={testingAuth} 
+              <Button
+                onClick={handleTestAuth}
+                disabled={testingAuth}
                 className="jambol-button text-xs sm:text-sm"
               >
                 {testingAuth ? 'Probando...' : 'Test Edge Function Auth'}
@@ -399,8 +400,8 @@ const SuperAdmin: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-3 p-3 sm:p-6">
               {loadingBlockStats ? (
-                 <p className="text-xs sm:text-sm text-muted-foreground">Cargando estadísticas...</p>
-               ) : (
+                <p className="text-xs sm:text-sm text-muted-foreground">Cargando estadísticas...</p>
+              ) : (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-4">
                     <Label htmlFor="blocks-available-input" className="text-xs sm:text-sm text-muted-foreground">
@@ -465,6 +466,13 @@ const SuperAdmin: React.FC = () => {
               </AlertDialog>
             </CardFooter>
           </Card>
+        </div>
+
+        {/* Developer Mode & System Config - New Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+          <div className="lg:col-span-1 h-full">
+            <DeveloperModeControl />
+          </div>
         </div>
 
 

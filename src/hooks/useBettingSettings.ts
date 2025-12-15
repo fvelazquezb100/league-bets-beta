@@ -49,7 +49,7 @@ const updateBettingCutoffTime = async (minutes: number): Promise<BettingSettings
   try {
     const { data, error } = await supabase
       .from('betting_settings' as any)
-      .update({ 
+      .update({
         setting_value: minutes.toString(),
         updated_at: new Date().toISOString()
       } as any)
@@ -77,6 +77,64 @@ const updateBettingCutoffTime = async (minutes: number): Promise<BettingSettings
   }
 };
 
+// Get developer mode status
+const getDeveloperMode = async (): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from('betting_settings' as any)
+      .select('*')
+      .eq('setting_key', 'developer_mode')
+      .maybeSingle();
+
+    if (error) {
+      console.error('Database error getting developer_mode:', error);
+      return false;
+    }
+
+    if (!data) {
+      return false;
+    }
+
+    return (data as any).setting_value === 'true';
+  } catch (err) {
+    console.error('Exception in getDeveloperMode:', err);
+    return false;
+  }
+};
+
+// Update developer mode in database
+const updateDeveloperMode = async (enabled: boolean): Promise<BettingSettingsResponse> => {
+  try {
+    const { data, error } = await supabase
+      .from('betting_settings' as any)
+      .upsert({
+        setting_key: 'developer_mode',
+        setting_value: enabled.toString(),
+        description: 'Developer mode to bypass time restrictions',
+        updated_at: new Date().toISOString()
+      } as any, { onConflict: 'setting_key' })
+      .select()
+      .single();
+
+    if (error) {
+      return {
+        success: false,
+        error: `Failed to update developer mode: ${error.message}`
+      };
+    }
+
+    return {
+      success: true,
+      message: `Developer mode ${enabled ? 'enabled' : 'disabled'} successfully`,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: 'Failed to save developer mode'
+    };
+  }
+};
+
 export const useBettingSettings = () => {
   const queryClient = useQueryClient();
 
@@ -90,6 +148,15 @@ export const useBettingSettings = () => {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
+  const {
+    data: developerMode = false,
+    isLoading: isLoadingDevMode,
+  } = useQuery({
+    queryKey: ['developer-mode'],
+    queryFn: getDeveloperMode,
+    staleTime: 0, // Always fresh for admin
+  });
+
   const updateCutoffTimeMutation = useMutation({
     mutationFn: updateBettingCutoffTime,
     onSuccess: () => {
@@ -98,14 +165,23 @@ export const useBettingSettings = () => {
     },
   });
 
+  const updateDeveloperModeMutation = useMutation({
+    mutationFn: updateDeveloperMode,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['developer-mode'] });
+    },
+  });
+
   return {
     settings: [], // Empty array for now since we don't have the database table
     cutoffMinutes,
-    isLoading: isLoadingCutoff,
+    developerMode,
+    isLoading: isLoadingCutoff || isLoadingDevMode,
     error: cutoffError,
     updateCutoffTime: updateCutoffTimeMutation.mutateAsync,
-    isUpdating: updateCutoffTimeMutation.isPending,
-    updateError: updateCutoffTimeMutation.error,
+    updateDeveloperMode: updateDeveloperModeMutation.mutateAsync,
+    isUpdating: updateCutoffTimeMutation.isPending || updateDeveloperModeMutation.isPending,
+    updateError: updateCutoffTimeMutation.error || updateDeveloperModeMutation.error,
   };
 };
 
