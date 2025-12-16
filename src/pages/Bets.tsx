@@ -420,11 +420,11 @@ const Bets = () => {
       } else {
         // For single bets, use market_bets field
         if (bet.market_bets) {
-          return bet.market_bets;
+          return getBettingTranslation(bet.market_bets);
         }
         // For combo bets with selections, use the market from bet_selections
         const selection = bet.bet_selections?.[0];
-        return selection ? selection.market : 'Boleto';
+        return selection ? getBettingTranslation(selection.market) : 'Boleto';
       }
     }).join(', ');
   };

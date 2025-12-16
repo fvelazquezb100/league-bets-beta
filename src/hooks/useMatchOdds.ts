@@ -37,8 +37,19 @@ export interface Bookmaker {
   bets: BetMarket[];
 }
 
+export interface League {
+  id: number;
+  name: string;
+  country: string;
+  logo: string;
+  flag: string;
+  season: number;
+  round: string;
+}
+
 export interface MatchData {
   fixture: Fixture;
+  league: League;
   teams: Teams;
   bookmakers: Bookmaker[];
 }
@@ -66,7 +77,7 @@ const fetchMatchOdds = async (sourceId: 1 | 2 | 3 | 4 | 5 | 6 = 1): Promise<Matc
     const { error: populateError } = await supabase.functions.invoke(
       sourceId === 3 || sourceId === 4 ? 'secure-run-update-selecciones-cache' : 'secure-run-update-football-cache'
     );
-    
+
     if (!populateError) {
       // Retry fetching after population
       const { data: newCacheData, error: retryError } = await supabase
@@ -74,7 +85,7 @@ const fetchMatchOdds = async (sourceId: 1 | 2 | 3 | 4 | 5 | 6 = 1): Promise<Matc
         .select('data')
         .eq('id', sourceId)
         .maybeSingle();
-      
+
       if (!retryError && newCacheData && newCacheData.data) {
         const apiData = newCacheData.data as unknown as CachedOddsData;
         if (apiData && Array.isArray(apiData.response)) {
@@ -82,7 +93,7 @@ const fetchMatchOdds = async (sourceId: 1 | 2 | 3 | 4 | 5 | 6 = 1): Promise<Matc
         }
       }
     }
-    
+
     throw new Error('Cache is empty and auto-population failed. Please try refreshing the page.');
   }
 
@@ -116,7 +127,7 @@ export const useMatchOdds = (sourceId: 1 | 2 | 3 | 4 | 5 | 6 = 1) => {
 // Mutation for updating match odds
 export const useUpdateMatchOdds = (sourceId: 1 | 2 | 3 | 4 | 5 | 6 = 1) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async () => {
       if (sourceId === 3 || sourceId === 4) {
