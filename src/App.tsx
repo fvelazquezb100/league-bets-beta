@@ -42,6 +42,8 @@ import { LeagueSetup } from "./pages/LeagueSetup";
 import { Settings } from "./pages/Settings";
 import { SmartRedirect } from "./components/SmartRedirect";
 import AnalyticsLoader from "./components/AnalyticsLoader";
+import { Maintenance } from "./pages/Maintenance";
+import { MaintenanceGuard } from "./components/MaintenanceGuard";
 import { ScrollToTop } from "./components/ScrollToTop";
 const queryClient = new QueryClient();
 
@@ -59,6 +61,7 @@ const App = () => (
           <AuthProvider>
             <Routes>
               <Route path="/" element={<Landing />} />
+              <Route path="/maintenance" element={<Maintenance />} />
               <Route path="/login" element={<Login />} />
               <Route path="/demo-language" element={<DemoLanguage />} />
               <Route path="/signup" element={<Signup />} />
@@ -79,93 +82,118 @@ const App = () => (
               <Route path="/aviso-legal" element={<AvisoLegal />} />
               <Route path="/faq" element={<FAQ />} />
               <Route path="/reglas" element={<Reglas />} />
+
+              {/* Wrappers for Protected Routes with Maintenance Guard */}
               <Route path="/league-setup" element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <LeagueSetup />
-                  </MainLayout>
-                </ProtectedRoute>
+                <MaintenanceGuard>
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <LeagueSetup />
+                    </MainLayout>
+                  </ProtectedRoute>
+                </MaintenanceGuard>
               } />
               <Route path="/home" element={
-                <ProtectedRoute>
-                  <SmartRedirect>
-                    <MainLayout>
-                      <Home />
-                    </MainLayout>
-                  </SmartRedirect>
-                </ProtectedRoute>
+                <MaintenanceGuard>
+                  <ProtectedRoute>
+                    <SmartRedirect>
+                      <MainLayout>
+                        <Home />
+                      </MainLayout>
+                    </SmartRedirect>
+                  </ProtectedRoute>
+                </MaintenanceGuard>
               } />
               <Route path="/clasificacion" element={
-                <ProtectedRoute>
-                  <SmartRedirect>
-                    <MainLayout>
-                      <Clasificacion />
-                    </MainLayout>
-                  </SmartRedirect>
-                </ProtectedRoute>
+                <MaintenanceGuard>
+                  <ProtectedRoute>
+                    <SmartRedirect>
+                      <MainLayout>
+                        <Clasificacion />
+                      </MainLayout>
+                    </SmartRedirect>
+                  </ProtectedRoute>
+                </MaintenanceGuard>
               } />
               <Route path="/bets" element={
-                <ProtectedRoute>
-                  <SmartRedirect>
-                    <MainLayout>
-                      <Bets />
-                    </MainLayout>
-                  </SmartRedirect>
-                </ProtectedRoute>
+                <MaintenanceGuard>
+                  <ProtectedRoute>
+                    <SmartRedirect>
+                      <MainLayout>
+                        <Bets />
+                      </MainLayout>
+                    </SmartRedirect>
+                  </ProtectedRoute>
+                </MaintenanceGuard>
               } />
               <Route path="/bet-history" element={
-                <ProtectedRoute>
-                  <SmartRedirect>
-                    <MainLayout>
-                      <BetHistory />
-                    </MainLayout>
-                  </SmartRedirect>
-                </ProtectedRoute>
+                <MaintenanceGuard>
+                  <ProtectedRoute>
+                    <SmartRedirect>
+                      <MainLayout>
+                        <BetHistory />
+                      </MainLayout>
+                    </SmartRedirect>
+                  </ProtectedRoute>
+                </MaintenanceGuard>
               } />
               <Route path="/settings" element={
-                <ProtectedRoute>
-                  <SmartRedirect>
-                    <MainLayout>
-                      <Settings />
-                    </MainLayout>
-                  </SmartRedirect>
-                </ProtectedRoute>
+                <MaintenanceGuard>
+                  <ProtectedRoute>
+                    <SmartRedirect>
+                      <MainLayout>
+                        <Settings />
+                      </MainLayout>
+                    </SmartRedirect>
+                  </ProtectedRoute>
+                </MaintenanceGuard>
               } />
               <Route path="/admin-liga" element={
-                <AdminRoute>
-                  <SmartRedirect>
-                    <MainLayout>
-                      <AdminLiga />
-                    </MainLayout>
-                  </SmartRedirect>
-                </AdminRoute>
+                <MaintenanceGuard>
+                  <AdminRoute>
+                    <SmartRedirect>
+                      <MainLayout>
+                        <AdminLiga />
+                      </MainLayout>
+                    </SmartRedirect>
+                  </AdminRoute>
+                </MaintenanceGuard>
               } />
               <Route path="/league-match-availability" element={
-                <AdminRoute>
-                  <SmartRedirect>
-                    <MainLayout>
-                      <LeagueMatchAvailabilityControl />
-                    </MainLayout>
-                  </SmartRedirect>
-                </AdminRoute>
+                <MaintenanceGuard>
+                  <AdminRoute>
+                    <SmartRedirect>
+                      <MainLayout>
+                        <LeagueMatchAvailabilityControl />
+                      </MainLayout>
+                    </SmartRedirect>
+                  </AdminRoute>
+                </MaintenanceGuard>
               } />
+
+              {/* SuperAdmin routes don't strictly need MaintenanceGuard since it allows SuperAdmins, 
+                  but wrapping them ensures consistent behavior if logic changes */}
               <Route path="/superadmin" element={
-                <SuperAdminRoute>
-                  <SmartRedirect>
-                    <MainLayout>
-                      <SuperAdmin />
-                    </MainLayout>
-                  </SmartRedirect>
-                </SuperAdminRoute>
+                <MaintenanceGuard>
+                  <SuperAdminRoute>
+                    <SmartRedirect>
+                      <MainLayout>
+                        <SuperAdmin />
+                      </MainLayout>
+                    </SmartRedirect>
+                  </SuperAdminRoute>
+                </MaintenanceGuard>
               } />
               <Route path="/superadmin-otras-ligas" element={
-                <SuperAdminRoute>
-                  <SmartRedirect>
-                    <MainLayout>
-                      <SuperAdminOtrasLigas />
-                    </MainLayout>
-                  </SmartRedirect>
-                </SuperAdminRoute>
+                <MaintenanceGuard>
+                  <SuperAdminRoute>
+                    <SmartRedirect>
+                      <MainLayout>
+                        <SuperAdminOtrasLigas />
+                      </MainLayout>
+                    </SmartRedirect>
+                  </SuperAdminRoute>
+                </MaintenanceGuard>
               } />
               <Route path="*" element={<NotFound />} />
             </Routes>

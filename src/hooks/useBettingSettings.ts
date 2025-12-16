@@ -135,6 +135,64 @@ const updateDeveloperMode = async (enabled: boolean): Promise<BettingSettingsRes
   }
 };
 
+// Get maintenance mode status
+const getMaintenanceMode = async (): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from('betting_settings' as any)
+      .select('*')
+      .eq('setting_key', 'system_maintenance_active')
+      .maybeSingle();
+
+    if (error) {
+      console.error('Database error getting maintenance_mode:', error);
+      return false;
+    }
+
+    if (!data) {
+      return false;
+    }
+
+    return (data as any).setting_value === 'true';
+  } catch (err) {
+    console.error('Exception in getMaintenanceMode:', err);
+    return false;
+  }
+};
+
+// Update maintenance mode in database
+const updateMaintenanceMode = async (enabled: boolean): Promise<BettingSettingsResponse> => {
+  try {
+    const { data, error } = await supabase
+      .from('betting_settings' as any)
+      .upsert({
+        setting_key: 'system_maintenance_active',
+        setting_value: enabled.toString(),
+        description: 'System Maintenance Active Flag',
+        updated_at: new Date().toISOString()
+      } as any, { onConflict: 'setting_key' })
+      .select()
+      .single();
+
+    if (error) {
+      return {
+        success: false,
+        error: `Failed to update maintenance mode: ${error.message}`
+      };
+    }
+
+    return {
+      success: true,
+      message: `Maintenance mode ${enabled ? 'enabled' : 'disabled'} successfully`,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: 'Failed to save maintenance mode'
+    };
+  }
+};
+
 export const useBettingSettings = () => {
   const queryClient = useQueryClient();
 
@@ -157,6 +215,17 @@ export const useBettingSettings = () => {
     staleTime: 0, // Always fresh for admin
   });
 
+  const {
+    data: maintenanceMode = false,
+    isLoading: isLoadingMaintenance,
+  } = useQuery({
+    queryKey: ['maintenance-mode'],
+    queryFn: getMaintenanceMode,
+    // Short stale time for maintenance mode to ensure clients catch it relatively quickly
+    staleTime: 30 * 1000,
+    refetchInterval: 60 * 1000, // Poll every minute
+  });
+
   const updateCutoffTimeMutation = useMutation({
     mutationFn: updateBettingCutoffTime,
     onSuccess: () => {
@@ -172,16 +241,25 @@ export const useBettingSettings = () => {
     },
   });
 
+  const updateMaintenanceModeMutation = useMutation({
+    mutationFn: updateMaintenanceMode,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['maintenance-mode'] });
+    },
+  });
+
   return {
     settings: [], // Empty array for now since we don't have the database table
     cutoffMinutes,
     developerMode,
-    isLoading: isLoadingCutoff || isLoadingDevMode,
+    maintenanceMode,
+    isLoading: isLoadingCutoff || isLoadingDevMode || isLoadingMaintenance,
     error: cutoffError,
     updateCutoffTime: updateCutoffTimeMutation.mutateAsync,
     updateDeveloperMode: updateDeveloperModeMutation.mutateAsync,
-    isUpdating: updateCutoffTimeMutation.isPending || updateDeveloperModeMutation.isPending,
-    updateError: updateCutoffTimeMutation.error || updateDeveloperModeMutation.error,
+    updateMaintenanceMode: updateMaintenanceModeMutation.mutateAsync,
+    isUpdating: updateCutoffTimeMutation.isPending || updateDeveloperModeMutation.isPending || updateMaintenanceModeMutation.isPending,
+    updateError: updateCutoffTimeMutation.error || updateDeveloperModeMutation.error || updateMaintenanceModeMutation.error,
   };
 };
 

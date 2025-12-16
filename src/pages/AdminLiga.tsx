@@ -12,16 +12,16 @@ import { Link } from 'react-router-dom';
 import { useCookieConsent } from '@/hooks/useCookieConsent';
 
 type ProfileRow = { league_id: number; role: string; };
-type LeagueRow = { 
-  id: number; 
-  name: string; 
-  week: number; 
-  budget: number; 
-  min_bet: number; 
-  max_bet: number; 
-  type: 'free' | 'premium'; 
-  reset_budget: string; 
-  join_code: string; 
+type LeagueRow = {
+  id: number;
+  name: string;
+  week: number;
+  budget: number;
+  min_bet: number;
+  max_bet: number;
+  type: 'free' | 'premium';
+  reset_budget: string;
+  join_code: string;
   league_season: number;
   available_leagues: number[];
 };
@@ -191,7 +191,7 @@ const AdminLiga: React.FC = () => {
           .select('id, name, week, budget, min_bet, max_bet, type, league_season, reset_budget, join_code, available_leagues')
           .eq('id', profileData.league_id)
           .maybeSingle();
-        
+
         if (leagueError) {
           // If available_leagues column doesn't exist, try without it
           if (leagueError.message.includes('available_leagues')) {
@@ -200,9 +200,9 @@ const AdminLiga: React.FC = () => {
               .select('id, name, week, budget, min_bet, max_bet, type, league_season, reset_budget, join_code')
               .eq('id', profileData.league_id)
               .maybeSingle();
-            
+
             if (fallbackError) throw fallbackError;
-            
+
             setLeagueData(fallbackData as LeagueRow);
             if (fallbackData) {
               setEditLeagueName(fallbackData.name);
@@ -210,7 +210,7 @@ const AdminLiga: React.FC = () => {
               setEditMinBet(fallbackData.min_bet);
               setEditMaxBet(fallbackData.max_bet);
               setEditResetBudget(fallbackData.reset_budget);
-              
+
               // Use default available leagues when column doesn't exist
               setSelectedLeagues([140, 2, 3, 262]);
             }
@@ -226,12 +226,12 @@ const AdminLiga: React.FC = () => {
             setEditMinBet(league.min_bet);
             setEditMaxBet(league.max_bet);
             setEditResetBudget(league.reset_budget);
-            
+
             // Initialize selected leagues
             setSelectedLeagues((league as any).available_leagues || [140, 2, 3, 262]);
           }
         }
-        
+
         // Set available leagues
         setAvailableLeagues(allLeagues);
       } catch (e: any) {
@@ -260,13 +260,13 @@ const AdminLiga: React.FC = () => {
       if (editMinBet !== leagueData.min_bet) { updates.min_bet = editMinBet; hasChanges = true; }
       if (editMaxBet !== leagueData.max_bet) { updates.max_bet = editMaxBet; hasChanges = true; }
       if (editResetBudget !== leagueData.reset_budget) { updates.reset_budget = editResetBudget; hasChanges = true; }
-      
+
       // Check if available leagues changed
       const currentLeagues = (leagueData as any).available_leagues || [];
       const leaguesChanged = JSON.stringify(currentLeagues.sort()) !== JSON.stringify(selectedLeagues.sort());
-      if (leaguesChanged) { 
-        updates.available_leagues = selectedLeagues; 
-        hasChanges = true; 
+      if (leaguesChanged) {
+        updates.available_leagues = selectedLeagues;
+        hasChanges = true;
       }
 
       if (!hasChanges) { toast({ title: 'Sin cambios', description: 'No se detectaron cambios para actualizar.' }); return; }
@@ -283,124 +283,139 @@ const AdminLiga: React.FC = () => {
   };
 
   const handleLeagueToggle = (leagueId: number) => {
-    setSelectedLeagues(prev => 
-      prev.includes(leagueId) 
+    setSelectedLeagues(prev =>
+      prev.includes(leagueId)
         ? prev.filter(id => id !== leagueId)
         : [...prev, leagueId]
     );
   };
 
 
-const handleResetWeek = async () => {
-  if (!leagueId) return;
+  const handleResetWeek = async () => {
+    if (!leagueId) return;
 
-  try {
-    setResettingWeek(true);
+    try {
+      setResettingWeek(true);
 
-    // 1️⃣ Obtener el usuario con más y menos puntos en esta liga
-    const { data: users, error: usersError } = await supabase
-      .from('profiles')
-      .select('id, total_points')
-      .eq('league_id', leagueId)
-      .order('total_points', { ascending: false });
+      // 1️⃣ Obtener el usuario con más y menos puntos en esta liga
+      const { data: users, error: usersError } = await supabase
+        .from('profiles')
+        .select('id, total_points')
+        .eq('league_id', leagueId)
+        .order('total_points', { ascending: false });
 
-    if (usersError) throw usersError;
-    if (!users || users.length === 0) throw new Error('No hay usuarios en la liga.');
+      if (usersError) throw usersError;
+      if (!users || users.length === 0) throw new Error('No hay usuarios en la liga.');
 
-    const championId = users[0].id; // más puntos
-    const lastId = users[users.length - 1].id; // menos puntos
+      const championId = users[0].id; // más puntos
+      const lastId = users[users.length - 1].id; // menos puntos
 
-    // 2️⃣ Obtener la temporada actual
-    const { data: league, error: leagueFetchError } = await supabase
-      .from('leagues')
-      .select('league_season')
-      .eq('id', leagueId)
-      .single();
+      // 2️⃣ Obtener la temporada actual
+      const { data: league, error: leagueFetchError } = await supabase
+        .from('leagues')
+        .select('league_season')
+        .eq('id', leagueId)
+        .single();
 
-    if (leagueFetchError) throw leagueFetchError;
-    const currentSeason = league?.league_season ?? 1;
+      if (leagueFetchError) throw leagueFetchError;
+      const currentSeason = league?.league_season ?? 1;
 
-    // 3️⃣ Actualizar la liga: semana, temporada, previous_champion y previous_last
-    const { error: leagueError } = await supabase
-      .from('leagues')
-      .update({
-        week: 1,
-        league_season: currentSeason + 1,
-        previous_champion: championId,
-        previous_last: lastId,
-      })
-      .eq('id', leagueId);
+      // 3️⃣ Actualizar la liga: semana, temporada, previous_champion y previous_last
+      const { error: leagueError } = await supabase
+        .from('leagues')
+        .update({
+          week: 1,
+          league_season: currentSeason + 1,
+          previous_champion: championId,
+          previous_last: lastId,
+        })
+        .eq('id', leagueId);
 
-    if (leagueError) throw leagueError;
+      if (leagueError) throw leagueError;
 
-    // 4️⃣ Resetear puntos de todos los usuarios de la liga
-    const { error: profilesError } = await supabase
-      .from('profiles')
-      .update({ total_points: 0 })
-      .eq('league_id', leagueId);
+      // 4️⃣ Resetear puntos de todos los usuarios de la liga
+      const { error: profilesError } = await supabase
+        .from('profiles')
+        .update({ total_points: 0 })
+        .eq('league_id', leagueId);
 
-    if (profilesError) throw profilesError;
+      if (profilesError) throw profilesError;
 
-    toast({
-      title: 'Liga reseteada',
-      description: 'Semana, temporada y puntos reiniciados. Campeón y último actualizados.',
-    });
-  } catch (e: any) {
-    toast({
-      title: 'Error',
-      description: e?.message ?? 'No se pudo resetear la liga.',
-      variant: 'destructive',
-    });
-  } finally {
-    setResettingWeek(false);
-    setConfirmingReset(false);
-  }
-};
-
-const handleResetWeekManually = async () => {
-  if (!leagueId) return;
-
-  try {
-    setResettingWeekManually(true);
-
-    // Ejecutar reset manual de semana específico para esta liga
-    const { data, error } = await supabase.functions.invoke('admin-reset-budgets', {
-      body: { 
-        manual_week_reset: true,
-        force: true,
-        league_id: leagueId  // Solo resetear esta liga específica
-      },
-    });
-
-    if (error) {
-      throw error;
+      toast({
+        title: 'Liga reseteada',
+        description: 'Semana, temporada y puntos reiniciados. Campeón y último actualizados.',
+      });
+    } catch (e: any) {
+      toast({
+        title: 'Error',
+        description: e?.message ?? 'No se pudo resetear la liga.',
+        variant: 'destructive',
+      });
+    } finally {
+      setResettingWeek(false);
+      setConfirmingReset(false);
     }
+  };
 
-    toast({
-      title: 'Reset de Semana Completado',
-      description: 'Semana incrementada, puntos guardados y presupuestos reseteados para tu liga',
-    });
+  const handleResetWeekManually = async () => {
+    if (!leagueId) return;
 
-    // Refrescar datos de la liga
-    const { data: updatedLeague, error: leagueError } = await supabase
-      .from('leagues')
-      .select('week')
-      .eq('id', leagueId)
-      .single();
-    
-    if (!leagueError && updatedLeague) {
-      setLeagueData(prev => prev ? { ...prev, week: updatedLeague.week } : null);
+    try {
+      setResettingWeekManually(true);
+
+      // 0. Generar noticia de bloqueos para esta liga ANTES de resetear
+      console.log('Generando noticias de bloqueo para liga:', leagueId);
+      const { error: newsError } = await supabase.rpc('generate_block_news_for_league', {
+        target_league_id: leagueId
+      });
+
+      if (newsError) {
+        console.error('Error generando noticias de bloqueo:', newsError);
+        toast({
+          title: 'Advertencia',
+          description: 'No se pudieron generar las noticias de bloqueos, pero se continuará con el reset.',
+          variant: 'destructive',
+        });
+      }
+
+      // Ejecutar reset manual de semana específico para esta liga
+      const { data, error } = await supabase.functions.invoke('admin-reset-budgets', {
+        body: {
+          manual_week_reset: true,
+          force: true,
+          league_id: leagueId  // Solo resetear esta liga específica
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: 'Reset de Semana Completado',
+        description: 'Semana incrementada, puntos guardados y presupuestos reseteados para tu liga',
+      });
+
+      // Refrescar datos de la liga
+      const { data: updatedLeague, error: leagueError } = await supabase
+        .from('leagues')
+        .select('week')
+        .eq('id', leagueId)
+        .single();
+
+      if (!leagueError && updatedLeague) {
+        setLeagueData(prev => prev ? { ...prev, week: updatedLeague.week } : null);
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error en Reset de Semana',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setResettingWeekManually(false);
     }
-  } catch (error: any) {
-    toast({
-      title: 'Error en Reset de Semana',
-      description: error.message,
-      variant: 'destructive',
-    });
-  } finally {
-    setResettingWeekManually(false);
-  }
-};
+  };
 
   return (
     <div>
@@ -454,11 +469,11 @@ const handleResetWeekManually = async () => {
                                   Actualiza a premium para poder editar todos estos datos:
                                 </p>
                               </div>
-                              
+
                               {/* Mostrar configuración actual (solo lectura) */}
                               <div className="bg-gray-50 p-4 rounded-lg space-y-3">
                                 <h4 className="font-semibold text-sm text-gray-700">Configuración actual (solo lectura):</h4>
-                                
+
                                 <div className="grid grid-cols-2 gap-3 text-sm">
                                   <div>
                                     <span className="font-medium text-gray-600">Nombre:</span>
@@ -487,13 +502,13 @@ const handleResetWeekManually = async () => {
                             <>
                               <div className="space-y-2">
                                 <Label htmlFor="league-name">Nombre de la Liga</Label>
-                                <Input 
+                                <Input
                                   id="league-name"
-                                  value={editLeagueName} 
+                                  value={editLeagueName}
                                   onChange={e => setEditLeagueName(e.target.value)}
                                 />
                               </div>
-                              
+
                               <div className="space-y-2">
                                 <Label>Presupuesto: {editBudget}</Label>
                                 <input
@@ -508,7 +523,7 @@ const handleResetWeekManually = async () => {
                                   autoFocus
                                 />
                               </div>
-                              
+
                               <div className="space-y-2">
                                 <Label>Puntos invertidos mínimos: {editMinBet}</Label>
                                 <input
@@ -521,7 +536,7 @@ const handleResetWeekManually = async () => {
                                   className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-success"
                                 />
                               </div>
-                              
+
                               <div className="space-y-2">
                                 <Label>Puntos invertidos máximos: {editMaxBet}</Label>
                                 <input
@@ -534,12 +549,12 @@ const handleResetWeekManually = async () => {
                                   className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
                                 />
                               </div>
-                              
+
                               <div className="space-y-2">
                                 <Label htmlFor="reset-budget">Frecuencia de reseteo de presupuesto</Label>
-                                <select 
+                                <select
                                   id="reset-budget"
-                                  value={editResetBudget} 
+                                  value={editResetBudget}
                                   onChange={e => setEditResetBudget(e.target.value)}
                                   className="w-full p-2 border border-gray-300 rounded-md"
                                 >
@@ -549,7 +564,7 @@ const handleResetWeekManually = async () => {
                               </div>
                             </>
                           )}
-                          
+
                           <div className="space-y-2">
                             <Label>Ligas disponibles para participar</Label>
                             {leagueData?.type === 'free' ? (
@@ -592,17 +607,17 @@ const handleResetWeekManually = async () => {
                               </>
                             )}
                           </div>
-                          
+
                           <div className="flex justify-end gap-2 pt-4">
-                            <Button 
+                            <Button
                               className="jambol-button"
                               onClick={() => setIsEditFormOpen(false)}
                             >
                               Cancelar
                             </Button>
-                            <Button 
+                            <Button
                               className="jambol-button"
-                              onClick={handleUpdateLeague} 
+                              onClick={handleUpdateLeague}
                               disabled={isUpdatingLeague}
                             >
                               {isUpdatingLeague ? 'Actualizando...' : 'Actualizar'}
@@ -642,8 +657,8 @@ const handleResetWeekManually = async () => {
               </CardContent>
               <CardFooter>
                 {leagueData?.type === 'free' ? (
-                  <Button 
-                    disabled 
+                  <Button
+                    disabled
                     className="jambol-button opacity-50 cursor-not-allowed"
                   >
                     Reset Manual de Semana
@@ -651,7 +666,7 @@ const handleResetWeekManually = async () => {
                 ) : (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button 
+                      <Button
                         disabled={resettingWeekManually}
                         className="jambol-button"
                       >
@@ -673,7 +688,7 @@ const handleResetWeekManually = async () => {
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction 
+                        <AlertDialogAction
                           onClick={handleResetWeekManually}
                           className="jambol-button"
                         >

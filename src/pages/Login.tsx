@@ -13,51 +13,18 @@ import { SiteFooter } from '@/components/layout/SiteFooter';
 import { useCookieConsent } from '@/hooks/useCookieConsent';
 import { SEO } from "@/components/SEO";
 
+import { useBettingSettings } from '@/hooks/useBettingSettings';
+
+// ... existing imports ...
+
 export const Login = () => {
   const { signIn, user, loading } = useAuth();
-  const { handleError } = useErrorHandler();
-  const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
-  const { consent } = useCookieConsent();
+  const { maintenanceMode, isLoading: settingsLoading } = useBettingSettings();
+  // ... existing hooks ...
 
-  useEffect(() => {
-    document.title = 'Jambol — Iniciar Sesión';
-  }, []);
+  // ... existing code ...
 
-  useEffect(() => {
-    if (!consent?.analytics) {
-      return;
-    }
-
-    const script1 = document.createElement('script');
-    script1.async = true;
-    script1.src = 'https://www.googletagmanager.com/gtag/js?id=G-N8SYMCJED4';
-    document.head.appendChild(script1);
-
-    const script2 = document.createElement('script');
-    script2.innerHTML = `
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-N8SYMCJED4');
-    `;
-    document.head.appendChild(script2);
-
-    return () => {
-      if (script1.parentNode) {
-        script1.parentNode.removeChild(script1);
-      }
-      if (script2.parentNode) {
-        script2.parentNode.removeChild(script2);
-      }
-    };
-  }, [consent?.analytics]);
-
-  if (loading) {
+  if (loading || (user && settingsLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -72,7 +39,7 @@ export const Login = () => {
     );
   }
 
-  if (user) {
+  if (user && !maintenanceMode) {
     return <Navigate to="/home" replace />;
   }
 

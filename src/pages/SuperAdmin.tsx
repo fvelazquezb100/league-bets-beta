@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { NewsManagement } from '@/components/NewsManagement';
 import { BettingSettingsControl } from '@/components/BettingSettingsControl';
 import { DeveloperModeControl } from '@/components/DeveloperModeControl';
+import { MaintenanceModeControl } from '@/components/MaintenanceModeControl';
 import { useLastProcessedMatch } from '@/hooks/useLastProcessedMatch';
 import { useNavigate } from 'react-router-dom';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -472,6 +473,9 @@ const SuperAdmin: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
           <div className="lg:col-span-1 h-full">
             <DeveloperModeControl />
+          </div>
+          <div className="lg:col-span-1 h-full">
+            <MaintenanceModeControl />
           </div>
         </div>
 
