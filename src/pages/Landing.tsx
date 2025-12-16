@@ -5,6 +5,7 @@ import { APP_CONFIG } from '@/config/app';
 import { useAuth } from '@/contexts/AuthContext';
 import { SiteFooter } from '@/components/layout/SiteFooter';
 import { useCookieConsent } from '@/hooks/useCookieConsent';
+import { useBettingSettings } from '@/hooks/useBettingSettings';
 
 const HOW_IT_WORKS_STEPS = [
   'Crea tu cuenta y recibe tus primeros puntos virtuales.',
@@ -123,16 +124,273 @@ const SCREENSHOT_IMAGES = [
   },
 ] as const;
 
-import { useBettingSettings } from '@/hooks/useBettingSettings';
-
-// ... existing imports ...
-
 export const Landing = () => {
   const { user, loading } = useAuth();
+  const { consent } = useCookieConsent();
   const { maintenanceMode, isLoading: settingsLoading } = useBettingSettings();
-  // ... existing hooks ...
 
-  // ... existing code ...
+  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isImageTransitioning, setIsImageTransitioning] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [autoPlay, setAutoPlay] = useState(true);
+
+  const handleImageSelect = (index: number) => {
+    if (index === currentImageIndex) return;
+    setAutoPlay(false); // Stop auto-play on manual interaction
+    setIsImageTransitioning(true);
+    setTimeout(() => {
+      setCurrentImageIndex(index);
+      setIsImageTransitioning(false);
+    }, 300);
+  };
+
+  useEffect(() => {
+    const pageTitle = 'Jambol — Predice, Compite y Domina';
+    const description =
+      'Jambol es tu fantasy estratégico: pronostica partidos, crea ligas privadas y escala la clasificación con puntos virtuales.';
+    const keywords =
+      'jambol, pronósticos simulados, fantasy fútbol, ligas privadas, selecciones deportivas, puntos virtuales, clasificaciones en vivo';
+    const image = APP_CONFIG.ASSETS.LOGO;
+    const currentUrl = window.location.origin + window.location.pathname;
+
+    document.title = pageTitle;
+
+    const metaDefinitions = [
+      {
+        selector: 'meta[name="description"]',
+        attributes: { name: 'description' },
+        content: description,
+      },
+      {
+        selector: 'meta[name="keywords"]',
+        attributes: { name: 'keywords' },
+        content: keywords,
+      },
+      {
+        selector: 'meta[property="og:title"]',
+        attributes: { property: 'og:title' },
+        content: pageTitle,
+      },
+      {
+        selector: 'meta[property="og:description"]',
+        attributes: { property: 'og:description' },
+        content: description,
+      },
+      {
+        selector: 'meta[property="og:image"]',
+        attributes: { property: 'og:image' },
+        content: image,
+      },
+      {
+        selector: 'meta[property="og:url"]',
+        attributes: { property: 'og:url' },
+        content: currentUrl,
+      },
+      {
+        selector: 'meta[property="og:type"]',
+        attributes: { property: 'og:type' },
+        content: 'website',
+      },
+      {
+        selector: 'meta[name="twitter:title"]',
+        attributes: { name: 'twitter:title' },
+        content: pageTitle,
+      },
+      {
+        selector: 'meta[name="twitter:description"]',
+        attributes: { name: 'twitter:description' },
+        content: description,
+      },
+      {
+        selector: 'meta[name="twitter:image"]',
+        attributes: { name: 'twitter:image' },
+        content: image,
+      },
+      {
+        selector: 'meta[name="twitter:card"]',
+        attributes: { name: 'twitter:card' },
+        content: 'summary_large_image',
+      },
+    ];
+
+    const managedMeta = metaDefinitions.map(({ selector, attributes, content }) => {
+      let element = document.querySelector(selector) as HTMLMetaElement | null;
+      let created = false;
+
+      if (!element) {
+        element = document.createElement('meta');
+        Object.entries(attributes).forEach(([attribute, value]) => {
+          element?.setAttribute(attribute, value);
+        });
+        document.head.appendChild(element);
+        created = true;
+      }
+
+      const previousContent = element.getAttribute('content') ?? undefined;
+      element.setAttribute('content', content);
+
+      return { element, previousContent, created };
+    });
+
+    // Canonical URL
+    let canonicalLink = document.querySelector('link[rel="canonical"]');
+    const previousCanonical = canonicalLink?.getAttribute('href') ?? undefined;
+    if (!canonicalLink) {
+      canonicalLink = document.createElement('link');
+      canonicalLink.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonicalLink);
+    }
+    canonicalLink.setAttribute('href', currentUrl);
+
+    // Structured Data (JSON-LD)
+    const structuredData = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        // WebApplication
+        {
+          '@type': 'WebApplication',
+          name: 'Jambol',
+          description:
+            'Jambol es tu fantasy estratégico: pronostica partidos, crea ligas privadas y escala la clasificación con puntos virtuales.',
+          url: window.location.origin,
+          applicationCategory: 'GameApplication',
+          operatingSystem: 'Web',
+          offers: {
+            '@type': 'Offer',
+            price: '0',
+            priceCurrency: 'EUR',
+          },
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: '4.5',
+            ratingCount: '120',
+          },
+          publisher: {
+            '@type': 'Organization',
+            name: 'Jambol',
+            url: window.location.origin,
+          },
+        },
+        // Organization
+        {
+          '@type': 'Organization',
+          name: 'Jambol',
+          url: window.location.origin,
+          logo: image,
+          description:
+            'Jambol es tu fantasy estratégico: pronostica partidos, crea ligas privadas y escala la clasificación con puntos virtuales.',
+        },
+        // BreadcrumbList
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            {
+              '@type': 'ListItem',
+              position: 1,
+              name: 'Inicio',
+              item: window.location.origin,
+            },
+          ],
+        },
+      ]
+    };
+
+    let scriptTag = document.querySelector('script[type="application/ld+json"]');
+    const previousScriptContent = scriptTag?.textContent ?? undefined;
+    if (!scriptTag) {
+      scriptTag = document.createElement('script');
+      scriptTag.setAttribute('type', 'application/ld+json');
+      document.head.appendChild(scriptTag);
+    }
+    scriptTag.textContent = JSON.stringify(structuredData);
+
+    return () => {
+      managedMeta.forEach(({ element, previousContent, created }) => {
+        if (created && element.parentNode) {
+          element.parentNode.removeChild(element);
+        } else if (!created && typeof previousContent === 'string') {
+          element.setAttribute('content', previousContent);
+        }
+      });
+
+      // Restore canonical URL
+      if (canonicalLink) {
+        if (previousCanonical) {
+          canonicalLink.setAttribute('href', previousCanonical);
+        } else if (canonicalLink.parentNode) {
+          canonicalLink.parentNode.removeChild(canonicalLink);
+        }
+      }
+
+      // Restore structured data
+      if (scriptTag) {
+        if (previousScriptContent) {
+          scriptTag.textContent = previousScriptContent;
+        } else if (scriptTag.parentNode) {
+          scriptTag.parentNode.removeChild(scriptTag);
+        }
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!consent?.analytics) {
+      return;
+    }
+
+    const script1 = document.createElement('script');
+    script1.async = true;
+    script1.src = 'https://www.googletagmanager.com/gtag/js?id=G-N8SYMCJED4';
+    document.head.appendChild(script1);
+
+    const script2 = document.createElement('script');
+    script2.innerHTML = `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-N8SYMCJED4');
+    `;
+    document.head.appendChild(script2);
+
+    return () => {
+      if (script1.parentNode) {
+        script1.parentNode.removeChild(script1);
+      }
+      if (script2.parentNode) {
+        script2.parentNode.removeChild(script2);
+      }
+    };
+  }, [consent?.analytics]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setCurrentQuoteIndex((prevIndex) => (prevIndex + 1) % COMMUNITY_QUOTES.length);
+        setIsTransitioning(false);
+      }, 300); // Duración de la transición
+    }, 4000); // Cambia cada 4 segundos
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (!autoPlay) return;
+
+    const interval = setInterval(() => {
+      setIsImageTransitioning(true);
+      setTimeout(() => {
+        setCurrentImageIndex((prevIndex) => (prevIndex + 1) % SCREENSHOT_IMAGES.length);
+        setIsImageTransitioning(false);
+      }, 500); // Duración de la transición fade
+    }, 3000); // Cambia cada 3 segundos
+
+    return () => clearInterval(interval);
+  }, [autoPlay]);
+
+  const currentScreenshot = SCREENSHOT_IMAGES[currentImageIndex];
 
   if (loading || (user && settingsLoading)) {
     return (
@@ -543,89 +801,20 @@ export const Landing = () => {
                     <circle cx="16" cy="6" r="1" fill="currentColor" />
                   </svg>
                 </div>
-                <h3 className="text-3xl font-bold text-white mb-3">Liga Premium</h3>
-                <p className="text-white/90 mb-6 text-base">
-                  Todo lo que necesitas para dominar la competición
+
+                <h3 className="text-2xl font-bold text-white mb-3">Liga Premium</h3>
+                <p className="text-white/80 text-sm leading-relaxed mb-6">
+                  La experiencia definitiva. Desbloquea todas las funcionalidades avanzadas y domina tu liga con herramientas profesionales.
                 </p>
-                <ul className="space-y-3 text-white text-sm w-full text-left">
-                  <li className="flex items-center gap-3">
-                    <svg className="w-5 h-5 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>Control total de puntos</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <svg className="w-5 h-5 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>Análisis avanzado</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <svg className="w-5 h-5 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>Herramientas estratégicas</span>
-                  </li>
-                </ul>
+
+                <div className="flex items-center gap-2 rounded-full border border-[#FFC72C]/30 bg-[#FFC72C]/10 px-4 py-1.5 text-xs font-medium text-[#FFC72C] group-hover:bg-[#FFC72C] group-hover:text-[#2D2D2D] transition-colors">
+                  <span>Ver todas las ventajas</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section
-        id="seguridad"
-        className="bg-gradient-to-br from-[#FFC72C] via-[#E6B328] to-[#CC9F24] py-24 text-white"
-      >
-        <div className="container mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-bold">
-            Juego responsable, sin dinero real
-          </h2>
-          <p className="mt-4 max-w-3xl text-lg text-white/90">
-            Jambol utiliza puntos virtuales sin valor económico. No se realizan pagos ni se ofrecen
-            premios monetarios. Nuestro sistema está diseñado para fomentar la estrategia, la sana
-            competencia y la diversión.
-          </p>
-
-          <div className="mt-10 grid gap-6 md:grid-cols-3">
-            {[
-              'Puntos virtuales, sin dinero real.',
-              'Registros auditables y estadísticas públicas.',
-              'Moderación activa contra comportamientos tóxicos.',
-            ].map((item) => (
-              <div
-                key={item}
-                className="rounded-3xl border-2 border-[#FFC72C] bg-[#2D2D2D] p-6 shadow-lg relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:scale-105 hover:border-[#FFC72C]/90 cursor-pointer group"
-              >
-                <div className="absolute top-0 right-0 w-16 h-16 bg-[#FFC72C] opacity-20 rounded-bl-full transition-opacity duration-300 group-hover:opacity-30"></div>
-                <p className="text-lg text-white/90 relative z-10 transition-colors duration-300 group-hover:text-white">{item}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="cta-final" className="bg-gradient-to-b from-[#FFC72C]/10 to-white py-24 text-center">
-        <div className="container mx-auto px-6">
-          <h2 className="text-4xl font-bold text-foreground">
-            Demuestra que sabes más que el resto
-          </h2>
-          <p className="mx-auto mt-4 max-w-3xl text-lg text-muted-foreground">
-            Regístrate gratis, crea tu liga y empieza a jugar hoy mismo. Cada jornada es una nueva
-            oportunidad para dominar la clasificación.
-          </p>
-
-          <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:justify-center">
-            <Link to="/signup" className="w-full sm:w-auto" aria-label="Crear cuenta en Jambol y empezar a jugar">
-              <Button size="lg" className="jambol-button w-full text-lg px-10 py-4">
-                Empezar ahora
-              </Button>
-            </Link>
-            <Link to="/login" className="w-full sm:w-auto" aria-label="Iniciar sesión en tu cuenta de Jambol">
-              <Button size="lg" className="jambol-button w-full text-lg px-10 py-4">
-                Ya tengo cuenta
-              </Button>
-            </Link>
           </div>
         </div>
       </section>

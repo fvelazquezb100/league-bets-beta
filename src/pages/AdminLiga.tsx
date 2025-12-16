@@ -678,6 +678,7 @@ const AdminLiga: React.FC = () => {
                         <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                         <AlertDialogDescription>
                           Esta acción ejecutará el reset de semana para tu liga:
+                          <br />• Generará automáticamente una noticia con los bloqueos de la semana
                           <br />• Guardará los puntos de la semana actual
                           <br />• Incrementará la semana de tu liga
                           <br />• Reseteará los presupuestos de los usuarios de tu liga
