@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { User, Shield, Eye, EyeOff, LogOut, AlertTriangle } from 'lucide-react';
+import { User, Shield, Eye, EyeOff, LogOut, AlertTriangle, Heart } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -272,8 +272,7 @@ export const Settings = () => {
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Ajustes</h1>
-      <div className="grid gap-6 max-w-2xl">
-
+      <div className="grid gap-6 md:grid-cols-2 max-w-4xl">
         {/* Mi Perfil */}
         <Card>
           <CardHeader>
@@ -370,8 +369,39 @@ export const Settings = () => {
           </CardContent>
         </Card>
 
-        {/* Cambiar Contraseña */}
+        {/* Apoyar nuestro proyecto */}
         <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Heart className="h-5 w-5 text-red-500" />
+              Apoyar nuestro proyecto
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Si disfrutas usando Jambol y quieres ayudarnos a seguir mejorando, considera apoyarnos. 
+                Tu contribución nos ayuda a mantener y mejorar el servicio.
+              </p>
+              <Button
+                asChild
+                className="w-full jambol-button bg-[#FFC72C] text-black hover:bg-[#FFD54F]"
+              >
+                <a
+                  href="https://www.paypal.com/ncp/payment/WVF5SKN3B8PCN"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Heart className="h-4 w-4 mr-2" />
+                  Apoyar con PayPal
+                </a>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Cambiar Contraseña */}
+        <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle>Cambiar Contraseña</CardTitle>
           </CardHeader>
@@ -471,7 +501,7 @@ export const Settings = () => {
 
         {/* Leave League Card */}
         {profile.league_id && (
-          <Card>
+          <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <LogOut className="h-5 w-5" />
