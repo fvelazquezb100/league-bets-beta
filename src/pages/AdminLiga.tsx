@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Copy, Settings, Calendar } from 'lucide-react';
+import { Copy, Settings } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Link } from 'react-router-dom';
@@ -637,7 +637,10 @@ const AdminLiga: React.FC = () => {
           <>
             <Card>
               <CardHeader>
-                <CardTitle>Reset Manual de Semana</CardTitle>
+                <CardTitle>Reseteo Manual de Semana</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Resetea manualmente la jornada y no esperes al martes.
+                </p>
               </CardHeader>
               <CardContent className="space-y-4">
                 {leagueData?.type === 'free' ? (
@@ -657,12 +660,7 @@ const AdminLiga: React.FC = () => {
               </CardContent>
               <CardFooter>
                 {leagueData?.type === 'free' ? (
-                  <Button
-                    disabled
-                    className="jambol-button opacity-50 cursor-not-allowed"
-                  >
-                    Reset Manual de Semana
-                  </Button>
+                  null
                 ) : (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -670,7 +668,7 @@ const AdminLiga: React.FC = () => {
                         disabled={resettingWeekManually}
                         className="jambol-button"
                       >
-                        {resettingWeekManually ? 'Reseteando...' : 'Reset Manual de Semana'}
+                        {resettingWeekManually ? 'Reseteando...' : 'Reseteo Manual de Semana'}
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -708,9 +706,8 @@ const AdminLiga: React.FC = () => {
         {leagueData && leagueId && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Control de Disponibilidad de Partidos
+              <CardTitle>
+                Control de Dias de Partidos
               </CardTitle>
               <p className="text-sm text-muted-foreground">
                 Gestiona qué días están disponibles los partidos en vivo en {leagueData.name}
