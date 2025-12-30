@@ -147,9 +147,9 @@ function computeFinalGoals(params: {
 
 function evaluateBet(
   bet: any,
-  fr: { 
-    home_goals: number; 
-    away_goals: number; 
+  fr: {
+    home_goals: number;
+    away_goals: number;
     outcome: "home" | "away" | "draw";
     halftime_home?: number;
     halftime_away?: number;
@@ -159,6 +159,8 @@ function evaluateBet(
     match_status?: "FT" | "AET" | "PEN";
     penalty_home?: number;
     penalty_away?: number;
+    final_goals_home?: number;
+    final_goals_away?: number;
   } | undefined,
 ): boolean {
   try {
@@ -169,7 +171,7 @@ function evaluateBet(
     // For bet_selections table: use market and selection
     const market = bet.market || bet.market_bets || "";
     const selection = bet.selection || bet.bet_selection || "";
-    
+
     // Clean selection text (remove odds if present)
     let cleanSelection = selection;
     if (cleanSelection && cleanSelection.includes(' @ ')) {
@@ -179,7 +181,7 @@ function evaluateBet(
 
     const marketLower = market.toLowerCase().trim();
     const selectionLower = cleanSelection.toLowerCase().trim();
-    
+
     const hg = Number(fr.home_goals ?? 0);
     const ag = Number(fr.away_goals ?? 0);
     const total = hg + ag;
@@ -187,15 +189,41 @@ function evaluateBet(
     console.log(`Evaluating bet:`, {
       market: marketLower,
       selection: selectionLower,
-      matchResult: { 
-        hg, 
-        ag, 
-        outcome: fr.outcome, 
+      matchResult: {
+        hg,
+        ag,
+        outcome: fr.outcome,
         halftime: fr.halftime_outcome,
         halftime_home: fr.halftime_home,
-        halftime_away: fr.halftime_away
+        halftime_away: fr.halftime_away,
+        match_status: fr.match_status,
+        final_goals: { home: fr.final_goals_home, away: fr.final_goals_away },
+        penalties: { home: fr.penalty_home, away: fr.penalty_away }
       }
     });
+
+    // To Qualify / Se Clasifica (ID: 61)
+    if (marketLower === "to qualify" || marketLower === "se clasifica") {
+      // Calculate total composite score: Goals (Regular + ET) + Penalties
+      const goalsHome = fr.final_goals_home ?? hg; // Fallback to reg goals if final not parsed (should usually be present)
+      const goalsAway = fr.final_goals_away ?? ag;
+
+      const pensHome = fr.penalty_home ?? 0;
+      const pensAway = fr.penalty_away ?? 0;
+
+      const totalHome = goalsHome + pensHome;
+      const totalAway = goalsAway + pensAway;
+
+      console.log(`To Qualify evaluation: Home ${totalHome} vs Away ${totalAway} (Goals: ${goalsHome}-${goalsAway}, Pens: ${pensHome}-${pensAway})`);
+
+      if (selectionLower.includes("home") || selectionLower.includes("local") || selectionLower.includes("1")) {
+        return totalHome > totalAway;
+      }
+      if (selectionLower.includes("away") || selectionLower.includes("visitante") || selectionLower.includes("2")) {
+        return totalAway > totalHome;
+      }
+      return false;
+    }
 
     // Match Winner / Ganador del Partido
     if (marketLower === "ganador del partido") {
@@ -237,7 +265,7 @@ function evaluateBet(
 
     // First Half Winner / Ganador del 1er Tiempo
     if (marketLower === "ganador del 1er tiempo") {
-      
+
       console.log(`First half bet evaluation:`, {
         market: marketLower,
         selection: selectionLower,
@@ -246,7 +274,7 @@ function evaluateBet(
         halftime_away: fr.halftime_away,
         fullMatchResult: fr
       });
-      
+
       // Calculate halftime outcome from goals if not available
       let halftimeOutcome = fr.halftime_outcome;
       if (!halftimeOutcome && fr.halftime_home !== undefined && fr.halftime_away !== undefined) {
@@ -259,7 +287,7 @@ function evaluateBet(
         }
         console.log(`Calculated halftime outcome from goals: ${halftimeOutcome} (${fr.halftime_home}-${fr.halftime_away})`);
       }
-      
+
       if (halftimeOutcome) {
         if (selectionLower.includes("home") || selectionLower.includes("local")) {
           const result = halftimeOutcome === "home";
@@ -287,11 +315,11 @@ function evaluateBet(
       let secondHalfAway: number | undefined;
 
       if (fr.second_half_home !== undefined && fr.second_half_home !== null &&
-          fr.second_half_away !== undefined && fr.second_half_away !== null) {
+        fr.second_half_away !== undefined && fr.second_half_away !== null) {
         secondHalfHome = Number(fr.second_half_home);
         secondHalfAway = Number(fr.second_half_away);
       } else if (fr.halftime_home !== undefined && fr.halftime_home !== null &&
-                 fr.halftime_away !== undefined && fr.halftime_away !== null) {
+        fr.halftime_away !== undefined && fr.halftime_away !== null) {
         secondHalfHome = hg - Number(fr.halftime_home);
         secondHalfAway = ag - Number(fr.halftime_away);
       }
@@ -337,10 +365,10 @@ function evaluateBet(
         if (parts.length === 2) {
           const htPart = parts[0].trim();
           const ftPart = parts[1].trim();
-          
+
           let htCorrect = false;
           let ftCorrect = false;
-          
+
           // Calculate halftime outcome if not available
           let halftimeOutcome = fr.halftime_outcome;
           if (!halftimeOutcome && fr.halftime_home !== undefined && fr.halftime_away !== undefined) {
@@ -352,7 +380,7 @@ function evaluateBet(
               halftimeOutcome = "draw";
             }
           }
-          
+
           console.log(`HT/FT bet evaluation:`, {
             market: marketLower,
             selection: selectionLower,
@@ -362,12 +390,12 @@ function evaluateBet(
             halftimeGoals: { home: fr.halftime_home, away: fr.halftime_away },
             fullTimeOutcome: fr.outcome
           });
-          
+
           if (!halftimeOutcome) {
             console.log(`No halftime data available for HT/FT bet`);
             return false;
           }
-          
+
           // Check halftime outcome - handle both English and Spanish
           if (htPart.toLowerCase().includes("home") || htPart.toLowerCase().includes("local") || htPart.includes("1")) {
             htCorrect = halftimeOutcome === "home";
@@ -376,7 +404,7 @@ function evaluateBet(
           } else if (htPart.toLowerCase().includes("draw") || htPart.toLowerCase().includes("empate") || htPart.includes("x")) {
             htCorrect = halftimeOutcome === "draw";
           }
-          
+
           // Check full-time outcome - handle both English and Spanish
           if (ftPart.toLowerCase().includes("home") || ftPart.toLowerCase().includes("local") || ftPart.includes("1")) {
             ftCorrect = fr.outcome === "home";
@@ -385,9 +413,9 @@ function evaluateBet(
           } else if (ftPart.toLowerCase().includes("draw") || ftPart.toLowerCase().includes("empate") || ftPart.includes("x")) {
             ftCorrect = fr.outcome === "draw";
           }
-          
+
           console.log(`HT/FT result:`, { htCorrect, ftCorrect, finalResult: htCorrect && ftCorrect });
-          
+
           return htCorrect && ftCorrect;
         }
       }
@@ -396,7 +424,7 @@ function evaluateBet(
 
     // Goals Over/Under / Goles Más/Menos de
     if (marketLower === "goles más/menos de") {
-      
+
       let threshold: number | null = null;
       let over = selectionLower.includes("over") || selectionLower.includes("más");
       let under = selectionLower.includes("under") || selectionLower.includes("menos");
@@ -438,10 +466,10 @@ function evaluateBet(
         if (parts.length === 2) {
           const resultPart = parts[0].trim();
           const overUnderPart = parts[1].trim();
-          
+
           let resultCorrect = false;
           let overUnderCorrect = false;
-          
+
           // Check result part
           if (resultPart.includes("home") || resultPart.includes("local")) {
             resultCorrect = fr.outcome === "home";
@@ -450,7 +478,7 @@ function evaluateBet(
           } else if (resultPart.includes("draw") || resultPart.includes("empate")) {
             resultCorrect = fr.outcome === "draw";
           }
-          
+
           // Check over/under part
           if (overUnderPart.includes("over") || overUnderPart.includes("más")) {
             const thresholdMatch = overUnderPart.match(/([0-9]+(?:\.[0-9]+)?)/);
@@ -465,7 +493,7 @@ function evaluateBet(
               overUnderCorrect = total < threshold;
             }
           }
-          
+
           return resultCorrect && overUnderCorrect;
         }
       }
@@ -479,10 +507,10 @@ function evaluateBet(
         if (parts.length === 2) {
           const resultPart = parts[0].trim();
           const bttsPart = parts[1].trim();
-          
+
           let resultCorrect = false;
           let bttsCorrect = false;
-          
+
           // Check result part
           if (resultPart.includes("home") || resultPart.includes("local")) {
             resultCorrect = fr.outcome === "home";
@@ -491,7 +519,7 @@ function evaluateBet(
           } else if (resultPart.includes("draw") || resultPart.includes("empate")) {
             resultCorrect = fr.outcome === "draw";
           }
-          
+
           // Check both teams score part
           const bothScored = hg > 0 && ag > 0;
           if (bttsPart.includes("yes") || bttsPart.includes("sí") || bttsPart.includes("si")) {
@@ -499,7 +527,7 @@ function evaluateBet(
           } else if (bttsPart.includes("no")) {
             bttsCorrect = !bothScored;
           }
-          
+
           return resultCorrect && bttsCorrect;
         }
       }
@@ -508,14 +536,14 @@ function evaluateBet(
 
     // Result + Over/Under combinations (legacy format with & or and)
     if (selectionLower.includes("&") || selectionLower.includes("and")) {
-      const parts = selectionLower.split(/[&]|and/).map(p => p.trim());
+      const parts = selectionLower.split(/[&]|and/).map((p: string) => p.trim());
       if (parts.length === 2) {
         const resultPart = parts[0];
         const overUnderPart = parts[1];
-        
+
         let resultCorrect = false;
         let overUnderCorrect = false;
-        
+
         // Check result part
         if (resultPart.includes("home") || resultPart.includes("local")) {
           resultCorrect = fr.outcome === "home";
@@ -524,7 +552,7 @@ function evaluateBet(
         } else if (resultPart.includes("draw") || resultPart.includes("empate")) {
           resultCorrect = fr.outcome === "draw";
         }
-        
+
         // Check over/under part
         if (overUnderPart.includes("over") || overUnderPart.includes("más")) {
           const thresholdMatch = overUnderPart.match(/([0-9]+(?:\.[0-9]+)?)/);
@@ -539,7 +567,7 @@ function evaluateBet(
             overUnderCorrect = total < threshold;
           }
         }
-        
+
         return resultCorrect && overUnderCorrect;
       }
     }
@@ -552,10 +580,10 @@ function evaluateBet(
   }
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   console.log('Protected function called');
   const startTime = Date.now();
-  
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -574,15 +602,15 @@ serve(async (req) => {
     const secretFromHeader = req.headers.get('x-internal-secret');
     const secretFromBody = parsedBody.internal_secret;
     const providedSecret = secretFromHeader || secretFromBody;
-    
+
     console.log('Internal secret from header present:', !!secretFromHeader);
     console.log('Internal secret from body present:', !!secretFromBody);
-    
+
     // @ts-ignore - Deno global
     const INTERNAL_SECRET = Deno.env.get("INTERNAL_FUNCTION_SECRET");
     if (!INTERNAL_SECRET) {
       console.error('Missing INTERNAL_FUNCTION_SECRET environment variable');
-      return new Response(JSON.stringify({ 
+      return new Response(JSON.stringify({
         error: 'Server configuration error: Missing internal secret',
         code: 'MISSING_INTERNAL_SECRET'
       }), {
@@ -593,7 +621,7 @@ serve(async (req) => {
 
     if (!providedSecret || providedSecret !== INTERNAL_SECRET) {
       console.error('Invalid or missing internal secret');
-      return new Response(JSON.stringify({ 
+      return new Response(JSON.stringify({
         error: 'Unauthorized: Invalid internal secret',
         code: 'INVALID_INTERNAL_SECRET'
       }), {
@@ -611,7 +639,7 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     if (!SUPABASE_URL) {
       console.error("Missing SUPABASE_URL environment variable");
-      return new Response(JSON.stringify({ 
+      return new Response(JSON.stringify({
         error: "Server configuration error: Missing Supabase URL",
         code: "MISSING_SUPABASE_URL"
       }), {
@@ -624,10 +652,10 @@ serve(async (req) => {
     const API_FOOTBALL_KEY = Deno.env.get("API_FOOTBALL_KEY");
 
     console.log('SERVICE_ROLE_KEY present:', !!SERVICE_ROLE_KEY);
-    
+
     if (!SERVICE_ROLE_KEY) {
       console.error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
-      return new Response(JSON.stringify({ 
+      return new Response(JSON.stringify({
         error: 'Server configuration error: Missing service role key',
         code: 'MISSING_SERVICE_KEY'
       }), {
@@ -638,7 +666,7 @@ serve(async (req) => {
 
     if (!API_FOOTBALL_KEY) {
       console.error('Missing API_FOOTBALL_KEY environment variable');
-      return new Response(JSON.stringify({ 
+      return new Response(JSON.stringify({
         error: 'Server configuration error: Missing API Football key',
         code: 'MISSING_API_KEY'
       }), {
@@ -658,35 +686,35 @@ serve(async (req) => {
     // 1) Fetch recently finished fixtures for all leagues
     const baseUrl = "https://v3.football.api-sports.io";
     let allFinishedFixtures: any[] = [];
-    
+
     for (const leagueId of leagueIds) {
       const leagueName = leagueId === 143
         ? 'Copa del Rey'
         : leagueId === 32
-        ? 'Clasificación Europea Mundial'
-        : null;
-      
+          ? 'Clasificación Europea Mundial'
+          : null;
+
       console.log(`Fetching finished fixtures for ${leagueName} (ID: ${leagueId})`);
-      
+
       // Fetch fixtures with different statuses separately
       const statuses = ['FT', 'AET', 'PEN'];
       let leagueFixtures: any[] = [];
-      
+
       for (const status of statuses) {
         console.log(`Fetching ${status} fixtures for ${leagueName}`);
-        
+
         const finishedRes = await fetch(`${baseUrl}/fixtures?league=${leagueId}&status=${status}&last=50`, {
           headers: { "x-apisports-key": API_FOOTBALL_KEY },
         });
-        
+
         if (!finishedRes.ok) {
           console.warn(`Failed to fetch ${status} fixtures for league ${leagueId}: ${finishedRes.status}`);
           continue; // Skip this status and continue with others
         }
-        
+
         const finishedJson = await finishedRes.json();
         const finished = finishedJson?.response ?? [];
-        
+
         // Add league info and status to each fixture
         finished.forEach((fixture: any) => {
           if (fixture?.fixture?.id) {
@@ -695,21 +723,20 @@ serve(async (req) => {
             fixture.match_status = status; // Track how the match ended
           }
         });
-        
+
         leagueFixtures.push(...finished);
         console.log(`Found ${finished.length} ${status} fixtures for ${leagueName}`);
       }
-      
+
       allFinishedFixtures.push(...leagueFixtures);
       console.log(`Total fixtures found for ${leagueName}: ${leagueFixtures.length}`);
     }
-    
+
     const finished = allFinishedFixtures;
 
-    const outcomeMap = new Map<number, "home" | "away" | "draw">();
-    const resultsMap = new Map<number, { 
-      home_goals: number; 
-      away_goals: number; 
+    const resultsMap = new Map<number, {
+      home_goals: number;
+      away_goals: number;
       outcome: "home" | "away" | "draw";
       halftime_home?: number;
       halftime_away?: number;
@@ -719,8 +746,10 @@ serve(async (req) => {
       match_status?: "FT" | "AET" | "PEN";
       penalty_home?: number;
       penalty_away?: number;
+      final_goals_home?: number;
+      final_goals_away?: number;
     }>();
-    
+
     for (const fx of finished) {
       const id = fx?.fixture?.id;
       const matchStatus = normalizeMatchStatus(fx?.match_status || fx?.fixture?.status?.short);
@@ -729,19 +758,17 @@ serve(async (req) => {
       const halftimeAwayRaw = fx?.score?.halftime?.away ?? null;
       const fullTimeHomeRaw = fx?.score?.fulltime?.home ?? null;
       const fullTimeAwayRaw = fx?.score?.fulltime?.away ?? null;
-      const extraHomeRaw = fx?.score?.extratime?.home ?? null;
-      const extraAwayRaw = fx?.score?.extratime?.away ?? null;
+
       const penaltyHomeRaw = fx?.score?.penalty?.home ?? null;
       const penaltyAwayRaw = fx?.score?.penalty?.away ?? null;
       const goalsHomeRaw = fx?.goals?.home ?? null;
       const goalsAwayRaw = fx?.goals?.away ?? null;
 
+
       const halftimeHome = halftimeHomeRaw != null ? Number(halftimeHomeRaw) : null;
       const halftimeAway = halftimeAwayRaw != null ? Number(halftimeAwayRaw) : null;
       const fullTimeHome = fullTimeHomeRaw != null ? Number(fullTimeHomeRaw) : null;
       const fullTimeAway = fullTimeAwayRaw != null ? Number(fullTimeAwayRaw) : null;
-      const extraTimeHome = extraHomeRaw != null ? Number(extraHomeRaw) : null;
-      const extraTimeAway = extraAwayRaw != null ? Number(extraAwayRaw) : null;
       const penaltyHome = penaltyHomeRaw != null ? Number(penaltyHomeRaw) : null;
       const penaltyAway = penaltyAwayRaw != null ? Number(penaltyAwayRaw) : null;
       const finalGoalsHome = goalsHomeRaw != null ? Number(goalsHomeRaw) : null;
@@ -752,7 +779,7 @@ serve(async (req) => {
 
       const oc = outcomeFromFixture(fx);
       let htOutcome: "home" | "away" | "draw" | undefined = undefined;
-      
+
       if (halftimeHome !== null && halftimeAway !== null) {
         if (halftimeHome > halftimeAway) htOutcome = "home";
         else if (halftimeHome < halftimeAway) htOutcome = "away";
@@ -775,12 +802,11 @@ serve(async (req) => {
           secondHalfAway = diff;
         }
       }
-      
-      if (id && oc) outcomeMap.set(id, oc);
+
       if (id != null && regulationHome != null && regulationAway != null && oc) {
-        resultsMap.set(id, { 
-          home_goals: regulationHome, 
-          away_goals: regulationAway, 
+        resultsMap.set(id, {
+          home_goals: regulationHome,
+          away_goals: regulationAway,
           outcome: oc,
           halftime_home: halftimeHome ?? undefined,
           halftime_away: halftimeAway ?? undefined,
@@ -790,18 +816,21 @@ serve(async (req) => {
           match_status: matchStatus ?? undefined,
           penalty_home: penaltyHome ?? undefined,
           penalty_away: penaltyAway ?? undefined,
+          // Store the RAW final goals from the API (includes ET if played, but usually not penalties in API-Football 'goals' field)
+          final_goals_home: finalGoalsHome ?? undefined,
+          final_goals_away: finalGoalsAway ?? undefined,
         });
       }
     }
-    
+
     const finishedIds = Array.from(resultsMap.keys());
     console.log(`Processing matchday results - found ${finishedIds.length} finished fixtures`);
-    
+
     if (finishedIds.length === 0) {
       console.log('No finished fixtures found, returning early');
       const endTime = Date.now();
-      return new Response(JSON.stringify({ 
-        ok: true, 
+      return new Response(JSON.stringify({
+        ok: true,
         updated: 0,
         message: 'No finished fixtures found to process',
         timing: { totalMs: endTime - startTime }
@@ -842,7 +871,7 @@ serve(async (req) => {
 
       const regulationHome = fullTimeHome ?? finalHomeGoals;
       const regulationAway = fullTimeAway ?? finalAwayGoals;
-      
+
       const finalHomeTotal = computeFinalGoals({
         regulation: regulationHome,
         finalGoals: finalHomeGoals,
@@ -888,7 +917,7 @@ serve(async (req) => {
           penaltyHome,
           penaltyAway,
         }) ?? `${regulationHome}-${regulationAway}`;
-        
+
         // Check if match_results entry already exists to preserve kickoff_time
         const { data: existingResult } = await sb
           .from('match_results')
@@ -922,7 +951,7 @@ serve(async (req) => {
           }, {
             onConflict: 'fixture_id'
           });
-        
+
         if (insertError) {
           console.error(`Error upserting match result for fixture ${id}:`, insertError);
         } else {
@@ -958,7 +987,7 @@ serve(async (req) => {
       if (!b || !b.fixture_id) continue;
       const currentStatus = (b.status ?? "pending").toLowerCase();
       if (currentStatus !== "pending") continue;
-      
+
       // Skip combo bets - they will be handled separately
       if (b.bet_type === 'combo') continue;
 
@@ -1006,7 +1035,7 @@ serve(async (req) => {
     // Process individual bet selections for combo bets
     for (const bs of betSelections ?? []) {
       if (!bs || !bs.fixture_id) continue;
-      
+
       const fr = resultsMap.get(Number(bs.fixture_id));
       if (!fr) continue;
 
@@ -1028,11 +1057,11 @@ serve(async (req) => {
       console.log(`Bet selection ${bs.id} evaluation result: ${isWin ? 'WON' : 'LOST'}`);
       const newStatus = isWin ? "won" : "lost";
 
-      selectionsToUpdate.push({ 
-        id: bs.id, 
-        status: newStatus 
+      selectionsToUpdate.push({
+        id: bs.id,
+        status: newStatus
       });
-      
+
       // Track which combo bets are affected
       affectedComboBets.add(bs.bet_id);
     }
@@ -1072,7 +1101,7 @@ serve(async (req) => {
     const totalUpdated = toUpdate.length + selectionsToUpdate.length;
     const endTime = Date.now();
     const processingTime = endTime - startTime;
-    
+
     console.log(`Processing completed successfully:`, {
       totalUpdated,
       singleBets: toUpdate.length,
@@ -1081,9 +1110,9 @@ serve(async (req) => {
       matchResults: matchResultsInserted,
       processingTimeMs: processingTime
     });
-    
-    return new Response(JSON.stringify({ 
-      ok: true, 
+
+    return new Response(JSON.stringify({
+      ok: true,
       updated: totalUpdated,
       singleBets: toUpdate.length,
       selections: selectionsToUpdate.length,
@@ -1095,22 +1124,22 @@ serve(async (req) => {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (e) {
+  } catch (e: any) {
     const endTime = Date.now();
     const processingTime = endTime - startTime;
-    
+
     console.error("=== PROCESS MATCHDAY RESULTS ERROR ===");
     console.error("Error message:", e?.message || String(e));
     console.error("Error stack:", e?.stack);
     console.error("Processing time before error:", processingTime, "ms");
-    
+
     const errorResponse = {
       error: 'Failed to process matchday results',
       details: e?.message || String(e),
       code: 'PROCESSING_ERROR',
       timing: { totalMs: processingTime }
     };
-    
+
     return new Response(JSON.stringify(errorResponse), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

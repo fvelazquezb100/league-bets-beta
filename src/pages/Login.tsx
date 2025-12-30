@@ -12,6 +12,7 @@ import { APP_CONFIG } from '@/config/app';
 import { SiteFooter } from '@/components/layout/SiteFooter';
 import { useCookieConsent } from '@/hooks/useCookieConsent';
 import { SEO } from "@/components/SEO";
+import { useBettingSettings } from '@/hooks/useBettingSettings';
 
 export const Login = () => {
   const { signIn, user, loading } = useAuth();
@@ -23,6 +24,7 @@ export const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const { consent } = useCookieConsent();
+  const { maintenanceMode, isLoading: settingsLoading } = useBettingSettings();
 
   useEffect(() => {
     document.title = 'Jambol — Iniciar Sesión';
@@ -57,7 +59,7 @@ export const Login = () => {
     };
   }, [consent?.analytics]);
 
-  if (loading) {
+  if (loading || (user && settingsLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -72,7 +74,7 @@ export const Login = () => {
     );
   }
 
-  if (user) {
+  if (user && !maintenanceMode) {
     return <Navigate to="/home" replace />;
   }
 

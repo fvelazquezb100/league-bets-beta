@@ -3,6 +3,7 @@ import type { MatchData, BetValue } from '@/pages/Bets';
 import { OddsIndicator } from './OddsIndicator';
 import { useOddsComparison, findOddsAuto } from '@/hooks/useOddsComparison';
 import { useIsPremiumLeague } from '@/hooks/useLeaguePremium';
+import { getBettingTranslation } from '@/utils/bettingTranslations';
 
 interface WinnerSelectorProps {
   match: MatchData;
@@ -14,11 +15,11 @@ interface WinnerSelectorProps {
 const WinnerSelector = ({ match, isFrozen, hasUserBetOnMarket, handleAddToSlip }: WinnerSelectorProps) => {
   const { data: oddsComparison } = useOddsComparison();
   const isPremium = useIsPremiumLeague();
-  
+
   // Find the three winner markets
   const findMarket = (marketName: string) => {
     if (!match.bookmakers || match.bookmakers.length === 0) return null;
-    
+
     for (const bookmaker of match.bookmakers) {
       const market = bookmaker.bets.find(bet => bet.name === marketName);
       if (market) return market;
@@ -29,6 +30,9 @@ const WinnerSelector = ({ match, isFrozen, hasUserBetOnMarket, handleAddToSlip }
   const matchWinnerMarket = findMarket('Match Winner');
   const firstHalfMarket = findMarket('First Half Winner');
   const secondHalfMarket = findMarket('Second Half Winner');
+  const toQualifyMarket = findMarket('To Qualify');
+
+  const isCopaDelRey = match.league?.name?.toLowerCase().includes('copa del rey') || match.league?.id === 143; // 143 is often Copa del Rey, but checking name is safer
 
   const handleBet = (marketName: string, selection: BetValue) => {
     if (isFrozen) return;
@@ -47,7 +51,7 @@ const WinnerSelector = ({ match, isFrozen, hasUserBetOnMarket, handleAddToSlip }
           {market.values.map((value: BetValue) => {
             let displayValue = value.value;
             const hasUserBet = hasUserBetOnMarket(match.fixture.id, marketName, value.value);
-            
+
             // Customize display based on selection
             if (value.value.toLowerCase().includes('home') || value.value === '1') {
               displayValue = 'Local'; // Always use "Local" for mobile optimization
@@ -70,22 +74,21 @@ const WinnerSelector = ({ match, isFrozen, hasUserBetOnMarket, handleAddToSlip }
                 key={value.value}
                 onClick={() => handleBet(marketName, value)}
                 disabled={isFrozen}
-                className={`flex-1 h-10 transition-all duration-200 hover:scale-[1.02] ${
-                  hasUserBet 
-                    ? 'bg-[#FFC72C] text-black border-2 border-[#FFC72C] hover:bg-[#FFC72C]/90 font-bold' 
-                    : 'jambol-button'
-                }`}
+                className={`flex-1 h-10 transition-all duration-200 hover:scale-[1.02] ${hasUserBet
+                  ? 'bg-[#FFC72C] text-black border-2 border-[#FFC72C] hover:bg-[#FFC72C]/90 font-bold'
+                  : 'jambol-button'
+                  }`}
               >
                 <div className="flex flex-col items-center">
                   <span className="text-xs font-medium">{displayValue}</span>
-                              <span className="text-sm font-bold flex items-center">
+                  <span className="text-sm font-bold flex items-center">
                     {value.odd}
-                                {isPremium && (
-                                  <OddsIndicator 
-                                    current={oddsData.current} 
-                                    previous={oddsData.previous} 
-                                  />
-                                )}
+                    {isPremium && (
+                      <OddsIndicator
+                        current={oddsData.current}
+                        previous={oddsData.previous}
+                      />
+                    )}
                   </span>
                 </div>
               </Button>
@@ -103,6 +106,7 @@ const WinnerSelector = ({ match, isFrozen, hasUserBetOnMarket, handleAddToSlip }
         {renderWinnerRow('Ganador del Partido', matchWinnerMarket, 'Ganador del Partido')}
         {renderWinnerRow('Ganador del 1er Tiempo', firstHalfMarket, 'Ganador del 1er Tiempo')}
         {renderWinnerRow('Ganador del 2do Tiempo', secondHalfMarket, 'Ganador del 2do Tiempo')}
+        {isCopaDelRey && renderWinnerRow(getBettingTranslation('To Qualify'), toQualifyMarket, 'To Qualify')}
       </div>
     </div>
   );

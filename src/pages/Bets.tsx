@@ -29,7 +29,7 @@ export type { UserBet } from '@/hooks/useUserBets';
 const Bets = () => {
   // Local UI state
   const [selectedBets, setSelectedBets] = useState<any[]>([]);
-  const { cutoffMinutes } = useBettingSettings();
+  const { cutoffMinutes, developerMode } = useBettingSettings();
   const [selectedLeague, setSelectedLeague] = useState<'primera' | 'champions' | 'europa' | 'liga-mx' | 'selecciones' | 'coparey'>('primera');
   const [openId, setOpenId] = useState<number | null>(null);
   const { consent } = useCookieConsent();
@@ -132,13 +132,13 @@ const Bets = () => {
       }
     };
   }, [consent?.analytics]);
-  
+
   // Hooks
   const { toast } = useToast();
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const { data: userProfile } = useUserProfile(user?.id);
-  
+
   // React Query hooks for data fetching
   const isSelecciones = selectedLeague === 'selecciones';
   const isCoparey = selectedLeague === 'coparey';
@@ -216,7 +216,7 @@ const Bets = () => {
     },
     staleTime: 60_000,
   });
-  
+
   // Derived loading and error states
   const loading = matchesLoading || userBetsLoading || leaguesLoading || availabilityLoading;
   const error = matchesError ? 'Failed to fetch or parse live betting data. Please try again later.' : null;
@@ -238,15 +238,15 @@ const Bets = () => {
       if (!matchDate || typeof matchDate !== 'string') {
         return false;
       }
-      
+
       const date = new Date(matchDate);
-      
+
       // Check if the date is valid
       if (isNaN(date.getTime())) {
         console.warn('Invalid date provided to isLiveBettingEnabled:', matchDate);
         return false;
       }
-      
+
       const dateStr = date.toISOString().split('T')[0];
       if (!availabilityMap.has(dateStr)) {
         return false;
@@ -291,7 +291,7 @@ const Bets = () => {
       // Intentar obtener la altura real del header
       const header = document.querySelector('header');
       const headerHeight = header ? header.offsetHeight + 40 : 140; // +40px de margen extra
-      
+
       const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
       const offsetPosition = elementPosition - headerHeight;
 
@@ -314,9 +314,10 @@ const Bets = () => {
       // Check if match is in the future (outside allowed timeframe) - BLOCK ALL FUTURE MATCHES
       const matchDate = new Date(match.fixture.date);
       const nextMondayEndOfDay = getNextMondayEndOfDay();
-      
+
       // For all other leagues, only allow betting until Monday 23:59
-      if (matchDate > nextMondayEndOfDay) {
+      // OR if developer mode is active, allow it regardless of time
+      if (matchDate > nextMondayEndOfDay && !developerMode) {
         toast({
           title: 'Partido no disponible',
           description: 'Solo se pueden participar en partidos de la semana actual. Las opciones para este partido no están disponibles aún.',
@@ -366,7 +367,7 @@ const Bets = () => {
 
   const findMarket = (match: MatchData, marketName: string) => {
     if (!match.bookmakers || match.bookmakers.length === 0) return undefined;
-    
+
     // Try exact match first - search through ALL bookmakers
     for (const bookmaker of match.bookmakers) {
       const market = bookmaker.bets.find(bet => bet.name === marketName);
@@ -374,7 +375,7 @@ const Bets = () => {
         return market;
       }
     }
-    
+
     // Try flexible matching for common market variations
     const marketVariations: Record<string, string[]> = {
       'Both Teams To Score': ['Both Teams To Score', 'Both Teams Score', 'BTTS', 'Both Teams To Score (Yes/No)'],
@@ -388,7 +389,7 @@ const Bets = () => {
       'Result/Total Goals': ['Result/Total Goals', 'Result & Total Goals', 'Match Result & Total Goals'],
       'Result/Both Teams Score': ['Result/Both Teams Score', 'Result & Both Teams Score', 'Match Result & BTTS']
     };
-    
+
     const variations = marketVariations[marketName] || [];
     for (const variation of variations) {
       for (const bookmaker of match.bookmakers) {
@@ -398,13 +399,13 @@ const Bets = () => {
         }
       }
     }
-    
+
     return undefined;
   };
 
   const getBetsForFixture = (fixtureId: number) => {
-    return userBets.filter(bet => 
-      bet.fixture_id === fixtureId || 
+    return userBets.filter(bet =>
+      bet.fixture_id === fixtureId ||
       (bet.bet_type === 'combo' && bet.bet_selections?.some(sel => sel.fixture_id === fixtureId))
     );
   };
@@ -419,11 +420,11 @@ const Bets = () => {
       } else {
         // For single bets, use market_bets field
         if (bet.market_bets) {
-          return bet.market_bets;
+          return getBettingTranslation(bet.market_bets);
         }
         // For combo bets with selections, use the market from bet_selections
         const selection = bet.bet_selections?.[0];
-        return selection ? selection.market : 'Boleto';
+        return selection ? getBettingTranslation(selection.market) : 'Boleto';
       }
     }).join(', ');
   };
@@ -431,7 +432,7 @@ const Bets = () => {
   const hasUserBetOnMarket = (fixtureId: number, marketName: string, selection: string) => {
     // Only check if this selection is in the current slip (selectedBets)
     // Do NOT check placed bets from database
-    return selectedBets.some(bet => 
+    return selectedBets.some(bet =>
       bet.fixtureId === fixtureId && bet.market === marketName && bet.selection === selection
     );
   };
@@ -440,7 +441,7 @@ const Bets = () => {
   const getMatchesByLeague = (league: string) => {
     const leagueMap: Record<string, number> = {
       'primera': 140,
-      
+
       'champions': 2,
       'europa': 3,
       'liga-mx': 262
@@ -457,7 +458,7 @@ const Bets = () => {
     const now = new Date();
     const nextMonday = new Date(now);
     const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-    
+
     // Calculate days until next Monday
     let daysUntilMonday;
     if (currentDay === 0) { // Sunday
@@ -467,7 +468,7 @@ const Bets = () => {
     } else { // Tuesday to Saturday
       daysUntilMonday = (8 - currentDay) % 7; // Days until next Monday
     }
-    
+
     nextMonday.setDate(now.getDate() + daysUntilMonday);
     nextMonday.setHours(23, 59, 59, 999);
     return nextMonday;
@@ -485,11 +486,11 @@ const Bets = () => {
 
   // Filter matches by availability control
   const leagueMatches = getMatchesByLeague(selectedLeague);
-  
+
   // Separate matches by live betting availability
   const liveBettingMatches: MatchData[] = [];
   const upcomingMatches: MatchData[] = [];
-  
+
   leagueMatches.forEach(match => {
     const date = new Date(match.fixture.date);
     if (isNaN(date.getTime())) {
@@ -508,7 +509,7 @@ const Bets = () => {
       return;
     }
 
-    if (isEnabled) {
+    if (isEnabled || developerMode) {
       liveBettingMatches.push(match);
     } else {
       upcomingMatches.push(match);
@@ -529,8 +530,8 @@ const Bets = () => {
         {matchesToRender.map((match) => {
           const kickoff = new Date(match.fixture.date);
           const freezeTime = new Date(kickoff.getTime() - cutoffMinutes * 60 * 1000);
-          const isFrozen = new Date() >= freezeTime;
-          
+          const isFrozen = developerMode ? false : new Date() >= freezeTime;
+
 
           return (
             <MagicCard
@@ -551,128 +552,128 @@ const Bets = () => {
                   onClick={() => toggle(match.fixture.id)}
                   className="w-full text-left flex items-center justify-between p-2 hover:bg-muted/50 rounded-md transition-colors"
                 >
-                <div className="text-left w-full">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-bold text-sm sm:text-lg text-foreground">{match.teams?.home?.name ?? 'Local'} vs {match.teams?.away?.name ?? 'Visitante'}</p>
-                      <p className="text-xs sm:text-sm text-muted-foreground">{new Date(match.fixture.date).toLocaleString()}</p>
+                  <div className="text-left w-full">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-bold text-sm sm:text-lg text-foreground">{match.teams?.home?.name ?? 'Local'} vs {match.teams?.away?.name ?? 'Visitante'}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">{new Date(match.fixture.date).toLocaleString()}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {getBetsForFixture(match.fixture.id).length > 0 && (
+                          <Badge variant="secondary" className="ml-2 bg-white text-black border-2 border-[#FFC72C] hover:bg-white focus:bg-white focus:ring-0 focus:ring-offset-0 cursor-default pointer-events-none">
+                            {getBetsForFixture(match.fixture.id).length} boleto{getBetsForFixture(match.fixture.id).length > 1 ? 's' : ''}
+                          </Badge>
+                        )}
+                        <svg
+                          className={`w-4 h-4 transition-transform duration-200 ${openId === match.fixture.id ? 'rotate-180' : ''
+                            }`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {getBetsForFixture(match.fixture.id).length > 0 && (
-                        <Badge variant="secondary" className="ml-2 bg-white text-black border-2 border-[#FFC72C] hover:bg-white focus:bg-white focus:ring-0 focus:ring-offset-0 cursor-default pointer-events-none">
-                          {getBetsForFixture(match.fixture.id).length} boleto{getBetsForFixture(match.fixture.id).length > 1 ? 's' : ''}
-                        </Badge>
-                      )}
-                      <svg
-                        className={`w-4 h-4 transition-transform duration-200 ${
-                          openId === match.fixture.id ? 'rotate-180' : ''
-                        }`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
+                    {getBetPreview(match.fixture.id) && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Tus boletos: {getBetPreview(match.fixture.id)}
+                      </p>
+                    )}
                   </div>
-                  {getBetPreview(match.fixture.id) && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Tus boletos: {getBetPreview(match.fixture.id)}
-                    </p>
-                  )}
-                </div>
-              </button>
-              
-              {openId === match.fixture.id && (
-                <div className="space-y-3 sm:space-y-6 pt-1 sm:pt-4 animate-in slide-in-from-top-2 duration-200">
-                  {/* Check if live betting is enabled for this match */}
-                  {(() => {
-                    // If showOdds is false, show upcoming matches without betting options
-                    if (!showOdds) {
-                      return (
-                        <div className="text-center py-8 text-muted-foreground">
-                          <p className="text-lg font-medium mb-2">Próximos encuentros</p>
-                          <p>Las opciones para este partido estarán disponibles próximamente.</p>
-                        </div>
-                      );
-                    }
-                    
-                    // Check if this match is blocked for the user
-                    if (blockedFixtures.includes(match.fixture.id)) {
-                      return (
-                        <div className="text-center py-8 text-muted-foreground">
-                          <p className="text-lg font-medium mb-2 text-red-500">Te han bloqueado este partido</p>
-                          <p>No puedes hacer selecciones en este partido porque otro usuario de tu liga lo ha bloqueado.</p>
-                        </div>
-                      );
-                    }
-                    
-                    // Check if live betting is enabled for this specific date
-                    if (!isLiveBettingEnabled(match.fixture.date)) {
-                      return (
-                        <div className="text-center py-8 text-muted-foreground">
-                          <p className="text-lg font-medium mb-2">Próximos encuentros</p>
-                          <p>Las opciones para este partido estarán disponibles próximamente.</p>
-                        </div>
-                      );
-                    }
-                    
-                    // Show normal betting options for current week matches
-                    // Check if there are any bookmakers available
-                    if (!match.bookmakers || match.bookmakers.length === 0) {
-                      return (
-                        <div className="text-center py-8 text-muted-foreground">
-                          <p>No hay opciones disponibles para este partido.</p>
-                        </div>
-                      );
-                    }
+                </button>
 
-                    return (
-                      <>
-                        {getBetTypesSorted().map(betType => {
-                          const market = findMarket(match, betType.apiName);
-                          
-                          // Special case for Result/Total Goals - always show even if market not found
-                          // The component will calculate odds internally
-                          if (betType.apiName === 'Result/Total Goals') {
+                {openId === match.fixture.id && (
+                  <div className="space-y-3 sm:space-y-6 pt-1 sm:pt-4 animate-in slide-in-from-top-2 duration-200">
+                    {/* Check if live betting is enabled for this match */}
+                    {(() => {
+                      // If showOdds is false, show upcoming matches without betting options
+                      if (!showOdds) {
+                        return (
+                          <div className="text-center py-8 text-muted-foreground">
+                            <p className="text-lg font-medium mb-2">Próximos encuentros</p>
+                            <p>Las opciones para este partido estarán disponibles próximamente.</p>
+                          </div>
+                        );
+                      }
+
+                      // Check if this match is blocked for the user
+                      if (blockedFixtures.includes(match.fixture.id)) {
+                        return (
+                          <div className="text-center py-8 text-muted-foreground">
+                            <p className="text-lg font-medium mb-2 text-red-500">Te han bloqueado este partido</p>
+                            <p>No puedes hacer selecciones en este partido porque otro usuario de tu liga lo ha bloqueado.</p>
+                          </div>
+                        );
+                      }
+
+                      // Check if lower level blocking (live betting check) applies
+                      // If Developer Mode is ON, we bypass this check to show everything
+                      if (!developerMode && !isLiveBettingEnabled(match.fixture.date)) {
+                        return (
+                          <div className="text-center py-8 text-muted-foreground">
+                            <p className="text-lg font-medium mb-2">Próximos encuentros</p>
+                            <p>Las opciones para este partido estarán disponibles próximamente.</p>
+                          </div>
+                        );
+                      }
+
+                      // Show normal betting options for current week matches
+                      // Check if there are any bookmakers available
+                      if (!match.bookmakers || match.bookmakers.length === 0) {
+                        return (
+                          <div className="text-center py-8 text-muted-foreground">
+                            <p>No hay opciones disponibles para este partido.</p>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <>
+                          {getBetTypesSorted().map(betType => {
+                            const market = findMarket(match, betType.apiName);
+
+                            // Special case for Result/Total Goals - always show even if market not found
+                            // The component will calculate odds internally
+                            if (betType.apiName === 'Result/Total Goals') {
+                              return (
+                                <BetMarketSection
+                                  key={betType.apiName}
+                                  match={match}
+                                  betType={betType}
+                                  market={market || { id: 0, name: 'Result/Total Goals', values: [] }}
+                                  isFrozen={isFrozen}
+                                  hasUserBetOnMarket={hasUserBetOnMarket}
+                                  handleAddToSlip={handleAddToSlip}
+                                />
+                              );
+                            }
+
+                            if (!market) return null;
+
                             return (
                               <BetMarketSection
                                 key={betType.apiName}
                                 match={match}
                                 betType={betType}
-                                market={market || { id: 0, name: 'Result/Total Goals', values: [] }}
+                                market={market}
                                 isFrozen={isFrozen}
                                 hasUserBetOnMarket={hasUserBetOnMarket}
                                 handleAddToSlip={handleAddToSlip}
                               />
                             );
-                          }
-                          
-                          if (!market) return null;
+                          })}
 
-                          return (
-                            <BetMarketSection
-                              key={betType.apiName}
-                              match={match}
-                              betType={betType}
-                              market={market}
-                              isFrozen={isFrozen}
-                              hasUserBetOnMarket={hasUserBetOnMarket}
-                              handleAddToSlip={handleAddToSlip}
-                            />
-                          );
-                        })}
-                        
-                        {getBetTypesSorted().every(betType => !findMarket(match, betType.apiName)) && (
-                          <div className="text-center py-8 text-muted-foreground">
-                            <p>No hay opciones disponibles para este partido.</p>
-                          </div>
-                        )}
-                      </>
-                    );
-                  })()}
-                </div>
-              )}
+                          {getBetTypesSorted().every(betType => !findMarket(match, betType.apiName)) && (
+                            <div className="text-center py-8 text-muted-foreground">
+                              <p>No hay opciones disponibles para este partido.</p>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
+                )}
               </div>
             </MagicCard>
           )
@@ -738,7 +739,7 @@ const Bets = () => {
   // Function to get available tabs based on available leagues
   const getAvailableTabs = () => {
     const tabs = [];
-    
+
     if (availableLeagues.includes(140)) {
       tabs.push({ value: 'primera', label: 'La Liga - Primera', leagueId: 140 });
     }
@@ -759,13 +760,13 @@ const Bets = () => {
     if (copareyEnabled) {
       tabs.push({ value: 'coparey', label: 'Copa del Rey', leagueId: 143 });
     }
-    
+
     return tabs;
   };
 
   const renderContent = () => {
     const availableTabs = getAvailableTabs();
-    
+
     // Don't render tabs until leagues are loaded
     if (leaguesLoading || seleccionesLoading || copareyLoading || availableTabs.length === 0) {
       return (
@@ -779,12 +780,12 @@ const Bets = () => {
         </div>
       );
     }
-    
+
     // If current selected league is not available, switch to the first available one
     if (availableTabs.length > 0 && !availableTabs.find(tab => tab.value === selectedLeague)) {
       setSelectedLeague(availableTabs[0].value as 'primera' | 'champions' | 'europa' | 'liga-mx' | 'selecciones' | 'coparey');
     }
-    
+
     return (
       <Tabs value={selectedLeague} onValueChange={(value) => setSelectedLeague(value as 'primera' | 'champions' | 'europa' | 'liga-mx' | 'selecciones' | 'coparey')} className="w-full">
         <TabsList className={`grid w-full mb-6 gap-2 h-auto ${availableTabs.length <= 2 ? 'grid-cols-2' : availableTabs.length === 3 ? 'grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'}`}>
@@ -864,13 +865,13 @@ const Bets = () => {
             const tabStyle = getTabStyle(tab.value);
 
             return (
-              <TabsTrigger 
+              <TabsTrigger
                 key={tab.value}
-                value={tab.value} 
+                value={tab.value}
                 className="relative overflow-hidden data-[state=active]:ring-2 data-[state=active]:ring-[#FFC72C] data-[state=active]:ring-offset-2"
               >
                 {/* Franjas de fondo */}
-                <div 
+                <div
                   className="absolute inset-0"
                   style={tabStyle}
                 />
@@ -892,7 +893,7 @@ const Bets = () => {
   return (
     <div className="w-full px-2 sm:container sm:mx-auto sm:p-4">
       <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Ligas</h1>
-      
+
       {/* Desktop Layout */}
       {!isMobile ? (
         <div className="flex flex-col md:flex-row gap-8">
@@ -900,23 +901,23 @@ const Bets = () => {
             {renderContent()}
           </div>
           <div className="w-full md:w-1/3 md:sticky md:top-32 md:self-start z-40">
-            <BetSlip 
-              selectedBets={selectedBets} 
+            <BetSlip
+              selectedBets={selectedBets}
               onRemoveBet={(betId) => setSelectedBets(prev => prev.filter(bet => bet.id !== betId))}
               onClearAll={() => setSelectedBets([])}
             />
           </div>
         </div>
       ) : (
-          /* Mobile Layout with Drawer */
+        /* Mobile Layout with Drawer */
         <div className="flex flex-col gap-4 sm:gap-8 w-full">
           <div className="w-full overflow-hidden">
             {renderContent()}
           </div>
 
           {/* Mobile Bet Slip - Fixed Bottom Bar */}
-          <MobileBetSlip 
-            selectedBets={selectedBets} 
+          <MobileBetSlip
+            selectedBets={selectedBets}
             onRemoveBet={(betId) => setSelectedBets(prev => prev.filter(bet => bet.id !== betId))}
             onClearAll={() => setSelectedBets([])}
           />

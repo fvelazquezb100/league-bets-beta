@@ -9,14 +9,20 @@ import { useBettingSettings } from '@/hooks/useBettingSettings';
 import { useToast } from '@/hooks/use-toast';
 
 export const BettingSettingsControl: React.FC = () => {
-  const { cutoffMinutes, isLoading, updateCutoffTime, isUpdating, updateError } = useBettingSettings();
+  const {
+    cutoffMinutes,
+    isLoading,
+    updateCutoffTime,
+    isUpdating,
+    updateError
+  } = useBettingSettings();
   const { toast } = useToast();
   const [newCutoffTime, setNewCutoffTime] = useState<string>('');
   const [isEditing, setIsEditing] = useState(false);
 
   const handleSave = async () => {
     const minutes = parseInt(newCutoffTime);
-    
+
     if (isNaN(minutes) || minutes < 1 || minutes > 120) {
       toast({
         title: "Error",
@@ -28,7 +34,7 @@ export const BettingSettingsControl: React.FC = () => {
 
     try {
       const result = await updateCutoffTime(minutes);
-      
+
       if (result.success) {
         toast({
           title: "Configuración actualizada",
@@ -144,8 +150,6 @@ export const BettingSettingsControl: React.FC = () => {
             </span>
           </div>
         )}
-
-        {/* Descripción informativa eliminada a petición: reglas y nota de aplicación inmediata */}
       </CardContent>
     </Card>
   );

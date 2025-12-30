@@ -35,7 +35,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
   const [weeklyBudget, setWeeklyBudget] = useState<number | null>(null);
   const [minBet, setMinBet] = useState<number>(10); // Default minimum bet
   const { toast } = useToast();
-  const { cutoffMinutes } = useBettingSettings();
+  const { cutoffMinutes, maintenanceMode } = useBettingSettings();
   const queryClient = useQueryClient();
 
   // Helper to adjust stake by 10, allowing values below minBet
@@ -85,7 +85,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
 
       if (profile) {
         setWeeklyBudget(profile.weekly_budget);
-        
+
         // Get minimum bet for the league
         if (profile.league_id) {
           const { data: league } = await supabase
@@ -93,7 +93,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
             .select('min_bet')
             .eq('id', profile.league_id)
             .single();
-          
+
           if (league && league.min_bet) {
             setMinBet(Math.floor(league.min_bet)); // Remove decimals
           }
@@ -112,6 +112,12 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
   }, [minBet]); // Removed stake dependency to prevent auto-setting
 
   const handlePlaceBet = async () => {
+    // Check maintenance mode first
+    if (maintenanceMode) {
+      window.location.reload(); // Force reload to trigger guard redirect
+      return;
+    }
+
     if (!stake || parseFloat(stake) <= 0) {
       toast({
         title: 'Error',
@@ -147,11 +153,11 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
       const freeze = new Date(kickoffTime.getTime() - cutoffMinutes * 60 * 1000);
       const now = new Date();
       const isFrozen = now >= freeze;
-      
-      
+
+
       return isFrozen;
     });
-    
+
     if (isAnyFrozen) {
       toast({
         title: 'Selecciones cerradas',
@@ -164,7 +170,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
     setIsSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         toast({
           title: 'Error',
@@ -200,9 +206,9 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
           variant: 'destructive',
         });
         return;
-      }  
+      }
 
-  // Nueva validación: máximo por boleto según la liga
+      // Nueva validación: máximo por boleto según la liga
       if (profile.league_id) {
         const { data: maxBetLeague, error: maxBetLeagueError } = await supabase
           .from('leagues')
@@ -227,7 +233,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
       }
 
 
-      
+
       // Validar presupuesto semanal disponible
       if (profile.weekly_budget < stakeAmount) {
         toast({
@@ -267,7 +273,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
           stake_amount: stakeAmount,
           selections: selections
         });
-        
+
         if (comboError) {
           throw comboError;
         }
@@ -400,9 +406,9 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
                   id="realizar-apuesta"
                   onClick={handlePlaceBet}
                   disabled={
-                    isSubmitting || 
-                    !stake || 
-                    parseFloat(stake) <= 0 || 
+                    isSubmitting ||
+                    !stake ||
+                    parseFloat(stake) <= 0 ||
                     (selectedBets.length > 1 && hasDuplicateFixtures) ||
                     selectedBets.some(bet => bet.kickoff ? (new Date() >= new Date(new Date(bet.kickoff).getTime() - cutoffMinutes * 60 * 1000)) : false)
                   }
