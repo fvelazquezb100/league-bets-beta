@@ -4,12 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { User, Shield, Eye, EyeOff, LogOut, AlertTriangle, Heart } from 'lucide-react';
+import { User, Shield, Eye, EyeOff, LogOut, AlertTriangle, Heart, Crown } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCookieConsent } from '@/hooks/useCookieConsent';
+import { useUserDonations } from '@/hooks/useUserDonations';
+import { PremiumUpgradeModal } from '@/components/PremiumUpgradeModal';
 
 interface Profile {
   id: string;
@@ -22,6 +24,7 @@ interface Profile {
 interface League {
   name: string;
   join_code: string;
+  type: 'free' | 'premium';
 }
 
 export const Settings = () => {
@@ -31,6 +34,7 @@ export const Settings = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [league, setLeague] = useState<League | null>(null);
   const [loading, setLoading] = useState(true);
+  const { data: donationsData } = useUserDonations(user?.id);
 
   useEffect(() => {
     document.title = 'Jambol — Ajustes';
@@ -55,6 +59,7 @@ export const Settings = () => {
   
   // Leave league state
   const [leaveLeagueLoading, setLeaveLeagueLoading] = useState(false);
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
 
   const fetchUserData = async () => {
     if (!user) return;
@@ -71,7 +76,7 @@ export const Settings = () => {
         if (profileData.league_id) {
           const { data: leagueData, error: leagueError } = await supabase
             .from('leagues')
-            .select('name, join_code')
+            .select('name, join_code, type')
             .eq('id', profileData.league_id)
             .single();
           if (!leagueError && leagueData) setLeague(leagueData);
@@ -263,6 +268,32 @@ export const Settings = () => {
     }
   };
 
+  const handleDonationClick = () => {
+    if (!user || !profile) {
+      toast({
+        title: 'Error',
+        description: 'Debes estar autenticado para realizar una donación',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Crear objeto con información personalizada para PayPal
+    const customData = {
+      user_id: user.id,
+      payment_type: 'donation',
+      league_id: profile.league_id || null,
+    };
+
+    // Codificar como JSON string para el parámetro custom de PayPal
+    const customParam = encodeURIComponent(JSON.stringify(customData));
+
+    // Construir URL de PayPal con parámetros personalizados
+    const paypalUrl = `https://www.paypal.com/ncp/payment/WVF5SKN3B8PCN?custom=${customParam}&item_name=Donación Jambol`;
+    
+    window.open(paypalUrl, '_blank', 'noopener,noreferrer');
+  };
+
   if (loading) return <p>Cargando perfil…</p>;
   if (!profile) return <p>No se pudo cargar el perfil.</p>;
 
@@ -369,39 +400,53 @@ export const Settings = () => {
           </CardContent>
         </Card>
 
-        {/* Apoyar nuestro proyecto */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Heart className="h-5 w-5 text-red-500" />
-              Apoyar nuestro proyecto
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Si disfrutas usando Jambol y quieres ayudarnos a seguir mejorando, considera apoyarnos. 
-                Tu contribución nos ayuda a mantener y mejorar el servicio.
-              </p>
-              <Button
-                asChild
-                className="w-full jambol-button bg-[#FFC72C] text-black hover:bg-[#FFD54F]"
-              >
-                <a
-                  href="https://www.paypal.com/ncp/payment/WVF5SKN3B8PCN"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Heart className="h-4 w-4 mr-2" />
-                  Apoyar con PayPal
-                </a>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Liga Premium */}
+        {profile.league_id && (
+          <Card className="border-2 border-yellow-400 bg-gradient-to-br from-yellow-50/50 to-amber-50/50 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Crown className="h-5 w-5 text-yellow-600" />
+                Liga Premium
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {league?.type === 'premium' ? (
+                  <div className="text-center py-4">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-100 mb-3">
+                      <Crown className="h-8 w-8 text-yellow-600" />
+                    </div>
+                    <p className="text-sm font-medium text-foreground mb-1">
+                      Tu liga es Premium
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Disfruta de todas las funcionalidades avanzadas
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-muted-foreground mb-2">
+                      <strong>⚠️ Funcionalidad Premium</strong>
+                    </p>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Actualiza a premium para desbloquear funcionalidades avanzadas como bloqueo de partidos, control de disponibilidad y más.
+                    </p>
+                    <Button
+                      className="w-full jambol-button bg-[#FFC72C] text-black hover:bg-[#FFD54F]"
+                      onClick={() => setIsPremiumModalOpen(true)}
+                    >
+                      <Crown className="h-4 w-4 mr-2" />
+                      Actualizar a Premium
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Cambiar Contraseña */}
-        <Card className="md:col-span-2">
+        <Card>
           <CardHeader>
             <CardTitle>Cambiar Contraseña</CardTitle>
           </CardHeader>
@@ -492,16 +537,52 @@ export const Settings = () => {
                 La contraseña debe tener al menos 6 caracteres.
               </p>
               
-              <Button type="submit" disabled={passwordLoading}>
+              <Button type="submit" disabled={passwordLoading} className="w-full">
                 {passwordLoading ? 'Guardando...' : 'Guardar'}
               </Button>
             </form>
           </CardContent>
         </Card>
 
+        {/* Apoyar nuestro proyecto */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Heart className="h-5 w-5 text-red-500" />
+              Apoyar nuestro proyecto
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Si disfrutas usando Jambol y quieres ayudarnos a seguir mejorando, considera apoyarnos. 
+                Tu contribución nos ayuda a mantener y mejorar el servicio.
+              </p>
+              <Button
+                onClick={handleDonationClick}
+                className="w-full jambol-button bg-[#FFC72C] text-black hover:bg-[#FFD54F]"
+              >
+                <Heart className="h-4 w-4 mr-2" />
+                Apoyar con PayPal
+              </Button>
+              {donationsData?.hasDonated && (
+                <div className="mt-4 p-3 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg text-center">
+                  <p className="text-sm font-medium text-amber-800 flex items-center justify-center gap-2">
+                    <Heart className="h-4 w-4 text-red-500 fill-red-500" />
+                    ¡Gracias por apoyarnos!
+                  </p>
+                  <p className="text-xs text-amber-700 mt-1">
+                    Tu apoyo nos ayuda a seguir mejorando Jambol
+                  </p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Leave League Card */}
         {profile.league_id && (
-          <Card className="md:col-span-2">
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <LogOut className="h-5 w-5" />
@@ -522,7 +603,7 @@ export const Settings = () => {
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button 
-                    className="jambol-button border-2 border-[#FFC72C] hover:bg-[#FFC72C] hover:text-black"
+                    className="jambol-button border-2 border-[#FFC72C] hover:bg-[#FFC72C] hover:text-black w-full"
                     disabled={leaveLeagueLoading}
                   >
                     <LogOut className="h-4 w-4 mr-2" />
@@ -564,6 +645,15 @@ export const Settings = () => {
           </Card>
         )}
       </div>
+
+      <PremiumUpgradeModal
+        isOpen={isPremiumModalOpen}
+        onClose={() => setIsPremiumModalOpen(false)}
+        onSuccess={async () => {
+          // Refresh user data to get updated league type
+          await fetchUserData();
+        }}
+      />
     </div>
   );
 };

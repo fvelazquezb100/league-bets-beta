@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Link } from 'react-router-dom';
 import { useCookieConsent } from '@/hooks/useCookieConsent';
+import { PremiumUpgradeModal } from '@/components/PremiumUpgradeModal';
 
 type ProfileRow = { league_id: number; role: string; };
 type LeagueRow = {
@@ -160,6 +161,7 @@ const AdminLiga: React.FC = () => {
   // Available leagues state
   const [availableLeagues, setAvailableLeagues] = React.useState<AvailableLeague[]>([]);
   const [selectedLeagues, setSelectedLeagues] = React.useState<number[]>([]);
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = React.useState(false);
 
   // Define available leagues
   const allLeagues: AvailableLeague[] = [
@@ -660,7 +662,12 @@ const AdminLiga: React.FC = () => {
               </CardContent>
               <CardFooter>
                 {leagueData?.type === 'free' ? (
-                  null
+                  <Button
+                    onClick={() => setIsPremiumModalOpen(true)}
+                    className="w-full jambol-button bg-[#FFC72C] text-black hover:bg-[#FFD54F]"
+                  >
+                    Actualizar a Premium
+                  </Button>
                 ) : (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -713,15 +720,21 @@ const AdminLiga: React.FC = () => {
                 Gestiona qué días están disponibles los partidos en vivo en {leagueData.name}
               </p>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               {leagueData?.type === 'free' ? (
                 <div className="text-center py-4">
                   <p className="text-muted-foreground mb-2">
                     <strong>⚠️ Funcionalidad Premium</strong>
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground mb-4">
                     Actualiza a premium para poder tener esta funcionalidad
                   </p>
+                  <Button
+                    onClick={() => setIsPremiumModalOpen(true)}
+                    className="w-full jambol-button bg-[#FFC72C] text-black hover:bg-[#FFD54F]"
+                  >
+                    Actualizar a Premium
+                  </Button>
                 </div>
               ) : (
                 <Link to="/league-match-availability">
@@ -747,6 +760,15 @@ const AdminLiga: React.FC = () => {
           </div>
         </div>
       )}
+
+      <PremiumUpgradeModal
+        isOpen={isPremiumModalOpen}
+        onClose={() => setIsPremiumModalOpen(false)}
+        onSuccess={() => {
+          // Reload page to refresh league data
+          window.location.reload();
+        }}
+      />
     </div>
   );
 };
