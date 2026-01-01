@@ -41,21 +41,10 @@ serve(async (req) => {
       );
     }
 
-    // Create authenticated client for user
-    const supabaseClient = createClient(
-      SUPABASE_URL,
-      authHeader.replace("Bearer ", "")
-    );
-
-    // Get the authenticated user
-    const {
-      data: { user },
-      error: userError,
-    } = await supabaseClient.auth.getUser();
-
-    if (userError || !user) {
+    const token = authHeader.replace("Bearer ", "").trim();
+    if (!token) {
       return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
+        JSON.stringify({ error: "Missing bearer token" }),
         {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -68,6 +57,22 @@ serve(async (req) => {
       SUPABASE_URL,
       SUPABASE_SERVICE_ROLE_KEY
     );
+
+    // Get the authenticated user from the provided token
+    const {
+      data: { user },
+      error: userError,
+    } = await supabaseAdmin.auth.getUser(token);
+
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
 
     // Get user's profile to check role and league_id
     const { data: profile, error: profileError } = await supabaseAdmin
