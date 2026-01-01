@@ -14,6 +14,9 @@ import { Award, ArrowDown, BarChart3, Calendar, TrendingUp, Target, DollarSign, 
 import { useCookieConsent } from '@/hooks/useCookieConsent';
 import { Button } from '@/components/ui/button';
 import { BlockMatchesModal } from '@/components/BlockMatchesModal';
+import { useUsersDonationStatus } from '@/hooks/useUserDonations';
+import { PremiumUpgradeModal } from '@/components/PremiumUpgradeModal';
+import { Crown } from 'lucide-react';
 
 export const Clasificacion = () => {
   const { user } = useAuth();
@@ -32,6 +35,7 @@ export const Clasificacion = () => {
   const [selectedWeek, setSelectedWeek] = useState<string>('total');
   const [showWeekFilter, setShowWeekFilter] = useState(false);
   const [playerStats, setPlayerStats] = useState<{ successRate: number; stakeSuccessRate: number } | null>(null);
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
 
   // Get league statistics
   const { data: leagueStats, isLoading: statsLoading } = useLeagueStatistics(leagueId);
@@ -44,6 +48,10 @@ export const Clasificacion = () => {
   
   // Get historical standings data
   const { data: historicalStandings, isLoading: historicalLoading } = useHistoricalStandings(leagueId);
+
+  // Get donation status for all users in standings
+  const userIds = standings?.map((s: any) => s.id).filter(Boolean) || [];
+  const { data: donationStatusMap } = useUsersDonationStatus(userIds);
 
   const fetchLeagueProfiles = async () => {
     if (!user) return;
@@ -342,6 +350,9 @@ export const Clasificacion = () => {
                     <TableCell className="font-medium text-xs sm:text-sm">{index + 1}</TableCell>
                     <TableCell className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
                       <span className="truncate">{profile.username || 'Usuario'}</span>
+                      {donationStatusMap?.get(profile.id) && (
+                        <span className="text-yellow-500 flex-shrink-0" title="Ha apoyado el proyecto">⭐</span>
+                      )}
                       {previousChampionName === profile.username && <Award className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 flex-shrink-0" />}
                       {previousLastName === profile.username && <ArrowDown className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 flex-shrink-0" />}
                     </TableCell>
@@ -371,22 +382,24 @@ export const Clasificacion = () => {
 
       {/* Cards Row - Desktop: 1/3 each, Mobile: stacked */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Historical Standings Card */}
-        <Card 
-          className="cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:border-primary/30"
-          onClick={openHistoricalModal}
-        >
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Evolución Histórica</p>
-                <p className="text-lg font-bold">Clasificación por Semanas</p>
-                <p className="text-xs text-muted-foreground">Ver evolución de posiciones</p>
+        {/* Historical Standings Card - Solo para ligas premium */}
+        {leagueType === 'premium' && (
+          <Card 
+            className="cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:border-primary/30"
+            onClick={openHistoricalModal}
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Evolución Histórica</p>
+                  <p className="text-lg font-bold">Grafica historia por Semanas</p>
+                  <p className="text-xs text-muted-foreground">Ver evolución de posiciones</p>
+                </div>
+                <TrendingUp className="h-5 w-5 text-primary" />
               </div>
-              <TrendingUp className="h-5 w-5 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Week Filter and League Statistics - Solo para ligas premium */}
         {leagueId && leagueType === 'premium' && (
@@ -449,6 +462,33 @@ export const Clasificacion = () => {
             </Card>
           </>
         )}
+
+        {/* Estadísticas Avanzadas - Solo para ligas free */}
+        {leagueId && leagueType === 'free' && (
+          <Card className="border-2 border-yellow-400 bg-gradient-to-br from-yellow-50/50 to-amber-50/50 opacity-60">
+            <CardContent className="p-4 h-full flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    <strong>⚠️ Funcionalidad Premium</strong>
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Actualiza a premium para acceder a estadísticas avanzadas
+                  </p>
+                  <Button
+                    onClick={() => setIsPremiumModalOpen(true)}
+                    className="w-full jambol-button bg-[#FFC72C] text-black hover:bg-[#FFD54F]"
+                    size="sm"
+                  >
+                    <Crown className="h-4 w-4 mr-2" />
+                    Actualizar a Premium
+                  </Button>
+                </div>
+                <BarChart3 className="h-5 w-5 text-muted-foreground flex-shrink-0 ml-2" />
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
 
@@ -487,13 +527,25 @@ export const Clasificacion = () => {
                   </CardContent>
                 </Card>
 
-                {leagueType === 'premium' && selectedPlayer.id !== user?.id && (
-                  <Card className="cursor-pointer hover:bg-muted/50 transition-colors flex items-center justify-center min-h-[100px]" onClick={openBlockModal}>
+                {selectedPlayer.id !== user?.id && (
+                  <Card 
+                    className={`flex items-center justify-center min-h-[100px] ${
+                      leagueType === 'premium' 
+                        ? 'cursor-pointer hover:bg-muted/50 transition-colors' 
+                        : 'opacity-60'
+                    }`} 
+                    onClick={leagueType === 'premium' ? openBlockModal : undefined}
+                  >
                     <CardHeader className="pb-2 pt-4">
                       <CardTitle className="text-base flex items-center justify-center gap-2">
                         <Ban className="w-4 h-4 text-red-500" />
                         Bloquear Partidos
                       </CardTitle>
+                      {leagueType === 'free' && (
+                        <p className="text-xs text-muted-foreground text-center mt-2">
+                          ⚠️ Funcionalidad Premium
+                        </p>
+                      )}
                     </CardHeader>
                   </Card>
                 )}
@@ -553,6 +605,16 @@ export const Clasificacion = () => {
         data={historicalStandings || {}}
         isLoading={historicalLoading}
         leagueName={leagueName}
+      />
+
+      {/* Premium Upgrade Modal */}
+      <PremiumUpgradeModal
+        isOpen={isPremiumModalOpen}
+        onClose={() => setIsPremiumModalOpen(false)}
+        onSuccess={() => {
+          // Refresh league data
+          fetchLeagueProfiles();
+        }}
       />
     </div>
   );
