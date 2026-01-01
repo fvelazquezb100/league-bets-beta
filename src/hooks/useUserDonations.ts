@@ -1,6 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+// Casting Supabase client to any to avoid type issues with generated types
+const sb: any = supabase;
+
 /**
  * Hook to check if a user has made donations
  * Returns the total donation amount and whether the user has donated
@@ -13,7 +16,7 @@ export function useUserDonations(userId: string | undefined) {
         return { hasDonated: false, totalAmount: 0 };
       }
 
-      const { data, error } = await supabase.rpc('get_user_total_donations', {
+      const { data, error } = await sb.rpc('get_user_total_donations', {
         user_uuid: userId,
       });
 
@@ -45,7 +48,7 @@ export function useUsersDonationStatus(userIds: string[]) {
         return new Map<string, boolean>();
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await sb
         .from('payments')
         .select('user_id')
         .in('user_id', userIds)
