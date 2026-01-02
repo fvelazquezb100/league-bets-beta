@@ -288,8 +288,10 @@ export const Settings = () => {
     // Codificar como JSON string para el parámetro custom de PayPal
     const customParam = encodeURIComponent(JSON.stringify(customData));
 
-    // Construir URL de PayPal con parámetros personalizados
-    const paypalUrl = `https://www.paypal.com/ncp/payment/WVF5SKN3B8PCN?custom=${customParam}&item_name=Donación Jambol`;
+    // Usar el botón hosted de PayPal y añadir el parámetro custom dinámicamente
+    // Nota: El notify_url y otras variables estáticas deben estar configuradas
+    // en el Button Manager de PayPal. El parámetro custom se añade aquí dinámicamente.
+    const paypalUrl = `https://www.paypal.com/donate/?hosted_button_id=M56PD6EZ7DZQE&custom=${customParam}`;
     
     window.open(paypalUrl, '_blank', 'noopener,noreferrer');
   };
