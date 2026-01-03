@@ -5,12 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Copy, Settings, Crown } from 'lucide-react';
+import { Copy, Settings, Crown, Shield } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Link } from 'react-router-dom';
 import { useCookieConsent } from '@/hooks/useCookieConsent';
 import { PremiumUpgradeModal } from '@/components/PremiumUpgradeModal';
+import { useUsersDonationStatus, useUsersProStatus } from '@/hooks/useUserDonations';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 type ProfileRow = { league_id: number; role: string; };
 type LeagueRow = {
@@ -162,6 +164,14 @@ const AdminLiga: React.FC = () => {
   const [availableLeagues, setAvailableLeagues] = React.useState<AvailableLeague[]>([]);
   const [selectedLeagues, setSelectedLeagues] = React.useState<number[]>([]);
   const [isPremiumModalOpen, setIsPremiumModalOpen] = React.useState(false);
+  const [leagueMembers, setLeagueMembers] = React.useState<Array<{ id: string; username: string; role: string }>>([]);
+  const [loadingMembers, setLoadingMembers] = React.useState(false);
+  const [assigningRole, setAssigningRole] = React.useState<string | null>(null);
+
+  // Get donation and PRO status for all league members
+  const memberIds = leagueMembers.map(m => m.id);
+  const { data: donationStatusMap } = useUsersDonationStatus(memberIds);
+  const { data: proStatusMap } = useUsersProStatus(memberIds);
 
   // Define available leagues
   const allLeagues: AvailableLeague[] = [
@@ -244,6 +254,81 @@ const AdminLiga: React.FC = () => {
     };
     fetchWeek();
   }, []);
+
+  // Fetch league members when leagueId changes
+  React.useEffect(() => {
+    const fetchLeagueMembers = async () => {
+      if (!leagueId) {
+        setLeagueMembers([]);
+        return;
+      }
+
+      try {
+        setLoadingMembers(true);
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, username, role')
+          .eq('league_id', leagueId)
+          .order('username', { ascending: true });
+
+        if (error) throw error;
+        setLeagueMembers(data || []);
+      } catch (error: any) {
+        console.error('Error fetching league members:', error);
+        toast({
+          title: 'Error',
+          description: 'No se pudieron cargar los miembros de la liga',
+          variant: 'destructive'
+        });
+      } finally {
+        setLoadingMembers(false);
+      }
+    };
+
+    fetchLeagueMembers();
+  }, [leagueId]);
+
+  // Function to assign admin role to a user
+  const handleAssignAdminRole = async (targetUserId: string) => {
+    if (!targetUserId) return;
+
+    try {
+      setAssigningRole(targetUserId);
+      const { data, error } = await supabase.functions.invoke('assign-league-admin-role', {
+        body: { target_user_id: targetUserId },
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast({
+          title: 'Éxito',
+          description: `Rol de administrador asignado a ${data.target_username || 'el usuario'}`,
+        });
+        // Refresh members list
+        const { data: membersData, error: membersError } = await supabase
+          .from('profiles')
+          .select('id, username, role')
+          .eq('league_id', leagueId)
+          .order('username', { ascending: true });
+
+        if (!membersError && membersData) {
+          setLeagueMembers(membersData);
+        }
+      } else {
+        throw new Error(data.error || 'No se pudo asignar el rol');
+      }
+    } catch (error: any) {
+      console.error('Error assigning admin role:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudo asignar el rol de administrador',
+        variant: 'destructive'
+      });
+    } finally {
+      setAssigningRole(null);
+    }
+  };
 
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -788,6 +873,67 @@ const AdminLiga: React.FC = () => {
                     Configurar Disponibilidad de Partidos
                   </Button>
                 </Link>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Miembros de la Liga - Solo para ligas premium */}
+        {userRole === 'admin_league' && leagueData?.type === 'premium' && (
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                Miembros de la Liga
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground mb-4">
+                Como administrador de una liga premium, puedes asignar el rol de administrador a otros miembros de tu liga.
+              </p>
+              {loadingMembers ? (
+                <p className="text-sm text-muted-foreground">Cargando miembros...</p>
+              ) : leagueMembers.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No hay miembros en la liga</p>
+              ) : (
+                <div className="space-y-3">
+                  {leagueMembers.map((member) => (
+                    <div
+                      key={member.id}
+                      className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{member.username}</span>
+                        {proStatusMap?.get(member.id) && (
+                          <span className="text-xs font-semibold text-purple-600">PRO</span>
+                        )}
+                        {donationStatusMap?.get(member.id) && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="text-yellow-500 flex-shrink-0 cursor-help">⭐</span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Ha apoyado el proyecto</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                        {member.role === 'admin_league' && (
+                          <Shield className="h-4 w-4 text-yellow-600" title="Administrador" />
+                        )}
+                      </div>
+                      {member.role !== 'admin_league' && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="jambol-button hover:bg-[#FFC72C] hover:text-black"
+                          onClick={() => handleAssignAdminRole(member.id)}
+                          disabled={assigningRole === member.id}
+                        >
+                          {assigningRole === member.id ? 'Asignando...' : 'Hacer Admin'}
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
