@@ -288,8 +288,10 @@ export const Settings = () => {
     // Codificar como JSON string para el parámetro custom de PayPal
     const customParam = encodeURIComponent(JSON.stringify(customData));
 
-    // Construir URL de PayPal con parámetros personalizados
-    const paypalUrl = `https://www.paypal.com/ncp/payment/WVF5SKN3B8PCN?custom=${customParam}&item_name=Donación Jambol`;
+    // Usar el botón hosted de PayPal y añadir el parámetro custom dinámicamente
+    // Nota: El notify_url y otras variables estáticas deben estar configuradas
+    // en el Button Manager de PayPal. El parámetro custom se añade aquí dinámicamente.
+    const paypalUrl = `https://www.paypal.com/donate/?hosted_button_id=M56PD6EZ7DZQE&custom=${customParam}`;
     
     window.open(paypalUrl, '_blank', 'noopener,noreferrer');
   };
@@ -419,15 +421,15 @@ export const Settings = () => {
                     <p className="text-sm font-medium text-foreground mb-1">
                       Tu liga es Premium
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground mb-2">
                       Disfruta de todas las funcionalidades avanzadas
+                    </p>
+                    <p className="text-xs text-muted-foreground italic">
+                      Premium hasta final de temporada 2025-2026 (31/05/2026)
                     </p>
                   </div>
                 ) : (
                   <div className="text-center py-4">
-                    <p className="text-muted-foreground mb-2">
-                      <strong>⚠️ Funcionalidad Premium</strong>
-                    </p>
                     <p className="text-sm text-muted-foreground mb-4">
                       Actualiza a premium para desbloquear funcionalidades avanzadas como bloqueo de partidos, control de disponibilidad y más.
                     </p>

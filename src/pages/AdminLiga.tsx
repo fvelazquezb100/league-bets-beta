@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Copy, Settings } from 'lucide-react';
+import { Copy, Settings, Crown } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Link } from 'react-router-dom';
@@ -425,7 +425,8 @@ const AdminLiga: React.FC = () => {
         <h1 className="text-3xl font-bold">Panel de Administración de tu Liga</h1>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+      <div className="grid gap-6 md:grid-cols-2 max-w-4xl mt-8">
+        {/* Información de la Liga */}
         <Card>
           <CardHeader><CardTitle>Información de la Liga</CardTitle></CardHeader>
           <CardContent>
@@ -635,81 +636,125 @@ const AdminLiga: React.FC = () => {
           </CardContent>
         </Card>
 
-        {userRole === 'admin_league' && (
-          <>
-            <Card>
-              <CardHeader>
-                <CardTitle>Reseteo Manual de Semana</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Resetea manualmente la jornada y no esperes al martes.
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {leagueData?.type === 'free' ? (
+        {/* Liga Premium */}
+        {leagueData && leagueId && (
+          <Card className="border-2 border-yellow-400 bg-gradient-to-br from-yellow-50/50 to-amber-50/50 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Crown className="h-5 w-5 text-yellow-600" />
+                Liga Premium
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {leagueData?.type === 'premium' ? (
                   <div className="text-center py-4">
-                    <p className="text-muted-foreground mb-2">
-                      <strong>⚠️ Funcionalidad Premium</strong>
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-100 mb-3">
+                      <Crown className="h-8 w-8 text-yellow-600" />
+                    </div>
+                    <p className="text-sm font-medium text-foreground mb-1">
+                      Tu liga es Premium
                     </p>
-                    <p className="text-sm text-muted-foreground">
-                      Actualiza a premium para poder tener esta funcionalidad
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Disfruta de todas las funcionalidades avanzadas
+                    </p>
+                    <p className="text-xs text-muted-foreground italic">
+                      Premium hasta final de temporada 2025-2026 (31/05/2026)
                     </p>
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">
-                    <strong>⚠️ ATENCIÓN:</strong> Ejecuta el reset de semana para tu liga: guarda puntos actuales, incrementa semana +1 y resetea presupuestos.
-                  </p>
+                  <div className="text-center py-4">
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Actualiza a premium para desbloquear funcionalidades avanzadas como bloqueo de partidos, control de disponibilidad y más.
+                    </p>
+                    <Button
+                      className="w-full jambol-button bg-[#FFC72C] text-black hover:bg-[#FFD54F]"
+                      onClick={() => setIsPremiumModalOpen(true)}
+                    >
+                      <Crown className="h-4 w-4 mr-2" />
+                      Actualizar a Premium
+                    </Button>
+                  </div>
                 )}
-              </CardContent>
-              <CardFooter>
-                {leagueData?.type === 'free' ? (
-                  <Button
-                    onClick={() => setIsPremiumModalOpen(true)}
-                    className="w-full jambol-button bg-[#FFC72C] text-black hover:bg-[#FFD54F]"
-                  >
-                    Actualizar a Premium
-                  </Button>
-                ) : (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        disabled={resettingWeekManually}
-                        className="jambol-button"
-                      >
-                        {resettingWeekManually ? 'Reseteando...' : 'Reseteo Manual de Semana'}
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Esta acción ejecutará el reset de semana para tu liga:
-                          <br />• Generará automáticamente una noticia con los bloqueos de la semana
-                          <br />• Guardará los puntos de la semana actual
-                          <br />• Incrementará la semana de tu liga
-                          <br />• Reseteará los presupuestos de los usuarios de tu liga
-                          <br />
-                          <br />
-                          <strong>Esta acción no se puede deshacer.</strong>
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={handleResetWeekManually}
-                          className="jambol-button"
-                        >
-                          Sí, resetear semana
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                )}
-              </CardFooter>
-            </Card>
-          </>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
-        {/* Control de Disponibilidad de Partidos - Solo para ligas premium */}
+        {/* Reseteo Manual de Semana */}
+        {userRole === 'admin_league' && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Reseteo Manual de Semana</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Resetea manualmente la jornada y no esperes al martes.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {leagueData?.type === 'free' ? (
+                <div className="text-center py-4">
+                  <p className="text-muted-foreground mb-2">
+                    <strong>⚠️ Funcionalidad Premium</strong>
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Actualiza a premium para poder tener esta funcionalidad
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  <strong>⚠️ ATENCIÓN:</strong> Ejecuta el reset de semana para tu liga: guarda puntos actuales, incrementa semana +1 y resetea presupuestos.
+                </p>
+              )}
+            </CardContent>
+            <CardFooter>
+              {leagueData?.type === 'free' ? (
+                <Button
+                  onClick={() => setIsPremiumModalOpen(true)}
+                  className="w-full jambol-button bg-[#FFC72C] text-black hover:bg-[#FFD54F]"
+                >
+                  Actualizar a Premium
+                </Button>
+              ) : (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      disabled={resettingWeekManually}
+                      className="jambol-button"
+                    >
+                      {resettingWeekManually ? 'Reseteando...' : 'Reseteo Manual de Semana'}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Esta acción ejecutará el reset de semana para tu liga:
+                        <br />• Generará automáticamente una noticia con los bloqueos de la semana
+                        <br />• Guardará los puntos de la semana actual
+                        <br />• Incrementará la semana de tu liga
+                        <br />• Reseteará los presupuestos de los usuarios de tu liga
+                        <br />
+                        <br />
+                        <strong>Esta acción no se puede deshacer.</strong>
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleResetWeekManually}
+                        className="jambol-button"
+                      >
+                        Sí, resetear semana
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </CardFooter>
+          </Card>
+        )}
+
+        {/* Control de Disponibilidad de Partidos */}
         {leagueData && leagueId && (
           <Card>
             <CardHeader>

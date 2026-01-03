@@ -46,10 +46,15 @@ serve(async (req) => {
       ipnData = Object.fromEntries(params) as Record<string, string>;
     }
 
+    console.log("PayPal IPN received - All fields:", Object.keys(ipnData));
     console.log("PayPal IPN received:", {
       txn_type: ipnData.txn_type,
       payment_status: ipnData.payment_status,
       txn_id: ipnData.txn_id,
+      custom: ipnData.custom,
+      item_number: ipnData.item_number,
+      invoice: ipnData.invoice,
+      payer_email: ipnData.payer_email,
     });
 
     // Verify the IPN message is from PayPal
@@ -137,31 +142,66 @@ serve(async (req) => {
     let paymentType: "donation" | "pro" | "premium" = "donation";
     let leagueId: number | null = null;
 
-    const customField = ipnData.custom || ipnData.item_number || "";
+    // Try multiple fields where PayPal might send custom data
+    const customField = ipnData.custom || ipnData.item_number || ipnData.invoice || "";
+    console.log("Custom field received:", customField);
     
     if (customField) {
       try {
-        const customData = JSON.parse(customField);
+        // Try to decode URL encoding if needed
+        let decodedCustom = customField;
+        try {
+          decodedCustom = decodeURIComponent(customField);
+        } catch (e) {
+          // If decoding fails, use original
+          decodedCustom = customField;
+        }
+        
+        // Try to parse as JSON
+        const customData = JSON.parse(decodedCustom);
         userId = customData.user_id || null;
         paymentType = customData.payment_type || "donation";
         leagueId = customData.league_id || null;
+        console.log("Parsed custom data:", { userId, paymentType, leagueId });
       } catch (e) {
-        // Fallback: try to use custom field as user_id directly
-        console.warn("Could not parse custom field as JSON, using as user_id:", e);
-        userId = customField;
+        console.warn("Could not parse custom field as JSON:", e);
+        console.warn("Custom field value:", customField);
+        // If it's not JSON, try to use it as user_id directly (for backwards compatibility)
+        if (customField.length === 36 && customField.includes('-')) {
+          // Looks like a UUID
+          userId = customField;
+          console.log("Using custom field as user_id (UUID format):", userId);
+        }
       }
+    } else {
+      console.warn("No custom field found in IPN data");
     }
 
-    // Fallback: try to extract from item_name or other fields
-    if (!userId && ipnData.payer_id) {
-      // If we can't get user_id from custom, we'll need to handle this differently
-      console.warn("No user_id found in custom field");
+    // If we still don't have user_id, try to find user by email
+    if (!userId && ipnData.payer_email) {
+      console.log("Attempting to find user by email:", ipnData.payer_email);
+      try {
+        const { data: authUsers } = await supabase.auth.admin.listUsers();
+        const matchingUser = authUsers?.users?.find(
+          (u) => u.email?.toLowerCase() === ipnData.payer_email.toLowerCase()
+        );
+        if (matchingUser) {
+          userId = matchingUser.id;
+          console.log("Found user by email:", userId);
+        } else {
+          console.warn("No user found with email:", ipnData.payer_email);
+        }
+      } catch (e) {
+        console.warn("Could not search users by email:", e);
+      }
     }
 
     // Extract payment details
     const amount = parseFloat(ipnData.mc_gross || ipnData.amount || "0");
     const currency = ipnData.mc_currency || ipnData.currency_code || "EUR";
     const payerEmail = ipnData.payer_email || ipnData.payer_mail || "";
+
+    console.log("Payment details:", { amount, currency, payerEmail, paymentType, userId, leagueId });
 
     // Validate payment type
     if (!["donation", "pro", "premium"].includes(paymentType)) {
@@ -181,9 +221,17 @@ serve(async (req) => {
       });
     }
 
-    if ((paymentType === "donation" || paymentType === "pro") && !userId) {
-      console.error("Donation/Pro payment requires user_id");
-      return new Response("INVALID - Donation/Pro payment requires user_id", {
+    // For donations, allow processing without user_id (but log it)
+    // This handles cases where PayPal doesn't send the custom field
+    if (paymentType === "donation" && !userId) {
+      console.warn("Donation without user_id - will process but user_id will be null");
+      console.warn("This donation will not be linked to a specific user");
+      // Continue processing - we'll save it with user_id = null
+    }
+
+    if (paymentType === "pro" && !userId) {
+      console.error("Pro payment requires user_id");
+      return new Response("INVALID - Pro payment requires user_id", {
         status: 400,
         headers: corsHeaders,
       });
