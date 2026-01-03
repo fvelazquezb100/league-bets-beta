@@ -421,15 +421,15 @@ export const Settings = () => {
                     <p className="text-sm font-medium text-foreground mb-1">
                       Tu liga es Premium
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground mb-2">
                       Disfruta de todas las funcionalidades avanzadas
+                    </p>
+                    <p className="text-xs text-muted-foreground italic">
+                      Premium hasta final de temporada 2025-2026 (31/05/2026)
                     </p>
                   </div>
                 ) : (
                   <div className="text-center py-4">
-                    <p className="text-muted-foreground mb-2">
-                      <strong>⚠️ Funcionalidad Premium</strong>
-                    </p>
                     <p className="text-sm text-muted-foreground mb-4">
                       Actualiza a premium para desbloquear funcionalidades avanzadas como bloqueo de partidos, control de disponibilidad y más.
                     </p>
