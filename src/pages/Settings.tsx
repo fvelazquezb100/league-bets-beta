@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCookieConsent } from '@/hooks/useCookieConsent';
 import { useUserDonations } from '@/hooks/useUserDonations';
 import { PremiumUpgradeModal } from '@/components/PremiumUpgradeModal';
+import { PremiumFeaturesModal } from '@/components/PremiumFeaturesModal';
 
 interface Profile {
   id: string;
@@ -60,6 +61,7 @@ export const Settings = () => {
   // Leave league state
   const [leaveLeagueLoading, setLeaveLeagueLoading] = useState(false);
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
+  const [isPremiumFeaturesModalOpen, setIsPremiumFeaturesModalOpen] = useState(false);
 
   const fetchUserData = async () => {
     if (!user) return;
@@ -404,7 +406,16 @@ export const Settings = () => {
 
         {/* Liga Premium */}
         {profile.league_id && (
-          <Card className="border-2 border-yellow-400 bg-gradient-to-br from-yellow-50/50 to-amber-50/50 shadow-lg">
+          <Card 
+            className={`border-2 border-yellow-400 bg-gradient-to-br from-yellow-50/50 to-amber-50/50 shadow-lg ${
+              league?.type === 'premium' ? 'cursor-pointer hover:shadow-xl transition-shadow' : ''
+            }`}
+            onClick={() => {
+              if (league?.type === 'premium') {
+                setIsPremiumFeaturesModalOpen(true);
+              }
+            }}
+          >
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Crown className="h-5 w-5 text-yellow-600" />
@@ -427,6 +438,9 @@ export const Settings = () => {
                     <p className="text-xs text-muted-foreground italic">
                       Premium hasta final de temporada 2025-2026 (31/05/2026)
                     </p>
+                    <p className="text-xs text-yellow-600 mt-2 font-medium">
+                      Haz clic para ver todas las funcionalidades
+                    </p>
                   </div>
                 ) : (
                   <div className="text-center py-4">
@@ -435,7 +449,10 @@ export const Settings = () => {
                     </p>
                     <Button
                       className="w-full jambol-button bg-[#FFC72C] text-black hover:bg-[#FFD54F]"
-                      onClick={() => setIsPremiumModalOpen(true)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsPremiumModalOpen(true);
+                      }}
                     >
                       <Crown className="h-4 w-4 mr-2" />
                       Actualizar a Premium
@@ -655,6 +672,10 @@ export const Settings = () => {
           // Refresh user data to get updated league type
           await fetchUserData();
         }}
+      />
+      <PremiumFeaturesModal
+        isOpen={isPremiumFeaturesModalOpen}
+        onClose={() => setIsPremiumFeaturesModalOpen(false)}
       />
     </div>
   );

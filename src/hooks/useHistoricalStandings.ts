@@ -70,11 +70,13 @@ export const useHistoricalStandings = (leagueId: number | null) => {
         for (const profile of profiles) {
           // Sumar todos los puntos ganados desde la semana 1 hasta la semana actual
           // Obtener todas las apuestas del usuario y filtrar por semana
+          // Note: Supabase has a default limit of 1000 rows, so we need to use range() to get all rows
           const { data: allBets, error: betsError } = await supabase
             .from('bets')
             .select('payout, week')
             .eq('user_id', profile.id)
-            .eq('status', 'won');
+            .eq('status', 'won')
+            .range(0, 999999); // Remove default 1000 limit
 
           if (betsError) {
             console.warn(`Error fetching bets for user ${profile.id}:`, betsError);
