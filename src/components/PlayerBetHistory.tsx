@@ -22,6 +22,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
         setLoading(true);
 
         // 1. Traemos apuestas (solo ganadas o perdidas, excluyendo semana 0)
+        // Note: Supabase has a default limit of 1000 rows, so we need to use range() to get all rows
         const { data: betsData, error: betsError } = await supabase
           .from('bets')
           .select(`
@@ -38,7 +39,8 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
           `)
           .eq('user_id', playerId)
           .in('status', ['won', 'lost'])
-          .not('week', 'eq', 0); // Exclude week 0 (historical bets)
+          .not('week', 'eq', 0) // Exclude week 0 (historical bets)
+          .range(0, 999999); // Remove default 1000 limit
 
         if (betsError) {
           console.error('Error fetching player bets:', betsError);
