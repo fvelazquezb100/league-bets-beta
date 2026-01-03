@@ -74,22 +74,45 @@ const fetchLeagueStatistics = async (leagueId: number): Promise<LeagueStatistics
     }
 
     // Get all bets from league users (excluding cancelled)
+    // Note: Supabase has a default limit of 1000 rows, so we need to fetch in batches or use a high limit
+    // Using range() to get all rows (0 to 999999 should cover most cases)
     const { data: allBets, error: betsError } = await supabase
       .from('bets')
       .select('id, user_id, stake, payout, odds, status, match_description')
       .in('user_id', userIds)
-      .in('status', ['won', 'lost', 'pending']);
+      .in('status', ['won', 'lost', 'pending'])
+      .range(0, 999999); // Remove default 1000 limit
 
     if (betsError) throw betsError;
 
     // Get all bet selections for market analysis
-    const { data: allSelections, error: selectionsError } = await supabase
-      .from('bet_selections')
-      .select('bet_id, market, selection, status, match_description')
-      .in('bet_id', allBets?.map(bet => bet.id) || [])
-      .in('status', ['won', 'lost', 'pending']);
-
-    if (selectionsError) throw selectionsError;
+    // Also remove limit for selections
+    const betIds = allBets?.map(bet => bet.id) || [];
+    if (betIds.length === 0) {
+      // No bets, return empty selections
+      var allSelections: any[] = [];
+    } else {
+      // Fetch selections in batches if needed (PostgREST has limits on IN clause size)
+      const batchSize = 1000;
+      const allSelectionsData: any[] = [];
+      
+      for (let i = 0; i < betIds.length; i += batchSize) {
+        const batch = betIds.slice(i, i + batchSize);
+        const { data: batchSelections, error: selectionsError } = await supabase
+          .from('bet_selections')
+          .select('bet_id, market, selection, status, match_description')
+          .in('bet_id', batch)
+          .in('status', ['won', 'lost', 'pending'])
+          .range(0, 999999); // Remove default 1000 limit
+        
+        if (selectionsError) throw selectionsError;
+        if (batchSelections) {
+          allSelectionsData.push(...batchSelections);
+        }
+      }
+      
+      var allSelections = allSelectionsData;
+    }
 
     // Calculate basic statistics
     const settledBets = allBets?.filter(bet => bet.status === 'won' || bet.status === 'lost') || [];

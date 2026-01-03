@@ -78,3 +78,45 @@ export function useUsersDonationStatus(userIds: string[]) {
   });
 }
 
+/**
+ * Hook to check if multiple users have PRO subscription
+ * Returns a map of user_id -> isPro
+ */
+export function useUsersProStatus(userIds: string[]) {
+  return useQuery({
+    queryKey: ['users-pro-status', userIds.sort().join(',')],
+    queryFn: async () => {
+      if (userIds.length === 0) {
+        return new Map<string, boolean>();
+      }
+
+      const { data, error } = await sb
+        .from('payments')
+        .select('user_id')
+        .in('user_id', userIds)
+        .eq('payment_type', 'pro')
+        .eq('status', 'completed');
+
+      if (error) {
+        console.error('Error fetching users PRO status:', error);
+        return new Map<string, boolean>();
+      }
+
+      const proMap = new Map<string, boolean>();
+      userIds.forEach((id) => {
+        proMap.set(id, false);
+      });
+
+      data?.forEach((payment) => {
+        if (payment.user_id) {
+          proMap.set(payment.user_id, true);
+        }
+      });
+
+      return proMap;
+    },
+    enabled: userIds.length > 0,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+}
+

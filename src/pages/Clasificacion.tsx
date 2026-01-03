@@ -17,6 +17,7 @@ import { BlockMatchesModal } from '@/components/BlockMatchesModal';
 import { useUsersDonationStatus } from '@/hooks/useUserDonations';
 import { PremiumUpgradeModal } from '@/components/PremiumUpgradeModal';
 import { Crown } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 export const Clasificacion = () => {
   const { user } = useAuth();
@@ -351,7 +352,14 @@ export const Clasificacion = () => {
                     <TableCell className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
                       <span className="truncate">{profile.username || 'Usuario'}</span>
                       {donationStatusMap?.get(profile.id) && (
-                        <span className="text-yellow-500 flex-shrink-0" title="Ha apoyado el proyecto">⭐</span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="text-yellow-500 flex-shrink-0 cursor-help">⭐</span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Ha apoyado el proyecto</p>
+                          </TooltipContent>
+                        </Tooltip>
                       )}
                       {previousChampionName === profile.username && <Award className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 flex-shrink-0" />}
                       {previousLastName === profile.username && <ArrowDown className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 flex-shrink-0" />}
