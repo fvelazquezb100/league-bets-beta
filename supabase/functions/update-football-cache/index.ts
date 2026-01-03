@@ -13,6 +13,18 @@ const corsHeaders = {
 // Helper function to add a delay between API calls to respect rate limits
 const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
+// Helper function to get the correct season year
+// For European football seasons (Aug-Jul), if we're in Jan-Jul, use previous year
+const getSeasonYear = () => {
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1; // getMonth() returns 0-11
+  const currentYear = now.getFullYear();
+  
+  // If between January (1) and July (7), use previous year
+  // If between August (8) and December (12), use current year
+  return currentMonth >= 8 ? currentYear : currentYear - 1;
+};
+
 // Helper function to make API requests with timeout
 const fetchWithTimeout = async (url: string, options: RequestInit, timeoutMs: number = 10000) => {
   const controller = new AbortController();
@@ -104,7 +116,8 @@ Deno.serve(async (req) => {
 
     // --- STEP 1: Fetch upcoming fixture IDs for all leagues (10 for La Liga/Liga MX, 18 for Champions/Europa) ---
     const leagueIds = [140, 2, 3, 262]; // La Liga, Champions League, Europa League, Liga MX
-    const currentYear = new Date().getFullYear();
+    const currentYear = getSeasonYear();
+    console.log(`Using season year: ${currentYear} (current date: ${new Date().toISOString()})`);
     
     let allFixtureIDs: number[] = [];
     let allTeamsByFixture = new Map<number, any>();

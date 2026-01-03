@@ -22,8 +22,20 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+    // Helper function to get the correct season year
+    // For European football seasons (Aug-Jul), if we're in Jan-Jul, use previous year
+    const getSeasonYear = () => {
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1; // getMonth() returns 0-11
+      const currentYear = now.getFullYear();
+      return currentMonth >= 8 ? currentYear : currentYear - 1;
+    };
+    
+    const seasonYear = getSeasonYear();
+    console.log(`Using season year: ${seasonYear}`);
+
     // Fetch upcoming La Liga matches with odds from API-Football
-    const response = await fetch(`https://v3.football.api-sports.io/odds?league=140&season=2025&next=10`, {
+    const response = await fetch(`https://v3.football.api-sports.io/odds?league=140&season=${seasonYear}&next=10`, {
       headers: {
         'x-apisports-key': footballApiKey,
       }
