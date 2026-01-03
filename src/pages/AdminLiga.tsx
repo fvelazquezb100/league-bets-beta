@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Link } from 'react-router-dom';
 import { useCookieConsent } from '@/hooks/useCookieConsent';
 import { PremiumUpgradeModal } from '@/components/PremiumUpgradeModal';
+import { PremiumFeaturesModal } from '@/components/PremiumFeaturesModal';
 import { useUsersDonationStatus, useUsersProStatus } from '@/hooks/useUserDonations';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -164,6 +165,7 @@ const AdminLiga: React.FC = () => {
   const [availableLeagues, setAvailableLeagues] = React.useState<AvailableLeague[]>([]);
   const [selectedLeagues, setSelectedLeagues] = React.useState<number[]>([]);
   const [isPremiumModalOpen, setIsPremiumModalOpen] = React.useState(false);
+  const [isPremiumFeaturesModalOpen, setIsPremiumFeaturesModalOpen] = React.useState(false);
   const [leagueMembers, setLeagueMembers] = React.useState<Array<{ id: string; username: string; role: string }>>([]);
   const [loadingMembers, setLoadingMembers] = React.useState(false);
   const [assigningRole, setAssigningRole] = React.useState<string | null>(null);
@@ -723,7 +725,16 @@ const AdminLiga: React.FC = () => {
 
         {/* Liga Premium */}
         {leagueData && leagueId && (
-          <Card className="border-2 border-yellow-400 bg-gradient-to-br from-yellow-50/50 to-amber-50/50 shadow-lg">
+          <Card 
+            className={`border-2 border-yellow-400 bg-gradient-to-br from-yellow-50/50 to-amber-50/50 shadow-lg ${
+              leagueData?.type === 'premium' ? 'cursor-pointer hover:shadow-xl transition-shadow' : ''
+            }`}
+            onClick={() => {
+              if (leagueData?.type === 'premium') {
+                setIsPremiumFeaturesModalOpen(true);
+              }
+            }}
+          >
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Crown className="h-5 w-5 text-yellow-600" />
@@ -746,6 +757,9 @@ const AdminLiga: React.FC = () => {
                     <p className="text-xs text-muted-foreground italic">
                       Premium hasta final de temporada 2025-2026 (31/05/2026)
                     </p>
+                    <p className="text-xs text-yellow-600 mt-2 font-medium">
+                      Haz clic para ver todas las funcionalidades
+                    </p>
                   </div>
                 ) : (
                   <div className="text-center py-4">
@@ -754,7 +768,10 @@ const AdminLiga: React.FC = () => {
                     </p>
                     <Button
                       className="w-full jambol-button bg-[#FFC72C] text-black hover:bg-[#FFD54F]"
-                      onClick={() => setIsPremiumModalOpen(true)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsPremiumModalOpen(true);
+                      }}
                     >
                       <Crown className="h-4 w-4 mr-2" />
                       Actualizar a Premium
@@ -767,7 +784,7 @@ const AdminLiga: React.FC = () => {
         )}
 
         {/* Reseteo Manual de Semana */}
-        {userRole === 'admin_league' && (
+        {leagueData && leagueId && (
           <Card>
             <CardHeader>
               <CardTitle>Reseteo Manual de Semana</CardTitle>
@@ -781,30 +798,41 @@ const AdminLiga: React.FC = () => {
                   <p className="text-muted-foreground mb-2">
                     <strong>⚠️ Funcionalidad Premium</strong>
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground mb-4">
                     Actualiza a premium para poder tener esta funcionalidad
                   </p>
+                  <Button
+                    onClick={() => setIsPremiumModalOpen(true)}
+                    className="w-full jambol-button bg-[#FFC72C] text-black hover:bg-[#FFD54F]"
+                  >
+                    Actualizar a Premium
+                  </Button>
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">
-                  <strong>⚠️ ATENCIÓN:</strong> Ejecuta el reset de semana para tu liga: guarda puntos actuales, incrementa semana +1 y resetea presupuestos.
-                </p>
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    <strong>⚠️ ATENCIÓN:</strong> Ejecuta el reset de semana para tu liga: guarda puntos actuales, incrementa semana +1 y resetea presupuestos.
+                  </p>
+                  {userRole !== 'admin_league' && (
+                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <div className="flex items-start gap-2">
+                        <Settings className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                        <div className="text-xs text-yellow-800">
+                          <p>Solo los administradores de la liga pueden ejecutar el reseteo manual de semana.</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
-            <CardFooter>
-              {leagueData?.type === 'free' ? (
-                <Button
-                  onClick={() => setIsPremiumModalOpen(true)}
-                  className="w-full jambol-button bg-[#FFC72C] text-black hover:bg-[#FFD54F]"
-                >
-                  Actualizar a Premium
-                </Button>
-              ) : (
+            {leagueData?.type === 'premium' && userRole === 'admin_league' && (
+              <CardFooter>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button
                       disabled={resettingWeekManually}
-                      className="jambol-button"
+                      className="jambol-button w-full"
                     >
                       {resettingWeekManually ? 'Reseteando...' : 'Reseteo Manual de Semana'}
                     </Button>
@@ -834,8 +862,8 @@ const AdminLiga: React.FC = () => {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-              )}
-            </CardFooter>
+              </CardFooter>
+            )}
           </Card>
         )}
 
@@ -870,7 +898,9 @@ const AdminLiga: React.FC = () => {
                 <Link to="/league-match-availability">
                   <Button className="jambol-button w-full">
                     <Settings className="h-4 w-4 mr-2" />
-                    Configurar Disponibilidad de Partidos
+                    {userRole === 'admin_league' 
+                      ? 'Configurar Disponibilidad de Partidos'
+                      : 'Ver Disponibilidad de Partidos'}
                   </Button>
                 </Link>
               )}
@@ -966,6 +996,10 @@ const AdminLiga: React.FC = () => {
           // Reload page to refresh league data
           window.location.reload();
         }}
+      />
+      <PremiumFeaturesModal
+        isOpen={isPremiumFeaturesModalOpen}
+        onClose={() => setIsPremiumFeaturesModalOpen(false)}
       />
     </div>
   );

@@ -19,6 +19,7 @@ const fetchLeagueStandings = async (leagueId: number, weekFilter?: string): Prom
   try {
     if (weekFilter && weekFilter !== 'total') {
       // Get standings for specific week
+      // Note: Supabase has a default limit of 1000 rows, so we need to use range() to get all rows
       const { data, error } = await supabase
         .from('bets')
         .select(`
@@ -32,7 +33,8 @@ const fetchLeagueStandings = async (leagueId: number, weekFilter?: string): Prom
         `)
         .eq('profiles.league_id', leagueId)
         .eq('week', weekFilter)
-        .eq('status', 'won');
+        .eq('status', 'won')
+        .range(0, 999999); // Remove default 1000 limit
 
       if (error) throw error;
 
@@ -96,6 +98,7 @@ const fetchLeagueStandings = async (leagueId: number, weekFilter?: string): Prom
 const fetchAvailableWeeks = async (leagueId: number): Promise<WeekOption[]> => {
   try {
     // Get all unique weeks from bets in this league using a join
+    // Note: Supabase has a default limit of 1000 rows, so we need to use range() to get all rows
     const { data, error } = await supabase
       .from('bets')
       .select(`
@@ -104,7 +107,8 @@ const fetchAvailableWeeks = async (leagueId: number): Promise<WeekOption[]> => {
       `)
       .eq('profiles.league_id', leagueId)
       .not('week', 'is', null)
-      .order('week', { ascending: false });
+      .order('week', { ascending: false })
+      .range(0, 999999); // Remove default 1000 limit
 
     if (error) throw error;
 

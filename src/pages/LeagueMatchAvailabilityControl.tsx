@@ -32,7 +32,7 @@ export const LeagueMatchAvailabilityControl = () => {
     document.title = 'Jambol — Control de Disponibilidad';
   }, []);
 
-  // Check if user is league admin
+  // Check if user is league admin and if league is premium
   useEffect(() => {
     const checkRole = async () => {
       if (!user || !userProfile?.league_id) {
@@ -71,10 +71,11 @@ export const LeagueMatchAvailabilityControl = () => {
   }, [user, userProfile]);
 
   useEffect(() => {
-    if (isLeagueAdmin && userProfile?.league_id) {
+    // Load data if league is premium (for all users) or if user is admin
+    if (userProfile?.league_id && (leagueData?.type === 'premium' || isLeagueAdmin)) {
       loadAvailabilityData();
     }
-  }, [isLeagueAdmin, userProfile?.league_id]);
+  }, [leagueData?.type, isLeagueAdmin, userProfile?.league_id]);
 
   const loadAvailabilityData = async () => {
     try {
@@ -123,6 +124,11 @@ export const LeagueMatchAvailabilityControl = () => {
   };
 
   const toggleAvailability = async (date: string, isEnabled: boolean) => {
+    // Only allow admins to modify
+    if (!isLeagueAdmin) {
+      return;
+    }
+
     try {
       setSaving(true);
       
@@ -196,7 +202,8 @@ export const LeagueMatchAvailabilityControl = () => {
     );
   }
 
-  if (!isLeagueAdmin) {
+  // Only allow access if league is premium (for viewing) or if user is admin
+  if (!leagueData || (leagueData.type !== 'premium' && !isLeagueAdmin)) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center min-h-[400px]">
@@ -204,7 +211,7 @@ export const LeagueMatchAvailabilityControl = () => {
             <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold mb-2">Acceso Denegado</h2>
             <p className="text-muted-foreground mb-4">
-              No tienes permisos para acceder a esta página.
+              Esta funcionalidad solo está disponible para ligas premium.
             </p>
             <Link to="/admin-liga">
               <Button variant="outline" className="border-[#FFC72C] bg-white hover:bg-[#FFC72C] hover:text-white">
@@ -305,13 +312,24 @@ export const LeagueMatchAvailabilityControl = () => {
                       <Switch
                         checked={day.isEnabled}
                         onCheckedChange={(checked) => toggleAvailability(day.date, checked)}
-                        disabled={saving}
+                        disabled={saving || !isLeagueAdmin}
                         className="scale-75 sm:scale-100"
                       />
                     </div>
                   </div>
                 );
               })}
+            </div>
+          )}
+          
+          {!isLeagueAdmin && (
+            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-start gap-2">
+                <Settings className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <div className="text-xs text-yellow-800">
+                  <p>Solo los administradores de la liga pueden modificar las opciones.</p>
+                </div>
+              </div>
             </div>
           )}
           
