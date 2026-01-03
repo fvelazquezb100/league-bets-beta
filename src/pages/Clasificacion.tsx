@@ -239,12 +239,14 @@ export const Clasificacion = () => {
   const fetchPlayerStats = async (playerId: string) => {
     try {
       // Fetch all bets for the player (won and lost)
+      // Note: Supabase has a default limit of 1000 rows, so we need to use range() to get all rows
       const { data: betsData, error: betsError } = await supabase
         .from('bets')
         .select('*')
         .eq('user_id', playerId)
         .in('status', ['won', 'lost'])
-        .not('week', 'eq', 0);
+        .not('week', 'eq', 0)
+        .range(0, 999999); // Remove default 1000 limit
 
       if (betsError) {
         console.error('Error fetching player bets:', betsError);
