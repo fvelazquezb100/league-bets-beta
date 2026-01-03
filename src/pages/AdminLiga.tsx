@@ -917,7 +917,14 @@ const AdminLiga: React.FC = () => {
                           </Tooltip>
                         )}
                         {member.role === 'admin_league' && (
-                          <Shield className="h-4 w-4 text-yellow-600" title="Administrador" />
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Shield className="h-4 w-4 text-yellow-600 cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Administrador</p>
+                            </TooltipContent>
+                          </Tooltip>
                         )}
                       </div>
                       {member.role !== 'admin_league' && (
