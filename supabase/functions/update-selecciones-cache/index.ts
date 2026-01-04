@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
       } catch {}
     }
 
-    // Step 1: Fetch fixtures by date, filter by World Cup Qualification leagues and Copa del Rey
+    // Step 1: Fetch fixtures by date, filter by World Cup Qualification leagues, Copa del Rey, and Supercopa de España
     const isWorldCupQualification = (leagueName?: string) => {
       if (!leagueName || typeof leagueName !== 'string') return false;
       const n = leagueName.toLowerCase();
@@ -65,8 +65,13 @@ Deno.serve(async (req) => {
       return leagueId === 143; // Copa del Rey league ID
     };
 
+    const isSupercopaEspana = (leagueId?: number) => {
+      return leagueId === 556; // Supercopa de España league ID
+    };
+
     const allFixtures: any[] = [];
     const copaFixtures: any[] = [];
+    const supercopaFixtures: any[] = [];
     
     for (const date of dates) {
       const url = `https://v3.football.api-sports.io/fixtures?date=${date}`;
@@ -92,6 +97,15 @@ Deno.serve(async (req) => {
         it?.fixture?.status?.short !== 'PEN'
       );
       copaFixtures.push(...copa);
+      
+      // Filter by Supercopa de España AND exclude finished matches
+      const supercopa = items.filter((it: any) => 
+        isSupercopaEspana(it?.league?.id) &&
+        it?.fixture?.status?.short !== 'FT' &&
+        it?.fixture?.status?.short !== 'AET' &&
+        it?.fixture?.status?.short !== 'PEN'
+      );
+      supercopaFixtures.push(...supercopa);
     }
 
     // Map teams and fixture IDs for Selecciones
@@ -122,6 +136,19 @@ Deno.serve(async (req) => {
         const fixtureDate = it?.fixture?.date || null;
         copaTeamsByFixture.set(fxId, { ...it.teams, league_name: leagueName, fixture_date: fixtureDate });
         copaFixtureIds.push(fxId);
+      }
+    });
+
+    // Map teams and fixture IDs for Supercopa de España
+    const supercopaTeamsByFixture = new Map<number, any>();
+    const supercopaFixtureIds: number[] = [];
+    supercopaFixtures.forEach((it: any) => {
+      const fxId = it?.fixture?.id;
+      if (fxId && it?.teams) {
+        const leagueName = it?.league?.name || 'Supercopa de España';
+        const fixtureDate = it?.fixture?.date || null;
+        supercopaTeamsByFixture.set(fxId, { ...it.teams, league_name: leagueName, fixture_date: fixtureDate });
+        supercopaFixtureIds.push(fxId);
       }
     });
 
@@ -173,8 +200,33 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Step 4: Fetch odds for Supercopa de España fixtures
+    const supercopaMergedOdds: any[] = [];
+    for (const fxId of supercopaFixtureIds) {
+      const oddsUrl = `https://v3.football.api-sports.io/odds?fixture=${fxId}`;
+      const oddsRes = await fetch(oddsUrl, { headers: { 'x-apisports-key': footballApiKey } });
+      if (!oddsRes.ok) {
+        // Create placeholder with date
+        const t = supercopaTeamsByFixture.get(fxId);
+        supercopaMergedOdds.push({ fixture: { id: fxId, date: t?.fixture_date || null }, teams: t, bookmakers: [] });
+        continue;
+      }
+      const oddsJson = await oddsRes.json().catch(() => null);
+      if (Array.isArray(oddsJson?.response) && oddsJson.response.length > 0) {
+        const t = supercopaTeamsByFixture.get(fxId);
+        oddsJson.response.forEach((entry: any) => {
+          const withDate = t ? { ...entry, teams: t, fixture: { ...(entry.fixture || {}), id: fxId, date: t?.fixture_date || entry?.fixture?.date || null } } : entry;
+          supercopaMergedOdds.push(withDate);
+        });
+      } else {
+        const t = supercopaTeamsByFixture.get(fxId);
+        supercopaMergedOdds.push({ fixture: { id: fxId, date: t?.fixture_date || null }, teams: t, bookmakers: [] });
+      }
+    }
+
     const seleccionesPayload = { response: mergedOdds };
     const copaPayload = { response: copaMergedOdds };
+    const supercopaPayload = { response: supercopaMergedOdds };
 
     // Before writing current selecciones (id=3), copy existing id=3 data AND date to id=4 (previous)
     try {
@@ -218,6 +270,27 @@ Deno.serve(async (req) => {
       console.warn('Copa del Rey: could not copy id=5 -> id=6:', (copyErr as Error).message);
     }
 
+    // Before writing current supercopa (id=7), copy existing id=7 data AND date to id=8 (previous)
+    try {
+      const { data: currentSupercopa } = await supabase
+        .from('match_odds_cache')
+        .select('data, last_updated')
+        .eq('id', 7)
+        .maybeSingle();
+      if (currentSupercopa && currentSupercopa.data) {
+        await supabase
+          .from('match_odds_cache')
+          .upsert({ 
+            id: 8, 
+            data: currentSupercopa.data, 
+            info: 'Supercopa de España - previous odds snapshot', 
+            last_updated: currentSupercopa.last_updated // Copy the date from current row
+          });
+      }
+    } catch (copyErr) {
+      console.warn('Supercopa de España: could not copy id=7 -> id=8:', (copyErr as Error).message);
+    }
+
     // Write to cache id=3 (Selecciones current)
     const { error: selError } = await supabase
       .from('match_odds_cache')
@@ -230,7 +303,13 @@ Deno.serve(async (req) => {
       .upsert({ id: 5, data: copaPayload, info: 'Copa del Rey - current odds snapshot', last_updated: new Date().toISOString() });
     if (copaError) throw copaError;
 
-    // Upsert kickoff times and team names to match_results - for both Selecciones and Copa del Rey
+    // Write to cache id=7 (Supercopa de España current)
+    const { error: supercopaError } = await supabase
+      .from('match_odds_cache')
+      .upsert({ id: 7, data: supercopaPayload, info: 'Supercopa de España - current odds snapshot', last_updated: new Date().toISOString() });
+    if (supercopaError) throw supercopaError;
+
+    // Upsert kickoff times and team names to match_results - for Selecciones, Copa del Rey, and Supercopa de España
     const seleccionesMatchResults = allFixtures
       .filter((fx: any) => {
         // Only include fixtures that have enabled teams (same filter as for odds)
@@ -255,7 +334,16 @@ Deno.serve(async (req) => {
         away_team: fx.teams.away.name,
       }));
 
-    const matchResultsUpserts = [...seleccionesMatchResults, ...copaMatchResults];
+    const supercopaMatchResults = supercopaFixtures
+      .filter((fx: any) => fx?.fixture?.id && fx?.fixture?.date && fx?.teams)
+      .map((fx: any) => ({
+        fixture_id: fx.fixture.id,
+        kickoff_time: fx.fixture.date,
+        home_team: fx.teams.home.name,
+        away_team: fx.teams.away.name,
+      }));
+
+    const matchResultsUpserts = [...seleccionesMatchResults, ...copaMatchResults, ...supercopaMatchResults];
 
     if (matchResultsUpserts.length > 0) {
       const { error: matchResultsError } = await supabase
@@ -270,10 +358,11 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'Selecciones and Copa del Rey odds cache updated', 
+        message: 'Selecciones, Copa del Rey and Supercopa de España odds cache updated', 
         selecciones_matches: mergedOdds.length,
         copa_matches: copaMergedOdds.length,
-        total_matches: mergedOdds.length + copaMergedOdds.length
+        supercopa_matches: supercopaMergedOdds.length,
+        total_matches: mergedOdds.length + copaMergedOdds.length + supercopaMergedOdds.length
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

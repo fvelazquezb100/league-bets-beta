@@ -33,6 +33,10 @@ const WinnerSelector = ({ match, isFrozen, hasUserBetOnMarket, handleAddToSlip }
   const toQualifyMarket = findMarket('To Qualify');
 
   const isCopaDelRey = match.league?.name?.toLowerCase().includes('copa del rey') || match.league?.id === 143; // 143 is often Copa del Rey, but checking name is safer
+  const isSupercopa = match.league?.name?.toLowerCase().includes('super cup') || 
+                      match.league?.name?.toLowerCase().includes('supercopa') || 
+                      match.teams?.league_name?.toLowerCase().includes('super cup') ||
+                      match.league?.id === 556; // 556 is Supercopa de España
 
   const handleBet = (marketName: string, selection: BetValue) => {
     if (isFrozen) return;
@@ -106,7 +110,7 @@ const WinnerSelector = ({ match, isFrozen, hasUserBetOnMarket, handleAddToSlip }
         {renderWinnerRow('Ganador del Partido', matchWinnerMarket, 'Ganador del Partido')}
         {renderWinnerRow('Ganador del 1er Tiempo', firstHalfMarket, 'Ganador del 1er Tiempo')}
         {renderWinnerRow('Ganador del 2do Tiempo', secondHalfMarket, 'Ganador del 2do Tiempo')}
-        {isCopaDelRey && renderWinnerRow(getBettingTranslation('To Qualify'), toQualifyMarket, 'To Qualify')}
+        {(isCopaDelRey || isSupercopa) && renderWinnerRow(getBettingTranslation('To Qualify'), toQualifyMarket, 'To Qualify')}
       </div>
     </div>
   );

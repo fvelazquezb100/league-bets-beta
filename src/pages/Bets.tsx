@@ -30,7 +30,7 @@ const Bets = () => {
   // Local UI state
   const [selectedBets, setSelectedBets] = useState<any[]>([]);
   const { cutoffMinutes, developerMode } = useBettingSettings();
-  const [selectedLeague, setSelectedLeague] = useState<'primera' | 'champions' | 'europa' | 'liga-mx' | 'selecciones' | 'coparey'>('primera');
+  const [selectedLeague, setSelectedLeague] = useState<'primera' | 'champions' | 'europa' | 'liga-mx' | 'selecciones' | 'coparey' | 'supercopa'>('primera');
   const [openId, setOpenId] = useState<number | null>(null);
   const { consent } = useCookieConsent();
 
@@ -142,10 +142,12 @@ const Bets = () => {
   // React Query hooks for data fetching
   const isSelecciones = selectedLeague === 'selecciones';
   const isCoparey = selectedLeague === 'coparey';
-  // Selecciones uses id=3, Copa del Rey uses id=5, main leagues use id=1
-  const getSourceId = (): 1 | 3 | 5 => {
+  const isSupercopa = selectedLeague === 'supercopa';
+  // Selecciones uses id=3, Copa del Rey uses id=5, Supercopa uses id=7, main leagues use id=1
+  const getSourceId = (): 1 | 3 | 5 | 7 => {
     if (isSelecciones) return 3;
     if (isCoparey) return 5;
+    if (isSupercopa) return 7;
     return 1;
   };
   const { data: matches = [], isLoading: matchesLoading, error: matchesError } = useMatchOdds(getSourceId());
@@ -211,6 +213,20 @@ const Bets = () => {
         .from('betting_settings' as any)
         .select('setting_value' as any)
         .eq('setting_key', 'enable_coparey')
+        .maybeSingle();
+      return (((data as any)?.setting_value || 'false') === 'true');
+    },
+    staleTime: 60_000,
+  });
+
+  // Load SuperAdmin toggle to control Supercopa de España tab visibility
+  const { data: supercopaEnabled = false, isLoading: supercopaLoading } = useQuery({
+    queryKey: ['betting-setting', 'enable_supercopa'],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from('betting_settings' as any)
+        .select('setting_value' as any)
+        .eq('setting_key', 'enable_supercopa')
         .maybeSingle();
       return (((data as any)?.setting_value || 'false') === 'true');
     },
@@ -307,9 +323,9 @@ const Bets = () => {
 
 
   const handleAddToSlip = (match: MatchData, marketName: string, selection: BetValue) => {
-    // For Selecciones and Copa del Rey, allow all matches without date restrictions
-    if (selectedLeague === 'selecciones' || selectedLeague === 'coparey') {
-      // No date restrictions for Selecciones and Copa del Rey
+    // For Selecciones, Copa del Rey and Supercopa, allow all matches without date restrictions
+    if (selectedLeague === 'selecciones' || selectedLeague === 'coparey' || selectedLeague === 'supercopa') {
+      // No date restrictions for Selecciones, Copa del Rey and Supercopa
     } else {
       // Check if match is in the future (outside allowed timeframe) - BLOCK ALL FUTURE MATCHES
       const matchDate = new Date(match.fixture.date);
@@ -446,7 +462,7 @@ const Bets = () => {
       'europa': 3,
       'liga-mx': 262
     };
-    if (league === 'selecciones' || league === 'coparey') {
+    if (league === 'selecciones' || league === 'coparey' || league === 'supercopa') {
       return matches;
     }
     const leagueId = leagueMap[league];
@@ -501,14 +517,9 @@ const Bets = () => {
     const hasAvailability = availabilityMap.has(dateStr);
     const isEnabled = availabilityMap.get(dateStr) ?? false;
 
-    if (isSelecciones) {
-      if (!hasAvailability || !isEnabled) {
-        return;
-      }
-      liveBettingMatches.push(match);
-      return;
-    }
-
+    // All leagues use the same availability logic:
+    // - Show in "Partidos disponibles" if date is enabled OR developer mode is active
+    // - Show in "Próximos encuentros" if date is not enabled
     if (isEnabled || developerMode) {
       liveBettingMatches.push(match);
     } else {
@@ -760,6 +771,10 @@ const Bets = () => {
     if (copareyEnabled) {
       tabs.push({ value: 'coparey', label: 'Copa del Rey', leagueId: 143 });
     }
+    // Add Supercopa de España tab only if enabled via betting_settings
+    if (supercopaEnabled) {
+      tabs.push({ value: 'supercopa', label: 'Supercopa España', leagueId: 556 });
+    }
 
     return tabs;
   };
@@ -768,7 +783,7 @@ const Bets = () => {
     const availableTabs = getAvailableTabs();
 
     // Don't render tabs until leagues are loaded
-    if (leaguesLoading || seleccionesLoading || copareyLoading || availableTabs.length === 0) {
+    if (leaguesLoading || seleccionesLoading || copareyLoading || supercopaLoading || availableTabs.length === 0) {
       return (
         <div className="w-full">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
@@ -783,11 +798,11 @@ const Bets = () => {
 
     // If current selected league is not available, switch to the first available one
     if (availableTabs.length > 0 && !availableTabs.find(tab => tab.value === selectedLeague)) {
-      setSelectedLeague(availableTabs[0].value as 'primera' | 'champions' | 'europa' | 'liga-mx' | 'selecciones' | 'coparey');
+      setSelectedLeague(availableTabs[0].value as 'primera' | 'champions' | 'europa' | 'liga-mx' | 'selecciones' | 'coparey' | 'supercopa');
     }
 
     return (
-      <Tabs value={selectedLeague} onValueChange={(value) => setSelectedLeague(value as 'primera' | 'champions' | 'europa' | 'liga-mx' | 'selecciones' | 'coparey')} className="w-full">
+      <Tabs value={selectedLeague} onValueChange={(value) => setSelectedLeague(value as 'primera' | 'champions' | 'europa' | 'liga-mx' | 'selecciones' | 'coparey' | 'supercopa')} className="w-full">
         <TabsList className={`grid w-full mb-6 gap-2 h-auto ${availableTabs.length <= 2 ? 'grid-cols-2' : availableTabs.length === 3 ? 'grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'}`}>
           {availableTabs.map((tab) => {
             const getTabStyle = (value: string) => {
@@ -847,6 +862,17 @@ const Bets = () => {
                     opacity: '0.4'
                   };
                 case 'coparey':
+                  return {
+                    background: `
+                      linear-gradient(45deg,
+                        #CE1126 0%, #CE1126 33.33%,
+                        #FFD200 33.33%, #FFD200 66.66%,
+                        #CE1126 66.66%, #CE1126 100%
+                      )
+                    `,
+                    opacity: '0.4'
+                  };
+                case 'supercopa':
                   return {
                     background: `
                       linear-gradient(45deg,
