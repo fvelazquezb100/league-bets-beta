@@ -48,6 +48,7 @@ const SuperAdminOtrasLigas: React.FC = () => {
   const [loadingSetting, setLoadingSetting] = React.useState(true);
   const [seleccionesEnabled, setSeleccionesEnabled] = React.useState(false);
   const [copareyEnabled, setCopareyEnabled] = React.useState(false);
+  const [supercopaEnabled, setSupercopaEnabled] = React.useState(false);
   const [forcingOdds, setForcingOdds] = React.useState(false);
   const [forcingResults, setForcingResults] = React.useState(false);
   const TEAMS: string[] = [
@@ -130,6 +131,19 @@ const SuperAdminOtrasLigas: React.FC = () => {
         }
 
         setCopareyEnabled(copareyData?.setting_value === 'true');
+
+        // Fetch Supercopa de España setting
+        const { data: supercopaData, error: supercopaError } = await supabase
+          .from('betting_settings')
+          .select('setting_value')
+          .eq('setting_key', 'enable_supercopa')
+          .single();
+
+        if (supercopaError && supercopaError.code !== 'PGRST116') {
+          throw supercopaError;
+        }
+
+        setSupercopaEnabled(supercopaData?.setting_value === 'true');
       } catch (error) {
         console.error('Error fetching settings:', error);
         toast({
@@ -223,6 +237,37 @@ const SuperAdminOtrasLigas: React.FC = () => {
       toast({
         title: 'Error',
         description: 'No se pudo actualizar la configuración de Copa del Rey',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleSupercopaToggle = async (checked: boolean) => {
+    try {
+      // Use upsert since the row might not exist initially
+      const { error } = await supabase
+        .from('betting_settings')
+        .upsert({ 
+          setting_key: 'enable_supercopa', 
+          setting_value: checked.toString() 
+        }, { 
+          onConflict: 'setting_key' 
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      setSupercopaEnabled(checked);
+      toast({
+        title: 'Configuración actualizada',
+        description: `Supercopa de España ${checked ? 'habilitada' : 'deshabilitada'}`,
+      });
+    } catch (error) {
+      console.error('Error updating supercopa setting:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo actualizar la configuración de Supercopa de España',
         variant: 'destructive',
       });
     }
@@ -362,6 +407,19 @@ const SuperAdminOtrasLigas: React.FC = () => {
                 onCheckedChange={handleCopareyToggle}
               />
             </div>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-medium">Supercopa España</h3>
+                <p className="text-sm text-muted-foreground">
+                  Activa la visibilidad de partidos de Supercopa de España en la página de partidos
+                </p>
+              </div>
+              <Switch
+                checked={supercopaEnabled}
+                onCheckedChange={handleSupercopaToggle}
+              />
+            </div>
           </CardContent>
         </Card>
 
@@ -380,7 +438,7 @@ const SuperAdminOtrasLigas: React.FC = () => {
                 {forcingOdds ? 'Actualizando multiplicadores...' : 'Forzar multiplicadores'}
               </Button>
               <p className="text-xs text-muted-foreground">
-                Actualiza los multiplicadores de Selecciones y Copa del Rey
+                Actualiza los multiplicadores de Selecciones, Copa del Rey y Supercopa
               </p>
               <div className="text-xs text-muted-foreground border-t pt-2">
                 <p className="font-medium">Última actualización:</p>
@@ -398,7 +456,7 @@ const SuperAdminOtrasLigas: React.FC = () => {
                 {forcingResults ? 'Procesando resultados...' : 'Forzar resultados'}
               </Button>
               <p className="text-xs text-muted-foreground">
-                Procesa los resultados de Selecciones y Copa del Rey
+                Procesa los resultados de Selecciones, Copa del Rey y Supercopa
               </p>
             </div>
           </CardContent>

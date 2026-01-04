@@ -60,8 +60,9 @@ export interface CachedOddsData {
 
 // Fetch function for match odds.
 // Id mapping:
-// 1 = Ligas (current), 2 = Ligas (previous), 3 = Selecciones (current), 4 = Selecciones (previous), 5 = Copa del Rey (current), 6 = Copa del Rey (previous)
-const fetchMatchOdds = async (sourceId: 1 | 2 | 3 | 4 | 5 | 6 = 1): Promise<MatchData[]> => {
+// 1 = Ligas (current), 2 = Ligas (previous), 3 = Selecciones (current), 4 = Selecciones (previous), 
+// 5 = Copa del Rey (current), 6 = Copa del Rey (previous), 7 = Supercopa España (current), 8 = Supercopa España (previous)
+const fetchMatchOdds = async (sourceId: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 = 1): Promise<MatchData[]> => {
   const { data: cacheData, error: cacheError } = await supabase
     .from('match_odds_cache')
     .select('data')
@@ -74,9 +75,11 @@ const fetchMatchOdds = async (sourceId: 1 | 2 | 3 | 4 | 5 | 6 = 1): Promise<Matc
 
   if (!cacheData || !cacheData.data) {
     // Try to populate cache if empty
-    const { error: populateError } = await supabase.functions.invoke(
-      sourceId === 3 || sourceId === 4 ? 'secure-run-update-selecciones-cache' : 'secure-run-update-football-cache'
-    );
+    // Selecciones (3,4), Copa del Rey (5,6) and Supercopa (7,8) use selecciones-cache function
+    const functionName = (sourceId >= 3 && sourceId <= 8) 
+      ? 'secure-run-update-selecciones-cache' 
+      : 'secure-run-update-football-cache';
+    const { error: populateError } = await supabase.functions.invoke(functionName);
 
     if (!populateError) {
       // Retry fetching after population
@@ -113,7 +116,7 @@ const updateMatchOdds = async () => {
 };
 
 // Custom hook for match odds (parameterized on sourceId)
-export const useMatchOdds = (sourceId: 1 | 2 | 3 | 4 | 5 | 6 = 1) => {
+export const useMatchOdds = (sourceId: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 = 1) => {
   return useQuery({
     queryKey: ['match-odds', sourceId],
     queryFn: () => fetchMatchOdds(sourceId),
@@ -125,16 +128,14 @@ export const useMatchOdds = (sourceId: 1 | 2 | 3 | 4 | 5 | 6 = 1) => {
 };
 
 // Mutation for updating match odds
-export const useUpdateMatchOdds = (sourceId: 1 | 2 | 3 | 4 | 5 | 6 = 1) => {
+export const useUpdateMatchOdds = (sourceId: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 = 1) => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async () => {
-      if (sourceId === 3 || sourceId === 4) {
+      // Selecciones (3,4), Copa del Rey (5,6) and Supercopa (7,8) use selecciones-cache function
+      if (sourceId >= 3 && sourceId <= 8) {
         const { error } = await supabase.functions.invoke('secure-run-update-selecciones-cache');
-        if (error) throw error;
-      } else if (sourceId === 5 || sourceId === 6) {
-        const { error } = await supabase.functions.invoke('secure-run-update-coparey-cache');
         if (error) throw error;
       } else {
         await updateMatchOdds();

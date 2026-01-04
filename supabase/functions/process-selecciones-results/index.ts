@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 // League constants – easy to change
-const leagueIds = [143, 32]; // Copa del Rey, Clasificación Europea Mundial
+const leagueIds = [143, 32, 556]; // Copa del Rey, Clasificación Europea Mundial, Supercopa de España
 
 function outcomeFromFixture(fx: any): "home" | "away" | "draw" | null {
   try {
@@ -692,7 +692,9 @@ serve(async (req: Request) => {
         ? 'Copa del Rey'
         : leagueId === 32
           ? 'Clasificación Europea Mundial'
-          : null;
+          : leagueId === 556
+            ? 'Supercopa de España'
+            : null;
 
       console.log(`Fetching finished fixtures for ${leagueName} (ID: ${leagueId})`);
 
