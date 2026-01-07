@@ -147,24 +147,28 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
     }
 
     // Bloqueo por cierre: X minutos antes del inicio (configurable)
-    const isAnyFrozen = selectedBets.some(bet => {
-      if (!bet.kickoff) return false;
-      const kickoffTime = new Date(bet.kickoff);
-      const freeze = new Date(kickoffTime.getTime() - cutoffMinutes * 60 * 1000);
-      const now = new Date();
-      const isFrozen = now >= freeze;
+    // Skip this restriction for live matches page (/directo) - allow betting on live matches
+    const isLivePage = window.location.pathname.includes('/directo');
+    
+    if (!isLivePage) {
+      const isAnyFrozen = selectedBets.some(bet => {
+        if (!bet.kickoff) return false;
+        const kickoffTime = new Date(bet.kickoff);
+        const freeze = new Date(kickoffTime.getTime() - cutoffMinutes * 60 * 1000);
+        const now = new Date();
+        const isFrozen = now >= freeze;
 
-
-      return isFrozen;
-    });
-
-    if (isAnyFrozen) {
-      toast({
-        title: 'Selecciones cerradas',
-        description: `Al menos una selección está cerrada (${cutoffMinutes} min antes del inicio).`,
-        variant: 'destructive',
+        return isFrozen;
       });
-      return;
+
+      if (isAnyFrozen) {
+        toast({
+          title: 'Selecciones cerradas',
+          description: `Al menos una selección está cerrada (${cutoffMinutes} min antes del inicio).`,
+          variant: 'destructive',
+        });
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -410,7 +414,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
                     !stake ||
                     parseFloat(stake) <= 0 ||
                     (selectedBets.length > 1 && hasDuplicateFixtures) ||
-                    selectedBets.some(bet => bet.kickoff ? (new Date() >= new Date(new Date(bet.kickoff).getTime() - cutoffMinutes * 60 * 1000)) : false)
+                    (!window.location.pathname.includes('/directo') && selectedBets.some(bet => bet.kickoff ? (new Date() >= new Date(new Date(bet.kickoff).getTime() - cutoffMinutes * 60 * 1000)) : false))
                   }
                   className="w-full"
                 >
