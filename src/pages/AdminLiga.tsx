@@ -785,30 +785,30 @@ const AdminLiga: React.FC = () => {
 
         {/* Reseteo Manual de Semana */}
         {leagueData && leagueId && (
-          <Card>
-            <CardHeader>
+            <Card>
+              <CardHeader>
               <CardTitle>Reseteo Manual de Semana</CardTitle>
               <p className="text-sm text-muted-foreground">
                 Resetea manualmente la jornada y no esperes al martes.
               </p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {leagueData?.type === 'free' ? (
-                <div className="text-center py-4">
-                  <p className="text-muted-foreground mb-2">
-                    <strong>⚠️ Funcionalidad Premium</strong>
-                  </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {leagueData?.type === 'free' ? (
+                  <div className="text-center py-4">
+                    <p className="text-muted-foreground mb-2">
+                      <strong>⚠️ Funcionalidad Premium</strong>
+                    </p>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Actualiza a premium para poder tener esta funcionalidad
-                  </p>
+                      Actualiza a premium para poder tener esta funcionalidad
+                    </p>
                   <Button
                     onClick={() => setIsPremiumModalOpen(true)}
                     className="w-full jambol-button bg-[#FFC72C] text-black hover:bg-[#FFD54F]"
                   >
                     Actualizar a Premium
                   </Button>
-                </div>
-              ) : (
+                  </div>
+                ) : (
                 <>
                   <p className="text-sm text-muted-foreground">
                     <strong>⚠️ ATENCIÓN:</strong> Ejecuta el reset de semana para tu liga: guarda puntos actuales, incrementa semana +1 y resetea presupuestos.
@@ -824,47 +824,47 @@ const AdminLiga: React.FC = () => {
                     </div>
                   )}
                 </>
-              )}
-            </CardContent>
+                )}
+              </CardContent>
             {leagueData?.type === 'premium' && userRole === 'admin_league' && (
               <CardFooter>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      disabled={resettingWeekManually}
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        disabled={resettingWeekManually}
                       className="jambol-button w-full"
-                    >
-                      {resettingWeekManually ? 'Reseteando...' : 'Reseteo Manual de Semana'}
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Esta acción ejecutará el reset de semana para tu liga:
-                        <br />• Generará automáticamente una noticia con los bloqueos de la semana
-                        <br />• Guardará los puntos de la semana actual
-                        <br />• Incrementará la semana de tu liga
-                        <br />• Reseteará los presupuestos de los usuarios de tu liga
-                        <br />
-                        <br />
-                        <strong>Esta acción no se puede deshacer.</strong>
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={handleResetWeekManually}
-                        className="jambol-button"
                       >
-                        Sí, resetear semana
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                      {resettingWeekManually ? 'Reseteando...' : 'Reseteo Manual de Semana'}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta acción ejecutará el reset de semana para tu liga:
+                          <br />• Generará automáticamente una noticia con los bloqueos de la semana
+                          <br />• Guardará los puntos de la semana actual
+                          <br />• Incrementará la semana de tu liga
+                          <br />• Reseteará los presupuestos de los usuarios de tu liga
+                          <br />
+                          <br />
+                          <strong>Esta acción no se puede deshacer.</strong>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleResetWeekManually}
+                          className="jambol-button"
+                        >
+                          Sí, resetear semana
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
               </CardFooter>
             )}
-          </Card>
+            </Card>
         )}
 
         {/* Control de Disponibilidad de Partidos */}

@@ -20,6 +20,7 @@ import { type MatchData, type BetValue } from '@/hooks/useMatchOdds';
 import { useUserBets, type UserBet } from '@/hooks/useUserBets';
 import { useLiveMatchesConfig } from '@/hooks/useLiveMatchesConfig';
 import { useLiveMatchesEnabled } from '@/hooks/useLiveMatchesEnabled';
+import { recordLiveMatchesCall } from '@/hooks/useLiveMatchesMonitoring';
 
 const LiveBets = () => {
   const { toast } = useToast();
@@ -228,6 +229,11 @@ const LiveBets = () => {
       const res = await supabase.functions.invoke('live-matches-odds').catch(() => null);
       const liveFixtureIds = (res as any)?.data?.live_fixture_ids;
 
+      // Record the call for monitoring
+      if (Array.isArray(liveFixtureIds)) {
+        recordLiveMatchesCall(liveFixtureIds);
+      }
+
       // Only consider live fixtures among the ones configured in the SuperAdmin panel
       if (Array.isArray(liveFixtureIds) && liveFixtureIds.length > 0) {
         wasLiveSeen = true;
@@ -362,23 +368,46 @@ const LiveBets = () => {
   }, [baseMatches, liveMatches]);
 
   // Separate matches:
-  // We render a single list of cards. A match is expandable only if it's live AND allowed by availability (or dev mode).
+  // In "En directo" page, we allow betting on live matches (matches that have started).
+  // No freeze time restrictions - the whole point is to bet on matches that are already in play.
   const renderMatches = (matchesToRender: MatchData[]) => {
     return (
       <div className="w-full space-y-4">
         {matchesToRender.map(match => {
           const kickoff = new Date(match.fixture.date);
-          const freezeTime = new Date(kickoff.getTime() - cutoffMinutes * 60 * 1000);
-          // In "En directo", we still keep the same freeze concept, but developerMode bypasses it
-          const isFrozen = developerMode ? false : new Date() >= freezeTime;
+          // In "En directo", we never freeze bets - allow betting on live matches
+          const isFrozen = false;
           const isLive = !!((match as any)?.teams?.is_live || (match as any)?.fixture?.is_live);
           const enabledToday = isLiveBettingEnabled(match.fixture.date);
-          const isExpandable = isLive && enabledToday;
+          // Expandable if: match is live AND has bookmakers (odds available) AND enabled today
+          const hasOdds = !!(match.bookmakers && match.bookmakers.length > 0);
+          const isExpandable = isLive && hasOdds && enabledToday;
           const isUpcoming = !isExpandable;
 
           const kickoffMs = kickoff.getTime();
           const msUntilKickoff = kickoffMs - nowTick;
           const within5h = msUntilKickoff > 0 && msUntilKickoff <= 5 * 60 * 60 * 1000;
+
+          // Handle click on match card
+          const handleMatchClick = () => {
+            if (!isExpandable) {
+              if (isLive && !hasOdds) {
+                toast({
+                  title: 'Cuotas no disponibles',
+                  description: 'Las cuotas en directo aparecerán cuando el partido esté en juego.',
+                  variant: 'default',
+                });
+              } else if (!isLive) {
+                toast({
+                  title: 'Partido no iniciado',
+                  description: 'Este partido aún no ha comenzado. Las apuestas en directo estarán disponibles cuando empiece.',
+                  variant: 'default',
+                });
+              }
+              return;
+            }
+            toggle(match.fixture.id);
+          };
 
           return (
             <MagicCard
@@ -398,10 +427,7 @@ const LiveBets = () => {
             >
               <div id={`accordion-item-${match.fixture.id}`}>
                 <button
-                  onClick={() => {
-                    if (!isExpandable) return;
-                    toggle(match.fixture.id);
-                  }}
+                  onClick={handleMatchClick}
                   disabled={!isExpandable}
                   className={`w-full text-left flex items-center justify-between p-2 rounded-md transition-colors ${
                     isExpandable ? 'hover:bg-muted/50' : 'cursor-not-allowed'

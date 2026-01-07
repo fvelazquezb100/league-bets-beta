@@ -7,6 +7,9 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { useLiveMatchesMonitoring, resetCallStats } from '@/hooks/useLiveMatchesMonitoring';
+import { Badge } from '@/components/ui/badge';
+import { Crown, Users, Activity, RefreshCw } from 'lucide-react';
 
 type LiveFixtureConfig = {
   fixture_id: number;
@@ -24,9 +27,19 @@ const safeString = (v: any) => (typeof v === 'string' ? v : v == null ? '' : Str
 
 const SuperAdminLiveMatches: React.FC = () => {
   const { toast } = useToast();
+  const monitoringStats = useLiveMatchesMonitoring();
+  const [, setRefresh] = React.useState(0);
 
   React.useEffect(() => {
     document.title = 'Jambol — Partidos en directo (config)';
+  }, []);
+
+  // Auto-refresh every 2 seconds to update time displays
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setRefresh((prev) => prev + 1);
+    }, 2000);
+    return () => clearInterval(interval);
   }, []);
 
   const { data: selectedConfig = [], refetch: refetchSelected } = useQuery({
@@ -230,6 +243,115 @@ const SuperAdminLiveMatches: React.FC = () => {
           Selecciona qué partidos (de los que ya tenemos en caché de cuotas) aparecerán en la sección <b>En directo</b>.
         </p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Monitoreo en tiempo real</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 rounded-lg border bg-card">
+              <div className="flex items-center gap-2 mb-2">
+                <Crown className="h-4 w-4 text-yellow-500" />
+                <span className="text-sm font-semibold">Leader actual</span>
+              </div>
+              {monitoringStats.leader ? (
+                <div className="space-y-1">
+                  <p className="text-sm font-mono">
+                    {monitoringStats.leader.isCurrentUser ? (
+                      <Badge variant="default" className="bg-yellow-500">Tú</Badge>
+                    ) : (
+                      <span className="text-muted-foreground">
+                        {monitoringStats.leader.userId.slice(0, 8)}...
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Conectado desde: {new Date(monitoringStats.leader.onlineAt).toLocaleTimeString()}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No hay leader activo</p>
+              )}
+            </div>
+
+            <div className="p-4 rounded-lg border bg-card">
+              <div className="flex items-center gap-2 mb-2">
+                <Users className="h-4 w-4 text-blue-500" />
+                <span className="text-sm font-semibold">Clientes conectados</span>
+              </div>
+              <p className="text-2xl font-bold">{monitoringStats.totalClients}</p>
+              <p className="text-xs text-muted-foreground">viendo /directo</p>
+            </div>
+
+            <div className="p-4 rounded-lg border bg-card">
+              <div className="flex items-center gap-2 mb-2">
+                <Activity className="h-4 w-4 text-green-500" />
+                <span className="text-sm font-semibold">Última llamada</span>
+              </div>
+              {monitoringStats.lastCallTime ? (
+                <div className="space-y-1">
+                  <p className="text-sm font-mono">
+                    {new Date(monitoringStats.lastCallTime).toLocaleTimeString()}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    hace{' '}
+                    {Math.round((Date.now() - new Date(monitoringStats.lastCallTime).getTime()) / 1000)}s
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Ninguna</p>
+              )}
+            </div>
+          </div>
+
+          {Array.from(monitoringStats.callsByFixture.entries()).length > 0 && (
+            <div className="mt-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold">Llamadas por partido</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    resetCallStats();
+                    toast({ title: 'Estadísticas reseteadas' });
+                  }}
+                  className="h-7"
+                >
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  Resetear
+                </Button>
+              </div>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {Array.from(monitoringStats.callsByFixture.entries())
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([fixtureId, count]) => {
+                    const fixture = selectedConfig.find((c) => c.fixture_id === fixtureId);
+                    return (
+                      <div key={fixtureId} className="flex items-center justify-between p-2 rounded border bg-muted/20">
+                        <div className="flex-1">
+                          <p className="text-xs font-medium">
+                            {fixture
+                              ? `${fixture.home_team} vs ${fixture.away_team}`
+                              : `Partido #${fixtureId}`}
+                          </p>
+                          {fixture && (
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(fixture.kickoff_time).toLocaleString('es-ES')}
+                            </p>
+                          )}
+                        </div>
+                        <Badge variant="secondary" className="ml-2">
+                          {count} llamada{count !== 1 ? 's' : ''}
+                        </Badge>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
