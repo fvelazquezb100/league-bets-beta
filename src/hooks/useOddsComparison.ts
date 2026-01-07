@@ -10,6 +10,7 @@ interface OddsComparisonAll {
   main: PairData;          // 1 vs 2
   selecciones: PairData;    // 3 vs 4
   coparey: PairData;       // 5 vs 6
+  supercopaLive: PairData; // 9 vs 10
 }
 
 export const useOddsComparison = () => {
@@ -49,13 +50,14 @@ export const useOddsComparison = () => {
       };
 
       // Fetch all pairs in parallel
-      const [main, selecciones, coparey] = await Promise.all([
+      const [main, selecciones, coparey, supercopaLive] = await Promise.all([
         fetchPair(1, 2),    // Main leagues
         fetchPair(3, 4),     // Selecciones
         fetchPair(5, 6),     // Copa del Rey
+        fetchPair(9, 10),    // Supercopa Live
       ]);
 
-      const result = { main, selecciones, coparey };
+      const result = { main, selecciones, coparey, supercopaLive };
 
       // Debug: Check if we have actual data
       console.log('Odds comparison result:', {
@@ -76,6 +78,12 @@ export const useOddsComparison = () => {
           hasPrevious: !!result.coparey.previous,
           currentResponse: (result.coparey.current as any)?.response?.length || 0,
           previousResponse: (result.coparey.previous as any)?.response?.length || 0
+        },
+        supercopaLive: {
+          hasCurrent: !!result.supercopaLive.current,
+          hasPrevious: !!result.supercopaLive.previous,
+          currentResponse: (result.supercopaLive.current as any)?.response?.length || 0,
+          previousResponse: (result.supercopaLive.previous as any)?.response?.length || 0
         }
       });
 
@@ -245,8 +253,9 @@ export const findOddsAuto = (
     };
   };
 
-  // Try pairs in order: Copa del Rey (5/6), Selecciones (3/4), Main leagues (1/2)
-  const result = tryPair(allData.coparey) ||
+  // Try pairs in order: Supercopa Live (9/10), Copa del Rey (5/6), Selecciones (3/4), Main leagues (1/2)
+  const result = tryPair(allData.supercopaLive) ||
+    tryPair(allData.coparey) ||
     tryPair(allData.selecciones) ||
     tryPair(allData.main) ||
     { current: null, previous: null };

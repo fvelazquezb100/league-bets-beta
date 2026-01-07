@@ -319,6 +319,27 @@ const SuperAdmin: React.FC = () => {
 
         </div>
 
+        {/* Partidos en directo - new management card */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+          <div className="lg:col-span-1 h-full">
+            <Card className="h-full">
+              <CardHeader>
+                <CardTitle className="text-base sm:text-lg">Partidos en directo</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 p-3 sm:p-6">
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  Elige qué partidos aparecen en la pestaña “En directo” y cuándo se refrescan cuotas.
+                </p>
+              </CardContent>
+              <CardFooter className="p-3 sm:p-6">
+                <Button className="jambol-button text-xs sm:text-sm" onClick={() => navigate('/superadmin-partidos-directo')}>
+                  Abrir opciones de Partidos en directo
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
+        </div>
+
         {/* Cache de Multiplicadores and Procesamiento de Resultados - 3 columns on desktop with equal card heights */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
           {/* Caché de Multiplicadores */}

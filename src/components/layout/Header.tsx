@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-import { LogOut, User, DollarSign, Trophy, Menu, Home, History, Settings, Shield, Award } from 'lucide-react';
+import { LogOut, User, DollarSign, Trophy, Menu, Home, History, Settings, Shield, Award, Activity } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
 import { APP_CONFIG } from '@/config/app';
@@ -25,6 +25,11 @@ const navigationItems = [
     name: 'Partidos',
     href: '/bets',
     icon: DollarSign,
+  },
+  {
+    name: 'En directo',
+    href: '/directo',
+    icon: Activity,
   },
   {
     name: 'Historial',
