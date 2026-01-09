@@ -105,7 +105,7 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll, forceOpen = fals
         .from('bets')
         .select('id')
         .eq('user_id', user.id)
-        .eq('week', currentWeek)
+        .eq('week', currentWeek.toString())
         .neq('status', 'cancelled');
       if (error || !bets || bets.length === 0) return 0;
       const betIds = bets.map(b => b.id);
