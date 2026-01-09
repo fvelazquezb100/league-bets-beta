@@ -238,6 +238,8 @@ export type Database = {
         Row: {
           available_leagues: number[] | null
           budget: number | null
+          boost_max_stake: number | null
+          boost_multiplier: number | null
           created_at: string
           id: number
           join_code: string | null
@@ -254,6 +256,8 @@ export type Database = {
         Insert: {
           available_leagues?: number[] | null
           budget?: number | null
+          boost_max_stake?: number | null
+          boost_multiplier?: number | null
           created_at?: string
           id?: number
           join_code?: string | null
@@ -270,6 +274,8 @@ export type Database = {
         Update: {
           available_leagues?: number[] | null
           budget?: number | null
+          boost_max_stake?: number | null
+          boost_multiplier?: number | null
           created_at?: string
           id?: number
           join_code?: string | null
