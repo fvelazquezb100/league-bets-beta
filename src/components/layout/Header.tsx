@@ -11,6 +11,7 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useLiveMatchesEnabled } from '@/hooks/useLiveMatchesEnabled';
 
 const navigationItems = [
   {
@@ -141,6 +142,7 @@ export const Header = () => {
   const isPremium = league?.type === 'premium';
   const displayBlocks = isPremium ? (profile?.blocks_available ?? 0) : 0;
   const displayBoosts = isPremium ? boostsAvailable : 0;
+  const { data: liveMatchesEnabled = false } = useLiveMatchesEnabled();
 
   return (
     <header className="bg-card border-b border-border/50 shadow-sm bg-background">
@@ -315,26 +317,34 @@ export const Header = () => {
                   {/* Navigation Links */}
                   <div className="flex-1">
                     <nav className="space-y-2">
-                      {navigationItems.map((item) => {
-                        const Icon = item.icon;
-                        const isActive = location.pathname === item.href;
-                        return (
-                          <Link
-                            key={item.name}
-                            to={item.href}
-                            onClick={() => setIsOpen(false)}
-                            className={cn(
-                              'flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors',
-                              isActive
-                                ? 'bg-primary text-primary-foreground'
-                                : 'hover:bg-muted text-muted-foreground hover:text-foreground'
-                            )}
-                          >
-                            <Icon className="h-4 w-4" />
-                            {item.name}
-                          </Link>
-                        );
-                      })}
+                      {navigationItems
+                        .filter(item => {
+                          // Hide "En directo" if live matches are disabled
+                          if (item.href === '/directo' && !liveMatchesEnabled) {
+                            return false;
+                          }
+                          return true;
+                        })
+                        .map((item) => {
+                          const Icon = item.icon;
+                          const isActive = location.pathname === item.href;
+                          return (
+                            <Link
+                              key={item.name}
+                              to={item.href}
+                              onClick={() => setIsOpen(false)}
+                              className={cn(
+                                'flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors',
+                                isActive
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                              )}
+                            >
+                              <Icon className="h-4 w-4" />
+                              {item.name}
+                            </Link>
+                          );
+                        })}
 
                       {/* SuperAdmin */}
                       {profile?.global_role === 'superadmin' && (

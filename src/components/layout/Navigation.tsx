@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useLiveMatchesEnabled } from '@/hooks/useLiveMatchesEnabled';
 
 const navigationItems = [
   {
@@ -52,6 +53,7 @@ export const Navigation = () => {
   const [profile, setProfile] = useState<any>(null);
   const [league, setLeague] = useState<any>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const { data: liveMatchesEnabled = false } = useLiveMatchesEnabled();
 
   useEffect(() => {
     let cancelled = false;
@@ -111,7 +113,15 @@ export const Navigation = () => {
       <nav className="bg-card border-b border-border/50 hidden md:block bg-background">
         <div className="container mx-auto px-6">
           <div className="flex space-x-8">
-            {navigationItems.map(item => renderLink(item.name, item.href, item.icon))}
+            {navigationItems
+              .filter(item => {
+                // Hide "En directo" if live matches are disabled
+                if (item.href === '/directo' && !liveMatchesEnabled) {
+                  return false;
+                }
+                return true;
+              })
+              .map(item => renderLink(item.name, item.href, item.icon))}
             {isSuperAdmin && renderLink('SuperAdmin', '/superadmin', Shield)}
           </div>
         </div>

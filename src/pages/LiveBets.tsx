@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -38,6 +39,14 @@ const LiveBets = () => {
   const { data: userProfile } = useUserProfile(user?.id);
 
   const { data: liveEnabled = false, isLoading: enabledLoading } = useLiveMatchesEnabled();
+
+  // Redirect if live matches are disabled
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!enabledLoading && !liveEnabled) {
+      navigate('/home', { replace: true });
+    }
+  }, [liveEnabled, enabledLoading, navigate]);
   const { data: liveConfig = [], isLoading: configLoading } = useLiveMatchesConfig();
   // Base list: selected fixtures configured by SuperAdmin
   const baseMatches: MatchData[] = useMemo(() => {
