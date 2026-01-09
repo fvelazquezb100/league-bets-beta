@@ -184,7 +184,10 @@ const AdminLiga: React.FC = () => {
     { id: 140, name: 'La Liga', flag: '' },
     { id: 2, name: 'Champions League', flag: '' },
     { id: 3, name: 'Europa League', flag: '' },
-    { id: 262, name: 'Liga MX', flag: '' }
+    { id: 262, name: 'Liga MX', flag: '' },
+    { id: 557, name: 'Selecciones', flag: '' },
+    { id: 143, name: 'Copa del Rey España', flag: '' },
+    { id: 556, name: 'Super Copa España', flag: '' }
   ];
 
   React.useEffect(() => {
@@ -232,7 +235,7 @@ const AdminLiga: React.FC = () => {
               setEditBoostMultiplier((fallbackData as any).boost_multiplier ?? 1.25);
 
               // Use default available leagues when column doesn't exist
-              setSelectedLeagues([140, 2, 3, 262]);
+              setSelectedLeagues([140, 2, 3, 262, 557, 143, 556]);
             }
           } else {
             throw leagueError;
@@ -250,7 +253,7 @@ const AdminLiga: React.FC = () => {
             setEditBoostMultiplier(league.boost_multiplier ?? 1.25);
 
             // Initialize selected leagues
-            setSelectedLeagues((league as any).available_leagues || [140, 2, 3, 262]);
+            setSelectedLeagues((league as any).available_leagues || [140, 2, 3, 262, 557, 143, 556]);
           }
         }
 

@@ -307,7 +307,7 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll, forceOpen = fals
           variant: 'destructive',
         });
         return;
-      }
+      }  
 
       // Nueva validación: máximo por boleto según la liga
       if (profile.league_id) {

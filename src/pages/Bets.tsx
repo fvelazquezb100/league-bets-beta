@@ -460,12 +460,21 @@ const Bets = () => {
 
       'champions': 2,
       'europa': 3,
-      'liga-mx': 262
+      'liga-mx': 262,
+      'selecciones': 557,
+      'coparey': 143,
+      'supercopa': 556
     };
+    const leagueId = leagueMap[league];
+    if (!leagueId) return matches;
+    
+    // For Selecciones, Copa del Rey and Supercopa, we can't filter by league_id in match.teams
+    // because they might not have a consistent league_id. So we return all matches
+    // The filtering is handled by availableLeagues check in getAvailableTabs()
     if (league === 'selecciones' || league === 'coparey' || league === 'supercopa') {
       return matches;
     }
-    const leagueId = leagueMap[league];
+    
     return matches.filter(match => match.teams?.league_id === leagueId);
   };
 
@@ -763,16 +772,16 @@ const Bets = () => {
     if (availableLeagues.includes(262)) {
       tabs.push({ value: 'liga-mx', label: 'Liga MX', leagueId: 262 });
     }
-    // Add Selecciones tab only if enabled via betting_settings
-    if (seleccionesEnabled) {
-      tabs.push({ value: 'selecciones', label: 'Selecciones', leagueId: 0 });
+    // Add Selecciones tab only if enabled via betting_settings AND available_leagues includes it
+    if (seleccionesEnabled && availableLeagues.includes(557)) {
+      tabs.push({ value: 'selecciones', label: 'Selecciones', leagueId: 557 });
     }
-    // Add Copa del Rey tab only if enabled via betting_settings
-    if (copareyEnabled) {
+    // Add Copa del Rey tab only if enabled via betting_settings AND available_leagues includes it
+    if (copareyEnabled && availableLeagues.includes(143)) {
       tabs.push({ value: 'coparey', label: 'Copa del Rey', leagueId: 143 });
     }
-    // Add Supercopa de España tab only if enabled via betting_settings
-    if (supercopaEnabled) {
+    // Add Supercopa de España tab only if enabled via betting_settings AND available_leagues includes it
+    if (supercopaEnabled && availableLeagues.includes(556)) {
       tabs.push({ value: 'supercopa', label: 'Supercopa España', leagueId: 556 });
     }
 
