@@ -333,17 +333,18 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
     
     // For combo bets
     if (bet.bet_type === 'combo' && bet.bet_selections) {
-      // Check if any selection is already finished (won or lost)
+      // Check if any selection is already finished (won or lost) - exclude BOOST selections
       const hasFinishedSelection = bet.bet_selections.some((selection: any) => 
-        selection.status === 'won' || selection.status === 'lost'
+        selection.market !== 'BOOST' && (selection.status === 'won' || selection.status === 'lost')
       );
       
       if (hasFinishedSelection) {
         return null; // Cannot cancel if any match is already finished
       }
       
-      // Check if any match has already started by looking at match_results
+      // Check if any match has already started by looking at match_results - exclude BOOST selections
       const hasStartedMatch = bet.bet_selections.some((selection: any) => {
+        if (selection.market === 'BOOST') return false; // BOOST doesn't have a match
         if (selection.fixture_id) {
           const matchResult = matchResults[selection.fixture_id];
           if (matchResult) {
@@ -365,10 +366,11 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
         return null; // Cannot cancel if any match has already started
       }
       
-      // Find the earliest kickoff time among all selections
+      // Find the earliest kickoff time among all selections - exclude BOOST selections
       let earliestKickoff: Date | null = null;
       
       bet.bet_selections.forEach((selection: any) => {
+        if (selection.market === 'BOOST') return; // Skip BOOST selection
         if (selection.fixture_id) {
           // Try match_results first (primary source)
           const matchResult = matchResults[selection.fixture_id];
@@ -420,17 +422,18 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
     
     // For combo bets - check if any match has already started
     if (bet.bet_type === 'combo' && bet.bet_selections) {
-      // Check if any selection is already finished (won or lost)
+      // Check if any selection is already finished (won or lost) - exclude BOOST selections
       const hasFinishedSelection = bet.bet_selections.some((selection: any) => 
-        selection.status === 'won' || selection.status === 'lost'
+        selection.market !== 'BOOST' && (selection.status === 'won' || selection.status === 'lost')
       );
       
       if (hasFinishedSelection) {
         return false; // Cannot cancel if any match is already finished
       }
       
-      // Check if any match has already started by looking at match_results
+      // Check if any match has already started by looking at match_results - exclude BOOST selections
       const hasStartedMatch = bet.bet_selections.some((selection: any) => {
+        if (selection.market === 'BOOST') return false; // BOOST doesn't have a match
         if (selection.fixture_id) {
           const matchResult = matchResults[selection.fixture_id];
           if (matchResult) {
@@ -556,6 +559,27 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
       const odds = parseFloat(selection.odds || 0);
       return total * odds;
     }, 1);
+  };
+
+  // Función para detectar si un boleto tiene boost
+  const hasBetBoost = (bet: any): boolean => {
+    if (!bet.bet_selections || !Array.isArray(bet.bet_selections)) return false;
+    return bet.bet_selections.some((selection: any) => selection.market === 'BOOST');
+  };
+
+  // Función para filtrar selecciones excluyendo BOOST (para display)
+  const getNonBoostSelections = (betSelections: any[]): any[] => {
+    if (!betSelections || !Array.isArray(betSelections)) return [];
+    return betSelections.filter((selection: any) => selection.market !== 'BOOST');
+  };
+
+  // Función para obtener el multiplicador de boost de una apuesta
+  const getBoostMultiplier = (betSelections: any[]): number | null => {
+    if (!betSelections || !Array.isArray(betSelections)) return null;
+    const boostSelection = betSelections.find((selection: any) => selection.market === 'BOOST');
+    if (!boostSelection) return null;
+    // El multiplicador está en odds o en selection (como string)
+    return parseFloat(boostSelection.odds || boostSelection.selection || '1.25');
   };
 
   // ✅ versión buena: partido arriba, resultado debajo
@@ -709,12 +733,20 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                 filteredBets.map((bet) => {
                   if (bet.bet_type === 'combo' && bet.bet_selections?.length) {
                     const betBlocked = isBetBlocked(bet);
+                    const hasBoost = hasBetBoost(bet);
+                    const showBoostStyle = hasBoost && bet.status !== 'cancelled';
+                    const displaySelections = getNonBoostSelections(bet.bet_selections);
+                    const boostMultiplier = getBoostMultiplier(bet.bet_selections);
                     return [
-                      <TableRow key={bet.id} className="bg-muted/30">
+                      <TableRow key={bet.id} className={showBoostStyle ? "bg-yellow-100/50" : "bg-muted/30"}>
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs">COMBO</Badge>
-                            <span className="text-sm">Boleto Combinado</span>
+                            {hasBoost ? (
+                              <Badge className={`text-xs ${bet.status === 'cancelled' ? 'bg-white text-gray-600 border-2 border-gray-400 hover:bg-white hover:text-gray-600' : 'bg-yellow-400 text-black border-yellow-400 hover:bg-yellow-500'}`}>SUPER</Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-xs">COMBO</Badge>
+                            )}
+                            <span className="text-sm">{hasBoost ? 'SuperBoleto' : 'Boleto Combinado'}</span>
                           </div>
                         </TableCell>
                         <TableCell></TableCell>
@@ -749,8 +781,8 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                           ) : null}
                         </TableCell>
                       </TableRow>,
-                      ...bet.bet_selections.map((selection: any, index: number) => (
-                         <TableRow key={`${bet.id}-${selection.id || index}`} className="bg-muted/10 border-l-2 border-muted">
+                      ...displaySelections.map((selection: any, index: number) => (
+                         <TableRow key={`${bet.id}-${selection.id || index}`} className={showBoostStyle ? "bg-yellow-50/50 border-l-2 border-yellow-400" : "bg-muted/10 border-l-2 border-muted"}>
                            <TableCell className="font-medium pl-8">
                              {getMatchResultDisplay(selection.match_description, selection.fixture_id)}
                            </TableCell>
@@ -762,6 +794,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                                   getBettingTranslation(selection.selection),
                                   parseFloat(selection.odds || 0)
                                 )}
+                                {showBoostStyle && boostMultiplier && <span className="text-yellow-600 font-medium"> x{boostMultiplier.toFixed(2).replace('.', ',')}</span>}
                               </span>
                               <Badge variant={getStatusVariant(selection.status)} className={`text-xs ${getStatusClassName(selection.status)}`}>
                                 {getStatusText(selection.status)}
@@ -856,18 +889,28 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
             {filteredBets.length > 0 ? (
               filteredBets.map((bet) => {
                 const betBlocked = isBetBlocked(bet);
+                const hasBoost = hasBetBoost(bet);
+                const showBoostStyle = hasBoost && bet.status !== 'cancelled';
+                const displaySelections = getNonBoostSelections(bet.bet_selections || []);
+                const boostMultiplier = getBoostMultiplier(bet.bet_selections || []);
                 return (
-                  <Card key={bet.id} className="p-4">
+                  <Card key={bet.id} className={`p-4 ${showBoostStyle ? 'bg-yellow-100/50 border-yellow-400' : ''}`}>
                   <div className="space-y-3">
                     {/* Header: Tipo + Semana + Botón Cancelar */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Badge 
-                          variant="outline"
-                          className={`text-xs ${getBetTypeBadgeClassName(bet.status)}`}
-                        >
-                          {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
-                        </Badge>
+                        {hasBoost ? (
+                          <Badge className={`text-xs ${bet.status === 'cancelled' ? 'bg-white text-gray-600 border-2 border-gray-400 hover:bg-white hover:text-gray-600' : 'bg-yellow-400 text-black border-yellow-400 hover:bg-yellow-500'}`}>
+                            SUPER
+                          </Badge>
+                        ) : (
+                          <Badge 
+                            variant="outline"
+                            className={`text-xs ${getBetTypeBadgeClassName(bet.status)}`}
+                          >
+                            {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
+                          </Badge>
+                        )}
                         <span className="text-xs text-muted-foreground">
                           Semana {bet.week || 'N/A'}
                         </span>
@@ -906,8 +949,8 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
 
                     {/* Detalles del boleto */}
                     <div className="space-y-3">
-                      {bet.bet_type === 'combo' && bet.bet_selections?.length ? (
-                        bet.bet_selections.map((selection: any, index: number) => (
+                      {bet.bet_type === 'combo' && displaySelections.length > 0 ? (
+                        displaySelections.map((selection: any, index: number) => (
                           <div key={selection.id || `selection-${index}`} className="space-y-1">
                             {/* Partido con resultado en la misma línea */}
                             <div className="flex items-center justify-between">
@@ -921,13 +964,16 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                               )}
                             </div>
                             {/* Boleto justo debajo */}
-                            <div className="flex items-center gap-2 text-sm font-medium text-foreground border-l-2 border-muted pl-2">
+                            <div className={`flex items-center gap-2 text-sm font-medium text-foreground border-l-2 pl-2 ${showBoostStyle ? 'border-yellow-400' : 'border-muted'}`}>
                               {getStatusIcon(selection.status)}
-                              <span>{getBettingTranslation(selection.market)}: {getBettingTranslation(selection.selection)} @ {selection.odds}</span>
+                              <span>
+                                {getBettingTranslation(selection.market)}: {getBettingTranslation(selection.selection)} @ {selection.odds}
+                                {showBoostStyle && boostMultiplier && <span className="text-yellow-600"> x{boostMultiplier.toFixed(2).replace('.', ',')}</span>}
+                              </span>
                             </div>
                           </div>
                         ))
-                      ) : (
+                      ) : bet.bet_type === 'single' ? (
                         <div className="space-y-1">
                           {/* Partido con resultado en la misma línea */}
                           <div className="flex items-center justify-between">
@@ -950,7 +996,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                             })()}
                           </div>
                         </div>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                   </Card>
@@ -1001,12 +1047,20 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                 <TableBody>
                   {historicalBets.map((bet) => {
                     if (bet.bet_type === 'combo' && bet.bet_selections?.length) {
+                      const hasBoost = hasBetBoost(bet);
+                      const showBoostStyle = hasBoost && bet.status !== 'cancelled';
+                      const displaySelections = getNonBoostSelections(bet.bet_selections);
+                      const boostMultiplier = getBoostMultiplier(bet.bet_selections);
                       return [
-                        <TableRow key={bet.id} className="bg-muted/30">
+                        <TableRow key={bet.id} className={showBoostStyle ? "bg-yellow-100/50" : "bg-muted/30"}>
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="text-xs">COMBO</Badge>
-                              <span className="text-sm">Boleto Combinado</span>
+                              {hasBoost ? (
+                                <Badge className={`text-xs ${bet.status === 'cancelled' ? 'bg-white text-gray-600 border-2 border-gray-400 hover:bg-white hover:text-gray-600' : 'bg-yellow-400 text-black border-yellow-400 hover:bg-yellow-500'}`}>SUPER</Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-xs">COMBO</Badge>
+                              )}
+                              <span className="text-sm">{hasBoost ? 'SuperBoleto' : 'Boleto Combinado'}</span>
                             </div>
                           </TableCell>
                           <TableCell></TableCell>
@@ -1019,8 +1073,8 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                           </TableCell>
                           <TableCell></TableCell>
                         </TableRow>,
-                        ...bet.bet_selections.map((selection: any, index: number) => (
-                           <TableRow key={`${bet.id}-${selection.id || index}`} className="bg-muted/10 border-l-2 border-muted">
+                        ...displaySelections.map((selection: any, index: number) => (
+                           <TableRow key={`${bet.id}-${selection.id || index}`} className={showBoostStyle ? "bg-yellow-50/50 border-l-2 border-yellow-400" : "bg-muted/10 border-l-2 border-muted"}>
                              <TableCell className="font-medium pl-8">
                                {getMatchResultDisplay(selection.match_description, selection.fixture_id)}
                              </TableCell>
@@ -1032,6 +1086,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                                     getBettingTranslation(selection.selection),
                                     parseFloat(selection.odds || 0)
                                   )}
+                                  {showBoostStyle && boostMultiplier && <span className="text-yellow-600 font-medium"> x{boostMultiplier.toFixed(2).replace('.', ',')}</span>}
                                 </span>
                                 <Badge variant={getStatusVariant(selection.status)} className={`text-xs ${getStatusClassName(selection.status)}`}>
                                   {getStatusText(selection.status)}
@@ -1083,88 +1138,103 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
 
           {/* Mobile Historical Bets View */}
           <div className="block sm:hidden space-y-4">
-            {historicalBets.map((bet) => (
-              <Card key={bet.id} className="p-4 opacity-75">
-                <div className="space-y-3">
-                  {/* Header: Tipo + Semana */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Badge 
-                        variant="outline"
-                        className={`text-xs ${getBetTypeBadgeClassName(bet.status)}`}
-                      >
-                        {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        Histórica
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Información financiera */}
-                  <div className="flex justify-between text-sm">
-                    <span>
-                      Apostado: <span className="font-medium">
-                        {(bet.stake || 0).toFixed(0)} pts
-                        {bet.bet_type === 'combo' && bet.bet_selections?.length && (
-                          <span className="text-muted-foreground"> @{calculateComboOdds(bet.bet_selections).toFixed(2)}</span>
-                        )}
-                      </span>
-                    </span>
-                    <span>Ganancia: <span className="font-medium">{bet.status === 'cancelled' ? '-' : `${(bet.payout || 0).toFixed(0)} pts`}</span></span>
-                  </div>
-
-                  {/* Detalles del boleto */}
+            {historicalBets.map((bet) => {
+              const hasBoost = hasBetBoost(bet);
+              const showBoostStyle = hasBoost && bet.status !== 'cancelled';
+              const displaySelections = getNonBoostSelections(bet.bet_selections || []);
+              const boostMultiplier = getBoostMultiplier(bet.bet_selections || []);
+              return (
+                <Card key={bet.id} className={`p-4 opacity-75 ${showBoostStyle ? 'bg-yellow-100/50 border-yellow-400' : ''}`}>
                   <div className="space-y-3">
-                    {bet.bet_type === 'combo' && bet.bet_selections?.length ? (
-                      bet.bet_selections.map((selection: any, index: number) => (
-                        <div key={selection.id || `selection-${index}`} className="space-y-1">
+                    {/* Header: Tipo + Semana */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {hasBoost ? (
+                          <Badge className={`text-xs ${bet.status === 'cancelled' ? 'bg-white text-gray-600 border-2 border-gray-400 hover:bg-white hover:text-gray-600' : 'bg-yellow-400 text-black border-yellow-400 hover:bg-yellow-500'}`}>
+                            SUPER
+                          </Badge>
+                        ) : (
+                          <Badge 
+                            variant="outline"
+                            className={`text-xs ${getBetTypeBadgeClassName(bet.status)}`}
+                          >
+                            {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
+                          </Badge>
+                        )}
+                        <span className="text-xs text-muted-foreground">
+                          Histórica
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Información financiera */}
+                    <div className="flex justify-between text-sm">
+                      <span>
+                        Apostado: <span className="font-medium">
+                          {(bet.stake || 0).toFixed(0)} pts
+                          {bet.bet_type === 'combo' && bet.bet_selections?.length && (
+                            <span className="text-muted-foreground"> @{calculateComboOdds(bet.bet_selections).toFixed(2)}</span>
+                          )}
+                        </span>
+                      </span>
+                      <span>Ganancia: <span className="font-medium">{bet.status === 'cancelled' ? '-' : `${(bet.payout || 0).toFixed(0)} pts`}</span></span>
+                    </div>
+
+                    {/* Detalles del boleto */}
+                    <div className="space-y-3">
+                      {bet.bet_type === 'combo' && displaySelections.length > 0 ? (
+                        displaySelections.map((selection: any, index: number) => (
+                          <div key={selection.id || `selection-${index}`} className="space-y-1">
+                            {/* Partido con resultado en la misma línea */}
+                            <div className="flex items-center justify-between">
+                              <div className="text-sm font-medium">
+                                {getMatchName(selection.match_description)}
+                              </div>
+                              {matchResults[selection.fixture_id]?.match_result && (
+                                <div className="text-xs text-muted-foreground">
+                                  ({matchResults[selection.fixture_id].match_result})
+                                </div>
+                              )}
+                            </div>
+                            {/* Boleto justo debajo */}
+                            <div className={`flex items-center gap-2 text-sm font-medium text-foreground border-l-2 pl-2 ${showBoostStyle ? 'border-yellow-400' : 'border-muted'}`}>
+                              {getStatusIcon(selection.status)}
+                              <span>
+                                {getBettingTranslation(selection.market)}: {getBettingTranslation(selection.selection)} @ {selection.odds}
+                                {showBoostStyle && boostMultiplier && <span className="text-yellow-600"> x{boostMultiplier.toFixed(2).replace('.', ',')}</span>}
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      ) : bet.bet_type === 'single' ? (
+                        <div className="space-y-1">
                           {/* Partido con resultado en la misma línea */}
                           <div className="flex items-center justify-between">
                             <div className="text-sm font-medium">
-                              {getMatchName(selection.match_description)}
+                              {getMatchName(bet.match_description)}
                             </div>
-                            {matchResults[selection.fixture_id]?.match_result && (
+                            {matchResults[bet.fixture_id]?.match_result && (
                               <div className="text-xs text-muted-foreground">
-                                ({matchResults[selection.fixture_id].match_result})
+                                ({matchResults[bet.fixture_id].match_result})
                               </div>
                             )}
                           </div>
                           {/* Boleto justo debajo */}
-                          <div className="flex items-center gap-2 text-sm font-medium text-foreground border-l-2 border-muted pl-2">
-                            {getStatusIcon(selection.status)}
-                            <span>{getBettingTranslation(selection.market)}: {getBettingTranslation(selection.selection)} @ {selection.odds}</span>
+                          <div className="text-sm font-medium text-foreground border-l-2 border-muted pl-2">
+                            {(() => {
+                              const parts = bet.bet_selection?.split(' @ ') || [];
+                              const selection = getBettingTranslation(parts[0] || '');
+                              const odds = parts[1] || bet.odds;
+                              return `${getBettingTranslation(bet.market_bets)}: ${selection} @ ${odds}`;
+                            })()}
                           </div>
                         </div>
-                      ))
-                    ) : (
-                      <div className="space-y-1">
-                        {/* Partido con resultado en la misma línea */}
-                        <div className="flex items-center justify-between">
-                          <div className="text-sm font-medium">
-                            {getMatchName(bet.match_description)}
-                          </div>
-                          {matchResults[bet.fixture_id]?.match_result && (
-                            <div className="text-xs text-muted-foreground">
-                              ({matchResults[bet.fixture_id].match_result})
-                            </div>
-                          )}
-                        </div>
-                        {/* Boleto justo debajo */}
-                        <div className="text-sm font-medium text-foreground border-l-2 border-muted pl-2">
-                          {(() => {
-                            const parts = bet.bet_selection?.split(' @ ') || [];
-                            const selection = getBettingTranslation(parts[0] || '');
-                            const odds = parts[1] || bet.odds;
-                            return `${getBettingTranslation(bet.market_bets)}: ${selection} @ ${odds}`;
-                          })()}
-                        </div>
-                      </div>
-                    )}
+                      ) : null}
+                    </div>
                   </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
         </div>
       )}
@@ -1185,7 +1255,10 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancelDialogClose}>
+            <AlertDialogCancel 
+              onClick={handleCancelDialogClose}
+              className="bg-[#FFC72C] hover:bg-[#FFC72C]/90 text-black border-[#FFC72C]"
+            >
               No, mantener boleto
             </AlertDialogCancel>
             <AlertDialogAction 

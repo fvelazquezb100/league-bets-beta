@@ -86,7 +86,7 @@ const SuperAdmin: React.FC = () => {
       const { data, error } = await supabase
         .from('betting_settings')
         .select('setting_key, setting_value')
-        .in('setting_key', ['blocks_available_per_user', 'blocks_received_max_per_user']);
+        .in('setting_key', ['blocks_available_per_user', 'blocks_received_max_per_user', 'boosts_per_week']);
 
       if (error) {
         throw error;
@@ -94,10 +94,12 @@ const SuperAdmin: React.FC = () => {
 
       const availableSetting = data?.find(s => s.setting_key === 'blocks_available_per_user');
       const blockedSetting = data?.find(s => s.setting_key === 'blocks_received_max_per_user');
+      const boostsSetting = data?.find(s => s.setting_key === 'boosts_per_week');
 
       return {
         blocksAvailable: availableSetting ? parseInt(availableSetting.setting_value, 10) : 1,
         blocksReceived: blockedSetting ? parseInt(blockedSetting.setting_value, 10) : 3,
+        boostsPerWeek: boostsSetting ? parseInt(boostsSetting.setting_value, 10) : 1,
       };
     },
   });
@@ -182,12 +184,14 @@ const SuperAdmin: React.FC = () => {
   const [blockResetDialogOpen, setBlockResetDialogOpen] = React.useState(false);
   const [blocksAvailableInput, setBlocksAvailableInput] = React.useState<number>(0);
   const [blocksBlockedInput, setBlocksBlockedInput] = React.useState<number>(0);
+  const [boostsPerWeekInput, setBoostsPerWeekInput] = React.useState<number>(1);
   const [updatingBlockSettings, setUpdatingBlockSettings] = React.useState(false);
 
   React.useEffect(() => {
     if (blockSettings) {
       setBlocksAvailableInput(blockSettings.blocksAvailable ?? 1);
       setBlocksBlockedInput(blockSettings.blocksReceived ?? 3);
+      setBoostsPerWeekInput(blockSettings.boostsPerWeek ?? 1);
     }
   }, [blockSettings]);
 
@@ -202,8 +206,9 @@ const SuperAdmin: React.FC = () => {
 
       const availableValue = Math.max(0, Math.floor(blocksAvailableInput));
       const receivedValue = Math.max(0, Math.floor(blocksBlockedInput));
+      const boostsValue = Math.max(0, Math.floor(boostsPerWeekInput));
 
-      // Update both settings using upsert
+      // Update settings using upsert
       const { error: error1 } = await supabase
         .from('betting_settings')
         .upsert({
@@ -230,6 +235,19 @@ const SuperAdmin: React.FC = () => {
 
       if (error2) throw error2;
 
+      const { error: error3 } = await supabase
+        .from('betting_settings')
+        .upsert({
+          setting_key: 'boosts_per_week',
+          setting_value: boostsValue.toString(),
+          description: 'Number of SuperBoleto boosts available per user per week (premium leagues only)',
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'setting_key',
+        });
+
+      if (error3) throw error3;
+
       await refetchBlockStats();
 
       toast({
@@ -240,7 +258,7 @@ const SuperAdmin: React.FC = () => {
       setBlockResetDialogOpen(false);
     } catch (error: any) {
       toast({
-        title: 'Error al actualizar bloqueos',
+        title: 'Error al actualizar configuración',
         description: error?.message ?? 'No se pudo completar la actualización.',
         variant: 'destructive',
       });
@@ -418,7 +436,7 @@ const SuperAdmin: React.FC = () => {
 
           <Card className="h-full">
             <CardHeader>
-              <CardTitle className="text-base sm:text-lg">Bloqueo de Partidos</CardTitle>
+              <CardTitle className="text-base sm:text-lg">Acciones</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 p-3 sm:p-6">
               {loadingBlockStats ? (
@@ -453,6 +471,20 @@ const SuperAdmin: React.FC = () => {
                       className="w-20 h-8 text-right"
                     />
                   </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <Label htmlFor="boosts-per-week-input" className="text-xs sm:text-sm text-muted-foreground">
+                      SuperBoletos por semana
+                    </Label>
+                    <Input
+                      id="boosts-per-week-input"
+                      type="number"
+                      min={0}
+                      value={boostsPerWeekInput}
+                      onChange={(event) => setBoostsPerWeekInput(Number(event.target.value || 0))}
+                      disabled={loadingBlockStats || updatingBlockSettings}
+                      className="w-20 h-8 text-right"
+                    />
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -475,9 +507,14 @@ const SuperAdmin: React.FC = () => {
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel disabled={updatingBlockSettings}>Cancelar</AlertDialogCancel>
+                    <AlertDialogCancel 
+                      disabled={updatingBlockSettings}
+                      className="bg-white hover:bg-[#FFC72C] hover:text-black text-black border-[#FFC72C]"
+                    >
+                      Cancelar
+                    </AlertDialogCancel>
                     <AlertDialogAction
-                      className="jambol-button"
+                      className="bg-[#FFC72C] hover:bg-[#FFC72C]/90 text-black border-[#FFC72C]"
                       onClick={handleApplyBlockSettings}
                       disabled={updatingBlockSettings}
                     >

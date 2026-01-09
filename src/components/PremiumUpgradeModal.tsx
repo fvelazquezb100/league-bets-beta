@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Crown, Check, Ban, Calendar, RefreshCw, Settings, TrendingUp, BarChart3 } from 'lucide-react';
+import { Crown, Check, Ban, Calendar, RefreshCw, Settings, TrendingUp, BarChart3, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -68,6 +68,11 @@ export const PremiumUpgradeModal: React.FC<PremiumUpgradeModalProps> = ({
   };
 
   const premiumFeatures = [
+    {
+      icon: Zap,
+      title: 'SuperBoleto',
+      description: 'Aumenta tus multiplicadores con SuperBoleto. Configura el límite máximo y multiplicador (1.25x, 1.5x o 2x)',
+    },
     {
       icon: Ban,
       title: 'Bloqueo de Partidos',

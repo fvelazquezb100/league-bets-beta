@@ -28,6 +28,8 @@ type LeagueRow = {
   join_code: string;
   league_season: number;
   available_leagues: number[];
+  boost_max_stake?: number;
+  boost_multiplier?: number;
 };
 
 type AvailableLeague = {
@@ -159,6 +161,8 @@ const AdminLiga: React.FC = () => {
   const [editMinBet, setEditMinBet] = React.useState(1);
   const [editMaxBet, setEditMaxBet] = React.useState(1000);
   const [editResetBudget, setEditResetBudget] = React.useState('weekly');
+  const [editBoostMaxStake, setEditBoostMaxStake] = React.useState(200);
+  const [editBoostMultiplier, setEditBoostMultiplier] = React.useState(1.25);
   const budgetRef = useRef<HTMLInputElement>(null);
 
   // Available leagues state
@@ -202,7 +206,7 @@ const AdminLiga: React.FC = () => {
 
         const { data: leagueData, error: leagueError } = await supabase
           .from('leagues')
-          .select('id, name, week, budget, min_bet, max_bet, type, league_season, reset_budget, join_code, available_leagues')
+          .select('id, name, week, budget, min_bet, max_bet, type, league_season, reset_budget, join_code, available_leagues, boost_max_stake, boost_multiplier')
           .eq('id', profileData.league_id)
           .maybeSingle();
 
@@ -224,6 +228,8 @@ const AdminLiga: React.FC = () => {
               setEditMinBet(fallbackData.min_bet);
               setEditMaxBet(fallbackData.max_bet);
               setEditResetBudget(fallbackData.reset_budget);
+              setEditBoostMaxStake((fallbackData as any).boost_max_stake ?? 200);
+              setEditBoostMultiplier((fallbackData as any).boost_multiplier ?? 1.25);
 
               // Use default available leagues when column doesn't exist
               setSelectedLeagues([140, 2, 3, 262]);
@@ -240,6 +246,8 @@ const AdminLiga: React.FC = () => {
             setEditMinBet(league.min_bet);
             setEditMaxBet(league.max_bet);
             setEditResetBudget(league.reset_budget);
+            setEditBoostMaxStake(league.boost_max_stake ?? 200);
+            setEditBoostMultiplier(league.boost_multiplier ?? 1.25);
 
             // Initialize selected leagues
             setSelectedLeagues((league as any).available_leagues || [140, 2, 3, 262]);
@@ -349,6 +357,12 @@ const AdminLiga: React.FC = () => {
       if (editMinBet !== leagueData.min_bet) { updates.min_bet = editMinBet; hasChanges = true; }
       if (editMaxBet !== leagueData.max_bet) { updates.max_bet = editMaxBet; hasChanges = true; }
       if (editResetBudget !== leagueData.reset_budget) { updates.reset_budget = editResetBudget; hasChanges = true; }
+      if (leagueData.type === 'premium') {
+        const currentBoostMaxStake = leagueData.boost_max_stake ?? 200;
+        const currentBoostMultiplier = leagueData.boost_multiplier ?? 1.25;
+        if (editBoostMaxStake !== currentBoostMaxStake) { updates.boost_max_stake = editBoostMaxStake; hasChanges = true; }
+        if (editBoostMultiplier !== currentBoostMultiplier) { updates.boost_multiplier = editBoostMultiplier; hasChanges = true; }
+      }
 
       // Check if available leagues changed
       const currentLeagues = (leagueData as any).available_leagues || [];
@@ -544,11 +558,11 @@ const AdminLiga: React.FC = () => {
                           Editar Liga
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="max-w-md">
-                        <DialogHeader>
+                      <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
+                        <DialogHeader className="flex-shrink-0">
                           <DialogTitle>Editar Configuración de la Liga</DialogTitle>
                         </DialogHeader>
-                        <div className="space-y-4">
+                        <div className="space-y-4 overflow-y-auto pr-2 flex-1 min-h-0">
                           {leagueData?.type === 'free' ? (
                             <div className="space-y-4">
                               <div className="text-center py-2">
@@ -584,6 +598,14 @@ const AdminLiga: React.FC = () => {
                                   <div className="col-span-2">
                                     <span className="font-medium text-gray-600">Reseteo:</span>
                                     <p className="text-gray-800 capitalize">{leagueData?.reset_budget}</p>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium text-gray-600">Límite SuperBoleto:</span>
+                                    <p className="text-gray-800">{leagueData?.boost_max_stake ?? 200} pts</p>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium text-gray-600">Multiplicador SuperBoleto:</span>
+                                    <p className="text-gray-800">{leagueData?.boost_multiplier ?? 1.25}</p>
                                   </div>
                                 </div>
                               </div>
@@ -652,6 +674,41 @@ const AdminLiga: React.FC = () => {
                                   <option value="weekly">Semanal</option>
                                 </select>
                               </div>
+
+                              {/* Boost Settings - Only for premium leagues */}
+                              <div className="border-t pt-4 space-y-4">
+                                <h4 className="font-semibold text-sm">Configuración de SuperBoleto</h4>
+                                
+                                <div className="space-y-2">
+                                  <Label>Límite máximo para SuperBoleto: {editBoostMaxStake} pts</Label>
+                                  <input
+                                    type="range"
+                                    min={editMinBet}
+                                    max={editMaxBet}
+                                    step={10}
+                                    value={editBoostMaxStake}
+                                    onChange={e => setEditBoostMaxStake(Number(e.target.value))}
+                                    className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                                  />
+                                  <p className="text-xs text-muted-foreground">
+                                    Rango permitido: {editMinBet} - {editMaxBet} pts
+                                  </p>
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label htmlFor="boost-multiplier">Multiplicador de SuperBoleto</Label>
+                                  <select
+                                    id="boost-multiplier"
+                                    value={editBoostMultiplier}
+                                    onChange={e => setEditBoostMultiplier(Number(e.target.value))}
+                                    className="w-full p-2 border border-gray-300 rounded-md"
+                                  >
+                                    <option value={1.25}>1.25</option>
+                                    <option value={1.5}>1.5</option>
+                                    <option value={2.0}>2.0</option>
+                                  </select>
+                                </div>
+                              </div>
                             </>
                           )}
 
@@ -698,7 +755,7 @@ const AdminLiga: React.FC = () => {
                             )}
                           </div>
 
-                          <div className="flex justify-end gap-2 pt-4">
+                          <div className="flex justify-end gap-2 pt-4 flex-shrink-0 border-t mt-4">
                             <Button
                               className="jambol-button"
                               onClick={() => setIsEditFormOpen(false)}

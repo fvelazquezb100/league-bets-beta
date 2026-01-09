@@ -4,14 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { X, DollarSign } from 'lucide-react';
+import { X, DollarSign, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useBettingSettings } from '@/hooks/useBettingSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { getBettingTranslation } from '@/utils/bettingTranslations';
 import { betSchema, type BetInput } from '@/schemas/validation';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useIsPremiumLeague } from '@/hooks/useLeaguePremium';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Bet {
   id: string;
@@ -34,9 +36,86 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [weeklyBudget, setWeeklyBudget] = useState<number | null>(null);
   const [minBet, setMinBet] = useState<number>(10); // Default minimum bet
+  const [boostActive, setBoostActive] = useState(false);
   const { toast } = useToast();
   const { cutoffMinutes, maintenanceMode } = useBettingSettings();
   const queryClient = useQueryClient();
+  const isPremium = useIsPremiumLeague();
+
+  // Query for boosts_per_week setting
+  const { data: boostsPerWeek = 1 } = useQuery({
+    queryKey: ['boosts-per-week-setting'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('betting_settings')
+        .select('setting_value')
+        .eq('setting_key', 'boosts_per_week')
+        .maybeSingle();
+      if (error || !data) return 1;
+      return parseInt(data.setting_value, 10) || 1;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Query for current week and boost settings
+  const { data: leagueBoostData } = useQuery({
+    queryKey: ['league-boost-settings'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { week: 1, boostMaxStake: 200, boostMultiplier: 1.25 };
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('league_id')
+        .eq('id', user.id)
+        .single();
+      if (!profile?.league_id) return { week: 1, boostMaxStake: 200, boostMultiplier: 1.25 };
+      const { data: league } = await supabase
+        .from('leagues')
+        .select('week, boost_max_stake, boost_multiplier')
+        .eq('id', profile.league_id)
+        .single();
+      return {
+        week: league?.week ?? 1,
+        boostMaxStake: league?.boost_max_stake ?? 200,
+        boostMultiplier: league?.boost_multiplier ?? 1.25
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const currentWeek = leagueBoostData?.week ?? 1;
+  const boostMaxStake = leagueBoostData?.boostMaxStake ?? 200;
+  const boostMultiplier = leagueBoostData?.boostMultiplier ?? 1.25;
+
+  // Query for boosts used this week (count from bet_selections where market = 'BOOST')
+  const { data: boostsUsedThisWeek = 0, refetch: refetchBoostsUsed } = useQuery({
+    queryKey: ['boosts-used-this-week', currentWeek],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return 0;
+      // Get all bets from this week that have a BOOST selection
+      const { data: bets, error } = await supabase
+        .from('bets')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('week', currentWeek)
+        .neq('status', 'cancelled');
+      if (error || !bets || bets.length === 0) return 0;
+      const betIds = bets.map(b => b.id);
+      // Count BOOST selections
+      const { count, error: countError } = await supabase
+        .from('bet_selections')
+        .select('*', { count: 'exact', head: true })
+        .in('bet_id', betIds)
+        .eq('market', 'BOOST');
+      if (countError) return 0;
+      return count ?? 0;
+    },
+    staleTime: 30 * 1000, // Refresh more often
+  });
+
+  const boostsRemaining = Math.max(0, boostsPerWeek - boostsUsedThisWeek);
+  const canUseBoost = isPremium && boostsRemaining > 0;
 
   // Helper to adjust stake by 10, allowing values below minBet
   const adjustStakeBy10 = (direction: 'up' | 'down') => {
@@ -68,7 +147,9 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
   const uniqueFixtureIds = new Set(fixtureIds);
   const hasDuplicateFixtures = fixtureIds.length !== uniqueFixtureIds.size;
 
-  const totalOdds = selectedBets.reduce((acc, bet) => acc * bet.odds, 1);
+  const baseOdds = selectedBets.reduce((acc, bet) => acc * bet.odds, 1);
+  const calculatedBoostMultiplier = boostActive ? boostMultiplier : 1;
+  const totalOdds = baseOdds * calculatedBoostMultiplier;
   const potentialWinnings = stake ? (parseFloat(stake.replace(',', '.')) * totalOdds).toFixed(2) : '0.00';
 
   useEffect(() => {
@@ -210,7 +291,27 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
           variant: 'destructive',
         });
         return;
-      }  
+      }
+
+      // Validación: máximo según configuración de la liga para SuperBoleto
+      if (boostActive && stakeAmount > boostMaxStake) {
+        toast({
+          title: 'Error',
+          description: `El máximo para SuperBoleto es de ${boostMaxStake} pts.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Validación: boost disponible
+      if (boostActive && boostsRemaining <= 0) {
+        toast({
+          title: 'Super ya utilizado',
+          description: 'Ya has usado todos tus SuperBoletos esta semana.',
+          variant: 'destructive',
+        });
+        return;
+      }
 
       // Nueva validación: máximo por boleto según la liga
       if (profile.league_id) {
@@ -249,7 +350,43 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
       }
 
       // Place bet based on type (single or combo)
-      if (selectedBets.length === 1) {
+      // If boost is active, always use combo bet with BOOST selection
+      if (boostActive) {
+        // Build selections array with all bets + BOOST
+        const selections = selectedBets.map(bet => ({
+          fixture_id: bet.fixtureId,
+          market: bet.market,
+          selection: bet.selection,
+          odds: bet.odds,
+          match_description: bet.matchDescription
+        }));
+        // Add BOOST selection
+        selections.push({
+          fixture_id: 1, // Fixed ID for BOOST
+          market: 'BOOST',
+          selection: boostMultiplier.toString(),
+          odds: boostMultiplier,
+          match_description: 'SuperBoleto'
+        });
+
+        const { data: betId, error: comboError } = await supabase.rpc('place_combo_bet', {
+          stake_amount: stakeAmount,
+          selections: selections
+        });
+        
+        if (comboError) {
+          throw comboError;
+        }
+
+        // Mark BOOST selection as 'won' immediately (it doesn't depend on any match result)
+        if (betId) {
+          await supabase
+            .from('bet_selections')
+            .update({ status: 'won' })
+            .eq('bet_id', betId)
+            .eq('market', 'BOOST');
+        }
+      } else if (selectedBets.length === 1) {
         // Single bet - use new RPC function with proper ID sequencing
         const { data: betId, error: betError } = await supabase.rpc('place_single_bet', {
           stake_amount: stakeAmount,
@@ -290,15 +427,22 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
       queryClient.invalidateQueries({ queryKey: ['user-bets'] });
       queryClient.invalidateQueries({ queryKey: ['user-profile'] });
       queryClient.invalidateQueries({ queryKey: ['user-bet-history'] });
+      if (boostActive) {
+        refetchBoostsUsed();
+      }
 
+      const betTypeLabel = boostActive 
+        ? 'SuperBoleto' 
+        : (selectedBets.length > 1 ? 'combinado' : '');
       toast({
-        title: '¡Boleto realizado!',
-        description: `Boleto ${selectedBets.length > 1 ? 'combinado' : ''} de ${stake} pts realizado con éxito.`,
+        title: boostActive ? '¡SuperBoleto realizado!' : '¡Boleto realizado!',
+        description: `Boleto ${betTypeLabel} de ${stake} pts realizado con éxito.`,
       });
 
       // Clear the bet slip
       onClearAll();
       setStake('');
+      setBoostActive(false);
 
     } catch (error) {
       console.error('Error placing bet:', error);
@@ -395,13 +539,22 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
               )}
 
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span>Multiplicador</span>
-                  <span className="font-semibold">{totalOdds.toFixed(2)}</span>
+                  <div className="flex items-center gap-2">
+                    {boostActive && (
+                      <span className="text-xs text-yellow-600 font-medium">(×{boostMultiplier.toFixed(2).replace('.', ',')})</span>
+                    )}
+                    <span className={`font-semibold ${boostActive ? 'text-yellow-600' : ''}`}>
+                      {totalOdds.toFixed(2)}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex justify-between">
                   <span>Ganancia Potencial:</span>
-                  <span className="font-semibold text-primary">{potentialWinnings} pts</span>
+                  <span className={`font-semibold ${boostActive ? 'text-yellow-600' : 'text-primary'}`}>
+                    {potentialWinnings} pts
+                  </span>
                 </div>
               </div>
 
@@ -420,9 +573,64 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
                 >
                   {isSubmitting ? 'Procesando...' : 'Realizar Boletos'}
                 </Button>
+                {/* SuperBoleto button - visible for all leagues, disabled for free leagues */}
+                {!isPremium ? (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="w-full">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              toast({
+                                title: 'Funcionalidad Premium',
+                                description: 'SuperBoleto está disponible solo para ligas premium.',
+                                variant: 'destructive',
+                              });
+                            }}
+                            disabled
+                            className="w-full bg-white text-black border border-gray-400 opacity-50 cursor-not-allowed"
+                          >
+                            <Zap className="h-4 w-4 mr-2" />
+                            SuperBoleto {boostMultiplier.toFixed(2).replace('.', ',')}
+                          </Button>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Funcionalidad Premium - Actualiza tu liga para usar SuperBoleto</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : (
+                  <Button
+                    variant={boostActive ? 'default' : 'outline'}
+                    onClick={() => {
+                      if (!canUseBoost && !boostActive) {
+                        toast({
+                          title: 'Super ya utilizado',
+                          description: 'Ya has usado todos tus SuperBoletos esta semana.',
+                          variant: 'destructive',
+                        });
+                        return;
+                      }
+                      setBoostActive(!boostActive);
+                    }}
+                    disabled={(!canUseBoost && !boostActive) || (stake && parseFloat(stake.replace(',', '.')) > boostMaxStake)}
+                    className={`w-full ${boostActive 
+                      ? 'bg-[#FFC72C] hover:bg-[#FFC72C] text-black border-[#FFC72C]' 
+                      : 'bg-white text-black border border-[#FFC72C] hover:bg-[#FFC72C] hover:text-black'
+                    }`}
+                  >
+                    <Zap className={`h-4 w-4 mr-2 ${boostActive ? 'fill-current' : ''}`} />
+                    SuperBoleto {boostMultiplier.toFixed(2).replace('.', ',')} {boostsRemaining > 0 ? `(${boostsRemaining})` : ''}
+                  </Button>
+                )}
                 <Button
                   variant="outline"
-                  onClick={onClearAll}
+                  onClick={() => {
+                    onClearAll();
+                    setBoostActive(false);
+                  }}
                   className="w-full bg-white text-black border border-[#FFC72C] hover:bg-[#FFC72C] hover:text-black"
                 >
                   Limpiar Boleto
