@@ -351,6 +351,8 @@ const LiveBets = () => {
   // Merge base fixtures with live odds overlay (by fixture id)
   const mergedMatches: MatchData[] = useMemo(() => {
     const byId = new Map<number, MatchData>();
+    const now = Date.now();
+
     (baseMatches || []).forEach((m) => {
       if (m?.fixture?.id) byId.set(m.fixture.id, m);
     });
@@ -363,7 +365,21 @@ const LiveBets = () => {
     });
 
     return Array.from(byId.values())
-      .filter((m) => m?.fixture?.id && m?.fixture?.date)
+      .filter((m) => {
+        if (!m?.fixture?.id || !m?.fixture?.date) return false;
+        
+        const kickoffMs = new Date(m.fixture.date).getTime();
+        const isLive = !!((m as any)?.teams?.is_live || (m as any)?.fixture?.is_live);
+        
+        // Filter out finished matches:
+        // If kickoff was more than 3 hours ago AND it's not marked as live, it's probably finished
+        const threeHoursAgo = now - (3 * 60 * 60 * 1000);
+        if (kickoffMs < threeHoursAgo && !isLive) {
+          return false;
+        }
+        
+        return true;
+      })
       .sort((a, b) => new Date(a.fixture.date).getTime() - new Date(b.fixture.date).getTime());
   }, [baseMatches, liveMatches]);
 
@@ -375,26 +391,35 @@ const LiveBets = () => {
       <div className="w-full space-y-4">
         {matchesToRender.map(match => {
           const kickoff = new Date(match.fixture.date);
+          const kickoffMs = kickoff.getTime();
           // In "En directo", we never freeze bets - allow betting on live matches
           const isFrozen = false;
-          const isLive = !!((match as any)?.teams?.is_live || (match as any)?.fixture?.is_live);
+          const isLiveFlag = !!((match as any)?.teams?.is_live || (match as any)?.fixture?.is_live);
+          // Consider match "in play" if: API says it's live OR kickoff was in the past (match has started)
+          const hasStarted = kickoffMs <= nowTick;
+          const isLive = isLiveFlag || hasStarted;
           const enabledToday = isLiveBettingEnabled(match.fixture.date);
-          // Expandable if: match is live AND has bookmakers (odds available) AND enabled today
+          // Expandable if: match has started (or is live) AND has bookmakers (odds available) AND enabled today
           const hasOdds = !!(match.bookmakers && match.bookmakers.length > 0);
           const isExpandable = isLive && hasOdds && enabledToday;
           const isUpcoming = !isExpandable;
 
-          const kickoffMs = kickoff.getTime();
           const msUntilKickoff = kickoffMs - nowTick;
           const within5h = msUntilKickoff > 0 && msUntilKickoff <= 5 * 60 * 60 * 1000;
 
           // Handle click on match card
           const handleMatchClick = () => {
             if (!isExpandable) {
-              if (isLive && !hasOdds) {
+              if (!enabledToday) {
+                toast({
+                  title: 'Partido no habilitado',
+                  description: 'Este partido no está habilitado hoy según la disponibilidad de partidos.',
+                  variant: 'default',
+                });
+              } else if (isLive && !hasOdds) {
                 toast({
                   title: 'Cuotas no disponibles',
-                  description: 'Las cuotas en directo aparecerán cuando el partido esté en juego.',
+                  description: 'Las cuotas en directo aparecerán cuando el partido esté en juego y haya cuotas disponibles.',
                   variant: 'default',
                 });
               } else if (!isLive) {
@@ -515,6 +540,7 @@ const LiveBets = () => {
                                   isFrozen={isFrozen}
                                   hasUserBetOnMarket={hasUserBetOnMarket}
                                   handleAddToSlip={handleAddToSlip}
+                                  isLiveMatch={isLive}
                                 />
                               );
                             }
@@ -530,6 +556,7 @@ const LiveBets = () => {
                                 isFrozen={isFrozen}
                                 hasUserBetOnMarket={hasUserBetOnMarket}
                                 handleAddToSlip={handleAddToSlip}
+                                isLiveMatch={isLive}
                               />
                             );
                           })}

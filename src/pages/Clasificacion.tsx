@@ -394,21 +394,21 @@ export const Clasificacion = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Historical Standings Card - Solo para ligas premium */}
         {leagueType === 'premium' && (
-          <Card 
-            className="cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:border-primary/30"
-            onClick={openHistoricalModal}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Evolución Histórica</p>
+        <Card 
+          className="cursor-pointer transition-all duration-200 hover:bg-primary/10 hover:border-primary/30"
+          onClick={openHistoricalModal}
+        >
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Evolución Histórica</p>
                   <p className="text-lg font-bold">Grafica historia por Semanas</p>
-                  <p className="text-xs text-muted-foreground">Ver evolución de posiciones</p>
-                </div>
-                <TrendingUp className="h-5 w-5 text-primary" />
+                <p className="text-xs text-muted-foreground">Ver evolución de posiciones</p>
               </div>
-            </CardContent>
-          </Card>
+              <TrendingUp className="h-5 w-5 text-primary" />
+            </div>
+          </CardContent>
+        </Card>
         )}
 
         {/* Week Filter and League Statistics - Solo para ligas premium */}

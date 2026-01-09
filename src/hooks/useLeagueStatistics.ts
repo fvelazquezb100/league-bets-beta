@@ -93,13 +93,13 @@ const fetchLeagueStatistics = async (leagueId: number): Promise<LeagueStatistics
         const to = from + pageSize - 1;
         
         const { data: batchBets, error: betsError } = await supabase
-          .from('bets')
-          .select('id, user_id, stake, payout, odds, status, match_description')
+      .from('bets')
+      .select('id, user_id, stake, payout, odds, status, match_description')
           .in('user_id', userBatch)
           .in('status', ['won', 'lost', 'pending'])
           .range(from, to);
-        
-        if (betsError) throw betsError;
+
+    if (betsError) throw betsError;
         
         if (batchBets && batchBets.length > 0) {
           allBetsData.push(...batchBets);
@@ -139,13 +139,13 @@ const fetchLeagueStatistics = async (leagueId: number): Promise<LeagueStatistics
           const to = from + selectionPageSize - 1;
           
           const { data: batchSelections, error: selectionsError } = await supabase
-            .from('bet_selections')
-            .select('bet_id, market, selection, status, match_description')
+      .from('bet_selections')
+      .select('bet_id, market, selection, status, match_description')
             .in('bet_id', betBatch)
             .in('status', ['won', 'lost', 'pending'])
             .range(from, to);
-          
-          if (selectionsError) throw selectionsError;
+
+    if (selectionsError) throw selectionsError;
           
           if (batchSelections && batchSelections.length > 0) {
             allSelectionsData.push(...batchSelections);

@@ -85,7 +85,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
 
       if (profile) {
         setWeeklyBudget(profile.weekly_budget);
-
+        
         // Get minimum bet for the league
         if (profile.league_id) {
           const { data: league } = await supabase
@@ -93,7 +93,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
             .select('min_bet')
             .eq('id', profile.league_id)
             .single();
-
+          
           if (league && league.min_bet) {
             setMinBet(Math.floor(league.min_bet)); // Remove decimals
           }
@@ -151,30 +151,30 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
     const isLivePage = window.location.pathname.includes('/directo');
     
     if (!isLivePage) {
-      const isAnyFrozen = selectedBets.some(bet => {
-        if (!bet.kickoff) return false;
-        const kickoffTime = new Date(bet.kickoff);
-        const freeze = new Date(kickoffTime.getTime() - cutoffMinutes * 60 * 1000);
-        const now = new Date();
-        const isFrozen = now >= freeze;
-
-        return isFrozen;
-      });
-
-      if (isAnyFrozen) {
-        toast({
+    const isAnyFrozen = selectedBets.some(bet => {
+      if (!bet.kickoff) return false;
+      const kickoffTime = new Date(bet.kickoff);
+      const freeze = new Date(kickoffTime.getTime() - cutoffMinutes * 60 * 1000);
+      const now = new Date();
+      const isFrozen = now >= freeze;
+      
+      return isFrozen;
+    });
+    
+    if (isAnyFrozen) {
+      toast({
           title: 'Selecciones cerradas',
-          description: `Al menos una selección está cerrada (${cutoffMinutes} min antes del inicio).`,
-          variant: 'destructive',
-        });
-        return;
+        description: `Al menos una selección está cerrada (${cutoffMinutes} min antes del inicio).`,
+        variant: 'destructive',
+      });
+      return;
       }
     }
 
     setIsSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-
+      
       if (!user) {
         toast({
           title: 'Error',
@@ -210,7 +210,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
           variant: 'destructive',
         });
         return;
-      }
+      }  
 
       // Nueva validación: máximo por boleto según la liga
       if (profile.league_id) {
@@ -237,7 +237,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
       }
 
 
-
+      
       // Validar presupuesto semanal disponible
       if (profile.weekly_budget < stakeAmount) {
         toast({
@@ -277,7 +277,7 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
           stake_amount: stakeAmount,
           selections: selections
         });
-
+        
         if (comboError) {
           throw comboError;
         }
@@ -410,9 +410,9 @@ const BetSlip = ({ selectedBets, onRemoveBet, onClearAll }: BetSlipProps) => {
                   id="realizar-apuesta"
                   onClick={handlePlaceBet}
                   disabled={
-                    isSubmitting ||
-                    !stake ||
-                    parseFloat(stake) <= 0 ||
+                    isSubmitting || 
+                    !stake || 
+                    parseFloat(stake) <= 0 || 
                     (selectedBets.length > 1 && hasDuplicateFixtures) ||
                     (!window.location.pathname.includes('/directo') && selectedBets.some(bet => bet.kickoff ? (new Date() >= new Date(new Date(bet.kickoff).getTime() - cutoffMinutes * 60 * 1000)) : false))
                   }

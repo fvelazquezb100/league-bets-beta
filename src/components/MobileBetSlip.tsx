@@ -152,18 +152,18 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll, forceOpen = fals
     const isLivePage = window.location.pathname.includes('/directo');
     
     if (!isLivePage) {
-      const isAnyFrozen = selectedBets.some(bet => {
-        if (!bet.kickoff) return false;
-        const freeze = new Date(new Date(bet.kickoff).getTime() - cutoffMinutes * 60 * 1000);
-        return new Date() >= freeze;
-      });
-      if (isAnyFrozen) {
-        toast({
+    const isAnyFrozen = selectedBets.some(bet => {
+      if (!bet.kickoff) return false;
+      const freeze = new Date(new Date(bet.kickoff).getTime() - cutoffMinutes * 60 * 1000);
+      return new Date() >= freeze;
+    });
+    if (isAnyFrozen) {
+      toast({
           title: 'Selecciones cerradas',
-          description: `Al menos una selección está cerrada (${cutoffMinutes} min antes del inicio).`,
-          variant: 'destructive',
-        });
-        return;
+        description: `Al menos una selección está cerrada (${cutoffMinutes} min antes del inicio).`,
+        variant: 'destructive',
+      });
+      return;
       }
     }
 

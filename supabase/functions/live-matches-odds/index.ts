@@ -269,28 +269,102 @@ Deno.serve(async (req: Request) => {
     const fixtureIds = Array.from(baseMatches.keys());
 
     // Step 2: Fetch odds only for live fixtures (when match started)
+    // For live matches, the standard odds endpoint should return live odds automatically
     for (const fxId of fixtureIds) {
       const base = baseMatches.get(fxId);
       const isLive = !!base?.teams?.is_live;
       if (!isLive) continue;
 
-      const oddsUrl = `${baseUrl}/odds?fixture=${fxId}`;
-      const oddsRes = await fetchWithTimeout(oddsUrl, { headers: apiHeaders }, 15000).catch(() => null);
-      if (!oddsRes || !oddsRes.ok) continue;
+      // Live odds in API-Football are exposed via /odds/live.
+      // We first try the live endpoint (in-play odds), and fallback to /odds?fixture= (pre-match/latest snapshot).
+      const requestHeaders = {
+        ...apiHeaders,
+        'Cache-Control': 'no-cache',
+      };
 
-      const oddsJson = await oddsRes.json().catch(() => null);
-      const resp = Array.isArray(oddsJson?.response) ? oddsJson.response : [];
-      if (resp.length === 0) continue;
+      const fetchOdds = async (url: string, label: string) => {
+        const res = await fetchWithTimeout(url, { headers: requestHeaders }, 15000).catch((err) => {
+          console.error(`Error fetching ${label} odds for fixture ${fxId}:`, err);
+          return null;
+        });
+        if (!res || !res.ok) return { res, json: null as any, resp: [] as any[] };
+        const json = await res.json().catch((err) => {
+          console.error(`Error parsing ${label} odds JSON for fixture ${fxId}:`, err);
+          return null;
+        });
+        const resp = Array.isArray(json?.response) ? json.response : [];
+        return { res, json, resp };
+      };
 
-      const entry = resp[0];
-      baseMatches.set(fxId, {
-        ...base,
-        league: entry?.league ?? base?.league,
-        fixture: { ...(entry?.fixture || {}), ...(base?.fixture || {}), id: fxId, date: base?.fixture?.date || entry?.fixture?.date || null },
-        teams: base?.teams ?? entry?.teams,
-        bookmakers: entry?.bookmakers ?? [],
-        update: entry?.update,
-      });
+      const liveOddsUrl = `${baseUrl}/odds/live?fixture=${fxId}`;
+      const fallbackUrl = `${baseUrl}/odds?fixture=${fxId}`;
+      const leagueLiveUrl = base?.league?.id ? `${baseUrl}/odds/live?league=${base.league.id}` : null;
+
+      // 1) Try live odds for this specific fixture
+      let chosen = await fetchOdds(liveOddsUrl, 'LIVE_FIXTURE');
+
+      // 2) If empty, try live odds for the entire league (sometimes fixture param is buggy in live)
+      if (chosen.resp.length === 0 && leagueLiveUrl) {
+        console.log(`Fixture ${fxId} returned no live odds; trying league ${base.league.id} live odds...`);
+        const leagueLive = await fetchOdds(leagueLiveUrl, 'LIVE_LEAGUE');
+        const fixtureInLeague = leagueLive.resp.filter((r: any) => r?.fixture?.id === fxId);
+        if (fixtureInLeague.length > 0) {
+          console.log(`Found live odds for fixture ${fxId} in league live response!`);
+          chosen = { ...leagueLive, resp: fixtureInLeague };
+        }
+      }
+
+      // 3) If still empty, try fallback to standard odds endpoint
+      if (chosen.resp.length === 0) {
+        chosen = await fetchOdds(fallbackUrl, 'FALLBACK');
+      }
+
+      // 4) Final check
+      if (!chosen.res || !chosen.res.ok) {
+        console.warn(`Failed to fetch odds for fixture ${fxId}: Status ${chosen.res?.status}`);
+        continue;
+      }
+
+      const resp = chosen.resp || [];
+      
+      // Process odds response
+      if (resp.length === 0) {
+        console.warn(`No odds data returned for fixture ${fxId} - keeping base match structure`);
+        // Keep base match structure even if no odds returned
+      } else {
+        // API-Football may return multiple entries for the same fixture; merge bookmakers across them.
+        const allBookmakers = resp
+          .map((r: any) => r?.bookmakers)
+          .filter((b: any) => Array.isArray(b))
+          .flat();
+
+        // Choose a representative entry (first one with league/fixture data if possible)
+        const entry =
+          resp.find((r: any) => r?.league || r?.fixture) ??
+          resp[0];
+
+        // Check if odds are outdated (update timestamp is before match start)
+        const updateTime = entry?.update ? new Date(entry.update).getTime() : null;
+        const matchStartTime = base?.fixture?.date ? new Date(base.fixture.date).getTime() : null;
+        const isOddsOutdated = updateTime && matchStartTime && updateTime < matchStartTime;
+
+        const bookmakersCount = Array.isArray(allBookmakers) ? allBookmakers.length : 0;
+        if (bookmakersCount === 0) {
+          console.warn(`Fixture ${fxId} has no bookmakers - update: ${entry?.update}`);
+        } else {
+          const statusMsg = isOddsOutdated ? 'OUTDATED (pre-match odds)' : 'CURRENT';
+          console.log(`Fixture ${fxId} has ${bookmakersCount} bookmakers (merged from ${resp.length} entries) - update: ${entry?.update} [${statusMsg}]`);
+        }
+
+        baseMatches.set(fxId, {
+          ...base,
+          league: entry?.league ?? base?.league,
+          fixture: { ...(entry?.fixture || {}), ...(base?.fixture || {}), id: fxId, date: base?.fixture?.date || entry?.fixture?.date || null },
+          teams: base?.teams ?? entry?.teams,
+          bookmakers: allBookmakers,
+          update: entry?.update,
+        });
+      }
     }
 
     const mergedOdds: any[] = Array.from(baseMatches.values())
