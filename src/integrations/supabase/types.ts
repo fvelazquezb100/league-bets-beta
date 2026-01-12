@@ -516,6 +516,7 @@ export type Database = {
           total_points: number | null
           username: string
           weekly_budget: number | null
+          weekly_points_history: Json | null
         }
         Insert: {
           blocks_available?: number
@@ -528,6 +529,7 @@ export type Database = {
           total_points?: number | null
           username: string
           weekly_budget?: number | null
+          weekly_points_history?: Json | null
         }
         Update: {
           blocks_available?: number
@@ -540,6 +542,7 @@ export type Database = {
           total_points?: number | null
           username?: string
           weekly_budget?: number | null
+          weekly_points_history?: Json | null
         }
         Relationships: [
           {

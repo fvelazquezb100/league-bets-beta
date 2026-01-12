@@ -397,7 +397,7 @@ const AdminLiga: React.FC = () => {
   };
 
 
-  const handleResetWeek = async () => {
+  const handleResetLeague = async () => {
     if (!leagueId) return;
 
     try {
@@ -442,7 +442,10 @@ const AdminLiga: React.FC = () => {
       // 4️⃣ Resetear puntos de todos los usuarios de la liga
       const { error: profilesError } = await supabase
         .from('profiles')
-        .update({ total_points: 0 })
+        .update({ 
+          total_points: 0,
+          weekly_points_history: {}
+        })
         .eq('league_id', leagueId);
 
       if (profilesError) throw profilesError;
@@ -1042,7 +1045,7 @@ const AdminLiga: React.FC = () => {
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center space-y-4">
             <p className="text-lg font-semibold">¿Estás seguro que quieres resetear la liga?</p>
             <div className="flex justify-between gap-4">
-              <Button variant="destructive" onClick={handleResetWeek}>Sí, resetear</Button>
+              <Button variant="destructive" onClick={handleResetLeague}>Sí, resetear</Button>
               <Button className="jambol-button" onClick={() => setConfirmingReset(false)}>Cancelar</Button>
             </div>
           </div>

@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Trophy, Calendar, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import { getBettingTranslation } from '@/utils/bettingTranslations';
 
@@ -191,6 +190,27 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
     return 'Partido no disponible';
   };
 
+  // Función para detectar si un boleto tiene boost
+  const hasBetBoost = (bet: any): boolean => {
+    if (!bet.bet_selections || !Array.isArray(bet.bet_selections)) return false;
+    return bet.bet_selections.some((selection: any) => selection.market === 'BOOST');
+  };
+
+  // Función para filtrar selecciones excluyendo BOOST (para display)
+  const getNonBoostSelections = (betSelections: any[]): any[] => {
+    if (!betSelections || !Array.isArray(betSelections)) return [];
+    return betSelections.filter((selection: any) => selection.market !== 'BOOST');
+  };
+
+  // Función para obtener el multiplicador de boost de una apuesta
+  const getBoostMultiplier = (betSelections: any[]): number | null => {
+    if (!betSelections || !Array.isArray(betSelections)) return null;
+    const boostSelection = betSelections.find((selection: any) => selection.market === 'BOOST');
+    if (!boostSelection) return null;
+    // El multiplicador está en odds o en selection (como string)
+    return parseFloat(boostSelection.odds || boostSelection.selection || '1.25');
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -209,199 +229,114 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
         </h2>
       </div>
 
-      {/* Desktop Bet History Table */}
-      <Card className="hidden sm:block">
-        <CardContent>
+      {/* Desktop Bet History View - Cards */}
+      <div className="hidden sm:block">
           {bets.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
               Este jugador no tiene apuestas finalizadas (ganadas o perdidas) todavía.
             </p>
           ) : (
-            <>
-              {/* Desktop Table View */}
-              <div className="hidden sm:block">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Partido</TableHead>
-                      <TableHead>Apuesta</TableHead>
-                      <TableHead>Estado</TableHead>
-                      <TableHead>Semana</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {bets.map((bet) => (
-                      <TableRow key={bet.id}>
-                        {/* Tipo */}
-                        <TableCell>
-                          <Badge variant="outline">
-                            {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
-                          </Badge>
-                        </TableCell>
-
-                        {/* Partido con resultado en línea abajo */}
-                        <TableCell>
-                          {bet.bet_type === 'combo'
-                            ? bet.bet_selections?.map((sel: any) => (
-                                <div key={sel.id} className="text-sm mb-1">
-                                  {getMatchName(sel.match_description)}
-                                  {sel.match_result && (
-                                    <div className="text-xs text-muted-foreground">{sel.match_result}</div>
-                                  )}
-                                </div>
-                              ))
-                            : <>
-                                {getMatchName(bet.match_description)}
-                                {bet.match_result && (
-                                  <div className="text-xs text-muted-foreground">{bet.match_result}</div>
-                                )}
-                              </>
-                          }
-                        </TableCell>
-
-                        {/* Apuesta */}
-                        <TableCell>
-                          {bet.bet_type === 'combo' ? (
-                            <>
-                              {bet.bet_selections?.map((sel: any, index: number) => (
-                                <div key={sel.id} className={`text-sm ${index < (bet.bet_selections?.length || 0) - 1 ? 'mb-5' : 'mb-2'} text-muted-foreground`}>
-                                  {sel.market}: {getBettingTranslation(sel.selection) || sel.selection} @ {sel.odds}
-                                </div>
-                              ))}
-                              <div className="text-xs text-muted-foreground">&nbsp;</div>
-                            </>
-                          ) : (
-                            <>
-                              <div className="text-sm text-muted-foreground">
-                                {(() => {
-                                  const market = bet.market_bets || '';
-                                  const selectionText = bet.bet_selection?.trim() || '';
-                                  
-                                  // Check if selectionText already contains odds (has @ symbol)
-                                  if (selectionText.includes(' @ ')) {
-                                    const parts = selectionText.split(' @ ');
-                                    const selection = getBettingTranslation(parts[0] || '') || parts[0] || '';
-                                    const odds = parts[1] ? parseFloat(parts[1]).toFixed(2) : '';
-                                    return `${market}: ${selection} @ ${odds}`;
-                                  } else {
-                                    // If no odds in selectionText, use bet.odds
-                                    const translatedSelection = getBettingTranslation(selectionText) || selectionText;
-                                    const odds = bet.odds ? parseFloat(bet.odds).toFixed(2) : '';
-                                    return `${market}: ${translatedSelection} @ ${odds}`;
-                                  }
-                                })()}
-                              </div>
-                              <div className="text-xs text-muted-foreground">&nbsp;</div>
-                            </>
-                          )}
-                        </TableCell>
-
-                        {/* Estado */}
-                        <TableCell>
-                          <Badge variant={getStatusVariant(bet.status)}>
-                            {getStatusText(bet.status)}
-                          </Badge>
-                        </TableCell>
-
-                        {/* Semana */}
-                        <TableCell className="text-muted-foreground">
-                          {bet.week || '-'}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Mobile Card View */}
-              <div className="block sm:hidden space-y-4">
-                {bets.map((bet) => (
-                  <Card key={bet.id} className="p-4">
+          <div className="space-y-4">
+            {bets.map((bet) => {
+              const hasBoost = hasBetBoost(bet);
+              const showBoostStyle = hasBoost && bet.status !== 'cancelled';
+              const displaySelections = bet.bet_type === 'combo' ? getNonBoostSelections(bet.bet_selections || []) : [];
+              const boostMultiplier = getBoostMultiplier(bet.bet_selections || []);
+              
+              return (
+                <Card key={bet.id} className={`p-4 ${showBoostStyle ? 'bg-yellow-100/50 border-yellow-400' : ''}`}>
                     <div className="space-y-3">
                       {/* Header: Tipo + Semana */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
+                        {hasBoost ? (
+                          <Badge className={`text-xs ${
+                            bet.status === 'cancelled' 
+                              ? 'bg-white text-gray-600 border-2 border-gray-400 hover:bg-white hover:text-gray-600' 
+                              : bet.status === 'lost'
+                              ? 'bg-red-600 text-white border-red-600 hover:bg-red-700'
+                              : bet.status === 'pending'
+                              ? 'bg-white text-[#FFC72C] border-2 border-[#FFC72C] hover:bg-white'
+                              : 'bg-yellow-400 text-black border-yellow-400 hover:bg-yellow-500'
+                          }`}>
+                            SUPER
+                          </Badge>
+                        ) : (
                           <Badge 
                             variant="outline"
                             className={`text-xs ${getBetTypeBadgeClassName(bet.status)}`}
                           >
                             {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
                           </Badge>
+                        )}
                           <span className="text-xs text-muted-foreground">
                             Semana {bet.week || 'N/A'}
                           </span>
                         </div>
                       </div>
 
-                      {/* Partido y Apuesta */}
+                    {/* Detalles del boleto */}
                       <div className="space-y-3">
-                        {bet.bet_type === 'combo'
-                          ? bet.bet_selections?.map((sel: any) => (
-                              <div key={sel.id} className="space-y-1">
-                                {/* Partido con resultado en la misma línea */}
-                                <div className="flex items-center justify-between">
-                                  <div className="text-sm font-medium">
-                                    {getMatchName(sel.match_description)}
-                                  </div>
-                                  {sel.match_result && (
-                                    <div className="text-xs text-muted-foreground">
-                                      ({sel.match_result})
-                                    </div>
-                                  )}
-                                </div>
-                                {/* Apuesta justo debajo */}
-                                <div className="flex items-center gap-2 text-sm font-medium text-foreground border-l-2 border-muted pl-2">
-                                  {getStatusIcon(sel.status)}
-                                  <span>{sel.market}: {getBettingTranslation(sel.selection) || sel.selection} @ {sel.odds}</span>
-                                </div>
+                      {bet.bet_type === 'combo' && displaySelections.length > 0 ? (
+                        displaySelections.map((selection: any, index: number) => {
+                          const matchResult = selection.fixture_id ? resultsMap[selection.fixture_id] : null;
+                          return (
+                            <div key={selection.id || `selection-${index}`} className="flex items-center gap-3">
+                              {/* Partido, marcador y cuota en la misma línea */}
+                              <div className="flex items-center gap-3 flex-1">
+                                <span className="text-sm font-medium">{getMatchName(selection.match_description)}</span>
+                                {matchResult && (
+                                  <span className="text-xs text-muted-foreground">
+                                    ({matchResult})
+                                  </span>
+                                )}
+                                <span className="text-sm">
+                                  {getBettingTranslation(selection.market)}: {getBettingTranslation(selection.selection) || selection.selection} @ {selection.odds}
+                                  {showBoostStyle && boostMultiplier && <span className="text-yellow-600 font-medium"> x{boostMultiplier.toFixed(2).replace('.', ',')}</span>}
+                                </span>
                               </div>
-                            ))
-                          : (
-                              <div className="space-y-1">
-                                {/* Partido con resultado en la misma línea */}
-                                <div className="flex items-center justify-between">
-                                  <div className="text-sm font-medium">
-                                    {getMatchName(bet.match_description)}
-                                  </div>
+                            </div>
+                          );
+                        })
+                      ) : bet.bet_type === 'single' ? (
+                        <div className="flex items-center gap-3">
+                          {/* Partido, marcador y cuota en la misma línea */}
+                          <div className="flex items-center gap-3 flex-1">
+                            <span className="text-sm font-medium">{getMatchName(bet.match_description)}</span>
                                   {bet.match_result && (
-                                    <div className="text-xs text-muted-foreground">
+                              <span className="text-xs text-muted-foreground">
                                       ({bet.match_result})
-                                    </div>
+                              </span>
                                   )}
-                                </div>
-                                {/* Apuesta justo debajo */}
-                                <div className="text-sm font-medium text-foreground border-l-2 border-muted pl-2">
+                            <span className="text-sm">
                                   {(() => {
                                     const market = bet.market_bets || '';
                                     const selectionText = bet.bet_selection?.trim() || '';
                                     
-                                    // Check if selectionText already contains odds (has @ symbol)
                                     if (selectionText.includes(' @ ')) {
                                       const parts = selectionText.split(' @ ');
                                       const selection = getBettingTranslation(parts[0] || '') || parts[0] || '';
                                       const odds = parts[1] ? parseFloat(parts[1]).toFixed(2) : '';
                                       return `${market}: ${selection} @ ${odds}`;
                                     } else {
-                                      // If no odds in selectionText, use bet.odds
                                       const translatedSelection = getBettingTranslation(selectionText) || selectionText;
                                       const odds = bet.odds ? parseFloat(bet.odds).toFixed(2) : '';
                                       return `${market}: ${translatedSelection} @ ${odds}`;
                                     }
                                   })()}
+                            </span>
                                 </div>
                               </div>
-                            )
-                        }
-                      </div>
+                      ) : null}
+                    </div>
                     </div>
                   </Card>
-                ))}
+              );
+            })}
               </div>
-            </>
           )}
-        </CardContent>
-      </Card>
+      </div>
+
 
       {/* Mobile Bet History View - Sin marco */}
       <div className="block sm:hidden">
@@ -411,18 +346,38 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
           </div>
         ) : (
           <div className="space-y-4">
-            {bets.map((bet) => (
-              <Card key={bet.id} className="p-4">
+            {bets.map((bet) => {
+              const hasBoost = hasBetBoost(bet);
+              const showBoostStyle = hasBoost && bet.status !== 'cancelled';
+              const displaySelections = bet.bet_type === 'combo' ? getNonBoostSelections(bet.bet_selections || []) : [];
+              const boostMultiplier = getBoostMultiplier(bet.bet_selections || []);
+              
+              return (
+              <Card key={bet.id} className={`p-4 ${showBoostStyle ? 'bg-yellow-100/50 border-yellow-400' : ''}`}>
                 <div className="space-y-3">
                   {/* Header: Tipo + Semana */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
+                      {hasBoost ? (
+                        <Badge className={`text-xs ${
+                          bet.status === 'cancelled' 
+                            ? 'bg-white text-gray-600 border-2 border-gray-400 hover:bg-white hover:text-gray-600' 
+                            : bet.status === 'lost'
+                            ? 'bg-red-600 text-white border-red-600 hover:bg-red-700'
+                            : bet.status === 'pending'
+                            ? 'bg-white text-[#FFC72C] border-2 border-[#FFC72C] hover:bg-white'
+                            : 'bg-yellow-400 text-black border-yellow-400 hover:bg-yellow-500'
+                        }`}>
+                          SUPER
+                        </Badge>
+                      ) : (
                       <Badge 
                         variant="outline"
                         className={`text-xs ${getBetTypeBadgeClassName(bet.status)}`}
                       >
                         {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
                       </Badge>
+                      )}
                       <span className="text-xs text-muted-foreground">
                         Semana {bet.week || 'N/A'}
                       </span>
@@ -431,8 +386,8 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
 
                   {/* Partido y Apuesta */}
                   <div className="space-y-3">
-                    {bet.bet_type === 'combo'
-                      ? bet.bet_selections?.map((sel: any) => (
+                    {bet.bet_type === 'combo' && displaySelections.length > 0
+                      ? displaySelections.map((sel: any) => (
                           <div key={sel.id} className="space-y-1">
                             {/* Partido con resultado en la misma línea */}
                             <div className="flex items-center justify-between">
@@ -446,9 +401,12 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                               )}
                             </div>
                             {/* Apuesta justo debajo */}
-                            <div className="flex items-center gap-2 text-sm font-medium text-foreground border-l-2 border-muted pl-2">
-                              {getStatusIcon(sel.status)}
-                              <span>{sel.market}: {getBettingTranslation(sel.selection) || sel.selection} @ {sel.odds}</span>
+                            <div className={`flex items-center gap-2 text-sm font-medium text-foreground border-l-2 pl-2 ${showBoostStyle ? 'border-yellow-400' : 'border-muted'}`}>
+                              {!hasBoost && getStatusIcon(sel.status)}
+                              <span>
+                                {sel.market}: {getBettingTranslation(sel.selection) || sel.selection} @ {sel.odds}
+                                {showBoostStyle && boostMultiplier && <span className="text-yellow-600 font-medium"> x{boostMultiplier.toFixed(2).replace('.', ',')}</span>}
+                              </span>
                             </div>
                           </div>
                         ))
@@ -479,7 +437,8 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                   </div>
                 </div>
               </Card>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

@@ -710,175 +710,143 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
         </Card>
       </div>
 
-      {/* Desktop Bets Table */}
-      <Card className="shadow-lg hidden sm:block">
-        <CardHeader>
-          <CardTitle>Mis Boletos</CardTitle>
-          <CardDescription>Historial completo de todos tus boletos</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Partido</TableHead>
-                <TableHead>Boleto</TableHead>
-                <TableHead>Importe</TableHead>
-                <TableHead>Ganancia</TableHead>
-                <TableHead>Resultado</TableHead>
-                <TableHead>Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredBets.length > 0 ? (
-                filteredBets.map((bet) => {
-                  if (bet.bet_type === 'combo' && bet.bet_selections?.length) {
-                    const betBlocked = isBetBlocked(bet);
-                    const hasBoost = hasBetBoost(bet);
-                    const showBoostStyle = hasBoost && bet.status !== 'cancelled';
-                    const displaySelections = getNonBoostSelections(bet.bet_selections);
-                    const boostMultiplier = getBoostMultiplier(bet.bet_selections);
-                    return [
-                      <TableRow key={bet.id} className={showBoostStyle ? "bg-yellow-100/50" : "bg-muted/30"}>
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            {hasBoost ? (
-                              <Badge className={`text-xs ${bet.status === 'cancelled' ? 'bg-white text-gray-600 border-2 border-gray-400 hover:bg-white hover:text-gray-600' : 'bg-yellow-400 text-black border-yellow-400 hover:bg-yellow-500'}`}>SUPER</Badge>
-                            ) : (
-                            <Badge variant="outline" className="text-xs">COMBO</Badge>
-                            )}
-                            <span className="text-sm">{hasBoost ? 'SuperBoleto' : 'Boleto Combinado'}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell></TableCell>
-                        <TableCell>
-                          {(bet.stake || 0).toFixed(0)} pts @{calculateComboOdds(bet.bet_selections).toFixed(2)}
-                        </TableCell>
-                        <TableCell>{bet.status === 'cancelled' ? '-' : `${(bet.payout || 0).toFixed(0)} pts`}</TableCell>
-                        <TableCell>
-                          <Badge variant={getStatusVariant(bet.status)} className={getStatusClassName(bet.status)}>{getStatusText(bet.status)}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          {betBlocked ? (
-                            <div className="flex justify-end">{renderBlockedTag()}</div>
-                          ) : canCancelBet(bet) ? (
-                            <div className="flex flex-col items-end gap-1">
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => handleCancelClick(bet.id)}
-                                disabled={cancelingId === bet.id}
-                              >
-                                {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Boleto'}
-                              </Button>
-                              <span className={`text-xs font-mono ${
-                                timeLeft[bet.id]?.includes('s') && !timeLeft[bet.id]?.includes('m') 
-                                  ? 'text-red-500 font-bold animate-pulse' 
-                                  : 'text-muted-foreground'
-                              }`}>
-                                {timeLeft[bet.id] || 'Calculando...'}
-                              </span>
-                            </div>
-                          ) : null}
-                        </TableCell>
-                      </TableRow>,
-                      ...displaySelections.map((selection: any, index: number) => (
-                         <TableRow key={`${bet.id}-${selection.id || index}`} className={showBoostStyle ? "bg-yellow-50/50 border-l-2 border-yellow-400" : "bg-muted/10 border-l-2 border-muted"}>
-                           <TableCell className="font-medium pl-8">
-                             {getMatchResultDisplay(selection.match_description, selection.fixture_id)}
-                           </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm">
-                                {formatBetDisplay(
-                                  getBettingTranslation(selection.market),
-                                  getBettingTranslation(selection.selection),
-                                  parseFloat(selection.odds || 0)
+      {/* Desktop Bets View - Cards */}
+      <div className="hidden sm:block">
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold text-foreground mb-2">Mis Boletos</h2>
+          <p className="text-muted-foreground">Historial completo de todos tus boletos</p>
+        </div>
+        <div className="space-y-4">
+          {filteredBets.length > 0 ? (
+            filteredBets.map((bet) => {
+              const betBlocked = isBetBlocked(bet);
+              const hasBoost = hasBetBoost(bet);
+              const showBoostStyle = hasBoost && bet.status !== 'cancelled';
+              const displaySelections = getNonBoostSelections(bet.bet_selections || []);
+              const boostMultiplier = getBoostMultiplier(bet.bet_selections || []);
+              return (
+                <Card key={bet.id} className={`p-4 ${showBoostStyle ? 'bg-yellow-100/50 border-yellow-400' : ''}`}>
+                  <div className="space-y-3">
+                    {/* Header: Tipo + Semana + Botón Cancelar */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {hasBoost ? (
+                          <Badge className={`text-xs ${
+                            bet.status === 'cancelled' 
+                              ? 'bg-white text-gray-600 border-2 border-gray-400 hover:bg-white hover:text-gray-600' 
+                              : bet.status === 'lost'
+                              ? 'bg-red-600 text-white border-red-600 hover:bg-red-700'
+                              : bet.status === 'pending'
+                              ? 'bg-white text-[#FFC72C] border-2 border-[#FFC72C] hover:bg-white'
+                              : 'bg-yellow-400 text-black border-yellow-400 hover:bg-yellow-500'
+                          }`}>
+                            SUPER
+                          </Badge>
+                        ) : (
+                          <Badge 
+                            variant="outline"
+                            className={`text-xs ${getBetTypeBadgeClassName(bet.status)}`}
+                          >
+                            {bet.bet_type === 'combo' ? 'Combinada' : 'Simple'}
+                          </Badge>
+                        )}
+                        <span className="text-xs text-muted-foreground">
+                          Semana {bet.week || 'N/A'}
+                        </span>
+                      </div>
+                      {betBlocked ? (
+                        <div className="flex flex-col items-end">{renderBlockedTag()}</div>
+                      ) : canCancelBet(bet) ? (
+                        <div className="flex flex-col items-end gap-1">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleCancelClick(bet.id)}
+                            disabled={cancelingId === bet.id}
+                          >
+                            {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar'}
+                          </Button>
+                          <span className="text-xs text-muted-foreground">
+                            {timeLeft[bet.id] || 'Calculando...'}
+                          </span>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    {/* Información financiera */}
+                    <div className="flex justify-between text-sm">
+                      <span>
+                        En boleto: <span className="font-medium">
+                          {(bet.stake || 0).toFixed(0)} pts
+                          {bet.bet_type === 'combo' && bet.bet_selections?.length && (
+                            <span className="text-muted-foreground"> @{calculateComboOdds(bet.bet_selections).toFixed(2)}</span>
+                          )}
+                        </span>
+                      </span>
+                      <span>Ganancia: <span className="font-medium">{bet.status === 'cancelled' ? '-' : `${(bet.payout || 0).toFixed(0)} pts`}</span></span>
+                    </div>
+
+                    {/* Detalles del boleto */}
+                    <div className="space-y-3">
+                      {bet.bet_type === 'combo' && displaySelections.length > 0 ? (
+                        displaySelections.map((selection: any, index: number) => {
+                          const matchResult = selection.fixture_id ? matchResults[selection.fixture_id] : null;
+                          return (
+                            <div key={selection.id || `selection-${index}`} className="flex items-center gap-3">
+                              {/* Partido, marcador y cuota en la misma línea */}
+                              <div className="flex items-center gap-3 flex-1">
+                                <span className="text-sm font-medium">{getMatchName(selection.match_description)}</span>
+                                {matchResult?.match_result && (
+                                  <span className="text-xs text-muted-foreground">
+                                    ({matchResult.match_result})
+                                  </span>
                                 )}
-                                {showBoostStyle && boostMultiplier && <span className="text-yellow-600 font-medium"> x{boostMultiplier.toFixed(2).replace('.', ',')}</span>}
-                              </span>
-                              <Badge variant={getStatusVariant(selection.status)} className={`text-xs ${getStatusClassName(selection.status)}`}>
-                                {getStatusText(selection.status)}
-                              </Badge>
+                                <span className="text-sm">
+                                  {getBettingTranslation(selection.market)}: {getBettingTranslation(selection.selection)} @ {selection.odds}
+                                  {showBoostStyle && boostMultiplier && <span className="text-yellow-600 font-medium"> x{boostMultiplier.toFixed(2).replace('.', ',')}</span>}
+                                </span>
+                              </div>
                             </div>
-                          </TableCell>
-                          <TableCell></TableCell>
-                          <TableCell></TableCell>
-                          <TableCell></TableCell>
-                          <TableCell></TableCell>
-                        </TableRow>
-                      )),
-                    ];
-                  } else {
-                    const betBlocked = isBetBlocked(bet);
-                    return (
-                       <TableRow key={bet.id}>
-                         <TableCell className="font-medium">
-                           {getMatchResultDisplay(bet.match_description, bet.fixture_id)}
-                         </TableCell>
-                        <TableCell>
-                          {bet.bet_type === 'single' ? (
-                            <>
-                              {bet.market_bets ? getBettingTranslation(bet.market_bets) + ': ' : ''}
+                          );
+                        })
+                      ) : bet.bet_type === 'single' ? (
+                        <div className="flex items-center gap-3">
+                          {/* Partido, marcador y cuota en la misma línea */}
+                          <div className="flex items-center gap-3 flex-1">
+                            <span className="text-sm font-medium">{getMatchName(bet.match_description)}</span>
+                            {matchResults[bet.fixture_id]?.match_result && (
+                              <span className="text-xs text-muted-foreground">
+                                ({matchResults[bet.fixture_id].match_result})
+                              </span>
+                            )}
+                            <span className="text-sm">
                               {(() => {
                                 const parts = bet.bet_selection?.split(' @ ') || [];
                                 const selection = getBettingTranslation(parts[0] || '');
-                                const odds = parts[1] ? parseFloat(parts[1]).toFixed(2) : (bet.odds || 0).toFixed(2);
-                                return `${selection} @ ${odds}`;
+                                const odds = parts[1] || bet.odds;
+                                return `${getBettingTranslation(bet.market_bets)}: ${selection} @ ${odds}`;
                               })()}
-                            </>
-                          ) : (
-                            bet.bet_selection
-                          )}
-                        </TableCell>
-                        <TableCell>{(bet.stake || 0).toFixed(0)} pts</TableCell>
-                        <TableCell>{bet.status === 'cancelled' ? '-' : `${(bet.payout || 0).toFixed(0)} pts`}</TableCell>
-                        <TableCell>
-                          <Badge variant={getStatusVariant(bet.status)} className={getStatusClassName(bet.status)}>{getStatusText(bet.status)}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          {betBlocked ? (
-                            <div className="flex justify-end">{renderBlockedTag()}</div>
-                          ) : canCancelBet(bet) ? (
-                            <div className="flex flex-col items-end gap-1">
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => handleCancelClick(bet.id)}
-                                disabled={cancelingId === bet.id}
-                              >
-                                {cancelingId === bet.id ? 'Cancelando...' : 'Cancelar Boleto'}
-                              </Button>
-                              <span className={`text-xs font-mono ${
-                                timeLeft[bet.id]?.includes('s') && !timeLeft[bet.id]?.includes('m') 
-                                  ? 'text-red-500 font-bold animate-pulse' 
-                                  : 'text-muted-foreground'
-                              }`}>
-                                {timeLeft[bet.id] || 'Calculando...'}
-                              </span>
-                            </div>
-                          ) : null}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  }
-                })
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
-                    {activeFilter === 'won' 
-                      ? 'No tienes boletos ganados todavía.'
-                      : activeFilter === 'pending'
-                      ? 'No tienes boletos pendientes.'
-                      : 'No tienes boletos todavía. ¡Ve a la sección de partidos para empezar!'
-                    }
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
+                            </span>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                </Card>
+              );
+            })
+          ) : (
+            <div className="text-center text-muted-foreground py-8">
+              {activeFilter === 'won' 
+                ? 'No tienes boletos ganados todavía.'
+                : activeFilter === 'pending'
+                ? 'No tienes boletos pendientes.'
+                : 'No tienes boletos todavía. ¡Ve a la sección de partidos para empezar!'
+              }
+            </div>
+          )}
+        </div>
+      </div>
       {/* Mobile Bets View - Sin marco */}
       <div className="block sm:hidden">
         <div className="text-center mb-6">
@@ -900,7 +868,15 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         {hasBoost ? (
-                          <Badge className={`text-xs ${bet.status === 'cancelled' ? 'bg-white text-gray-600 border-2 border-gray-400 hover:bg-white hover:text-gray-600' : 'bg-yellow-400 text-black border-yellow-400 hover:bg-yellow-500'}`}>
+                          <Badge className={`text-xs ${
+                            bet.status === 'cancelled' 
+                              ? 'bg-white text-gray-600 border-2 border-gray-400 hover:bg-white hover:text-gray-600' 
+                              : bet.status === 'lost'
+                              ? 'bg-red-600 text-white border-red-600 hover:bg-red-700'
+                              : bet.status === 'pending'
+                              ? 'bg-white text-[#FFC72C] border-2 border-[#FFC72C] hover:bg-white'
+                              : 'bg-yellow-400 text-black border-yellow-400 hover:bg-yellow-500'
+                          }`}>
                             SUPER
                           </Badge>
                         ) : (
@@ -965,7 +941,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                             </div>
                             {/* Boleto justo debajo */}
                             <div className={`flex items-center gap-2 text-sm font-medium text-foreground border-l-2 pl-2 ${showBoostStyle ? 'border-yellow-400' : 'border-muted'}`}>
-                              {getStatusIcon(selection.status)}
+                              {!hasBoost && getStatusIcon(selection.status)}
                               <span>
                                 {getBettingTranslation(selection.market)}: {getBettingTranslation(selection.selection)} @ {selection.odds}
                                 {showBoostStyle && boostMultiplier && <span className="text-yellow-600"> x{boostMultiplier.toFixed(2).replace('.', ',')}</span>}
@@ -1056,7 +1032,13 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-2">
                               {hasBoost ? (
-                                <Badge className={`text-xs ${bet.status === 'cancelled' ? 'bg-white text-gray-600 border-2 border-gray-400 hover:bg-white hover:text-gray-600' : 'bg-yellow-400 text-black border-yellow-400 hover:bg-yellow-500'}`}>SUPER</Badge>
+                                <Badge className={`text-xs ${
+                                  bet.status === 'cancelled' 
+                                    ? 'bg-white text-gray-600 border-2 border-gray-400 hover:bg-white hover:text-gray-600' 
+                                    : bet.status === 'lost'
+                                    ? 'bg-red-600 text-white border-red-600 hover:bg-red-700'
+                                    : 'bg-yellow-400 text-black border-yellow-400 hover:bg-yellow-500'
+                                }`}>SUPER</Badge>
                               ) : (
                               <Badge variant="outline" className="text-xs">COMBO</Badge>
                               )}
@@ -1198,7 +1180,7 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                           </div>
                           {/* Boleto justo debajo */}
                             <div className={`flex items-center gap-2 text-sm font-medium text-foreground border-l-2 pl-2 ${showBoostStyle ? 'border-yellow-400' : 'border-muted'}`}>
-                            {getStatusIcon(selection.status)}
+                            {!hasBoost && getStatusIcon(selection.status)}
                               <span>
                                 {getBettingTranslation(selection.market)}: {getBettingTranslation(selection.selection)} @ {selection.odds}
                                 {showBoostStyle && boostMultiplier && <span className="text-yellow-600"> x{boostMultiplier.toFixed(2).replace('.', ',')}</span>}

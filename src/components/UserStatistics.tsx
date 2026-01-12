@@ -405,11 +405,14 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
     }
 
     // Calculate success rates for markets and teams
-    const marketStatsArray = Object.entries(marketStats).map(([market, data]) => ({
-      market,
-      ...data,
-      successRate: data.bets > 0 ? (data.wins / data.bets) * 100 : 0
-    })).sort((a, b) => b.successRate - a.successRate);
+    // Exclude BOOST market as it's not a real bet
+    const marketStatsArray = Object.entries(marketStats)
+      .filter(([market]) => market !== 'BOOST')
+      .map(([market, data]) => ({
+        market,
+        ...data,
+        successRate: data.bets > 0 ? (data.wins / data.bets) * 100 : 0
+      })).sort((a, b) => b.successRate - a.successRate);
 
     const teamStatsArray = Object.entries(teamStats).map(([team, data]) => ({
       team,
