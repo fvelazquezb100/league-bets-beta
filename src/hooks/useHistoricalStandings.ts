@@ -30,10 +30,10 @@ export const useHistoricalStandings = (leagueId: number | null) => {
     queryFn: async (): Promise<HistoricalStandingsData> => {
       if (!leagueId) return {};
 
-      // Obtener todos los perfiles de la liga
+      // Obtener todos los perfiles de la liga con su weekly_points_history
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, username')
+        .select('id, username, weekly_points_history')
         .eq('league_id', leagueId);
 
       if (profilesError) throw profilesError;
@@ -61,35 +61,29 @@ export const useHistoricalStandings = (leagueId: number | null) => {
         historicalData[profile.username] = {};
       });
 
-      // Para cada semana, calcular las posiciones acumuladas
+      // Para cada semana, calcular las posiciones acumuladas usando weekly_points_history
       for (const week of sortedWeeks) {
         
-        // Obtener puntos acumulados hasta esta semana para cada jugador
+        // Obtener puntos acumulados hasta esta semana para cada jugador desde weekly_points_history
         const cumulativePoints: { [userId: string]: number } = {};
         
         for (const profile of profiles) {
-          // Sumar todos los puntos ganados desde la semana 1 hasta la semana actual
-          // Obtener todas las apuestas del usuario y filtrar por semana
-          // Note: Supabase has a default limit of 1000 rows, so we need to use range() to get all rows
-          const { data: allBets, error: betsError } = await supabase
-            .from('bets')
-            .select('payout, week')
-            .eq('user_id', profile.id)
-            .eq('status', 'won')
-            .range(0, 999999); // Remove default 1000 limit
-
-          if (betsError) {
-            console.warn(`Error fetching bets for user ${profile.id}:`, betsError);
-            cumulativePoints[profile.id] = 0;
-            continue;
-          }
-
-          // Filtrar manualmente por semana (comparación numérica)
-          const betsData = allBets?.filter(bet => Number(bet.week) <= Number(week)) || [];
-
-          const totalPoints = betsData?.reduce((sum, bet) => sum + (bet.payout || 0), 0) || 0;
-          cumulativePoints[profile.id] = totalPoints;
+          let totalPoints = 0;
           
+          // Leer weekly_points_history (JSONB: {"1": 100, "2": 150, "3": 200})
+          const weeklyHistory = profile.weekly_points_history as Record<string, number> | null;
+          
+          if (weeklyHistory && typeof weeklyHistory === 'object') {
+            // Sumar puntos de todas las semanas hasta la semana actual
+            for (const [weekKey, weekPoints] of Object.entries(weeklyHistory)) {
+              const weekNum = Number(weekKey);
+              if (!isNaN(weekNum) && weekNum <= week) {
+                totalPoints += Number(weekPoints) || 0;
+              }
+            }
+          }
+          
+          cumulativePoints[profile.id] = totalPoints;
         }
 
         // Ordenar por puntos acumulados (descendente) para obtener posiciones

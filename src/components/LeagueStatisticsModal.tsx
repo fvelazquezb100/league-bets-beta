@@ -2,8 +2,10 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trophy, Target, TrendingUp, Users, BarChart3, Award, Star } from 'lucide-react';
+import { Trophy, Target, TrendingUp, Users, BarChart3, Award, Star, Calendar } from 'lucide-react';
 import { LeagueStatistics } from '@/hooks/useLeagueStatistics';
+import { useWeekStatistics } from '@/hooks/useWeekStatistics';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface LeagueStatisticsModalProps {
   isOpen: boolean;
@@ -11,6 +13,7 @@ interface LeagueStatisticsModalProps {
   statistics: LeagueStatistics;
   isLoading: boolean;
   leagueName: string;
+  leagueId?: number | null;
 }
 
 export const LeagueStatisticsModal: React.FC<LeagueStatisticsModalProps> = ({ 
@@ -18,8 +21,11 @@ export const LeagueStatisticsModal: React.FC<LeagueStatisticsModalProps> = ({
   onClose, 
   statistics, 
   isLoading, 
-  leagueName 
+  leagueName,
+  leagueId
 }) => {
+  // Get week statistics
+  const { data: weekStats = [], isLoading: weekStatsLoading } = useWeekStatistics(leagueId || null);
 
   if (!isOpen) return null;
 
@@ -231,6 +237,57 @@ export const LeagueStatisticsModal: React.FC<LeagueStatisticsModalProps> = ({
               </div>
             </div>
           </div>
+
+            {/* Week Statistics - Listado de jornadas */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Estadísticas por Jornada
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {weekStatsLoading ? (
+                  <div className="text-center py-4 text-muted-foreground">
+                    Cargando estadísticas por jornada...
+                  </div>
+                ) : weekStats.length === 0 ? (
+                  <div className="text-center py-4 text-muted-foreground">
+                    No hay jornadas jugadas aún
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-sm">Jornada</TableHead>
+                          <TableHead className="text-sm text-right">Total Ganado</TableHead>
+                          <TableHead className="text-sm text-right">% Aciertos</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {weekStats.map((weekStat) => (
+                          <TableRow key={weekStat.week}>
+                            <TableCell className="font-medium">Jornada {weekStat.week}</TableCell>
+                            <TableCell className="text-right text-green-600 font-semibold">
+                              {weekStat.totalWon.toFixed(1)} pts
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <span className={`font-semibold ${weekStat.winPercentage >= 50 ? 'text-green-600' : 'text-red-600'}`}>
+                                {weekStat.winPercentage.toFixed(1)}%
+                              </span>
+                              <span className="text-xs text-muted-foreground ml-1">
+                                ({weekStat.wonBets}/{weekStat.totalBets})
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

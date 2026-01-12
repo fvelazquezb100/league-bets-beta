@@ -583,7 +583,8 @@ export const Clasificacion = () => {
         <LeagueStatisticsModal
           isOpen={isLeagueStatsModalOpen}
           onClose={() => setIsLeagueStatsModalOpen(false)}
-        statistics={leagueStats || {
+          leagueId={leagueId}
+          statistics={leagueStats || {
           totalBets: 0,
           totalWonBets: 0,
           totalLostBets: 0,

@@ -181,16 +181,18 @@ const fetchLeagueStatistics = async (leagueId: number): Promise<LeagueStatistics
       ? settledBets.reduce((sum, bet) => sum + (bet.odds || 0), 0) / settledBets.length 
       : 0;
 
-    // Find most popular market
+    // Find most popular market (excluding BOOST as it's not a real bet)
     const marketCounts: { [key: string]: number } = {};
     allSelections?.forEach(selection => {
-      if (selection.market) {
+      if (selection.market && selection.market !== 'BOOST') {
         marketCounts[selection.market] = (marketCounts[selection.market] || 0) + 1;
       }
     });
-    const mostPopularMarket = Object.keys(marketCounts).reduce((a, b) => 
-      marketCounts[a] > marketCounts[b] ? a : b, 'N/A'
-    );
+    const mostPopularMarket = Object.keys(marketCounts).length > 0
+      ? Object.keys(marketCounts).reduce((a, b) => 
+          marketCounts[a] > marketCounts[b] ? a : b, 'N/A'
+        )
+      : 'N/A';
     const mostPopularMarketBets = marketCounts[mostPopularMarket] || 0;
 
     // Find most popular team (from match descriptions)
