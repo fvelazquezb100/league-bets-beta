@@ -694,7 +694,7 @@ serve(async (req: Request) => {
           ? 'Clasificación Europea Mundial'
           : leagueId === 556
             ? 'Supercopa de España'
-            : null;
+          : null;
 
       console.log(`Fetching finished fixtures for ${leagueName} (ID: ${leagueId})`);
 

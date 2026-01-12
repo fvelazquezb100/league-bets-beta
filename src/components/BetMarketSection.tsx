@@ -18,6 +18,7 @@ interface BetMarketSectionProps {
   isFrozen: boolean;
   hasUserBetOnMarket: (fixtureId: number, marketName: string, selection: string) => boolean;
   handleAddToSlip: (match: MatchData, marketName: string, selection: BetValue) => void;
+  isLiveMatch?: boolean; // If true, show "Partido en directo" indicator
 }
 
 const BetMarketSection = ({
@@ -26,7 +27,8 @@ const BetMarketSection = ({
   market,
   isFrozen,
   hasUserBetOnMarket,
-  handleAddToSlip
+  handleAddToSlip,
+  isLiveMatch = false
 }: BetMarketSectionProps) => {
   const { data: oddsComparison } = useOddsComparison();
   const isPremium = useIsPremiumLeague();
@@ -110,6 +112,9 @@ const BetMarketSection = ({
   return (
     <div className="border-t-2 border-border pt-3 sm:pt-8 mt-3 sm:mt-8 first:border-t-0 first:pt-0 first:mt-0">
       <h4 className="font-semibold mb-3 sm:mb-6 text-foreground text-base sm:text-lg">{betType.displayName}</h4>
+      {isLiveMatch && (
+        <p className="text-xs text-green-600 font-medium mb-2 sm:hidden">Partido en directo</p>
+      )}
       <div 
         className="grid gap-2"
         style={{
@@ -171,6 +176,9 @@ const BetMarketSection = ({
                       />
                     )}
                   </span>
+                  {isLiveMatch && (
+                    <span className="text-[10px] text-green-600 font-medium mt-1 hidden sm:block">Partido en directo</span>
+                  )}
                 </div>
               ) : (
                 <>
@@ -184,6 +192,9 @@ const BetMarketSection = ({
                       />
                     )}
                   </span>
+                  {isLiveMatch && (
+                    <span className="text-[10px] text-green-600 font-medium mt-1 hidden sm:block">Partido en directo</span>
+                  )}
                 </>
               )}
             </Button>

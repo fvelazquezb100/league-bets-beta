@@ -21,14 +21,14 @@ const fetchAvailableLeagues = async (userId: string): Promise<number[]> => {
     if (leagueError) {
       // If column doesn't exist yet, use default leagues
       console.warn('available_leagues column not found, using default leagues');
-      return [140, 2, 3, 262];
+      return [140, 2, 3, 262, 557, 143, 556];
     }
     
-    return (leagueData as any)?.available_leagues || [140, 2, 3, 262];
+    return (leagueData as any)?.available_leagues || [140, 2, 3, 262, 557, 143, 556];
   } catch (error) {
     console.error('Error fetching available leagues:', error);
     // Default to all leagues if there's an error
-    return [140, 2, 3, 262];
+    return [140, 2, 3, 262, 557, 143, 556];
   }
 };
 

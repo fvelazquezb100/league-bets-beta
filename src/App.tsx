@@ -21,6 +21,7 @@ import { ClasificacionDemo } from "./pages/ClasificacionDemo";
 import { TestDemo } from "./pages/TestDemo";
 import { Clasificacion } from "./pages/Clasificacion";
 import Bets from "./pages/Bets";
+import LiveBets from "./pages/LiveBets";
 import { BetHistory } from "./pages/BetHistory";
 import LeagueMatchAvailabilityControl from "./pages/LeagueMatchAvailabilityControl";
 import NotFound from "./pages/NotFound";
@@ -34,6 +35,7 @@ import AdminLiga from "./pages/AdminLiga";
 import { AdminRoute } from "./components/AdminRoute";
 import SuperAdmin from "./pages/SuperAdmin";
 import SuperAdminOtrasLigas from "./pages/SuperAdminOtrasLigas";
+import SuperAdminLiveMatches from "./pages/SuperAdminLiveMatches";
 import { SuperAdminRoute } from "./components/SuperAdminRoute";
 import { ResetPassword } from "./pages/ResetPassword";
 import { UpdatePassword } from "./pages/UpdatePassword";
@@ -126,6 +128,17 @@ const App = () => (
                   </ProtectedRoute>
                 </MaintenanceGuard>
               } />
+              <Route path="/directo" element={
+                <MaintenanceGuard>
+                  <ProtectedRoute>
+                    <SmartRedirect>
+                      <MainLayout>
+                        <LiveBets />
+                      </MainLayout>
+                    </SmartRedirect>
+                  </ProtectedRoute>
+                </MaintenanceGuard>
+              } />
               <Route path="/bet-history" element={
                 <MaintenanceGuard>
                   <ProtectedRoute>
@@ -190,6 +203,17 @@ const App = () => (
                     <SmartRedirect>
                       <MainLayout>
                         <SuperAdminOtrasLigas />
+                      </MainLayout>
+                    </SmartRedirect>
+                  </SuperAdminRoute>
+                </MaintenanceGuard>
+              } />
+              <Route path="/superadmin-partidos-directo" element={
+                <MaintenanceGuard>
+                  <SuperAdminRoute>
+                    <SmartRedirect>
+                      <MainLayout>
+                        <SuperAdminLiveMatches />
                       </MainLayout>
                     </SmartRedirect>
                   </SuperAdminRoute>

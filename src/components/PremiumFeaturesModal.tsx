@@ -1,6 +1,6 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Crown, Ban, Calendar, RefreshCw, TrendingUp, BarChart3, Settings, Check } from 'lucide-react';
+import { Crown, Ban, Calendar, RefreshCw, TrendingUp, BarChart3, Settings, Check, Zap } from 'lucide-react';
 
 interface PremiumFeaturesModalProps {
   isOpen: boolean;
@@ -12,6 +12,11 @@ export const PremiumFeaturesModal: React.FC<PremiumFeaturesModalProps> = ({
   onClose
 }) => {
   const premiumFeatures = [
+    {
+      icon: Zap,
+      title: 'SuperBoleto',
+      description: 'Aumenta tus multiplicadores con SuperBoleto. Configura el límite máximo y multiplicador (1.25x, 1.5x o 2x)',
+    },
     {
       icon: Ban,
       title: 'Bloqueo de Partidos',
