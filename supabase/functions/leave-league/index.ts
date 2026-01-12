@@ -86,6 +86,7 @@ Deno.serve(async (req) => {
       .update({ 
         total_points: 0,
         last_week_points: 0,
+        weekly_points_history: {},
         league_id: null
       })
       .eq('id', user_id);
