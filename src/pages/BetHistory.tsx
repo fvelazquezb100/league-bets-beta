@@ -792,42 +792,55 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                         displaySelections.map((selection: any, index: number) => {
                           const matchResult = selection.fixture_id ? matchResults[selection.fixture_id] : null;
                           return (
-                            <div key={selection.id || `selection-${index}`} className="flex items-center gap-3">
-                              {/* Partido, marcador y cuota en la misma línea */}
-                              <div className="flex items-center gap-3 flex-1">
-                                <span className="text-sm font-medium">{getMatchName(selection.match_description)}</span>
-                                {matchResult?.match_result && (
-                                  <span className="text-xs text-muted-foreground">
-                                    ({matchResult.match_result})
-                                  </span>
-                                )}
-                                <span className="text-sm">
-                                  {getBettingTranslation(selection.market)}: {getBettingTranslation(selection.selection)} @ {selection.odds}
-                                  {showBoostStyle && boostMultiplier && <span className="text-yellow-600 font-medium"> x{boostMultiplier.toFixed(2).replace('.', ',')}</span>}
-                                </span>
+                            <div key={selection.id || `selection-${index}`} className="grid gap-4 items-center" style={{ gridTemplateColumns: '0.5fr 1fr 1fr 1fr' }}>
+                              {/* Primera columna: Vacía (invisible, ancho mitad) */}
+                              <div></div>
+                              {/* Segunda columna: Equipos con resultado */}
+                              <div className="flex items-center gap-2 pr-4">
+                                {!hasBoost && getStatusIcon(selection.status)}
+                                <div>
+                                  <span className="text-sm font-medium">{getMatchName(selection.match_description)}</span>
+                                  {matchResult?.match_result && (
+                                    <span className="text-xs text-muted-foreground ml-1">
+                                      ({matchResult.match_result})
+                                    </span>
+                                  )}
+                                </div>
                               </div>
+                              {/* Tercera columna: Mercado con cuota y super si tiene */}
+                              <div className="text-sm">
+                                {getBettingTranslation(selection.market)}: {getBettingTranslation(selection.selection)} @ {selection.odds}
+                                {showBoostStyle && boostMultiplier && <span className="text-yellow-600 font-medium"> x{boostMultiplier.toFixed(2).replace('.', ',')}</span>}
+                              </div>
+                              {/* Cuarta columna: Vacía */}
+                              <div></div>
                             </div>
                           );
                         })
                       ) : bet.bet_type === 'single' ? (
-                        <div className="flex items-center gap-3">
-                          {/* Partido, marcador y cuota en la misma línea */}
-                          <div className="flex items-center gap-3 flex-1">
+                        <div className="grid gap-4 items-center" style={{ gridTemplateColumns: '0.5fr 1fr 1fr 1fr' }}>
+                          {/* Primera columna: Vacía (invisible, ancho mitad) */}
+                          <div></div>
+                          {/* Segunda columna: Equipos con resultado */}
+                          <div className="pr-4">
                             <span className="text-sm font-medium">{getMatchName(bet.match_description)}</span>
                             {matchResults[bet.fixture_id]?.match_result && (
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs text-muted-foreground ml-1">
                                 ({matchResults[bet.fixture_id].match_result})
                               </span>
                             )}
-                            <span className="text-sm">
-                              {(() => {
-                                const parts = bet.bet_selection?.split(' @ ') || [];
-                                const selection = getBettingTranslation(parts[0] || '');
-                                const odds = parts[1] || bet.odds;
-                                return `${getBettingTranslation(bet.market_bets)}: ${selection} @ ${odds}`;
-                              })()}
-                            </span>
                           </div>
+                          {/* Tercera columna: Mercado con cuota */}
+                          <div className="text-sm">
+                            {(() => {
+                              const parts = bet.bet_selection?.split(' @ ') || [];
+                              const selection = getBettingTranslation(parts[0] || '');
+                              const odds = parts[1] || bet.odds;
+                              return `${getBettingTranslation(bet.market_bets)}: ${selection} @ ${odds}`;
+                            })()}
+                          </div>
+                          {/* Cuarta columna: Vacía */}
+                          <div></div>
                         </div>
                       ) : null}
                     </div>

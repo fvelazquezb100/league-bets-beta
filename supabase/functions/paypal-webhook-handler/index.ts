@@ -158,7 +158,8 @@ serve(async (req) => {
                   amount,
                   currency,
                   payerEmail,
-                  webhookEvent
+                  webhookEvent,
+                  customData.discount_code || null
                 );
 
                 return new Response(JSON.stringify({ message: "Webhook processed successfully" }), {
@@ -201,7 +202,8 @@ async function processPayment(
   amount: number,
   currency: string,
   payerEmail: string,
-  webhookEvent: any
+  webhookEvent: any,
+  discountCode: string | null = null
 ) {
   console.log("Processing payment:", {
     userId,
@@ -285,6 +287,20 @@ async function processPayment(
       // Don't throw - payment is already recorded
     } else {
       console.log("League upgraded to premium:", leagueId);
+    }
+
+    // If a discount code was used, increment its usage counter
+    if (discountCode) {
+      const { error: discountUpdateError } = await supabase.rpc('increment_discount_usage', {
+        discount_code_param: discountCode.toUpperCase()
+      });
+      
+      if (discountUpdateError) {
+        // Log error but don't fail the payment processing
+        console.error("Error incrementing discount usage:", discountUpdateError);
+      } else {
+        console.log("Discount usage incremented:", discountCode);
+      }
     }
   }
 

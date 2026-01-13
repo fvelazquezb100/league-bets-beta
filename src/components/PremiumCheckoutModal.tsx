@@ -238,8 +238,7 @@ export const PremiumCheckoutModal: React.FC<PremiumCheckoutModalProps> = ({
               <Button
                 onClick={handleVerifyDiscount}
                 disabled={isVerifying || !discountCode.trim()}
-                variant="outline"
-                className="whitespace-nowrap"
+                className="whitespace-nowrap bg-white border-2 border-[#FFC72C] text-black hover:bg-[#FFC72C] hover:text-black"
               >
                 {isVerifying ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

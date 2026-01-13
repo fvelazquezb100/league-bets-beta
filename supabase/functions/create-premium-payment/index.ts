@@ -14,6 +14,8 @@ serve(async (req) => {
   }
 
   try {
+    console.log("create-premium-payment function called");
+    
     // @ts-ignore
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     // @ts-ignore
@@ -25,7 +27,16 @@ serve(async (req) => {
     // @ts-ignore
     const PAYPAL_MODE = Deno.env.get("PAYPAL_MODE") || "live"; // "live" or "sandbox"
 
+    console.log("Environment check:", {
+      hasSupabaseUrl: !!SUPABASE_URL,
+      hasServiceRoleKey: !!SUPABASE_SERVICE_ROLE_KEY,
+      hasPaypalClientId: !!PAYPAL_CLIENT_ID,
+      hasPaypalSecret: !!PAYPAL_SECRET,
+      paypalMode: PAYPAL_MODE,
+    });
+
     if (!SUPABASE_SERVICE_ROLE_KEY) {
+      console.error("Missing SUPABASE_SERVICE_ROLE_KEY");
       return new Response(
         JSON.stringify({ error: "Missing SUPABASE_SERVICE_ROLE_KEY" }),
         {
@@ -36,6 +47,7 @@ serve(async (req) => {
     }
 
     if (!PAYPAL_CLIENT_ID || !PAYPAL_SECRET) {
+      console.error("Missing PayPal credentials");
       return new Response(
         JSON.stringify({ error: "Missing PayPal credentials" }),
         {
@@ -48,6 +60,7 @@ serve(async (req) => {
     // Get authorization header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
+      console.error("Missing authorization header");
       return new Response(
         JSON.stringify({ error: "Missing authorization header" }),
         {
@@ -59,6 +72,7 @@ serve(async (req) => {
 
     const token = authHeader.replace("Bearer ", "").trim();
     if (!token) {
+      console.error("Missing bearer token");
       return new Response(
         JSON.stringify({ error: "Missing bearer token" }),
         {
@@ -68,12 +82,14 @@ serve(async (req) => {
       );
     }
 
+    console.log("Creating Supabase admin client");
     // Create service role client for privileged operations
     const supabaseAdmin = createClient(
       SUPABASE_URL,
       SUPABASE_SERVICE_ROLE_KEY
     );
 
+    console.log("Getting user from token");
     // Get the authenticated user from the provided token
     const {
       data: { user },
@@ -81,6 +97,7 @@ serve(async (req) => {
     } = await supabaseAdmin.auth.getUser(token);
 
     if (userError || !user) {
+      console.error("User error:", userError);
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         {
@@ -90,8 +107,12 @@ serve(async (req) => {
       );
     }
 
+    console.log("User authenticated:", user.id);
+
     // Parse request body
+    console.log("Parsing request body");
     const body = await req.json();
+    console.log("Request body:", { amount: body.amount, league_id: body.league_id, has_discount_code: !!body.discount_code });
     const { amount, league_id, discount_code } = body;
 
     if (!amount || amount <= 0) {
@@ -136,6 +157,14 @@ serve(async (req) => {
       ? "https://api-m.sandbox.paypal.com"
       : "https://api-m.paypal.com";
 
+    console.log("PayPal configuration:", {
+      mode: PAYPAL_MODE,
+      baseUrl: paypalBaseUrl,
+      clientIdLength: PAYPAL_CLIENT_ID?.length || 0,
+      secretLength: PAYPAL_SECRET?.length || 0,
+      clientIdPrefix: PAYPAL_CLIENT_ID?.substring(0, 10) || "none",
+    });
+
     // Step 1: Get PayPal access token
     const authResponse = await fetch(`${paypalBaseUrl}/v1/oauth2/token`, {
       method: "POST",
@@ -149,8 +178,12 @@ serve(async (req) => {
     if (!authResponse.ok) {
       const errorText = await authResponse.text();
       console.error("PayPal auth error:", errorText);
+      console.error("PayPal auth status:", authResponse.status, authResponse.statusText);
       return new Response(
-        JSON.stringify({ error: "Failed to authenticate with PayPal" }),
+        JSON.stringify({ 
+          error: "Failed to authenticate with PayPal",
+          details: errorText 
+        }),
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -249,8 +282,14 @@ serve(async (req) => {
     );
   } catch (error: any) {
     console.error("Error in create-premium-payment:", error);
+    console.error("Error message:", error?.message);
+    console.error("Error stack:", error?.stack);
+    console.error("Error name:", error?.name);
     return new Response(
-      JSON.stringify({ error: error.message || "Internal server error" }),
+      JSON.stringify({ 
+        error: error?.message || "Internal server error",
+        details: error?.stack || String(error)
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
