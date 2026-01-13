@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { SiteFooter } from '@/components/layout/SiteFooter';
 import { useCookieConsent } from '@/hooks/useCookieConsent';
 import { useBettingSettings } from '@/hooks/useBettingSettings';
+import { PremiumFeaturesModal } from '@/components/PremiumFeaturesModal';
 
 const HOW_IT_WORKS_STEPS = [
   'Crea tu cuenta y recibe tus primeros puntos virtuales.',
@@ -135,6 +136,7 @@ export const Landing = () => {
   const [isImageTransitioning, setIsImageTransitioning] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [autoPlay, setAutoPlay] = useState(true);
+  const [isPremiumFeaturesModalOpen, setIsPremiumFeaturesModalOpen] = useState(false);
 
   const handleImageSelect = (index: number) => {
     if (index === currentImageIndex) return;
@@ -787,7 +789,10 @@ export const Landing = () => {
             </div>
 
             {/* Liga Premium - Card destacada */}
-            <div className="rounded-2xl border-2 border-[#FFC72C] bg-gradient-to-br from-[#2D2D2D] via-[#3a3a2a] to-[#4a4a3a] p-6 shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:scale-105 cursor-pointer group relative overflow-hidden">
+            <div 
+              onClick={() => setIsPremiumFeaturesModalOpen(true)}
+              className="rounded-2xl border-2 border-[#FFC72C] bg-gradient-to-br from-[#2D2D2D] via-[#3a3a2a] to-[#4a4a3a] p-6 shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 hover:scale-105 cursor-pointer group relative overflow-hidden"
+            >
               {/* Degradado de fondo jambol gold a jambol grey */}
               <div className="absolute inset-0 bg-gradient-to-br from-[#FFC72C]/20 via-[#FFC72C]/10 to-[#2D2D2D] opacity-60 rounded-2xl"></div>
               <div className="relative z-10 flex flex-col items-center text-center">
@@ -820,6 +825,11 @@ export const Landing = () => {
       </section>
 
       <SiteFooter />
+
+      <PremiumFeaturesModal 
+        isOpen={isPremiumFeaturesModalOpen}
+        onClose={() => setIsPremiumFeaturesModalOpen(false)}
+      />
     </main>
   );
 };

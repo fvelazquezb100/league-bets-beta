@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Copy, Settings, Crown, Shield } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useCookieConsent } from '@/hooks/useCookieConsent';
 import { PremiumUpgradeModal } from '@/components/PremiumUpgradeModal';
 import { PremiumFeaturesModal } from '@/components/PremiumFeaturesModal';
@@ -41,6 +41,8 @@ type AvailableLeague = {
 const AdminLiga: React.FC = () => {
   const { toast } = useToast();
   const { consent } = useCookieConsent();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     const pageTitle = 'Jambol — Tu Liga';
@@ -267,6 +269,67 @@ const AdminLiga: React.FC = () => {
     };
     fetchWeek();
   }, []);
+
+  // Handle PayPal payment return
+  React.useEffect(() => {
+    const handlePayPalReturn = async () => {
+      const payment = searchParams.get('payment');
+      const token = searchParams.get('token');
+      const payerId = searchParams.get('PayerID');
+
+      if (payment === 'cancelled') {
+        toast({
+          title: 'Pago cancelado',
+          description: 'El pago fue cancelado. Puedes intentarlo de nuevo cuando quieras.',
+          variant: 'destructive',
+        });
+        // Remove query params
+        setSearchParams({});
+        return;
+      }
+
+      if (payment === 'success' && token) {
+        try {
+          // Capture the PayPal order
+          const { data, error } = await supabase.functions.invoke('capture-paypal-order', {
+            body: { token },
+          });
+
+          if (error) {
+            throw error;
+          }
+
+          if (data?.error) {
+            throw new Error(data.error);
+          }
+
+          // Payment captured successfully - PayPal will send webhook to update the league
+          toast({
+            title: 'Pago procesado',
+            description: 'Tu pago se ha procesado correctamente. La liga se actualizará a premium en unos momentos.',
+          });
+
+          // Remove query params and reload to refresh league data
+          setSearchParams({});
+          // Wait a bit for the webhook to process, then reload
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
+        } catch (error: any) {
+          console.error('Error capturing PayPal order:', error);
+          toast({
+            title: 'Error al procesar el pago',
+            description: error.message || 'No se pudo procesar el pago. Por favor, contacta con soporte.',
+            variant: 'destructive',
+          });
+          // Remove query params even on error
+          setSearchParams({});
+        }
+      }
+    };
+
+    handlePayPalReturn();
+  }, [searchParams, toast, setSearchParams]);
 
   // Fetch league members when leagueId changes
   React.useEffect(() => {

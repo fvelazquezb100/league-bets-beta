@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Crown, Check, Ban, Calendar, RefreshCw, Settings, TrendingUp, BarChart3, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
+import { PremiumCheckoutModal } from './PremiumCheckoutModal';
 
 interface PremiumUpgradeModalProps {
   isOpen: boolean;
@@ -18,53 +21,54 @@ export const PremiumUpgradeModal: React.FC<PremiumUpgradeModalProps> = ({
   onUpgrade,
   onSuccess
 }) => {
+  const { user } = useAuth();
   const { toast } = useToast();
-  const [isUpgrading, setIsUpgrading] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
-  const handleUpgrade = async () => {
-    setIsUpgrading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('upgrade-league-to-premium');
+  // Get user profile to get league_id
+  const { data: profile } = useQuery({
+    queryKey: ['user-profile', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('league_id')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
 
-      if (error) {
-        throw error;
-      }
+  const leagueId = profile?.league_id;
 
-      if (data?.error) {
-        throw new Error(data.error);
-      }
+  // Get league pricing information
+  const { data: leaguePricing, isLoading: isLoadingPricing } = useQuery({
+    queryKey: ['league-pricing', leagueId],
+    queryFn: async () => {
+      if (!leagueId) return null;
+      const { data, error } = await supabase
+        .from('leagues_with_pricing')
+        .select('id, name, members_realtime, premium_cost_realtime')
+        .eq('id', leagueId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!leagueId,
+  });
 
-      if (data?.already_premium) {
-        toast({
-          title: 'Liga Premium',
-          description: 'Tu liga ya es premium',
-        });
-      } else {
-        toast({
-          title: '¡Liga actualizada a Premium!',
-          description: 'Tu liga ahora tiene acceso a todas las funcionalidades premium',
-        });
-      }
-
-      if (onUpgrade) {
-        onUpgrade();
-      }
-
-      if (onSuccess) {
-        onSuccess();
-      }
-
-      onClose();
-    } catch (error: any) {
-      console.error('Error upgrading league:', error);
+  const handleUpgradeClick = () => {
+    if (!leaguePricing) {
       toast({
-        title: 'Error al actualizar',
-        description: error.message || 'No se pudo actualizar la liga a premium',
+        title: 'Error',
+        description: 'No se pudo cargar la información de la liga',
         variant: 'destructive',
       });
-    } finally {
-      setIsUpgrading(false);
+      return;
     }
+    setIsCheckoutOpen(true);
   };
 
   const premiumFeatures = [
@@ -142,19 +146,40 @@ export const PremiumUpgradeModal: React.FC<PremiumUpgradeModalProps> = ({
 
           {/* Mensaje de oferta - Botón clickeable */}
           <button
-            onClick={handleUpgrade}
-            disabled={isUpgrading}
+            onClick={handleUpgradeClick}
+            disabled={isLoadingPricing || !leaguePricing}
             className="w-full bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-300 rounded-lg p-3 text-center hover:from-yellow-100 hover:to-amber-100 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <p className="text-base font-bold text-amber-900 mb-1">
-              {isUpgrading ? 'Actualizando...' : 'Gratis hasta final de temporada'}
+              {isLoadingPricing 
+                ? 'Cargando...' 
+                : leaguePricing 
+                  ? `${leaguePricing.premium_cost_realtime?.toFixed(2) || '0.00'} € hasta final de temporada`
+                  : 'Cargando precio...'}
             </p>
             <p className="text-xs text-amber-800">
-              {isUpgrading ? 'Por favor espera...' : 'Actualiza ahora y disfruta de todas las ventajas premium sin costo adicional'}
+              Actualiza ahora y disfruta de todas las ventajas premium
             </p>
           </button>
         </div>
       </DialogContent>
+
+      {/* Checkout Modal */}
+      {leaguePricing && (
+        <PremiumCheckoutModal
+          isOpen={isCheckoutOpen}
+          onClose={() => setIsCheckoutOpen(false)}
+          onSuccess={() => {
+            if (onSuccess) {
+              onSuccess();
+            }
+          }}
+          leagueId={leaguePricing.id}
+          leagueName={leaguePricing.name || ''}
+          membersCount={leaguePricing.members_realtime || 0}
+          premiumCost={Number(leaguePricing.premium_cost_realtime) || 0}
+        />
+      )}
     </Dialog>
   );
 };
