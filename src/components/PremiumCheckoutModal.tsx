@@ -133,6 +133,9 @@ export const PremiumCheckoutModal: React.FC<PremiumCheckoutModalProps> = ({
       // If final price is 0 (100% discount), upgrade directly without PayPal
       if (finalPrice === 0) {
         const { data, error } = await supabase.functions.invoke('upgrade-league-to-premium', {
+          body: {
+            discount_code: discountInfo && discountInfo.valid ? discountInfo.codigo : null,
+          },
           headers: {
             Authorization: `Bearer ${session.access_token}`,
           },
@@ -148,7 +151,7 @@ export const PremiumCheckoutModal: React.FC<PremiumCheckoutModalProps> = ({
 
         toast({
           title: '¡Liga actualizada a Premium!',
-          description: 'Tu liga ahora tiene acceso a todas las funcionalidades premium',
+          description: 'Tu liga ahora tiene acceso a todas las funcionalidades premium (gratis con descuento).',
         });
 
         if (onSuccess) {
@@ -294,13 +297,13 @@ export const PremiumCheckoutModal: React.FC<PremiumCheckoutModalProps> = ({
             </div>
           </div>
 
-          {/* PayPal Button */}
+          {/* Payment Button */}
           <Button
             onClick={handlePayPalClick}
             className="w-full bg-[#FFC72C] hover:bg-[#FFB800] text-black font-semibold"
             size="lg"
           >
-            Pagar con PayPal
+            {finalPrice === 0 ? 'Actualizar a Premium gratis' : 'Pagar con PayPal'}
           </Button>
         </div>
       </DialogContent>

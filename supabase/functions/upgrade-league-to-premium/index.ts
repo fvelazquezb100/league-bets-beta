@@ -144,6 +144,18 @@ serve(async (req) => {
       );
     }
 
+    // Parse request body to get discount_code
+    let discountCode: string | null = null;
+    try {
+      const body = await req.json().catch(() => ({}));
+      discountCode = body.discount_code || null;
+      if (discountCode) {
+        discountCode = discountCode.toUpperCase();
+      }
+    } catch (e) {
+      // Body parsing failed, continue without discount_code
+    }
+
     // Update league to premium
     const { error: updateError } = await supabaseAdmin
       .from("leagues")
@@ -177,6 +189,7 @@ serve(async (req) => {
         ipn_data: {
           source: "upgrade-league-to-premium",
           free: true,
+          discount_code: discountCode,
         },
       })
       .select("id")
@@ -197,6 +210,20 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
+    }
+
+    // If a discount code was used, increment its usage counter
+    if (discountCode) {
+      const { error: discountUpdateError } = await supabaseAdmin.rpc('increment_discount_usage', {
+        discount_code_param: discountCode
+      });
+      
+      if (discountUpdateError) {
+        // Log error but don't fail the upgrade
+        console.error("Error incrementing discount usage:", discountUpdateError);
+      } else {
+        console.log("Discount usage incremented:", discountCode);
+      }
     }
 
     return new Response(
