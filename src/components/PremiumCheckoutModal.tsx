@@ -78,17 +78,20 @@ export const PremiumCheckoutModal: React.FC<PremiumCheckoutModalProps> = ({
         throw error;
       }
 
-      if (data?.valid) {
-        setDiscountInfo(data as DiscountInfo);
+      // Type assertion for JSONB return type
+      const discountResult = data as any;
+      
+      if (discountResult?.valid) {
+        setDiscountInfo(discountResult as DiscountInfo);
         toast({
           title: 'Código válido',
-          description: `Descuento aplicado: ${data.tipo_descuento === '%' ? `${data.cantidad}%` : `${data.cantidad}€`}`,
+          description: `Descuento aplicado: ${discountResult.tipo_descuento === '%' ? `${discountResult.cantidad}%` : `${discountResult.cantidad}€`}`,
         });
       } else {
-        setDiscountInfo({ valid: false, error: data?.error || 'Código inválido' });
+        setDiscountInfo({ valid: false, error: discountResult?.error || 'Código inválido' });
         toast({
           title: 'Código inválido',
-          description: data?.error || 'El código de descuento no es válido',
+          description: discountResult?.error || 'El código de descuento no es válido',
           variant: 'destructive',
         });
       }

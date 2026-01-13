@@ -601,7 +601,33 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      leagues_with_pricing: {
+        Row: {
+          id: number
+          name: string
+          created_at: string
+          type: "free" | "premium"
+          members_realtime: number
+          premium_cost_realtime: number
+        }
+        Insert: {
+          id?: number
+          name?: string
+          created_at?: string
+          type?: "free" | "premium"
+          members_realtime?: number
+          premium_cost_realtime?: number
+        }
+        Update: {
+          id?: number
+          name?: string
+          created_at?: string
+          type?: "free" | "premium"
+          members_realtime?: number
+          premium_cost_realtime?: number
+        }
+        Relationships: []
+      }
     }
     Functions: {
       calculate_and_store_weekly_performance: {
@@ -745,6 +771,10 @@ export type Database = {
       validate_available_leagues: {
         Args: { league_ids: number[] }
         Returns: boolean
+      }
+      verify_discount_code: {
+        Args: { discount_code: string }
+        Returns: Json
       }
     }
     Enums: {
