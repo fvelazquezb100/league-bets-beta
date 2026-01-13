@@ -254,12 +254,18 @@ serve(async (req) => {
 
     const orderData = await orderResponse.json();
 
+    console.log("PayPal order response:", JSON.stringify(orderData, null, 2));
+    console.log("All links:", JSON.stringify(orderData.links, null, 2));
+
     // Find the approval URL
     const approvalLink = orderData.links?.find(
       (link: any) => link.rel === "approve"
     );
 
+    console.log("Approval link found:", JSON.stringify(approvalLink, null, 2));
+
     if (!approvalLink) {
+      console.error("No approval link found in PayPal response");
       return new Response(
         JSON.stringify({ error: "No approval link found in PayPal response" }),
         {
@@ -268,6 +274,8 @@ serve(async (req) => {
         }
       );
     }
+
+    console.log("Returning approval_url:", approvalLink.href);
 
     return new Response(
       JSON.stringify({
