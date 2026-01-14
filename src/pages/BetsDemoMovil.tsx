@@ -100,23 +100,23 @@ export const BetsDemoMovil = () => {
       highlight: "first-match"
     },
     {
-      title: language === 'es' ? "MERCADOS DE APUESTAS" : "BETTING MARKETS",
+      title: language === 'es' ? "MERCADOS" : "BETTING MARKETS",
       content: language === 'es' 
         ? "Cada partido tiene diferentes mercados. Selecciona el mercado que te interese y elige tu cuota."
         : "Each match has different markets. Select the market that interests you and choose your odds.",
       highlight: "markets-section"
     },
     {
-      title: language === 'es' ? "BOLETO DE APUESTAS" : "BETTING SLIP",
+      title: language === 'es' ? "BOLETO" : "BETTING SLIP",
       content: language === 'es' 
-        ? "Una vez seleccionada la cuota, aparece en tu boleto de apuestas en la parte inferior. Aquí puedes ver el resumen de tu apuesta y el total de puntos que apostarás. El importe se establece automáticamente en 100 pts para la demo."
+        ? "Una vez seleccionada la cuota, aparece en tu boleto en la parte inferior. Aquí puedes ver el resumen de tu boleto y el total de puntos que apostarás. El importe se establece automáticamente en 100 pts para la demo."
         : "Once you select the odds, it appears in your betting slip at the bottom. Here you can see the summary of your bet and the total points you will bet. The amount is automatically set to 100 pts for the demo.",
       highlight: "bet-slip-demo"
     },
     {
-      title: language === 'es' ? "REALIZAR APUESTA" : "PLACE BET",
+      title: language === 'es' ? "REALIZAR BOLETO" : "PLACE BET",
       content: language === 'es' 
-        ? "¡Apuesta realizada! Apuesta simple de 100 pts realizada con éxito. Ya tienes tu apuesta registrada y podrás ver los resultados cuando termine el partido. Podrás ver tus apuestas en el historial."
+        ? "¡Boleto realizado! Boleto simple de 100 pts realizado con éxito. Ya tienes tu boleto registrado y podrás ver los resultados cuando termine el partido. Podrás ver tus boletos en el historial."
         : "Bet placed! Simple bet of 100 pts placed successfully. Your bet is now registered and you can see the results when the match ends. You can see your bets in the history.",
       highlight: "realizar-apuesta"
     }
@@ -256,7 +256,7 @@ export const BetsDemoMovil = () => {
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
-      // Si estamos en el paso 2 (MERCADOS DE APUESTAS), automáticamente seleccionamos Real Madrid
+      // Si estamos en el paso 2 (MERCADOS), automáticamente seleccionamos Real Madrid
       if (currentStep === 2) {
         const madridMatch = matches.primera[0]; // Real Madrid vs FC Barcelona
         const madridSelection = { value: 'Real Madrid', odd: '2.10' };
@@ -383,7 +383,7 @@ export const BetsDemoMovil = () => {
       {/* Contenido principal */}
       <main className="container mx-auto px-4 py-8 pt-20">
         <div className="w-full px-2 sm:container sm:mx-auto sm:p-4">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Apuestas</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Boletos</h1>
           
           {/* Mobile Layout */}
           <div className="flex flex-col gap-4 sm:gap-8 w-full">
@@ -680,7 +680,7 @@ export const BetsDemoMovil = () => {
                       id="realizar-apuesta"
                       className="w-full bg-[#FFC72C] text-black hover:bg-[#e6b328] py-3 px-4 rounded-md font-medium transition-colors"
                     >
-                      Realizar Apuestas
+                      Realizar Boletos
                     </button>
                     <button
                       onClick={() => setSelectedBets([])}

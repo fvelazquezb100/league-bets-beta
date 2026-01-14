@@ -48,23 +48,23 @@ export const BetHistoryDemoMovil = () => {
 
   const steps = [
     {
-      title: language === 'es' ? "HISTORIAL DE APUESTAS" : "BET HISTORY",
+      title: language === 'es' ? "HISTORIAL DE BOLETOS" : "BET HISTORY",
       content: language === 'es' 
-        ? "Aquí puedes ver todas tus apuestas realizadas, tanto las ganadas como las perdidas. Puedes revisar tu rendimiento y estadísticas."
+        ? "Aquí puedes ver todos tus boletos realizados, tanto los ganados como los perdidos. Puedes revisar tu rendimiento y estadísticas."
         : "Here you can see all your bets placed, both won and lost. You can review your performance and statistics.",
       highlight: null
     },
     {
       title: language === 'es' ? "ESTADÍSTICAS" : "STATISTICS",
       content: language === 'es' 
-        ? "Estas tarjetas muestran un resumen de tu rendimiento: total apostado, total ganado, apuestas pendientes y tu porcentaje de aciertos."
+        ? "Estas tarjetas muestran un resumen de tu rendimiento: total apostado, total ganado, boletos pendientes y tu porcentaje de aciertos."
         : "These cards show a summary of your performance: total wagered, total won, pending bets and your success percentage.",
       highlight: "personal-stats"
     },
     {
-      title: language === 'es' ? "MIS APUESTAS" : "MY BETS",
+      title: language === 'es' ? "MIS BOLETOS" : "MY BETS",
       content: language === 'es' 
-        ? "Aquí puedes ver el historial completo de todas tus apuestas. Cada entrada muestra el partido, la apuesta realizada, la cuota y el resultado."
+        ? "Aquí puedes ver el historial completo de todos tus boletos. Cada entrada muestra el partido, el boleto realizado, la cuota y el resultado."
         : "Here you can see the complete history of all your bets. Each entry shows the match, the bet placed, the odds and the result.",
       highlight: "bet-history"
     }
@@ -185,8 +185,8 @@ export const BetHistoryDemoMovil = () => {
         <div className="w-full px-2 sm:container sm:mx-auto sm:p-4">
           {/* Título y descripción */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Mi Historial de Apuestas</h1>
-            <p className="text-gray-600">Revisa tu rendimiento y estadísticas de apuestas</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Mi Historial de Boletos</h1>
+            <p className="text-gray-600">Revisa tu rendimiento y estadísticas de boletos</p>
           </div>
 
           {/* Tarjetas de estadísticas */}
@@ -217,12 +217,12 @@ export const BetHistoryDemoMovil = () => {
               </CardContent>
             </Card>
 
-            {/* Apuestas Pendientes */}
+            {/* Boletos Pendientes */}
             <Card className="bg-white border-gray-200">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 mb-1">Apuestas Pendientes</p>
+                    <p className="text-sm text-gray-600 mb-1">Boletos Pendientes</p>
                     <p className="text-2xl font-bold text-orange-500">0</p>
                   </div>
                   <Calendar className="w-6 h-6 text-orange-500" />
@@ -237,7 +237,7 @@ export const BetHistoryDemoMovil = () => {
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Estadísticas Personales</p>
                     <p className="text-2xl font-bold text-orange-500">35%</p>
-                    <p className="text-xs text-gray-500">% de aciertos de apuestas</p>
+                    <p className="text-xs text-gray-500">% de aciertos de boletos</p>
                   </div>
                   <Trophy className="w-6 h-6 text-[#FFC72C]" />
                 </div>
@@ -245,14 +245,14 @@ export const BetHistoryDemoMovil = () => {
             </Card>
           </div>
 
-          {/* Sección Mis Apuestas */}
+          {/* Sección Mis Boletos */}
           <div id="bet-history">
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Mis Apuestas</h2>
-              <p className="text-gray-600">Historial completo de todas tus apuestas</p>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Mis Boletos</h2>
+              <p className="text-gray-600">Historial completo de todos tus boletos</p>
             </div>
 
-            {/* Lista de apuestas */}
+            {/* Lista de boletos */}
             <div className="space-y-4">
               {/* Apuesta 1 */}
               <Card className="bg-white border-gray-200 shadow-sm">

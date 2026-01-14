@@ -25,7 +25,7 @@ export default function PoliticaPrivacidad() {
 
       <h1 className="text-2xl md:text-3xl font-bold mb-2">Política de Privacidad</h1>
       <p className="text-sm md:text-base text-muted-foreground mb-2">
-        Última actualización: octubre de 2025.
+        Última actualización: enero de 2026.
       </p>
 
       <hr className="my-6 border-border" />
@@ -55,7 +55,8 @@ export default function PoliticaPrivacidad() {
             <li>Datos técnicos y de navegación: dirección IP, tipo de navegador, dispositivo, sistema operativo y páginas visitadas.</li>
             <li>Datos derivados del uso: actividad dentro de la plataforma, como participación en ligas o clasificación.</li>
             <li>Datos de cookies: preferencias, comportamiento de navegación y anuncios mostrados o clicados.</li>
-            <li>Datos de terceros: información proporcionada por proveedores como Google LLC (Analytics), Supabase (autenticación y base de datos) y Vercel (alojamiento web).</li>
+            <li>Datos de pago y transacciones: correo electrónico del pagador, identificadores de transacción, montos y monedas de las transacciones, y datos de facturación proporcionados por el procesador de pagos (PayPal) cuando realizas un pago para actualizar una liga a premium.</li>
+            <li>Datos de terceros: información proporcionada por proveedores como Google LLC (Analytics), Supabase (autenticación y base de datos), Vercel (alojamiento web) y PayPal (procesamiento de pagos).</li>
           </ul>
         </div>
 
@@ -67,6 +68,9 @@ export default function PoliticaPrivacidad() {
           <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1 mt-2">
             <li>Permitir el acceso y uso de las funciones de la plataforma.</li>
             <li>Gestionar cuentas de usuario y preferencias.</li>
+            <li>Procesar pagos para actualizar ligas a premium mediante servicios de terceros (PayPal).</li>
+            <li>Gestionar suscripciones premium y códigos de descuento aplicados.</li>
+            <li>Cumplir obligaciones fiscales y contables relacionadas con las transacciones realizadas.</li>
             <li>Analizar el tráfico y el rendimiento del sitio web.</li>
             <li>Mostrar publicidad personalizada.</li>
             <li>Prevenir usos indebidos o fraudulentos del servicio.</li>
@@ -94,7 +98,8 @@ export default function PoliticaPrivacidad() {
           <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1">
             <li>Los datos de registro se conservan mientras la cuenta permanezca activa.</li>
             <li>Los datos analíticos y de cookies se conservan durante un máximo de 26 meses.</li>
-            <li>Tras solicitar la eliminación de la cuenta, los datos se eliminarán o anonimizarán en un plazo máximo de 30 días.</li>
+            <li>Los datos de pago y transacciones se conservan durante el tiempo necesario para cumplir con las obligaciones legales, fiscales y contables aplicables (mínimo 5 años desde la fecha de la transacción, según la normativa española).</li>
+            <li>Tras solicitar la eliminación de la cuenta, los datos se eliminarán o anonimizarán en un plazo máximo de 30 días, salvo aquellos datos de pago que deban conservarse por obligaciones legales.</li>
           </ul>
         </div>
 
@@ -107,6 +112,7 @@ export default function PoliticaPrivacidad() {
             <li>Google LLC (Analytics), con sede en Estados Unidos, bajo cláusulas contractuales tipo aprobadas por la Comisión Europea.</li>
             <li>Supabase Inc., como proveedor de base de datos y autenticación.</li>
             <li>Vercel Inc., responsable del alojamiento y despliegue web.</li>
+            <li>PayPal Europe S.à.r.l. et Cie, S.C.A., con sede en Luxemburgo, como procesador de pagos para transacciones de ligas premium. PayPal procesa los datos de pago según su propia política de privacidad y términos de servicio.</li>
             <li>Autoridades públicas o judiciales, cuando exista obligación legal.</li>
           </ul>
           <p className="text-sm md:text-base text-muted-foreground mt-2">En ningún caso vendemos tus datos personales a terceros.</p>

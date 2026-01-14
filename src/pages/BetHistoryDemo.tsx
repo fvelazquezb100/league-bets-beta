@@ -58,23 +58,23 @@ export const BetHistoryDemo = () => {
 
   const steps = [
     {
-      title: language === 'es' ? "HISTORIAL DE APUESTAS" : "BET HISTORY",
+      title: language === 'es' ? "HISTORIAL DE BOLETOS" : "BET HISTORY",
       content: language === 'es' 
-        ? "Aquí puedes ver todas tus apuestas realizadas. En la tabla encontrarás diferentes tipos de apuestas:<br />• PERDIDAS<br />• GANADAS<br /> • CANCELADAS<br />• PENDIENTE. Esta apuesta sí la puedes cancelar hasta que el partido empiece"
+        ? "Aquí puedes ver todos tus boletos realizados. En la tabla encontrarás diferentes tipos de boletos:<br />• PERDIDOS<br />• GANADOS<br /> • CANCELADOS<br />• PENDIENTE. Este boleto sí lo puedes cancelar hasta que el partido empiece"
         : "Here you can see all your placed bets. In the table you will find different types of bets:<br />• LOST<br />• WON<br />• CANCELLED<br />• PENDING. This bet you can cancel until the match starts",
       highlight: "bets-table"
     },
     {
       title: language === 'es' ? "FILTROS DE VISUALIZACIÓN" : "VIEW FILTERS",
       content: language === 'es' 
-        ? "Estas tarjetas actúan como filtros para facilitar la visualización de tus apuestas. Puedes hacer clic en ellas para ver solo las apuestas ganadas, perdidas o pendientes."
+        ? "Estas tarjetas actúan como filtros para facilitar la visualización de tus boletos. Puedes hacer clic en ellas para ver solo los boletos ganados, perdidos o pendientes."
         : "These cards act as filters to facilitate viewing your bets. You can click on them to see only won, lost or pending bets.",
       highlight: "filters-section"
     },
     {
       title: language === 'es' ? "ESTADÍSTICAS PERSONALES" : "PERSONAL STATISTICS",
       content: language === 'es' 
-        ? "Aquí puedes ver tus estadísticas detalladas: porcentaje de aciertos, apuestas más rentables, y análisis de tu rendimiento. Ahora puedes ver la clasificación de tu liga con los puntos que has sumado."
+        ? "Aquí puedes ver tus estadísticas detalladas: porcentaje de aciertos, boletos más rentables, y análisis de tu rendimiento. Ahora puedes ver la clasificación de tu liga con los puntos que has sumado."
         : "Here you can see your detailed statistics: hit percentage, most profitable bets, and performance analysis. Now you can see your league standings with the points you have accumulated.",
       highlight: "stats-card"
     }
@@ -173,7 +173,7 @@ export const BetHistoryDemo = () => {
       {/* Contenido principal */}
       <main className="container mx-auto px-4 py-8 pt-20">
         <div className="w-full px-2 sm:container sm:mx-auto sm:p-4">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Historial de Apuestas</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Historial de Boletos</h1>
           
           {/* Tarjetas de estadísticas */}
           <div id="filters-section" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -205,7 +205,7 @@ export const BetHistoryDemo = () => {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Apuestas Pendientes</p>
+                    <p className="text-sm text-muted-foreground">Boletos Pendientes</p>
                     <p className="text-2xl font-bold text-primary">1</p>
                   </div>
                   <Calendar className="h-5 w-5 text-primary" />
@@ -219,7 +219,7 @@ export const BetHistoryDemo = () => {
                   <div>
                     <p className="text-sm text-muted-foreground">Estadísticas Personales</p>
                     <p className="text-2xl font-bold text-primary">33%</p>
-                    <p className="text-xs text-muted-foreground">% de aciertos de apuestas</p>
+                    <p className="text-xs text-muted-foreground">% de aciertos de boletos</p>
                   </div>
                   <Trophy className="h-5 w-5 text-primary" />
                 </div>
@@ -227,11 +227,11 @@ export const BetHistoryDemo = () => {
             </Card>
           </div>
 
-          {/* Tabla de apuestas */}
+          {/* Tabla de boletos */}
           <Card id="bets-table" className="shadow-lg">
             <CardHeader>
-              <CardTitle>Mis Apuestas</CardTitle>
-              <CardDescription>Historial completo de todas tus apuestas</CardDescription>
+              <CardTitle>Mis Boletos</CardTitle>
+              <CardDescription>Historial completo de todos tus boletos</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>

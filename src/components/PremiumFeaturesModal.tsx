@@ -1,6 +1,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Crown, Ban, Calendar, RefreshCw, TrendingUp, BarChart3, Settings, Check, Zap } from 'lucide-react';
+import { useIsPremiumLeague } from '@/hooks/useLeaguePremium';
 
 interface PremiumFeaturesModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ export const PremiumFeaturesModal: React.FC<PremiumFeaturesModalProps> = ({
   isOpen, 
   onClose
 }) => {
+  const isPremium = useIsPremiumLeague();
   const premiumFeatures = [
     {
       icon: Zap,
@@ -89,9 +91,11 @@ export const PremiumFeaturesModal: React.FC<PremiumFeaturesModalProps> = ({
             <p className="text-sm font-medium text-amber-900 mb-1">
               Premium hasta final de temporada 2025-2026 (31/05/2026)
             </p>
-            <p className="text-xs text-amber-800">
-              Disfruta de todas las ventajas premium sin costo adicional
-            </p>
+            {!isPremium && (
+              <p className="text-xs text-amber-800">
+                Consigue tu codigo de descuento y disfruta de todas las ventajas premium sin costo adicional
+              </p>
+            )}
           </div>
         </div>
       </DialogContent>

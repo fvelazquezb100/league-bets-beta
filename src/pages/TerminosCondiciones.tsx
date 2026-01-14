@@ -76,19 +76,48 @@ export default function TerminosCondiciones() {
       <h2 className="text-xl font-semibold mt-6 mb-2">12. Legislación y jurisdicción aplicable</h2>
       <p className="text-sm md:text-base text-muted-foreground">Estos Términos se rigen por la legislación española. Cualquier controversia relacionada con el servicio se someterá a los juzgados y tribunales de Madrid (España), salvo disposición imperativa en contrario.</p>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2">13. Servicios premium y suscripciones futuras</h2>
-      <p className="text-sm md:text-base text-muted-foreground">Actualmente, Jambol ™ ofrece todas sus funcionalidades de forma gratuita. En el futuro, podrán incorporarse planes de suscripción o servicios premium que otorguen acceso a características adicionales, como ligas privadas, ventajas exclusivas o funcionalidades avanzadas.</p>
+      <h2 className="text-xl font-semibold mt-6 mb-2">13. Servicios premium y pagos</h2>
+      <p className="text-sm md:text-base text-muted-foreground">
+        Jambol ™ ofrece la posibilidad de actualizar ligas gratuitas a ligas premium mediante un pago único que cubre el coste hasta el final de la temporada actual. Las ligas premium incluyen funcionalidades avanzadas como SuperBoleto, bloqueo de partidos, control de días de partidos, reseteo manual de semana, evolución de multiplicadores, estadísticas avanzadas y configuración avanzada de la liga.
+      </p>
+      
+      <h3 className="text-lg font-semibold mt-4 mb-2">13.1. Proceso de pago</h3>
       <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1">
-        <li>Se informará claramente al usuario de sus condiciones, precios y forma de pago antes de cualquier cargo.</li>
-        <li>Los pagos se procesarán mediante plataformas seguras de terceros (por ejemplo, Stripe o PayPal).</li>
-        <li>Se aplicará una política de reembolsos conforme a la legislación española y europea en materia de consumidores.</li>
+        <li>El precio de actualización a premium se calcula dinámicamente en función del número de miembros de la liga y los meses restantes hasta el final de la temporada.</li>
+        <li>El precio se muestra claramente antes de realizar el pago, incluyendo cualquier descuento aplicado mediante códigos promocionales.</li>
+        <li>Los pagos se procesan de forma segura mediante PayPal, plataforma de terceros que gestiona toda la información de pago de forma independiente.</li>
+        <li>Jambol ™ no almacena información de tarjetas de crédito ni datos bancarios. Todos los datos de pago son gestionados exclusivamente por PayPal.</li>
+        <li>Una vez completado el pago, la liga se actualiza automáticamente a premium y el acceso a las funcionalidades premium queda activado de forma inmediata.</li>
       </ul>
-      <p className="text-sm md:text-base text-muted-foreground mt-2">Hasta ese momento, Jambol ™ no solicita ni gestiona ningún pago por parte de los usuarios.</p>
+
+      <h3 className="text-lg font-semibold mt-4 mb-2">13.2. Códigos de descuento</h3>
+      <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1">
+        <li>Jambol ™ puede ofrecer códigos de descuento promocionales que reducen el precio de actualización a premium.</li>
+        <li>Los códigos de descuento tienen fecha de caducidad y pueden tener límites de uso.</li>
+        <li>El uso de códigos de descuento es válido solo para el pago de actualización a premium y no puede combinarse con otras ofertas salvo indicación expresa.</li>
+        <li>Jambol ™ se reserva el derecho de modificar, cancelar o invalidar códigos de descuento en cualquier momento.</li>
+      </ul>
+
+      <h3 className="text-lg font-semibold mt-4 mb-2">13.3. Política de reembolsos</h3>
+      <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1">
+        <li>De acuerdo con la normativa europea de protección al consumidor, tienes derecho a desistir del contrato en un plazo de 14 días naturales desde la fecha de pago, siempre que no hayas comenzado a utilizar los servicios premium de forma significativa.</li>
+        <li>Para solicitar un reembolso, debes contactar a <a href="mailto:contact@jambol.co" className="underline">contact@jambol.co</a> indicando tu solicitud de reembolso y el identificador de transacción.</li>
+        <li>El reembolso se procesará en un plazo máximo de 14 días desde la recepción de tu solicitud, utilizando el mismo método de pago utilizado para la transacción original.</li>
+        <li>Una vez procesado el reembolso, la liga volverá automáticamente a ser gratuita y perderá el acceso a las funcionalidades premium.</li>
+        <li>Jambol ™ se reserva el derecho de rechazar reembolsos si se detecta un uso fraudulento o abusivo del servicio premium.</li>
+      </ul>
+
+      <h3 className="text-lg font-semibold mt-4 mb-2">13.4. Duración y renovación</h3>
+      <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1">
+        <li>El pago de actualización a premium cubre el acceso a las funcionalidades premium hasta el final de la temporada actual.</li>
+        <li>Al finalizar la temporada, la liga volverá automáticamente a ser gratuita a menos que se realice un nuevo pago para la siguiente temporada.</li>
+        <li>No hay renovación automática. Cada temporada requiere un pago independiente si se desea mantener el estatus premium.</li>
+      </ul>
 
       <h2 className="text-xl font-semibold mt-6 mb-2">14. Aceptación</h2>
       <p className="text-sm md:text-base text-muted-foreground">Al registrarte o utilizar Jambol ™, confirmas que has leído y aceptas estos Términos y Condiciones.</p>
 
-      <p className="text-sm md:text-base text-muted-foreground mt-6">Fecha de última actualización: octubre de 2025.</p>
+      <p className="text-sm md:text-base text-muted-foreground mt-6">Fecha de última actualización: enero de 2026.</p>
 
       <div className="mt-8">
         <Link to="/" className="underline text-sm">Volver al inicio</Link>
