@@ -525,13 +525,13 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
   const getBetTypeBadgeClassName = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-white text-black border-2 border-[#FFC72C] hover:bg-white hover:text-black';
+        return 'bg-white dark:bg-card text-black dark:text-foreground border-2 border-[#FFC72C] hover:bg-white dark:hover:bg-card hover:text-black dark:hover:text-foreground';
       case 'won':
         return 'bg-[#FFC72C] text-black border-2 border-[#FFC72C] hover:bg-[#FFC72C] hover:text-black';
       case 'lost':
         return 'bg-destructive hover:bg-destructive/90 text-destructive-foreground';
       case 'cancelled':
-        return 'bg-white text-gray-600 border-2 border-gray-400 hover:bg-white hover:text-gray-600';
+        return 'bg-white dark:bg-card text-gray-600 dark:text-muted-foreground border-2 border-gray-400 dark:border-border hover:bg-white dark:hover:bg-card hover:text-gray-600 dark:hover:text-muted-foreground';
       default:
         return '';
     }
@@ -733,11 +733,11 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                         {hasBoost ? (
                           <Badge className={`text-xs ${
                             bet.status === 'cancelled' 
-                              ? 'bg-white text-gray-600 border-2 border-gray-400 hover:bg-white hover:text-gray-600' 
+                              ? 'bg-white dark:bg-card text-gray-600 dark:text-muted-foreground border-2 border-gray-400 dark:border-border hover:bg-white dark:hover:bg-card hover:text-gray-600 dark:hover:text-muted-foreground' 
                               : bet.status === 'lost'
                               ? 'bg-red-600 text-white border-red-600 hover:bg-red-700'
                               : bet.status === 'pending'
-                              ? 'bg-white text-[#FFC72C] border-2 border-[#FFC72C] hover:bg-white'
+                              ? 'bg-white dark:bg-card text-[#FFC72C] border-2 border-[#FFC72C] hover:bg-white dark:hover:bg-card'
                               : 'bg-yellow-400 text-black border-yellow-400 hover:bg-yellow-500'
                           }`}>
                             SUPER
@@ -883,11 +883,11 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                         {hasBoost ? (
                           <Badge className={`text-xs ${
                             bet.status === 'cancelled' 
-                              ? 'bg-white text-gray-600 border-2 border-gray-400 hover:bg-white hover:text-gray-600' 
+                              ? 'bg-white dark:bg-card text-gray-600 dark:text-muted-foreground border-2 border-gray-400 dark:border-border hover:bg-white dark:hover:bg-card hover:text-gray-600 dark:hover:text-muted-foreground' 
                               : bet.status === 'lost'
                               ? 'bg-red-600 text-white border-red-600 hover:bg-red-700'
                               : bet.status === 'pending'
-                              ? 'bg-white text-[#FFC72C] border-2 border-[#FFC72C] hover:bg-white'
+                              ? 'bg-white dark:bg-card text-[#FFC72C] border-2 border-[#FFC72C] hover:bg-white dark:hover:bg-card'
                               : 'bg-yellow-400 text-black border-yellow-400 hover:bg-yellow-500'
                           }`}>
                             SUPER
@@ -1145,7 +1145,13 @@ const { data: matchKickoffs = {} } = useKickoffTimes(fixtureIds);
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         {hasBoost ? (
-                          <Badge className={`text-xs ${bet.status === 'cancelled' ? 'bg-white text-gray-600 border-2 border-gray-400 hover:bg-white hover:text-gray-600' : 'bg-yellow-400 text-black border-yellow-400 hover:bg-yellow-500'}`}>
+                          <Badge className={`text-xs ${
+                            bet.status === 'cancelled' 
+                              ? 'bg-white dark:bg-card text-gray-600 dark:text-muted-foreground border-2 border-gray-400 dark:border-border hover:bg-white dark:hover:bg-card hover:text-gray-600 dark:hover:text-muted-foreground'
+                              : bet.status === 'pending'
+                              ? 'bg-white dark:bg-card text-[#FFC72C] border-2 border-[#FFC72C] hover:bg-white dark:hover:bg-card'
+                              : 'bg-yellow-400 text-black border-yellow-400 hover:bg-yellow-500'
+                          }`}>
                             SUPER
                           </Badge>
                         ) : (

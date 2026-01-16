@@ -252,11 +252,11 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                         {hasBoost ? (
                           <Badge className={`text-xs ${
                             bet.status === 'cancelled' 
-                              ? 'bg-white text-gray-600 border-2 border-gray-400 hover:bg-white hover:text-gray-600' 
+                              ? 'bg-white dark:bg-card text-gray-600 dark:text-muted-foreground border-2 border-gray-400 dark:border-border hover:bg-white dark:hover:bg-card hover:text-gray-600 dark:hover:text-muted-foreground' 
                               : bet.status === 'lost'
                               ? 'bg-red-600 text-white border-red-600 hover:bg-red-700'
                               : bet.status === 'pending'
-                              ? 'bg-white text-[#FFC72C] border-2 border-[#FFC72C] hover:bg-white'
+                              ? 'bg-white dark:bg-card text-[#FFC72C] border-2 border-[#FFC72C] hover:bg-white dark:hover:bg-card'
                               : 'bg-yellow-400 text-black border-yellow-400 hover:bg-yellow-500'
                           }`}>
                             SUPER
@@ -361,11 +361,11 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                       {hasBoost ? (
                         <Badge className={`text-xs ${
                           bet.status === 'cancelled' 
-                            ? 'bg-white text-gray-600 border-2 border-gray-400 hover:bg-white hover:text-gray-600' 
+                            ? 'bg-white dark:bg-card text-gray-600 dark:text-muted-foreground border-2 border-gray-400 dark:border-border hover:bg-white dark:hover:bg-card hover:text-gray-600 dark:hover:text-muted-foreground' 
                             : bet.status === 'lost'
                             ? 'bg-red-600 text-white border-red-600 hover:bg-red-700'
                             : bet.status === 'pending'
-                            ? 'bg-white text-[#FFC72C] border-2 border-[#FFC72C] hover:bg-white'
+                            ? 'bg-white dark:bg-card text-[#FFC72C] border-2 border-[#FFC72C] hover:bg-white dark:hover:bg-card'
                             : 'bg-yellow-400 text-black border-yellow-400 hover:bg-yellow-500'
                         }`}>
                           SUPER
