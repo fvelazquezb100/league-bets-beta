@@ -22,12 +22,14 @@ import { useUserBets, type UserBet } from '@/hooks/useUserBets';
 import { useLiveMatchesConfig } from '@/hooks/useLiveMatchesConfig';
 import { useLiveMatchesEnabled } from '@/hooks/useLiveMatchesEnabled';
 import { recordLiveMatchesCall } from '@/hooks/useLiveMatchesMonitoring';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const LiveBets = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const { cutoffMinutes, developerMode } = useBettingSettings();
+  const [openTooltipId, setOpenTooltipId] = useState<string | null>(null);
 
   const [selectedBets, setSelectedBets] = useState<any[]>([]);
   const [openId, setOpenId] = useState<number | null>(null);
@@ -340,17 +342,258 @@ const LiveBets = () => {
     );
   };
 
-  const getBetPreview = (fixtureId: number) => {
+  const formatDoubleChanceSelection = (selection: string, market: string, homeTeam?: string, awayTeam?: string): string => {
+    if (market?.toLowerCase() !== 'doble oportunidad' && market?.toLowerCase() !== 'double chance') {
+      return '';
+    }
+    
+    const selectionLower = selection.toLowerCase();
+    
+    // Handle different formats: "home/draw", "local/empate", "1X", etc.
+    if (selectionLower.includes('/')) {
+      const parts = selection.split('/').map(p => p.trim());
+      const result: string[] = [];
+      
+      for (const part of parts) {
+        const partLower = part.toLowerCase();
+        if (partLower.includes('home') || partLower.includes('local') || partLower === '1') {
+          result.push(homeTeam || 'Local');
+        } else if (partLower.includes('away') || partLower.includes('visitante') || partLower === '2') {
+          result.push(awayTeam || 'Visitante');
+        } else if (partLower.includes('draw') || partLower.includes('empate') || partLower === 'x') {
+          result.push('Empate');
+        } else {
+          result.push(getBettingTranslation(part));
+        }
+      }
+      
+      return result.join(' o ');
+    }
+    
+    // Handle "1X", "X2", "12" format
+    if (selectionLower === '1x' || selectionLower === 'x1') {
+      return `${homeTeam || 'Local'} o Empate`;
+    } else if (selectionLower === 'x2' || selectionLower === '2x') {
+      return `Empate o ${awayTeam || 'Visitante'}`;
+    } else if (selectionLower === '12' || selectionLower === '21') {
+      return `${homeTeam || 'Local'} o ${awayTeam || 'Visitante'}`;
+    }
+    
+    return '';
+  };
+
+  const formatResultTotalGoalsSelection = (selection: string, homeTeam?: string, awayTeam?: string): string => {
+    if (!selection.includes('/')) {
+      return '';
+    }
+    
+    const parts = selection.split('/').map(p => p.trim());
+    if (parts.length !== 2) {
+      return '';
+    }
+    
+    const [resultPart, overUnderPart] = parts;
+    const resultPartLower = resultPart.toLowerCase();
+    const overUnderPartLower = overUnderPart.toLowerCase();
+    
+    // Format result part
+    let resultText = '';
+    if (resultPartLower.includes('home') || resultPartLower.includes('local')) {
+      resultText = homeTeam || 'Local';
+    } else if (resultPartLower.includes('away') || resultPartLower.includes('visitante')) {
+      resultText = awayTeam || 'Visitante';
+    } else if (resultPartLower.includes('draw') || resultPartLower.includes('empate')) {
+      resultText = 'Empate';
+    } else {
+      resultText = getBettingTranslation(resultPart);
+    }
+    
+    // Format over/under part
+    let overUnderText = '';
+    if (overUnderPartLower.includes('over') || overUnderPartLower.includes('más')) {
+      const thresholdMatch = overUnderPart.match(/([0-9]+(?:\.[0-9]+)?)/);
+      if (thresholdMatch) {
+        overUnderText = `Más de ${thresholdMatch[1]}`;
+      } else {
+        overUnderText = getBettingTranslation(overUnderPart);
+      }
+    } else if (overUnderPartLower.includes('under') || overUnderPartLower.includes('menos')) {
+      const thresholdMatch = overUnderPart.match(/([0-9]+(?:\.[0-9]+)?)/);
+      if (thresholdMatch) {
+        overUnderText = `Menos de ${thresholdMatch[1]}`;
+      } else {
+        overUnderText = getBettingTranslation(overUnderPart);
+      }
+    } else {
+      overUnderText = getBettingTranslation(overUnderPart);
+    }
+    
+    return `${resultText} / ${overUnderText}`;
+  };
+
+  const formatHTFTSelection = (selection: string, homeTeam?: string, awayTeam?: string): string => {
+    if (!selection.includes('/')) {
+      return '';
+    }
+    
+    const parts = selection.split('/').map(p => p.trim());
+    if (parts.length !== 2) {
+      return '';
+    }
+    
+    const [htPart, ftPart] = parts;
+    const htPartLower = htPart.toLowerCase();
+    const ftPartLower = ftPart.toLowerCase();
+    
+    // Format halftime result
+    let htText = '';
+    if (htPartLower.includes('home') || htPartLower.includes('local')) {
+      htText = homeTeam || 'Local';
+    } else if (htPartLower.includes('away') || htPartLower.includes('visitante')) {
+      htText = awayTeam || 'Visitante';
+    } else if (htPartLower.includes('draw') || htPartLower.includes('empate')) {
+      htText = 'Empate';
+    } else {
+      htText = getBettingTranslation(htPart);
+    }
+    
+    // Format fulltime result
+    let ftText = '';
+    if (ftPartLower.includes('home') || ftPartLower.includes('local')) {
+      ftText = homeTeam || 'Local';
+    } else if (ftPartLower.includes('away') || ftPartLower.includes('visitante')) {
+      ftText = awayTeam || 'Visitante';
+    } else if (ftPartLower.includes('draw') || ftPartLower.includes('empate')) {
+      ftText = 'Empate';
+    } else {
+      ftText = getBettingTranslation(ftPart);
+    }
+    
+    return `${htText} / ${ftText}`;
+  };
+
+  const getBetTooltip = (bet: any, fixtureId: number, homeTeam?: string, awayTeam?: string): string => {
+    if (bet.bet_type === 'combo') {
+      // For combo bets, show the selection for this specific fixture
+      const selection = bet.bet_selections?.find((sel: any) => sel.fixture_id === fixtureId);
+      if (selection) {
+        const market = getBettingTranslation(selection.market);
+        const marketLower = selection.market?.toLowerCase() || '';
+        
+        // Handle HT/FT Double specially
+        if (marketLower.includes('medio tiempo/final') || marketLower.includes('ht/ft') || marketLower.includes('htft')) {
+          const htftText = formatHTFTSelection(selection.selection || '', homeTeam, awayTeam);
+          if (htftText) {
+            return `${market}: ${htftText}`;
+          }
+        }
+        
+        // Handle Result/Total Goals specially
+        if (marketLower.includes('resultado/total') || marketLower.includes('result/total')) {
+          const resultTotalText = formatResultTotalGoalsSelection(selection.selection || '', homeTeam, awayTeam);
+          if (resultTotalText) {
+            return `${market}: ${resultTotalText}`;
+          }
+        }
+        
+        // Handle Double Chance specially
+        if (marketLower.includes('doble oportunidad') || marketLower.includes('double chance')) {
+          const doubleChanceText = formatDoubleChanceSelection(selection.selection || '', selection.market || '', homeTeam, awayTeam);
+          if (doubleChanceText) {
+            return `${market}: ${doubleChanceText}`;
+          }
+        }
+        
+        // Extract team name if selection is Home/Away/Draw (for other markets)
+        if (selection.selection?.toLowerCase().includes('home') || selection.selection?.toLowerCase().includes('local')) {
+          return `${market}: ${homeTeam || 'Local'}`;
+        } else if (selection.selection?.toLowerCase().includes('away') || selection.selection?.toLowerCase().includes('visitante')) {
+          return `${market}: ${awayTeam || 'Visitante'}`;
+        } else if (selection.selection?.toLowerCase().includes('draw') || selection.selection?.toLowerCase().includes('empate')) {
+          return `${market}: Empate`;
+        }
+        const selectionText = getBettingTranslation(selection.selection);
+        return `${market}: ${selectionText}`;
+      }
+      return 'Combinada';
+    } else {
+      // For single bets
+      if (bet.market_bets && bet.bet_selection) {
+        const market = getBettingTranslation(bet.market_bets);
+        const marketLower = bet.market_bets?.toLowerCase() || '';
+        
+        // Extract clean selection (remove odds if present)
+        let selection = bet.bet_selection;
+        if (selection.includes(' @ ')) {
+          selection = selection.split(' @ ')[0].trim();
+        }
+        
+        // Handle HT/FT Double specially
+        if (marketLower.includes('medio tiempo/final') || marketLower.includes('ht/ft') || marketLower.includes('htft')) {
+          const htftText = formatHTFTSelection(selection, homeTeam, awayTeam);
+          if (htftText) {
+            return `${market}: ${htftText}`;
+          }
+        }
+        
+        // Handle Result/Total Goals specially
+        if (marketLower.includes('resultado/total') || marketLower.includes('result/total')) {
+          const resultTotalText = formatResultTotalGoalsSelection(selection, homeTeam, awayTeam);
+          if (resultTotalText) {
+            return `${market}: ${resultTotalText}`;
+          }
+        }
+        
+        // Handle Double Chance specially
+        if (marketLower.includes('doble oportunidad') || marketLower.includes('double chance')) {
+          const doubleChanceText = formatDoubleChanceSelection(selection, bet.market_bets || '', homeTeam, awayTeam);
+          if (doubleChanceText) {
+            return `${market}: ${doubleChanceText}`;
+          }
+        }
+        
+        // Check if it's Home/Away/Draw to show team name (for other markets)
+        if (selection?.toLowerCase().includes('home') || selection?.toLowerCase().includes('local')) {
+          return `${market}: ${homeTeam || 'Local'}`;
+        } else if (selection?.toLowerCase().includes('away') || selection?.toLowerCase().includes('visitante')) {
+          return `${market}: ${awayTeam || 'Visitante'}`;
+        } else if (selection?.toLowerCase().includes('draw') || selection?.toLowerCase().includes('empate')) {
+          return `${market}: Empate`;
+        }
+        const selectionText = getBettingTranslation(selection);
+        return `${market}: ${selectionText}`;
+      }
+      if (bet.market_bets) {
+        return getBettingTranslation(bet.market_bets);
+      }
+      return 'Boleto';
+    }
+  };
+
+  const getBetPreview = (fixtureId: number, match?: MatchData): Array<{ label: string; tooltip: string }> | null => {
     const bets = getBetsForFixture(fixtureId);
     if (bets.length === 0) return null;
-    return bets
-      .map(bet => {
-        if (bet.bet_type === 'combo') return 'Combinada';
-        if (bet.market_bets) return getBettingTranslation(bet.market_bets);
-        const selection = bet.bet_selections?.[0];
-        return selection ? getBettingTranslation(selection.market) : 'Boleto';
-      })
-      .join(', ');
+    
+    const homeTeam = match?.teams?.home?.name;
+    const awayTeam = match?.teams?.away?.name;
+    
+    return bets.map(bet => {
+      let label: string;
+      if (bet.bet_type === 'combo') {
+        label = 'Combinada';
+      } else {
+        if (bet.market_bets) {
+          label = getBettingTranslation(bet.market_bets);
+        } else {
+          const selection = bet.bet_selections?.[0];
+          label = selection ? getBettingTranslation(selection.market) : 'Boleto';
+        }
+      }
+      return {
+        label,
+        tooltip: getBetTooltip(bet, fixtureId, homeTeam, awayTeam)
+      };
+    });
   };
 
   const hasUserBetOnMarket = (fixtureId: number, marketName: string, selection: string) => {
@@ -503,9 +746,48 @@ const LiveBets = () => {
                         )}
                       </div>
                     </div>
-                    {getBetPreview(match.fixture.id) && (
+                    {getBetPreview(match.fixture.id, match) && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        Tus boletos: {getBetPreview(match.fixture.id)}
+                        Tus boletos:{' '}
+                        <TooltipProvider delayDuration={isMobile ? 0 : 700}>
+                          {getBetPreview(match.fixture.id, match)?.map((bet, index, array) => {
+                            const tooltipId = `${match.fixture.id}-${index}`;
+                            const isOpen = openTooltipId === tooltipId;
+                            return (
+                              <React.Fragment key={index}>
+                                <Tooltip open={isMobile ? isOpen : undefined} onOpenChange={isMobile ? undefined : undefined}>
+                                  <TooltipTrigger asChild>
+                                    <span 
+                                      className="cursor-help underline decoration-dotted underline-offset-2"
+                                      onClick={(e) => {
+                                        if (isMobile) {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          setOpenTooltipId(isOpen ? null : tooltipId);
+                                        }
+                                      }}
+                                    >
+                                      {bet.label}
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent 
+                                    side="top"
+                                    onClick={(e) => {
+                                      if (isMobile) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setOpenTooltipId(null);
+                                      }
+                                    }}
+                                  >
+                                    <p className="text-xs">{bet.tooltip}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                                {index < array.length - 1 && <span>, </span>}
+                              </React.Fragment>
+                            );
+                          })}
+                        </TooltipProvider>
                       </p>
                     )}
                   </div>
