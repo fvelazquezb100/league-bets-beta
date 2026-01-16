@@ -737,7 +737,7 @@ const AdminLiga: React.FC = () => {
                                   id="reset-budget"
                                   value={editResetBudget}
                                   onChange={e => setEditResetBudget(e.target.value)}
-                                  className="w-full p-2 border border-gray-300 rounded-md"
+                                  className="w-full p-2 border border-gray-300 dark:border-border rounded-md bg-white dark:bg-card text-foreground"
                                 >
                                   <option value="daily">Diario</option>
                                   <option value="weekly">Semanal</option>
@@ -770,7 +770,7 @@ const AdminLiga: React.FC = () => {
                                     id="boost-multiplier"
                                     value={editBoostMultiplier}
                                     onChange={e => setEditBoostMultiplier(Number(e.target.value))}
-                                    className="w-full p-2 border border-gray-300 rounded-md"
+                                    className="w-full p-2 border border-gray-300 dark:border-border rounded-md bg-white dark:bg-card text-foreground"
                                   >
                                     <option value={1.25}>1.25</option>
                                     <option value={1.5}>1.5</option>
@@ -852,7 +852,7 @@ const AdminLiga: React.FC = () => {
         {/* Liga Premium */}
         {leagueData && leagueId && (
           <Card 
-            className={`border-2 border-yellow-400 bg-gradient-to-br from-yellow-50/50 to-amber-50/50 shadow-lg ${
+            className={`border-2 border-[#FFC72C] shadow-lg ${
               leagueData?.type === 'premium' ? 'cursor-pointer hover:shadow-xl transition-shadow' : ''
             }`}
             onClick={() => {

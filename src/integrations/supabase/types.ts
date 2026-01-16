@@ -513,6 +513,7 @@ export type Database = {
           last_week_points: number | null
           league_id: number | null
           role: string
+          theme: string
           total_points: number | null
           username: string
           weekly_budget: number | null
@@ -526,6 +527,7 @@ export type Database = {
           last_week_points?: number | null
           league_id?: number | null
           role?: string
+          theme?: string
           total_points?: number | null
           username: string
           weekly_budget?: number | null
@@ -539,6 +541,7 @@ export type Database = {
           last_week_points?: number | null
           league_id?: number | null
           role?: string
+          theme?: string
           total_points?: number | null
           username?: string
           weekly_budget?: number | null

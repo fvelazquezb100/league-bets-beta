@@ -87,19 +87,19 @@ export const LeagueStatisticsModal: React.FC<LeagueStatisticsModalProps> = ({
                   </div>
                   
                   <div className="text-center p-4 bg-muted/50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">€{statistics?.totalPayout.toFixed(0) || '0'}</div>
+                    <div className="text-2xl font-bold text-[#FFC72C]">€{statistics?.totalPayout.toFixed(0) || '0'}</div>
                     <div className="text-sm text-muted-foreground">Total Ganado</div>
                   </div>
                   
                   <div className="text-center p-4 bg-muted/50 rounded-lg">
-                    <div className={`text-2xl font-bold ${(statistics?.netProfit || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <div className={`text-2xl font-bold ${(statistics?.netProfit || 0) >= 0 ? 'text-[#FFC72C]' : 'text-red-600'}`}>
                       €{statistics?.netProfit.toFixed(0) || '0'}
                     </div>
                     <div className="text-sm text-muted-foreground">Beneficio Neto</div>
                   </div>
                   
                   <div className="text-center p-4 bg-muted/50 rounded-lg">
-                    <div className={`text-2xl font-bold ${profitPercentage >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <div className={`text-2xl font-bold ${profitPercentage >= 0 ? 'text-[#FFC72C]' : 'text-red-600'}`}>
                       {profitPercentage.toFixed(1)}%
                     </div>
                     <div className="text-sm text-muted-foreground">% Ganancias</div>
@@ -124,7 +124,7 @@ export const LeagueStatisticsModal: React.FC<LeagueStatisticsModalProps> = ({
                   </div>
                   
                   <div className="text-center p-4 bg-muted/50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">{statistics?.totalWonBets || 0}</div>
+                    <div className="text-2xl font-bold text-[#FFC72C]">{statistics?.totalWonBets || 0}</div>
                     <div className="text-sm text-muted-foreground">Boletos Ganados</div>
                   </div>
                   
@@ -212,7 +212,7 @@ export const LeagueStatisticsModal: React.FC<LeagueStatisticsModalProps> = ({
                 <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
                   <span className="text-sm font-medium">Mayor Victoria (Puntos):</span>
                   <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-green-500" />
+                    <TrendingUp className="h-4 w-4 text-[#FFC72C]" />
                     <span className="text-sm font-medium">{statistics?.topPlayerByBiggestWin.username || 'N/A'}</span>
                     <span className="text-xs text-muted-foreground">({statistics?.topPlayerByBiggestWin.biggestWin || 0} pts)</span>
                   </div>
@@ -238,29 +238,29 @@ export const LeagueStatisticsModal: React.FC<LeagueStatisticsModalProps> = ({
             </div>
           </div>
 
-            {/* Week Statistics - Listado de jornadas */}
+            {/* Week Statistics - Listado de semanas */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Calendar className="h-5 w-5" />
-                  Estadísticas por Jornada
+                  Estadísticas por Semana
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {weekStatsLoading ? (
                   <div className="text-center py-4 text-muted-foreground">
-                    Cargando estadísticas por jornada...
+                    Cargando estadísticas por semana...
                   </div>
                 ) : weekStats.length === 0 ? (
                   <div className="text-center py-4 text-muted-foreground">
-                    No hay jornadas jugadas aún
+                    No hay semanas jugadas aún
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="text-sm">Jornada</TableHead>
+                          <TableHead className="text-sm">Semana</TableHead>
                           <TableHead className="text-sm text-right">Total Ganado</TableHead>
                           <TableHead className="text-sm text-right">% Aciertos</TableHead>
                         </TableRow>
@@ -268,12 +268,12 @@ export const LeagueStatisticsModal: React.FC<LeagueStatisticsModalProps> = ({
                       <TableBody>
                         {weekStats.map((weekStat) => (
                           <TableRow key={weekStat.week}>
-                            <TableCell className="font-medium">Jornada {weekStat.week}</TableCell>
-                            <TableCell className="text-right text-green-600 font-semibold">
+                            <TableCell className="font-medium">Semana {weekStat.week}</TableCell>
+                            <TableCell className="text-right text-[#FFC72C] font-semibold">
                               {weekStat.totalWon.toFixed(1)} pts
                             </TableCell>
                             <TableCell className="text-right">
-                              <span className={`font-semibold ${weekStat.winPercentage >= 50 ? 'text-green-600' : 'text-red-600'}`}>
+                              <span className={`font-semibold ${weekStat.winPercentage >= 50 ? 'text-[#FFC72C]' : 'text-red-600'}`}>
                                 {weekStat.winPercentage.toFixed(1)}%
                               </span>
                               <span className="text-xs text-muted-foreground ml-1">

@@ -35,16 +35,16 @@ export default function Reglas() {
           alt="Jambol Logo"
           className="h-10 jambol-logo"
         />
-        <span className="text-2xl font-bold jambol-dark">Jambol ™</span>
+        <span className="text-2xl font-bold text-foreground">Jambol ™</span>
       </div>
-      <h1 className="text-2xl md:text-3xl font-bold mb-4">Reglas del Juego</h1>
+      <h1 className="text-2xl md:text-3xl font-bold mb-4 text-foreground">Reglas del Juego</h1>
 
       {/* Índice */}
       <nav className="mb-6">
         <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
           {sections.map(s => (
             <li key={s.id}>
-              <a href={`#${s.id}`} className="underline">
+              <a href={`#${s.id}`} className="underline hover:text-[#FFC72C] transition-colors">
                 {s.title}
               </a>
             </li>
@@ -54,7 +54,7 @@ export default function Reglas() {
 
       {/* 1. Introducción */}
       <section id="introduccion" className="scroll-mt-24">
-        <h2 className="text-xl font-semibold mb-2">1. Introducción</h2>
+        <h2 className="text-xl font-semibold mb-2 text-foreground">1. Introducción</h2>
         <p className="text-sm md:text-base text-muted-foreground">
           Jambol ™ es un juego de simulación: no hay dinero real ni premios económicos. Los puntos, multiplicadores y resultados son ficticios y se utilizan exclusivamente con fines recreativos.
         </p>
@@ -64,7 +64,7 @@ export default function Reglas() {
 
       {/* 2. Tipos de ligas */}
       <section id="tipos-ligas" className="scroll-mt-24">
-        <h2 className="text-xl font-semibold mb-2">2. Tipos de ligas</h2>
+        <h2 className="text-xl font-semibold mb-2 text-foreground">2. Tipos de ligas</h2>
         <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1">
           <li>Ligas Semanales (Weekly): la "semana de juego" avanza cada martes.</li>
           <li>Ligas Diarias (Daily – Premium): el presupuesto se resetea cada día.</li>
@@ -75,7 +75,7 @@ export default function Reglas() {
 
       {/* 3. Calendario y reinicios */}
       <section id="calendario" className="scroll-mt-24">
-        <h2 className="text-xl font-semibold mb-2">3. Calendario y reinicios</h2>
+        <h2 className="text-xl font-semibold mb-2 text-foreground">3. Calendario y reinicios</h2>
         <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1">
           <li>Cada martes: se renueva la disponibilidad de partidos y comienza una nueva semana de juego.</li>
           <li>Los partidos aparecen según su fecha y hora local del torneo.</li>
@@ -86,7 +86,7 @@ export default function Reglas() {
 
       {/* 4. Disponibilidad y cierre de selecciones */}
       <section id="disponibilidad" className="scroll-mt-24">
-        <h2 className="text-xl font-semibold mb-2">4. Disponibilidad y cierre de selecciones</h2>
+        <h2 className="text-xl font-semibold mb-2 text-foreground">4. Disponibilidad y cierre de selecciones</h2>
         <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1">
           <li>No podrás hacer selecciones cuando falten pocos minutos para que empiece el partido.</li>
           <li>En ocasiones un administrador puede congelar temporalmente la disponibilidad de partidos.</li>
@@ -97,7 +97,7 @@ export default function Reglas() {
 
       {/* 5. Presupuesto y límites */}
       <section id="presupuesto" className="scroll-mt-24">
-        <h2 className="text-xl font-semibold mb-2">5. Presupuesto y límites</h2>
+        <h2 className="text-xl font-semibold mb-2 text-foreground">5. Presupuesto y límites</h2>
         <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1">
           <li>Tienes un presupuesto de puntos para hacer selecciones; se recupera al iniciar cada semana (Weekly) o cada jornada (Daily).</li>
           <li>Las combinadas suman selecciones; si falla una, falla la combinada.</li>
@@ -108,7 +108,7 @@ export default function Reglas() {
 
       {/* 6. Mercados disponibles */}
       <section id="mercados" className="scroll-mt-24">
-        <h2 className="text-xl font-semibold mb-2">6. Mercados disponibles</h2>
+        <h2 className="text-xl font-semibold mb-2 text-foreground">6. Mercados disponibles</h2>
         <p className="text-sm md:text-base text-muted-foreground">
           Ganador del partido, Doble oportunidad, Resultado exacto, Más/Menos de goles, Descanso/Final, Resultado + Total goles, Ambos marcan.
         </p>
@@ -118,7 +118,7 @@ export default function Reglas() {
 
       {/* 7. Cómo se puntúa */}
       <section id="puntuacion" className="scroll-mt-24">
-        <h2 className="text-xl font-semibold mb-2">7. Cómo se puntúa</h2>
+        <h2 className="text-xl font-semibold mb-2 text-foreground">7. Cómo se puntúa</h2>
         <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1">
           <li>Boleto simple: puntos ganados = puntos en boleto × multiplicador.</li>
           <li>Combinadas: se multiplican los multiplicadores de las selecciones acertadas.</li>
@@ -130,7 +130,7 @@ export default function Reglas() {
 
       {/* 8. Resultados y posibles retrasos */}
       <section id="resultados" className="scroll-mt-24">
-        <h2 className="text-xl font-semibold mb-2">8. Resultados y posibles retrasos</h2>
+        <h2 className="text-xl font-semibold mb-2 text-foreground">8. Resultados y posibles retrasos</h2>
         <p className="text-sm md:text-base text-muted-foreground">
           Los resultados se registran cuando finaliza el partido. Si hay prórroga o penaltis, la validación puede tardar un poco más.
         </p>
@@ -140,7 +140,7 @@ export default function Reglas() {
 
       {/* 9. Clasificación y desempates */}
       <section id="clasificacion" className="scroll-mt-24">
-        <h2 className="text-xl font-semibold mb-2">9. Clasificación y desempates</h2>
+        <h2 className="text-xl font-semibold mb-2 text-foreground">9. Clasificación y desempates</h2>
         <p className="text-sm md:text-base text-muted-foreground">
           Se ordena por puntos de mayor a menor. Si hay empate, cuentan más aciertos; si persiste, el multiplicador más alto acertado; después, la fecha del primer acierto.
         </p>
@@ -150,7 +150,7 @@ export default function Reglas() {
 
       {/* 10. Juego limpio */}
       <section id="juego-limpio" className="scroll-mt-24">
-        <h2 className="text-xl font-semibold mb-2">10. Juego limpio</h2>
+        <h2 className="text-xl font-semibold mb-2 text-foreground">10. Juego limpio</h2>
         <p className="text-sm md:text-base text-muted-foreground">
           No se permite contenido ofensivo ni conductas abusivas o automatizadas. El incumplimiento puede suponer suspensión.
         </p>
@@ -160,113 +160,113 @@ export default function Reglas() {
 
       {/* 11. Funcionalidades liga premium */}
       <section id="funcionalidades-premium" className="scroll-mt-24">
-        <h2 className="text-xl font-semibold mb-2">11. Funcionalidades liga premium</h2>
+        <h2 className="text-xl font-semibold mb-2 text-foreground">11. Funcionalidades liga premium</h2>
         <p className="text-sm md:text-base text-muted-foreground mb-4">
           Las ligas premium ofrecen funcionalidades avanzadas que permiten una experiencia de juego más completa y personalizada. Estas funcionalidades están disponibles exclusivamente para ligas que han sido actualizadas a premium mediante el pago correspondiente.
         </p>
 
         {/* Tabla comparativa de funcionalidades */}
         <div className="overflow-x-auto my-6 flex justify-center">
-          <table className="border-collapse border border-gray-300 text-sm table-auto">
+          <table className="border-collapse border border-border text-sm table-auto">
             <thead>
-              <tr className="bg-[#FFC72C]/20">
-                <th className="border border-gray-300 px-4 py-3 text-left font-semibold text-black">Funcionalidad</th>
-                <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-black">Usuario Free</th>
-                <th className="border border-gray-300 px-4 py-3 text-center font-semibold text-black">Usuario Liga Premium</th>
+              <tr className="bg-[#FFC72C]/20 dark:bg-[#FFC72C]/30">
+                <th className="border border-border px-4 py-3 text-left font-semibold text-foreground">Funcionalidad</th>
+                <th className="border border-border px-4 py-3 text-center font-semibold text-foreground">Usuario Free</th>
+                <th className="border border-border px-4 py-3 text-center font-semibold text-foreground">Usuario Liga Premium</th>
               </tr>
             </thead>
             <tbody>
               {/* Funcionalidades Free */}
-              <tr className="bg-white">
-                <td className="border border-gray-300 px-4 py-2 font-medium">Realizar apuestas simples</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
+              <tr className="bg-card">
+                <td className="border border-border px-4 py-2 font-medium text-foreground">Realizar apuestas simples</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
               </tr>
-              <tr className="bg-gray-50">
-                <td className="border border-gray-300 px-4 py-2 font-medium">Realizar apuestas combinadas</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
+              <tr className="bg-muted/30">
+                <td className="border border-border px-4 py-2 font-medium text-foreground">Realizar apuestas combinadas</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
               </tr>
-              <tr className="bg-white">
-                <td className="border border-gray-300 px-4 py-2 font-medium">Acceder a diferentes ligas deportivas</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
+              <tr className="bg-card">
+                <td className="border border-border px-4 py-2 font-medium text-foreground">Acceder a diferentes ligas deportivas</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
               </tr>
-              <tr className="bg-gray-50">
-                <td className="border border-gray-300 px-4 py-2 font-medium">Reseteo automático de presupuesto semanal</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
+              <tr className="bg-muted/30">
+                <td className="border border-border px-4 py-2 font-medium text-foreground">Reseteo automático de presupuesto semanal</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
               </tr>
-              <tr className="bg-white">
-                <td className="border border-gray-300 px-4 py-2 font-medium">Reseteo automático de presupuesto diario</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-gray-400">-</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
+              <tr className="bg-card">
+                <td className="border border-border px-4 py-2 font-medium text-foreground">Reseteo automático de presupuesto diario</td>
+                <td className="border border-border px-4 py-2 text-center text-muted-foreground">-</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
               </tr>
-              <tr className="bg-gray-50">
-                <td className="border border-gray-300 px-4 py-2 font-medium">Ver clasificación</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
+              <tr className="bg-muted/30">
+                <td className="border border-border px-4 py-2 font-medium text-foreground">Ver clasificación</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
               </tr>
-              <tr className="bg-white">
-                <td className="border border-gray-300 px-4 py-2 font-medium">Ver historial de apuestas</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
+              <tr className="bg-card">
+                <td className="border border-border px-4 py-2 font-medium text-foreground">Ver historial de apuestas</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
               </tr>
-              <tr className="bg-gray-50">
-                <td className="border border-gray-300 px-4 py-2 font-medium">Ver estadísticas básicas de usuario</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
+              <tr className="bg-muted/30">
+                <td className="border border-border px-4 py-2 font-medium text-foreground">Ver estadísticas básicas de usuario</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
               </tr>
-              <tr className="bg-white">
-                <td className="border border-gray-300 px-4 py-2 font-medium">Participar en ligas semanales</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
+              <tr className="bg-card">
+                <td className="border border-border px-4 py-2 font-medium text-foreground">Participar en ligas semanales</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
               </tr>
-              <tr className="bg-gray-50">
-                <td className="border border-gray-300 px-4 py-2 font-medium">Cancelar apuestas (con restricciones)</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
+              <tr className="bg-muted/30">
+                <td className="border border-border px-4 py-2 font-medium text-foreground">Cancelar apuestas (con restricciones)</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
               </tr>
-              <tr className="bg-white">
-                <td className="border border-gray-300 px-4 py-2 font-medium">Ver resultados de partidos</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
+              <tr className="bg-card">
+                <td className="border border-border px-4 py-2 font-medium text-foreground">Ver resultados de partidos</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
               </tr>
-              <tr className="bg-gray-50">
-                <td className="border border-gray-300 px-4 py-2 font-medium">Acceso a diferentes mercados de apuestas</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
+              <tr className="bg-muted/30">
+                <td className="border border-border px-4 py-2 font-medium text-foreground">Acceso a diferentes mercados de apuestas</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
               </tr>
               {/* Funcionalidades Premium */}
-              <tr className="bg-white">
-                <td className="border border-gray-300 px-4 py-2 font-medium">SuperBoleto</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-gray-400">-</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
+              <tr className="bg-card">
+                <td className="border border-border px-4 py-2 font-medium text-foreground">SuperBoleto</td>
+                <td className="border border-border px-4 py-2 text-center text-muted-foreground">-</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
               </tr>
-              <tr className="bg-gray-50">
-                <td className="border border-gray-300 px-4 py-2 font-medium">Control de Días de Partidos</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-gray-400">-</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
+              <tr className="bg-muted/30">
+                <td className="border border-border px-4 py-2 font-medium text-foreground">Control de Días de Partidos</td>
+                <td className="border border-border px-4 py-2 text-center text-muted-foreground">-</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
               </tr>
-              <tr className="bg-white">
-                <td className="border border-gray-300 px-4 py-2 font-medium">Reseteo Manual de Semana</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-gray-400">-</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
+              <tr className="bg-card">
+                <td className="border border-border px-4 py-2 font-medium text-foreground">Reseteo Manual de Semana</td>
+                <td className="border border-border px-4 py-2 text-center text-muted-foreground">-</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
               </tr>
-              <tr className="bg-gray-50">
-                <td className="border border-gray-300 px-4 py-2 font-medium">Evolución de Multiplicadores</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-gray-400">-</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
+              <tr className="bg-muted/30">
+                <td className="border border-border px-4 py-2 font-medium text-foreground">Evolución de Multiplicadores</td>
+                <td className="border border-border px-4 py-2 text-center text-muted-foreground">-</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
               </tr>
-              <tr className="bg-white">
-                <td className="border border-gray-300 px-4 py-2 font-medium">Estadísticas Avanzadas de Liga</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-gray-400">-</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
+              <tr className="bg-card">
+                <td className="border border-border px-4 py-2 font-medium text-foreground">Estadísticas Avanzadas de Liga</td>
+                <td className="border border-border px-4 py-2 text-center text-muted-foreground">-</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
               </tr>
-              <tr className="bg-gray-50">
-                <td className="border border-gray-300 px-4 py-2 font-medium">Configuración Avanzada</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-gray-400">-</td>
-                <td className="border border-gray-300 px-4 py-2 text-center text-[#FFC72C]">✓</td>
+              <tr className="bg-muted/30">
+                <td className="border border-border px-4 py-2 font-medium text-foreground">Configuración Avanzada</td>
+                <td className="border border-border px-4 py-2 text-center text-muted-foreground">-</td>
+                <td className="border border-border px-4 py-2 text-center text-[#FFC72C]">✓</td>
               </tr>
             </tbody>
           </table>
@@ -347,11 +347,11 @@ export default function Reglas() {
           <li><strong>Personalización completa:</strong> Todas estas configuraciones pueden modificarse en cualquier momento por el administrador, permitiendo adaptar la liga a las necesidades y preferencias del grupo.</li>
         </ul>
 
-        <div className="mt-6 p-4 bg-yellow-50 border-2 border-yellow-200 rounded-lg">
-          <p className="text-sm md:text-base text-yellow-900 font-semibold mb-2">
+        <div className="mt-6 p-4 bg-yellow-50 dark:bg-[#FFC72C]/20 border-2 border-yellow-200 dark:border-[#FFC72C]/40 rounded-lg">
+          <p className="text-sm md:text-base text-yellow-900 dark:text-[#FFC72C] font-semibold mb-2">
             Nota importante sobre ligas premium
           </p>
-          <p className="text-sm md:text-base text-yellow-800">
+          <p className="text-sm md:text-base text-yellow-800 dark:text-amber-300">
             Para acceder a estas funcionalidades, tu liga debe estar actualizada a premium. El coste de actualización se calcula dinámicamente en función del número de miembros y los meses restantes hasta el final de la temporada. Puedes consultar más información sobre el proceso de actualización a premium en la sección de administración de tu liga.
           </p>
         </div>
@@ -361,7 +361,7 @@ export default function Reglas() {
 
       {/* 12. Cambios en estas reglas */}
       <section id="cambios" className="scroll-mt-24">
-        <h2 className="text-xl font-semibold mb-2">12. Cambios en estas reglas</h2>
+        <h2 className="text-xl font-semibold mb-2 text-foreground">12. Cambios en estas reglas</h2>
         <p className="text-sm md:text-base text-muted-foreground">
           Podemos actualizar las reglas. Avisaremos de la fecha de actualización.
         </p>
@@ -371,14 +371,14 @@ export default function Reglas() {
 
       {/* 13. Ayuda */}
       <section id="ayuda" className="scroll-mt-24">
-        <h2 className="text-xl font-semibold mb-2">13. Ayuda</h2>
+        <h2 className="text-xl font-semibold mb-2 text-foreground">13. Ayuda</h2>
         <p className="text-sm md:text-base text-muted-foreground">
           ¿Dudas? Escríbenos a <a href="mailto:contact@jambol.co" className="underline">contact@jambol.co</a>.
         </p>
       </section>
 
       <div className="mt-8">
-        <Link to="/" className="underline text-sm">Volver al inicio</Link>
+        <Link to="/" className="underline text-sm text-foreground hover:text-[#FFC72C] transition-colors">Volver al inicio</Link>
       </div>
     </div>
   );

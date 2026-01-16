@@ -187,3 +187,8 @@ All colors MUST be HSL.
 .jambol-button {
   @apply bg-[#F8F9FA] border-[#FFC72C] text-[#2D2D2D] hover:bg-[#FFC72C] hover:text-[#2D2D2D] active:bg-[#FFC72C] active:text-[#2D2D2D] border-2 font-medium transition-colors duration-200;
 }
+
+/* Jambol Button - Dark mode variant */
+.dark .jambol-button {
+  @apply bg-[#1a1a1a] border-[#FFC72C] text-[#FFC72C] hover:bg-[#FFC72C] hover:text-[#2D2D2D] active:bg-[#FFC72C] active:text-[#2D2D2D];
+}

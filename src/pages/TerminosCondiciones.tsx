@@ -20,22 +20,22 @@ export default function TerminosCondiciones() {
           alt="Jambol Logo"
           className="h-10 jambol-logo"
         />
-        <span className="text-2xl font-bold jambol-dark">Jambol ™</span>
+        <span className="text-2xl font-bold text-foreground">Jambol ™</span>
       </div>
-      <h1 className="text-2xl md:text-3xl font-bold mb-2">Términos y Condiciones</h1>
+      <h1 className="text-2xl md:text-3xl font-bold mb-2 text-foreground">Términos y Condiciones</h1>
       <p className="text-sm md:text-base text-muted-foreground mb-6">
         Bienvenido a Jambol ™. Al acceder y utilizar este sitio, aceptas los siguientes términos y condiciones. Si no estás de acuerdo con alguna parte, por favor no utilices el servicio.
       </p>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2">1. Naturaleza del servicio</h2>
+      <h2 className="text-xl font-semibold mt-6 mb-2 text-foreground">1. Naturaleza del servicio</h2>
       <p className="text-sm md:text-base text-muted-foreground">
         Jambol ™ es un juego de simulación deportiva sin dinero real. No se realizan selecciones, transacciones económicas ni se otorgan premios monetarios. Todos los puntos, multiplicadores y resultados son ficticios y se utilizan exclusivamente con fines recreativos y de entretenimiento entre los usuarios registrados.
       </p>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2">2. Registro y cuenta de usuario</h2>
+      <h2 className="text-xl font-semibold mt-6 mb-2 text-foreground">2. Registro y cuenta de usuario</h2>
       <p className="text-sm md:text-base text-muted-foreground">Para participar en la plataforma, deberás registrarte con información veraz y mantener tus credenciales de forma segura. Eres responsable de todas las acciones realizadas con tu cuenta. Podremos suspender, restringir o eliminar cuentas que incumplan estos términos, la normativa vigente o las normas de convivencia de la comunidad.</p>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2">3. Reglas de juego y funcionamiento</h2>
+      <h2 className="text-xl font-semibold mt-6 mb-2 text-foreground">3. Reglas de juego y funcionamiento</h2>
       <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1">
         <li>Los puntos no tienen valor económico ni pueden canjearse.</li>
         <li>Los multiplicadores, resultados y clasificaciones son simulaciones generadas a partir de datos deportivos públicos o de terceros.</li>
@@ -43,7 +43,7 @@ export default function TerminosCondiciones() {
         <li>El objetivo del servicio es el entretenimiento y la competencia amistosa.</li>
       </ul>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2">4. Conducta y uso del servicio</h2>
+      <h2 className="text-xl font-semibold mt-6 mb-2 text-foreground">4. Conducta y uso del servicio</h2>
       <p className="text-sm md:text-base text-muted-foreground">El usuario se compromete a:</p>
       <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1">
         <li>No publicar contenido ofensivo, ilegal o que vulnere derechos de terceros.</li>
@@ -52,36 +52,36 @@ export default function TerminosCondiciones() {
       </ul>
       <p className="text-sm md:text-base text-muted-foreground mt-2">El incumplimiento podrá implicar la suspensión inmediata de la cuenta.</p>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2">5. Disponibilidad y mantenimiento</h2>
+      <h2 className="text-xl font-semibold mt-6 mb-2 text-foreground">5. Disponibilidad y mantenimiento</h2>
       <p className="text-sm md:text-base text-muted-foreground">Jambol ™ trabajará para ofrecer un servicio estable, pero no garantiza disponibilidad ininterrumpida. Podemos realizar mantenimientos, actualizaciones o cambios técnicos sin previo aviso.</p>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2">6. Privacidad y tratamiento de datos</h2>
-      <p className="text-sm md:text-base text-muted-foreground">La gestión de datos personales se realiza conforme a nuestra Política de Privacidad. Los usuarios pueden ejercer sus derechos de acceso, rectificación, cancelación, oposición, portabilidad y limitación del tratamiento contactando a <a href="mailto:contact@jambol.co" className="underline">contact@jambol.co</a>. Consulta también nuestra <Link to="/politica-cookies" className="underline">Política de Cookies</Link> para conocer cómo gestionamos el consentimiento de cookies y tecnologías similares.</p>
+      <h2 className="text-xl font-semibold mt-6 mb-2 text-foreground">6. Privacidad y tratamiento de datos</h2>
+      <p className="text-sm md:text-base text-muted-foreground">La gestión de datos personales se realiza conforme a nuestra Política de Privacidad. Los usuarios pueden ejercer sus derechos de acceso, rectificación, cancelación, oposición, portabilidad y limitación del tratamiento contactando a <a href="mailto:contact@jambol.co" className="underline hover:text-[#FFC72C] transition-colors">contact@jambol.co</a>. Consulta también nuestra <Link to="/politica-cookies" className="underline hover:text-[#FFC72C] transition-colors">Política de Cookies</Link> para conocer cómo gestionamos el consentimiento de cookies y tecnologías similares.</p>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2">7. Publicidad y monetización</h2>
+      <h2 className="text-xl font-semibold mt-6 mb-2 text-foreground">7. Publicidad y monetización</h2>
       <p className="text-sm md:text-base text-muted-foreground">Jambol ™ puede mostrar anuncios de terceros para financiar el servicio. Estos anuncios se mostrarán conforme al consentimiento otorgado por el usuario en el banner de cookies. No tenemos control sobre el contenido de los anuncios mostrados por terceros.</p>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2">8. Propiedad intelectual</h2>
+      <h2 className="text-xl font-semibold mt-6 mb-2 text-foreground">8. Propiedad intelectual</h2>
       <p className="text-sm md:text-base text-muted-foreground">El diseño, código, logotipo, textos y demás elementos del sitio web son propiedad de Jambol ™ o de sus legítimos titulares, y están protegidos por la legislación sobre derechos de autor y propiedad industrial. No se concede ninguna licencia de uso o reproducción salvo las permitidas por la ley. La marca “Jambol” se encuentra registrada o en proceso de registro ante la OEPM (España).</p>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2">9. Limitación de responsabilidad</h2>
+      <h2 className="text-xl font-semibold mt-6 mb-2 text-foreground">9. Limitación de responsabilidad</h2>
       <p className="text-sm md:text-base text-muted-foreground">Jambol ™ no garantiza la exactitud ni la actualidad de los datos mostrados y no se hace responsable de decisiones tomadas a partir de la información del sitio ni de daños o perjuicios derivados del uso o imposibilidad de uso del servicio, dentro de los límites permitidos por la ley.</p>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2">10. Uso de servicios de terceros</h2>
+      <h2 className="text-xl font-semibold mt-6 mb-2 text-foreground">10. Uso de servicios de terceros</h2>
       <p className="text-sm md:text-base text-muted-foreground">El sitio puede integrar datos o contenidos procedentes de fuentes externas (por ejemplo, API-Sports o proveedores similares). Estos datos se ofrecen con fines informativos y bajo las condiciones de uso de dichos proveedores.</p>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2">11. Modificaciones de los términos</h2>
+      <h2 className="text-xl font-semibold mt-6 mb-2 text-foreground">11. Modificaciones de los términos</h2>
       <p className="text-sm md:text-base text-muted-foreground">Podemos actualizar o modificar estos Términos y Condiciones en cualquier momento para reflejar cambios técnicos, legales o de funcionamiento. La nueva versión se publicará en esta misma página con la fecha de actualización correspondiente.</p>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2">12. Legislación y jurisdicción aplicable</h2>
+      <h2 className="text-xl font-semibold mt-6 mb-2 text-foreground">12. Legislación y jurisdicción aplicable</h2>
       <p className="text-sm md:text-base text-muted-foreground">Estos Términos se rigen por la legislación española. Cualquier controversia relacionada con el servicio se someterá a los juzgados y tribunales de Madrid (España), salvo disposición imperativa en contrario.</p>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2">13. Servicios premium y pagos</h2>
+      <h2 className="text-xl font-semibold mt-6 mb-2 text-foreground">13. Servicios premium y pagos</h2>
       <p className="text-sm md:text-base text-muted-foreground">
         Jambol ™ ofrece la posibilidad de actualizar ligas gratuitas a ligas premium mediante un pago único que cubre el coste hasta el final de la temporada actual. Las ligas premium incluyen funcionalidades avanzadas como SuperBoleto, bloqueo de partidos, control de días de partidos, reseteo manual de semana, evolución de multiplicadores, estadísticas avanzadas y configuración avanzada de la liga.
       </p>
       
-      <h3 className="text-lg font-semibold mt-4 mb-2">13.1. Proceso de pago</h3>
+      <h3 className="text-lg font-semibold mt-4 mb-2 text-foreground">13.1. Proceso de pago</h3>
       <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1">
         <li>El precio de actualización a premium se calcula dinámicamente en función del número de miembros de la liga y los meses restantes hasta el final de la temporada.</li>
         <li>El precio se muestra claramente antes de realizar el pago, incluyendo cualquier descuento aplicado mediante códigos promocionales.</li>
@@ -90,7 +90,7 @@ export default function TerminosCondiciones() {
         <li>Una vez completado el pago, la liga se actualiza automáticamente a premium y el acceso a las funcionalidades premium queda activado de forma inmediata.</li>
       </ul>
 
-      <h3 className="text-lg font-semibold mt-4 mb-2">13.2. Códigos de descuento</h3>
+      <h3 className="text-lg font-semibold mt-4 mb-2 text-foreground">13.2. Códigos de descuento</h3>
       <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1">
         <li>Jambol ™ puede ofrecer códigos de descuento promocionales que reducen el precio de actualización a premium.</li>
         <li>Los códigos de descuento tienen fecha de caducidad y pueden tener límites de uso.</li>
@@ -98,29 +98,29 @@ export default function TerminosCondiciones() {
         <li>Jambol ™ se reserva el derecho de modificar, cancelar o invalidar códigos de descuento en cualquier momento.</li>
       </ul>
 
-      <h3 className="text-lg font-semibold mt-4 mb-2">13.3. Política de reembolsos</h3>
+      <h3 className="text-lg font-semibold mt-4 mb-2 text-foreground">13.3. Política de reembolsos</h3>
       <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1">
         <li>De acuerdo con la normativa europea de protección al consumidor, tienes derecho a desistir del contrato en un plazo de 14 días naturales desde la fecha de pago, siempre que no hayas comenzado a utilizar los servicios premium de forma significativa.</li>
-        <li>Para solicitar un reembolso, debes contactar a <a href="mailto:contact@jambol.co" className="underline">contact@jambol.co</a> indicando tu solicitud de reembolso y el identificador de transacción.</li>
+        <li>Para solicitar un reembolso, debes contactar a <a href="mailto:contact@jambol.co" className="underline hover:text-[#FFC72C] transition-colors">contact@jambol.co</a> indicando tu solicitud de reembolso y el identificador de transacción.</li>
         <li>El reembolso se procesará en un plazo máximo de 14 días desde la recepción de tu solicitud, utilizando el mismo método de pago utilizado para la transacción original.</li>
         <li>Una vez procesado el reembolso, la liga volverá automáticamente a ser gratuita y perderá el acceso a las funcionalidades premium.</li>
         <li>Jambol ™ se reserva el derecho de rechazar reembolsos si se detecta un uso fraudulento o abusivo del servicio premium.</li>
       </ul>
 
-      <h3 className="text-lg font-semibold mt-4 mb-2">13.4. Duración y renovación</h3>
+      <h3 className="text-lg font-semibold mt-4 mb-2 text-foreground">13.4. Duración y renovación</h3>
       <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1">
         <li>El pago de actualización a premium cubre el acceso a las funcionalidades premium hasta el final de la temporada actual.</li>
         <li>Al finalizar la temporada, la liga volverá automáticamente a ser gratuita a menos que se realice un nuevo pago para la siguiente temporada.</li>
         <li>No hay renovación automática. Cada temporada requiere un pago independiente si se desea mantener el estatus premium.</li>
       </ul>
 
-      <h2 className="text-xl font-semibold mt-6 mb-2">14. Aceptación</h2>
+      <h2 className="text-xl font-semibold mt-6 mb-2 text-foreground">14. Aceptación</h2>
       <p className="text-sm md:text-base text-muted-foreground">Al registrarte o utilizar Jambol ™, confirmas que has leído y aceptas estos Términos y Condiciones.</p>
 
       <p className="text-sm md:text-base text-muted-foreground mt-6">Fecha de última actualización: enero de 2026.</p>
 
       <div className="mt-8">
-        <Link to="/" className="underline text-sm">Volver al inicio</Link>
+        <Link to="/" className="underline text-sm text-foreground hover:text-[#FFC72C] transition-colors">Volver al inicio</Link>
       </div>
     </div>
   );

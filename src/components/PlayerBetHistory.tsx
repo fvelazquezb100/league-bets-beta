@@ -244,7 +244,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
               const boostMultiplier = getBoostMultiplier(bet.bet_selections || []);
               
               return (
-                <Card key={bet.id} className={`p-4 ${showBoostStyle ? 'bg-yellow-100/50 border-yellow-400' : ''}`}>
+                <Card key={bet.id} className={`p-4 ${showBoostStyle ? 'bg-yellow-100/50 border-yellow-400 dark:bg-gray-800/50 dark:border-[#FFC72C]' : ''}`}>
                     <div className="space-y-3">
                       {/* Header: Tipo + Semana */}
                       <div className="flex items-center justify-between">
@@ -353,7 +353,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
               const boostMultiplier = getBoostMultiplier(bet.bet_selections || []);
               
               return (
-              <Card key={bet.id} className={`p-4 ${showBoostStyle ? 'bg-yellow-100/50 border-yellow-400' : ''}`}>
+              <Card key={bet.id} className={`p-4 ${showBoostStyle ? 'bg-yellow-100/50 border-yellow-400 dark:bg-gray-800/50 dark:border-[#FFC72C]' : ''}`}>
                 <div className="space-y-3">
                   {/* Header: Tipo + Semana */}
                   <div className="flex items-center justify-between">
