@@ -113,10 +113,15 @@ export const Settings = () => {
       }
       
       if (profileData) {
-        setProfile(profileData);
+        // Ensure theme is correctly typed
+        const typedProfile: Profile = {
+          ...profileData,
+          theme: (profileData.theme === 'dark' || profileData.theme === 'light') ? profileData.theme : 'light'
+        };
+        setProfile(typedProfile);
         setNewUsername(profileData.username || '');
         // Apply theme immediately when profile loads
-        const userTheme = (profileData.theme || 'light') as 'light' | 'dark';
+        const userTheme = typedProfile.theme || 'light';
         applyTheme(userTheme);
         if (profileData.league_id) {
           const { data: leagueData, error: leagueError } = await supabase
