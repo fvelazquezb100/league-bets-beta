@@ -63,7 +63,8 @@ export const ensureUserProfile = async (user: User): Promise<boolean> => {
         weekly_budget: 1000,
         total_points: 0,
         league_id: null,
-        role: 'user'
+        role: 'user',
+        theme: 'light'
       });
 
     if (error) {

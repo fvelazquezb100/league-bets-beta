@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
     // Insert the profile (league_id left NULL on purpose)
     const { error: insertError } = await supabase
       .from('profiles')
-      .insert({ id: userId, username, weekly_budget: 1000, total_points: 0, league_id: null });
+      .insert({ id: userId, username, weekly_budget: 1000, total_points: 0, league_id: null, theme: 'light' });
 
     if (insertError) {
       // If a profile already exists (e.g., legacy trigger already ran), treat as success

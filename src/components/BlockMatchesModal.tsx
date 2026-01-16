@@ -585,7 +585,7 @@ export const BlockMatchesModal: React.FC<BlockMatchesModalProps> = ({ isOpen, on
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogCancel className="!bg-[#F8F9FA] !border-[#FFC72C] !text-[#2D2D2D] hover:!bg-[#FFC72C] hover:!text-[#2D2D2D] border-2 dark:!bg-[#1a1a1a] dark:!border-[#FFC72C] dark:!text-[#FFC72C] dark:hover:!bg-[#FFC72C] dark:hover:!text-[#2D2D2D]">Cancelar</AlertDialogCancel>
               <AlertDialogAction
                 className="jambol-button"
                 onClick={() => blockMutation.mutate()}

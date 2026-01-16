@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { MainLayout } from "./components/layout/MainLayout";
+import { ThemeProvider } from "./components/ThemeProvider";
 import { Landing } from "./pages/Landing";
 import { Login } from "./pages/Login";
 import { DemoLanguage } from "./pages/DemoLanguage";
@@ -61,7 +62,8 @@ const App = () => (
           <ScrollToTop />
           <AnalyticsLoader />
           <AuthProvider>
-            <Routes>
+            <ThemeProvider>
+              <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/maintenance" element={<Maintenance />} />
               <Route path="/login" element={<Login />} />
@@ -221,6 +223,7 @@ const App = () => (
               } />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </ThemeProvider>
           </AuthProvider>
         </BrowserRouter>
       </HelmetProvider>

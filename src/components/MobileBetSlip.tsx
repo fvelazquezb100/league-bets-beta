@@ -646,7 +646,7 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll, forceOpen = fals
                           });
                         }}
                         disabled
-                        className="w-full bg-white text-black border border-gray-400 opacity-50 cursor-not-allowed"
+                        className="w-full bg-card text-foreground border border-border opacity-50 cursor-not-allowed"
                       >
                         <Zap className="h-4 w-4 mr-2" />
                         SuperBoleto {boostMultiplier.toFixed(2).replace('.', ',')}
@@ -674,8 +674,8 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll, forceOpen = fals
                 }}
                 disabled={(!canUseBoost && !boostActive) || (stake && parseFloat(stake.replace(',', '.')) > boostMaxStake)}
                 className={`w-full ${boostActive 
-                  ? 'bg-[#FFC72C] hover:bg-[#FFC72C] text-black border-[#FFC72C]' 
-                  : 'bg-white text-black border border-[#FFC72C] hover:bg-[#FFC72C] hover:text-black'
+                  ? 'bg-[#FFC72C] hover:bg-[#FFC72C] text-[#2D2D2D] border-[#FFC72C]' 
+                  : 'bg-card text-foreground border border-[#FFC72C] hover:bg-[#FFC72C] hover:text-[#2D2D2D]'
                 }`}
               >
                 <Zap className={`h-4 w-4 mr-2 ${boostActive ? 'fill-current' : ''}`} />
@@ -684,7 +684,7 @@ const MobileBetSlip = ({ selectedBets, onRemoveBet, onClearAll, forceOpen = fals
             )}
             <Button
               variant="outline"
-              className="w-full bg-white text-black border border-[#FFC72C] hover:bg-[#FFC72C] hover:text-black"
+              className="w-full bg-card text-foreground border border-[#FFC72C] hover:bg-[#FFC72C] hover:text-[#2D2D2D]"
               onClick={() => {
                 handleClearAll();
                 setBoostActive(false);

@@ -20,21 +20,21 @@ export default function AvisoLegal() {
           alt="Jambol Logo"
           className="h-10 jambol-logo"
         />
-        <span className="text-2xl font-bold jambol-dark">Jambol ™</span>
+        <span className="text-2xl font-bold text-foreground">Jambol ™</span>
       </div>
 
-      <h1 className="text-2xl md:text-3xl font-bold mb-2">Aviso Legal</h1>
+      <h1 className="text-2xl md:text-3xl font-bold mb-2 text-foreground">Aviso Legal</h1>
 
       <hr className="my-6 border-border" />
 
       <section className="space-y-4">
         <div>
-          <h2 className="text-xl font-semibold mb-2">1. Identidad del titular del sitio web</h2>
+          <h2 className="text-xl font-semibold mb-2 text-foreground">1. Identidad del titular del sitio web</h2>
           <p className="text-sm md:text-base text-muted-foreground">
-            El sitio web disponible en <a href="https://jambol.co" className="underline" target="_blank" rel="noopener noreferrer">https://jambol.co</a> (en adelante, el "Sitio") es gestionado por Jambol ™, marca en trámite ante la Oficina Española de Patentes y Marcas (OEPM).
+            El sitio web disponible en <a href="https://jambol.co" className="underline hover:text-[#FFC72C] transition-colors" target="_blank" rel="noopener noreferrer">https://jambol.co</a> (en adelante, el "Sitio") es gestionado por Jambol ™, marca en trámite ante la Oficina Española de Patentes y Marcas (OEPM).
           </p>
           <p className="text-sm md:text-base text-muted-foreground mt-2">
-            Correo de contacto: <a href="mailto:contact@jambol.co" className="underline">contact@jambol.co</a><br />
+            Correo de contacto: <a href="mailto:contact@jambol.co" className="underline hover:text-[#FFC72C] transition-colors">contact@jambol.co</a><br />
             Ubicación: Madrid, España
           </p>
           <p className="text-sm md:text-base text-muted-foreground mt-2">
@@ -45,7 +45,7 @@ export default function AvisoLegal() {
         <hr className="border-border" />
 
         <div>
-          <h2 className="text-xl font-semibold mb-2">2. Objeto del Sitio</h2>
+          <h2 className="text-xl font-semibold mb-2 text-foreground">2. Objeto del Sitio</h2>
           <p className="text-sm md:text-base text-muted-foreground">
             Jambol ™ ofrece un servicio de entretenimiento basado en simulación deportiva y ligas privadas entre usuarios.
           </p>
@@ -57,7 +57,7 @@ export default function AvisoLegal() {
         <hr className="border-border" />
 
         <div>
-          <h2 className="text-xl font-semibold mb-2">3. Condiciones de uso</h2>
+          <h2 className="text-xl font-semibold mb-2 text-foreground">3. Condiciones de uso</h2>
           <p className="text-sm md:text-base text-muted-foreground">Al acceder y utilizar el Sitio, el usuario acepta:</p>
           <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1 mt-2">
             <li>Utilizar el Sitio de forma lícita y respetuosa.</li>
@@ -68,14 +68,14 @@ export default function AvisoLegal() {
             Jambol ™ se reserva el derecho a suspender o bloquear el acceso de usuarios que incumplan estas normas o los Términos y Condiciones del servicio.
           </p>
           <p className="text-sm md:text-base text-muted-foreground mt-2">
-            Para más detalle sobre el uso de la plataforma consulta nuestros <Link to="/terminos" className="underline">Términos y Condiciones</Link>.
+            Para más detalle sobre el uso de la plataforma consulta nuestros <Link to="/terminos" className="underline hover:text-[#FFC72C] transition-colors">Términos y Condiciones</Link>.
           </p>
         </div>
 
         <hr className="border-border" />
 
         <div>
-          <h2 className="text-xl font-semibold mb-2">4. Propiedad intelectual e industrial</h2>
+          <h2 className="text-xl font-semibold mb-2 text-foreground">4. Propiedad intelectual e industrial</h2>
           <p className="text-sm md:text-base text-muted-foreground">
             El nombre comercial, la marca verbal y los elementos gráficos asociados a Jambol ™ son propiedad de sus titulares y se encuentran en trámite de registro ante la OEPM.
           </p>
@@ -90,7 +90,7 @@ export default function AvisoLegal() {
         <hr className="border-border" />
 
         <div>
-          <h2 className="text-xl font-semibold mb-2">5. Responsabilidad y disponibilidad del servicio</h2>
+          <h2 className="text-xl font-semibold mb-2 text-foreground">5. Responsabilidad y disponibilidad del servicio</h2>
           <p className="text-sm md:text-base text-muted-foreground">
             Jambol ™ trabaja para que el Sitio esté disponible y actualizado, pero no garantiza:
           </p>
@@ -110,7 +110,7 @@ export default function AvisoLegal() {
         <hr className="border-border" />
 
         <div>
-          <h2 className="text-xl font-semibold mb-2">6. Enlaces a terceros y contenidos externos</h2>
+          <h2 className="text-xl font-semibold mb-2 text-foreground">6. Enlaces a terceros y contenidos externos</h2>
           <p className="text-sm md:text-base text-muted-foreground">
             El Sitio puede incluir enlaces, banners o integraciones técnicas que dirigen a sitios web o servicios de terceros.
           </p>
@@ -122,12 +122,12 @@ export default function AvisoLegal() {
         <hr className="border-border" />
 
         <div>
-          <h2 className="text-xl font-semibold mb-2">7. Publicidad y monetización</h2>
+          <h2 className="text-xl font-semibold mb-2 text-foreground">7. Publicidad y monetización</h2>
           <p className="text-sm md:text-base text-muted-foreground">
             El Sitio puede incluir espacios publicitarios y contenidos patrocinados gestionados directamente o a través de plataformas de terceros.
           </p>
           <p className="text-sm md:text-base text-muted-foreground mt-2">
-            La visualización de publicidad puede basarse en tu actividad de navegación y preferencias, de acuerdo con lo establecido en la <Link to="/politica-cookies" className="underline">Política de Cookies</Link> y sujeto al consentimiento que otorgues en el banner de cookies.
+            La visualización de publicidad puede basarse en tu actividad de navegación y preferencias, de acuerdo con lo establecido en la <Link to="/politica-cookies" className="underline hover:text-[#FFC72C] transition-colors">Política de Cookies</Link> y sujeto al consentimiento que otorgues en el banner de cookies.
           </p>
           <p className="text-sm md:text-base text-muted-foreground mt-2">
             Jambol ™ no controla ni garantiza el contenido de los anuncios mostrados por terceros.
@@ -137,9 +137,9 @@ export default function AvisoLegal() {
         <hr className="border-border" />
 
         <div>
-          <h2 className="text-xl font-semibold mb-2">8. Protección de datos personales</h2>
+          <h2 className="text-xl font-semibold mb-2 text-foreground">8. Protección de datos personales</h2>
           <p className="text-sm md:text-base text-muted-foreground">
-            El uso y tratamiento de los datos personales de los usuarios de Jambol ™ se rige por la <Link to="/politica-privacidad" className="underline">Política de Privacidad</Link>.
+            El uso y tratamiento de los datos personales de los usuarios de Jambol ™ se rige por la <Link to="/politica-privacidad" className="underline hover:text-[#FFC72C] transition-colors">Política de Privacidad</Link>.
           </p>
           <p className="text-sm md:text-base text-muted-foreground mt-2">En particular:</p>
           <ul className="list-disc pl-6 text-sm md:text-base text-muted-foreground space-y-1 mt-2">
@@ -154,16 +154,16 @@ export default function AvisoLegal() {
         <hr className="border-border" />
 
         <div>
-          <h2 className="text-xl font-semibold mb-2">9. Cookies</h2>
+          <h2 className="text-xl font-semibold mb-2 text-foreground">9. Cookies</h2>
           <p className="text-sm md:text-base text-muted-foreground">
-            Este Sitio utiliza cookies propias y de terceros (incluyendo cookies publicitarias y analíticas). Puedes configurar, rechazar o retirar tu consentimiento en cualquier momento mediante el banner de cookies o visitando la <Link to="/politica-cookies" className="underline">Política de Cookies</Link>.
+            Este Sitio utiliza cookies propias y de terceros (incluyendo cookies publicitarias y analíticas). Puedes configurar, rechazar o retirar tu consentimiento en cualquier momento mediante el banner de cookies o visitando la <Link to="/politica-cookies" className="underline hover:text-[#FFC72C] transition-colors">Política de Cookies</Link>.
           </p>
         </div>
 
         <hr className="border-border" />
 
         <div>
-          <h2 className="text-xl font-semibold mb-2">10. Legislación aplicable y jurisdicción</h2>
+          <h2 className="text-xl font-semibold mb-2 text-foreground">10. Legislación aplicable y jurisdicción</h2>
           <p className="text-sm md:text-base text-muted-foreground">
             El presente Aviso Legal se rige por la legislación española. Para la resolución de cualquier conflicto relacionado con el acceso o uso del Sitio, las partes se someten (salvo norma imperativa en contrario) a los juzgados y tribunales de Madrid, España.
           </p>
@@ -179,7 +179,7 @@ export default function AvisoLegal() {
       </section>
 
       <div className="mt-8">
-        <Link to="/" className="underline text-sm">Volver al inicio</Link>
+        <Link to="/" className="underline text-sm text-foreground hover:text-[#FFC72C] transition-colors">Volver al inicio</Link>
       </div>
     </div>
   );

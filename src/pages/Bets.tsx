@@ -819,13 +819,13 @@ const Bets = () => {
                 case 'primera':
                   return {
                     background: `
-                      linear-gradient(45deg, 
-                        #C60B1E 0%, #C60B1E 33%, 
-                        #FFC400 33%, #FFC400 66%, 
-                        #C60B1E 66%, #C60B1E 100%
+                      linear-gradient(45deg,
+                        #CE1126 0%, #CE1126 33.33%,
+                        #FFD200 33.33%, #FFD200 66.66%,
+                        #CE1126 66.66%, #CE1126 100%
                       )
                     `,
-                    opacity: '0.15'
+                    opacity: '0.4'
                   };
                 case 'champions':
                   return {
@@ -911,7 +911,7 @@ const Bets = () => {
                   style={tabStyle}
                 />
                 {/* Texto por encima */}
-                <span className="relative z-10 text-black font-semibold text-xs sm:text-sm leading-tight">{tab.label}</span>
+                <span className="relative z-10 text-foreground font-semibold text-xs sm:text-sm leading-tight">{tab.label}</span>
               </TabsTrigger>
             );
           })}

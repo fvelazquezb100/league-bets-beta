@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { BarChart3, TrendingUp, Target, DollarSign, Calendar, Trophy, Users, Zap, TrendingDown, Award } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { cn } from '@/lib/utils';
 
 interface UserStats {
   totalBets: number;
@@ -36,6 +37,7 @@ interface UserStats {
     wins: number;
     stake: number;
     payout: number;
+    profit: number;
     successRate: number;
   }>;
   teamStats: Array<{
@@ -44,6 +46,7 @@ interface UserStats {
     wins: number;
     stake: number;
     payout: number;
+    profit: number;
     successRate: number;
   }>;
 }
@@ -408,24 +411,25 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
     // Exclude BOOST market as it's not a real bet
     const marketStatsArray = Object.entries(marketStats)
       .filter(([market]) => market !== 'BOOST')
-      .map(([market, data]) => ({
-        market,
-        ...data,
-        successRate: data.bets > 0 ? (data.wins / data.bets) * 100 : 0
-      })).sort((a, b) => b.successRate - a.successRate);
+      .map(([market, data]) => {
+        const profit = data.payout - data.stake;
+        return {
+          market,
+          ...data,
+          profit,
+          successRate: data.bets > 0 ? (data.wins / data.bets) * 100 : 0
+        };
+      }).sort((a, b) => b.profit - a.profit); // Sort by profit (descending)
 
-    const teamStatsArray = Object.entries(teamStats).map(([team, data]) => ({
-      team,
-      ...data,
-      successRate: data.bets > 0 ? (data.wins / data.bets) * 100 : 0
-    })).sort((a, b) => {
-      // First sort by success rate (descending)
-      if (b.successRate !== a.successRate) {
-        return b.successRate - a.successRate;
-      }
-      // If success rates are equal, sort by number of bets (descending)
-      return b.bets - a.bets;
-    });
+    const teamStatsArray = Object.entries(teamStats).map(([team, data]) => {
+      const profit = data.payout - data.stake;
+      return {
+        team,
+        ...data,
+        profit,
+        successRate: data.bets > 0 ? (data.wins / data.bets) * 100 : 0
+      };
+    }).sort((a, b) => b.profit - a.profit); // Sort by profit (descending)
 
     // Find favorites and best performers - only if we have data
     const favoriteMarket = marketStatsArray.length > 0 
@@ -936,20 +940,61 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {stats.marketStats.slice(0, 5).map((market, index) => (
-                      <div key={market.market} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">{market.market}</span>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-white border-[#FFC72C] text-[#2D2D2D] border-2 cursor-default hover:bg-white hover:border-[#FFC72C] hover:text-[#2D2D2D]">{market.bets} boletos</Badge>
-                            <Badge className="bg-white border-[#FFC72C] text-[#2D2D2D] border-2 cursor-default hover:bg-white hover:border-[#FFC72C] hover:text-[#2D2D2D]">
-                              {market.successRate.toFixed(1)}%
-                            </Badge>
+                    {(() => {
+                      const allProfits = stats.marketStats.map(m => m.profit || 0);
+                      const maxAbsProfit = Math.max(
+                        ...allProfits.map(p => Math.abs(p)),
+                        1
+                      );
+                      return stats.marketStats.slice(0, 5).map((market, index) => {
+                        const profit = market.profit || 0;
+                        const isPositive = profit >= 0;
+                        const absProfit = Math.abs(profit);
+                        const percent = maxAbsProfit > 0 ? (absProfit / maxAbsProfit) * 50 : 0; // 50% max each side
+                        return (
+                          <div key={market.market} className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium">{market.market}</span>
+                              <div className="flex items-center gap-2">
+                                <Badge className={cn(
+                                  "border-2 cursor-default",
+                                  isPositive 
+                                    ? 'bg-white dark:bg-card border-[#FFC72C] text-[#2D2D2D] dark:text-foreground' 
+                                    : 'bg-white dark:bg-card border-red-500 text-red-600 dark:text-red-400'
+                                )}>
+                                  {isPositive ? '+' : ''}{profit.toFixed(0)} pts
+                                </Badge>
+                                <Badge className="bg-white dark:bg-card border-[#FFC72C] text-[#2D2D2D] dark:text-foreground border-2 cursor-default">
+                                  {market.successRate.toFixed(1)}%
+                                </Badge>
+                                <Badge className="bg-white dark:bg-card border-[#FFC72C] text-[#2D2D2D] dark:text-foreground border-2 cursor-default">
+                                  {market.bets} boletos
+                                </Badge>
+                              </div>
+                            </div>
+                            {/* Custom bidirectional progress bar */}
+                            <div className="relative h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                              {/* Center line */}
+                              <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-400 dark:bg-gray-500 z-10" />
+                              {/* Positive (right side) */}
+                              {isPositive && percent > 0 && (
+                                <div 
+                                  className="absolute left-1/2 top-0 bottom-0 bg-[#FFC72C] rounded-r-full"
+                                  style={{ width: `${percent}%` }}
+                                />
+                              )}
+                              {/* Negative (left side) */}
+                              {!isPositive && percent > 0 && (
+                                <div 
+                                  className="absolute right-1/2 top-0 bottom-0 bg-red-500 rounded-l-full"
+                                  style={{ width: `${percent}%` }}
+                                />
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        <Progress value={market.successRate} className="h-2 [&>div]:bg-[#FFC72C] [&>div]:border-[#FFC72C] bg-gray-200" />
-                      </div>
-                    ))}
+                        );
+                      });
+                    })()}
                   </div>
                 </CardContent>
               </Card>
@@ -961,20 +1006,61 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {stats.teamStats.slice(0, 5).map((team, index) => (
-                      <div key={team.team} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">{team.team}</span>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-white border-[#FFC72C] text-[#2D2D2D] border-2 cursor-default hover:bg-white hover:border-[#FFC72C] hover:text-[#2D2D2D]">{team.bets} boletos</Badge>
-                            <Badge className="bg-white border-[#FFC72C] text-[#2D2D2D] border-2 cursor-default hover:bg-white hover:border-[#FFC72C] hover:text-[#2D2D2D]">
-                              {team.successRate.toFixed(1)}%
-                            </Badge>
+                    {(() => {
+                      const allProfits = stats.teamStats.map(t => t.profit || 0);
+                      const maxAbsProfit = Math.max(
+                        ...allProfits.map(p => Math.abs(p)),
+                        1
+                      );
+                      return stats.teamStats.slice(0, 5).map((team, index) => {
+                        const profit = team.profit || 0;
+                        const isPositive = profit >= 0;
+                        const absProfit = Math.abs(profit);
+                        const percent = maxAbsProfit > 0 ? (absProfit / maxAbsProfit) * 50 : 0; // 50% max each side
+                        return (
+                          <div key={team.team} className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium">{team.team}</span>
+                              <div className="flex items-center gap-2">
+                                <Badge className={cn(
+                                  "border-2 cursor-default",
+                                  isPositive 
+                                    ? 'bg-white dark:bg-card border-[#FFC72C] text-[#2D2D2D] dark:text-foreground' 
+                                    : 'bg-white dark:bg-card border-red-500 text-red-600 dark:text-red-400'
+                                )}>
+                                  {isPositive ? '+' : ''}{profit.toFixed(0)} pts
+                                </Badge>
+                                <Badge className="bg-white dark:bg-card border-[#FFC72C] text-[#2D2D2D] dark:text-foreground border-2 cursor-default">
+                                  {team.successRate.toFixed(1)}%
+                                </Badge>
+                                <Badge className="bg-white dark:bg-card border-[#FFC72C] text-[#2D2D2D] dark:text-foreground border-2 cursor-default">
+                                  {team.bets} boletos
+                                </Badge>
+                              </div>
+                            </div>
+                            {/* Custom bidirectional progress bar */}
+                            <div className="relative h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                              {/* Center line */}
+                              <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-400 dark:bg-gray-500 z-10" />
+                              {/* Positive (right side) */}
+                              {isPositive && percent > 0 && (
+                                <div 
+                                  className="absolute left-1/2 top-0 bottom-0 bg-[#FFC72C] rounded-r-full"
+                                  style={{ width: `${percent}%` }}
+                                />
+                              )}
+                              {/* Negative (left side) */}
+                              {!isPositive && percent > 0 && (
+                                <div 
+                                  className="absolute right-1/2 top-0 bottom-0 bg-red-500 rounded-l-full"
+                                  style={{ width: `${percent}%` }}
+                                />
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        <Progress value={team.successRate} className="h-2 [&>div]:bg-[#FFC72C] [&>div]:border-[#FFC72C] bg-gray-200" />
-                      </div>
-                    ))}
+                        );
+                      });
+                    })()}
                   </div>
                 </CardContent>
               </Card>
@@ -992,7 +1078,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                           <div className="font-medium">{week.week}</div>
                           <div className="text-sm text-muted-foreground">{week.bets} boletos</div>
                         </div>
-                        <div className={`text-lg font-bold ${week.profit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                        <div className={`text-lg font-bold ${week.profit >= 0 ? 'text-[#FFC72C]' : 'text-red-500'}`}>
                           {week.profit >= 0 ? '+' : ''}{week.profit.toFixed(0)} pts
                         </div>
                       </div>

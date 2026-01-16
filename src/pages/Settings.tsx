@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { User, Shield, Eye, EyeOff, LogOut, AlertTriangle, Heart, Crown } from 'lucide-react';
+import { User, Shield, Eye, EyeOff, LogOut, AlertTriangle, Heart, Crown, Moon, Sun } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,6 +20,7 @@ interface Profile {
   weekly_budget: number;
   league_id: number | null;
   global_role: string;
+  theme?: 'light' | 'dark';
 }
 
 interface League {
@@ -62,19 +63,61 @@ export const Settings = () => {
   const [leaveLeagueLoading, setLeaveLeagueLoading] = useState(false);
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   const [isPremiumFeaturesModalOpen, setIsPremiumFeaturesModalOpen] = useState(false);
+  const [themeLoading, setThemeLoading] = useState(false);
+
+  const applyTheme = (theme: 'light' | 'dark') => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+  };
 
   const fetchUserData = async () => {
     if (!user) return;
     try {
+      // Try to fetch with theme, but handle gracefully if column doesn't exist yet
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('id, username, weekly_budget, league_id, global_role')
+        .select('id, username, weekly_budget, league_id, global_role, theme')
         .eq('id', user.id)
         .single();
-      if (profileError) throw profileError;
+      
+      if (profileError) {
+        // If error is about missing column, try without theme
+        if (profileError.message?.includes('theme') || profileError.message?.includes('column')) {
+          const { data: profileDataFallback, error: profileErrorFallback } = await supabase
+            .from('profiles')
+            .select('id, username, weekly_budget, league_id, global_role')
+            .eq('id', user.id)
+            .single();
+          
+          if (profileErrorFallback) throw profileErrorFallback;
+          if (profileDataFallback) {
+            setProfile({ ...profileDataFallback, theme: 'light' });
+            setNewUsername(profileDataFallback.username || '');
+            applyTheme('light');
+            if (profileDataFallback.league_id) {
+              const { data: leagueData, error: leagueError } = await supabase
+                .from('leagues')
+                .select('name, join_code, type')
+                .eq('id', profileDataFallback.league_id)
+                .single();
+              if (!leagueError && leagueData) setLeague(leagueData);
+            }
+          }
+          return;
+        }
+        throw profileError;
+      }
+      
       if (profileData) {
         setProfile(profileData);
         setNewUsername(profileData.username || '');
+        // Apply theme immediately when profile loads
+        const userTheme = (profileData.theme || 'light') as 'light' | 'dark';
+        applyTheme(userTheme);
         if (profileData.league_id) {
           const { data: leagueData, error: leagueError } = await supabase
             .from('leagues')
@@ -270,6 +313,50 @@ export const Settings = () => {
     }
   };
 
+  const handleThemeChange = async (newTheme: 'light' | 'dark') => {
+    if (!user || !profile) return;
+    
+    setThemeLoading(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ theme: newTheme })
+        .eq('id', user.id);
+
+      if (error) {
+        // If theme column doesn't exist, show helpful message
+        if (error.message?.includes('theme') || error.message?.includes('column')) {
+          toast({
+            title: 'Error',
+            description: 'La migración para el tema aún no se ha aplicado. Por favor, contacta al administrador.',
+            variant: 'destructive',
+          });
+          return;
+        }
+        throw error;
+      }
+
+      // Update local state
+      setProfile(prev => prev ? { ...prev, theme: newTheme } : null);
+      
+      // Apply theme immediately
+      applyTheme(newTheme);
+
+      toast({
+        title: '¡Tema actualizado!',
+        description: `Tu tema ha sido cambiado a ${newTheme === 'dark' ? 'oscuro' : 'claro'}.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudo actualizar el tema.',
+        variant: 'destructive',
+      });
+    } finally {
+      setThemeLoading(false);
+    }
+  };
+
   const handleDonationClick = () => {
     if (!user || !profile) {
       toast({
@@ -308,6 +395,7 @@ export const Settings = () => {
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Ajustes</h1>
       <div className="grid gap-6 md:grid-cols-2 max-w-4xl">
+        {/* Fila 1: Mi Perfil - Liga Premium */}
         {/* Mi Perfil */}
         <Card>
           <CardHeader>
@@ -407,7 +495,7 @@ export const Settings = () => {
         {/* Liga Premium */}
         {profile.league_id && (
           <Card 
-            className={`border-2 border-yellow-400 bg-gradient-to-br from-yellow-50/50 to-amber-50/50 shadow-lg ${
+            className={`border-2 border-[#FFC72C] shadow-lg ${
               league?.type === 'premium' ? 'cursor-pointer hover:shadow-xl transition-shadow' : ''
             }`}
             onClick={() => {
@@ -464,6 +552,58 @@ export const Settings = () => {
           </Card>
         )}
 
+        {/* Fila 2: Tema - Apoya nuestro proyecto */}
+        {/* Tema de la aplicación */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              {(profile.theme || 'light') === 'dark' ? (
+                <Moon className="h-5 w-5" />
+              ) : (
+                <Sun className="h-5 w-5" />
+              )}
+              Tema de la aplicación
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Elige cómo quieres ver Jambol. Puedes cambiar entre tema claro y oscuro.
+              </p>
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant={(profile.theme || 'light') === 'light' ? 'default' : 'outline'}
+                  className={`flex-1 ${(profile.theme || 'light') === 'light' 
+                    ? 'bg-[#FFC72C] text-[#2D2D2D] hover:bg-[#FFC72C]/90' 
+                    : 'border-2 border-border hover:bg-muted'}`}
+                  onClick={() => handleThemeChange('light')}
+                  disabled={themeLoading || (profile.theme || 'light') === 'light'}
+                >
+                  <Sun className="h-4 w-4 mr-2" />
+                  Claro
+                </Button>
+                <Button
+                  type="button"
+                  variant={(profile.theme || 'light') === 'dark' ? 'default' : 'outline'}
+                  className={`flex-1 ${(profile.theme || 'light') === 'dark' 
+                    ? 'bg-[#FFC72C] text-[#2D2D2D] hover:bg-[#FFC72C]/90' 
+                    : 'border-2 border-border hover:bg-muted'}`}
+                  onClick={() => handleThemeChange('dark')}
+                  disabled={themeLoading || (profile.theme || 'light') === 'dark'}
+                >
+                  <Moon className="h-4 w-4 mr-2" />
+                  Oscuro
+                </Button>
+              </div>
+              {themeLoading && (
+                <p className="text-sm text-muted-foreground">Actualizando tema...</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Fila 3: Contraseña - Salir de la Liga */}
         {/* Cambiar Contraseña */}
         <Card>
           <CardHeader>
@@ -585,12 +725,12 @@ export const Settings = () => {
                 Apoyar con PayPal
               </Button>
               {donationsData?.hasDonated && (
-                <div className="mt-4 p-3 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg text-center">
-                  <p className="text-sm font-medium text-amber-800 flex items-center justify-center gap-2">
+                <div className="mt-4 p-3 border rounded-lg text-center border-yellow-200 dark:border-[#FFC72C]/40 [background:linear-gradient(to_right,#fefce8,#fffbeb)] dark:[background:rgba(255,199,44,0.2)]">
+                  <p className="text-sm font-medium text-amber-800 dark:text-[#FFC72C] flex items-center justify-center gap-2">
                     <Heart className="h-4 w-4 text-red-500 fill-red-500" />
                     ¡Gracias por apoyarnos!
                   </p>
-                  <p className="text-xs text-amber-700 mt-1">
+                  <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
                     Tu apoyo nos ayuda a seguir mejorando Jambol
                   </p>
                 </div>

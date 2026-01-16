@@ -129,23 +129,23 @@ export const Home = () => {
       <NewsBoard />
 
       <div className="grid md:grid-cols-2 gap-8">
-        <Card className="shadow-lg">
+        <Card className="shadow-lg bg-card border-border">
           <CardHeader>
-            <CardTitle>Próximos Partidos</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-card-foreground">Próximos Partidos</CardTitle>
+            <CardDescription className="text-muted-foreground">
               Encuentra los mejores partidos para participar hoy
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {loadingUpcoming ? (
               <>
-                <div className="p-4 rounded-lg bg-muted/50">
-                  <Skeleton className="h-5 w-2/3 mb-2" />
-                  <Skeleton className="h-4 w-1/3" />
+                <div className="p-4 rounded-lg bg-muted/50 border border-border">
+                  <Skeleton className="h-5 w-2/3 mb-2 bg-muted" />
+                  <Skeleton className="h-4 w-1/3 bg-muted" />
                 </div>
-                <div className="p-4 rounded-lg bg-muted/50">
-                  <Skeleton className="h-5 w-2/3 mb-2" />
-                  <Skeleton className="h-4 w-1/3" />
+                <div className="p-4 rounded-lg bg-muted/50 border border-border">
+                  <Skeleton className="h-5 w-2/3 mb-2 bg-muted" />
+                  <Skeleton className="h-4 w-1/3 bg-muted" />
                 </div>
               </>
             ) : upcoming.length === 0 ? (
@@ -157,13 +157,13 @@ export const Home = () => {
                 const draw = mw?.values.find(v => v.value.toLowerCase().includes('draw'))?.odd ?? '-';
                 const away = mw?.values.find(v => v.value.toLowerCase().includes('away'))?.odd ?? '-';
                 return (
-                  <div key={match.fixture.id} className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
+                  <div key={match.fixture.id} className="flex justify-between items-center p-4 bg-muted/50 rounded-lg border border-border hover:bg-muted/70 transition-colors">
                     <div>
-                      <p className="font-semibold">{match.teams?.home?.name} vs {match.teams?.away?.name}</p>
+                      <p className="font-semibold text-foreground">{match.teams?.home?.name} vs {match.teams?.away?.name}</p>
                       <p className="text-sm text-muted-foreground">{new Date(match.fixture.date).toLocaleString('es-ES')}</p>
                     </div>
                     <div className="text-sm font-medium">
-                      <span className="text-primary">{home}</span> | <span className="text-primary">{draw}</span> | <span className="text-primary">{away}</span>
+                      <span className="text-[#FFC72C] font-bold">{home}</span> | <span className="text-[#FFC72C] font-bold">{draw}</span> | <span className="text-[#FFC72C] font-bold">{away}</span>
                     </div>
                   </div>
                 );
@@ -171,7 +171,7 @@ export const Home = () => {
             )}
             <Link to="/bets">
               <Button
-                className="jambol-button w-full mt-4"
+                className="w-full mt-4 bg-[#FFC72C] text-[#2D2D2D] hover:bg-[#FFC72C]/90 font-semibold border-2 border-[#FFC72C] transition-colors"
               >
                 Ver Todos los Partidos
               </Button>
@@ -179,23 +179,23 @@ export const Home = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg">
+        <Card className="shadow-lg bg-card border-border">
           <CardHeader>
-            <CardTitle>Actividad Reciente</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-card-foreground">Actividad Reciente</CardTitle>
+            <CardDescription className="text-muted-foreground">
               Tus últimas boletos y resultados
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {loadingActivity ? (
               <>
-                <div className="p-4 rounded-lg bg-muted/50">
-                  <Skeleton className="h-5 w-2/3 mb-2" />
-                  <Skeleton className="h-4 w-1/3" />
+                <div className="p-4 rounded-lg bg-muted/50 border border-border">
+                  <Skeleton className="h-5 w-2/3 mb-2 bg-muted" />
+                  <Skeleton className="h-4 w-1/3 bg-muted" />
                 </div>
-                <div className="p-4 rounded-lg bg-muted/50">
-                  <Skeleton className="h-5 w-2/3 mb-2" />
-                  <Skeleton className="h-4 w-1/3" />
+                <div className="p-4 rounded-lg bg-muted/50 border border-border">
+                  <Skeleton className="h-5 w-2/3 mb-2 bg-muted" />
+                  <Skeleton className="h-4 w-1/3 bg-muted" />
                 </div>
               </>
             ) : recentBets.length === 0 ? (
@@ -218,12 +218,12 @@ export const Home = () => {
                 }
 
                 return (
-                  <div key={bet.id} className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
+                  <div key={bet.id} className="flex justify-between items-center p-4 bg-muted/50 rounded-lg border border-border hover:bg-muted/70 transition-colors">
                     <div>
-                      <p className={`font-semibold ${isWon ? 'text-primary' : isLost ? 'text-destructive' : ''}`}>{betDescription}</p>
+                      <p className={`font-semibold ${isWon ? 'text-[#FFC72C]' : isLost ? 'text-destructive' : 'text-foreground'}`}>{betDescription}</p>
                       <p className="text-sm text-muted-foreground">{isWon ? 'Ganaste' : isLost ? 'Perdiste' : 'Boleto pendiente'}</p>
                     </div>
-                    <div className={`font-bold ${isWon ? 'text-primary' : isLost ? 'text-destructive' : 'text-foreground'}`}>
+                    <div className={`font-bold ${isWon ? 'text-[#FFC72C]' : isLost ? 'text-destructive' : 'text-foreground'}`}>
                       {isWon ? `+${net.toFixed(2)}` : isLost ? `-${stake.toFixed(2)}` : '—'}
                     </div>
                   </div>
@@ -232,7 +232,7 @@ export const Home = () => {
             )}
             <Link to="/bet-history">
               <Button
-                className="jambol-button w-full mt-4"
+                className="w-full mt-4 bg-[#FFC72C] text-[#2D2D2D] hover:bg-[#FFC72C]/90 font-semibold border-2 border-[#FFC72C] transition-colors"
               >
                 <History className="h-4 w-4 mr-2" />
                 Ver Historial Completo

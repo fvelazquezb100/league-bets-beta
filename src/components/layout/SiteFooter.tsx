@@ -51,7 +51,7 @@ export const SiteFooter: React.FC = () => {
   };
 
   return (
-    <footer className="border-t bg-background">
+    <footer className="border-t border-border bg-background">
       <div className="container mx-auto px-6 py-8">
         <table className="w-full border-none">
           <tbody>

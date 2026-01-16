@@ -10,13 +10,14 @@ export interface UserProfile {
   league_id: number | null;
   role: string;
   global_role?: string;
+  theme?: 'light' | 'dark';
 }
 
 // Fetch user profile
 const fetchUserProfile = async (userId: string): Promise<UserProfile> => {
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('id, username, weekly_budget, total_points, league_id, role, global_role')
+    .select('id, username, weekly_budget, total_points, league_id, role, global_role, theme')
     .eq('id', userId)
     .single();
 

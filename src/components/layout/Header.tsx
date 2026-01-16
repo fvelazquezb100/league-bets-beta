@@ -145,7 +145,7 @@ export const Header = () => {
   const { data: liveMatchesEnabled = false } = useLiveMatchesEnabled();
 
   return (
-    <header className="bg-card border-b border-border/50 shadow-sm bg-background">
+    <header className="bg-card border-b border-border/50 shadow-sm">
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <Link to="/home" className="flex items-center gap-3">
@@ -154,7 +154,7 @@ export const Header = () => {
               alt="Jambol Logo" 
               className="h-10 jambol-logo"
             />
-            <span className="text-2xl font-bold jambol-dark">
+            <span className="text-2xl font-bold text-foreground">
               Jambol
             </span>
           </Link>
@@ -236,11 +236,11 @@ export const Header = () => {
             {/* Mobile: Hamburger menu */}
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="md:hidden border-[#FFC72C] text-[#FFC72C] hover:bg-[#FFC72C] hover:text-black">
+                <Button variant="outline" size="sm" className="md:hidden border-[#FFC72C] text-[#FFC72C] hover:bg-[#FFC72C] hover:text-[#2D2D2D]">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-80">
+              <SheetContent side="right" className="w-80 bg-card border-border">
                 <VisuallyHidden>
                   <SheetTitle>Menú de navegación</SheetTitle>
                   <SheetDescription>
@@ -249,8 +249,8 @@ export const Header = () => {
                 </VisuallyHidden>
                 <div className="flex flex-col h-full">
                   {/* Header */}
-                  <div className="pb-4 mb-4 border-b">
-                    <h2 className="text-lg font-semibold">Tu Liga</h2>
+                  <div className="pb-4 mb-4 border-b border-border">
+                    <h2 className="text-lg font-semibold text-card-foreground">Tu Liga</h2>
                     {profile && (
                       <div className="mt-2 text-sm text-muted-foreground">
                         <Tooltip>
@@ -336,7 +336,7 @@ export const Header = () => {
                               className={cn(
                                 'flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors',
                                 isActive
-                                  ? 'bg-primary text-primary-foreground'
+                                  ? 'bg-[#FFC72C] text-[#2D2D2D]'
                                   : 'hover:bg-muted text-muted-foreground hover:text-foreground'
                               )}
                             >
@@ -354,7 +354,7 @@ export const Header = () => {
                           className={cn(
                             'flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors',
                             location.pathname === '/superadmin'
-                              ? 'bg-primary text-primary-foreground'
+                              ? 'bg-[#FFC72C] text-[#2D2D2D]'
                               : 'hover:bg-muted text-muted-foreground hover:text-foreground'
                           )}
                         >
@@ -366,13 +366,13 @@ export const Header = () => {
                   </div>
 
                   {/* Logout Button */}
-                  <div className="pt-4 mt-4 border-t">
+                  <div className="pt-4 mt-4 border-t border-border">
                     <Button 
                       onClick={() => {
                         signOut();
                         setIsOpen(false);
                       }}
-                      className="w-full gap-2 jambol-button"
+                      className="w-full gap-2 bg-[#FFC72C] text-[#2D2D2D] hover:bg-[#FFC72C]/90 font-semibold border-2 border-[#FFC72C]"
                     >
                       <LogOut className="h-4 w-4" />
                       Cerrar Sesión

@@ -177,7 +177,7 @@ export const HistoricalStandingsChart: React.FC<HistoricalStandingsChartProps> =
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} vertical={false} />
                   <XAxis 
                     dataKey="week" 
-                    tick={{ fontSize: isMobile ? 10 : 12 }}
+                    tick={{ fontSize: isMobile ? 10 : 12, fill: 'hsl(var(--foreground))' }}
                   />
                   <YAxis 
                     tick={{ fontSize: 0 }} // Ocultar números del eje Y
@@ -202,7 +202,7 @@ export const HistoricalStandingsChart: React.FC<HistoricalStandingsChartProps> =
           
           {/* Nombres de jugadores - posición dinámica */}
           <div 
-            className={`absolute top-0 h-full z-10 bg-background/80 backdrop-blur-sm ${isLeftToRight ? 'right-2' : 'left-0'}`} 
+            className={`absolute top-0 h-full z-10 bg-background/90 backdrop-blur-sm ${isLeftToRight ? 'right-2' : 'left-0'}`} 
             style={{ width: isMobile ? '50px' : '60px' }}
           >
             {Object.entries(playerFinalPositions)
@@ -217,12 +217,11 @@ export const HistoricalStandingsChart: React.FC<HistoricalStandingsChartProps> =
                 return (
                 <div 
                   key={username}
-                  className={`${isMobile ? 'text-xs' : 'text-xs'} font-medium truncate flex items-center gap-2 ${isLeftToRight ? '' : 'justify-end'}`}
+                  className={`${isMobile ? 'text-xs' : 'text-xs'} font-medium truncate flex items-center gap-2 text-foreground ${isLeftToRight ? '' : 'justify-end'}`}
                   style={{ 
                     position: 'absolute',
                     top: `${yPosition}%`,
-                    transform: 'translateY(-50%)',
-                    color: 'black'
+                    transform: 'translateY(-50%)'
                   }}
                 >
                     {isLeftToRight ? (
@@ -255,14 +254,14 @@ export const HistoricalStandingsChart: React.FC<HistoricalStandingsChartProps> =
 
       {/* Switch para alternar entre direcciones - Abajo a la derecha */}
       <div className="absolute -bottom-12 right-4 z-20">
-        <div className="flex items-center space-x-3 bg-white/95 backdrop-blur-sm rounded-lg p-3 border shadow-lg">
-          <span className={`text-sm font-medium ${!isLeftToRight ? 'text-primary' : 'text-muted-foreground'}`}>
+        <div className="flex items-center space-x-3 bg-card/95 backdrop-blur-sm rounded-lg p-3 border border-border shadow-lg">
+          <span className={`text-sm font-medium ${!isLeftToRight ? 'text-[#FFC72C]' : 'text-muted-foreground'}`}>
             ←
           </span>
           <button
             onClick={() => setIsLeftToRight(!isLeftToRight)}
             className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-ring ${
-              isLeftToRight ? 'bg-primary' : 'bg-muted'
+              isLeftToRight ? 'bg-[#FFC72C]' : 'bg-muted'
             }`}
           >
             <span
@@ -271,7 +270,7 @@ export const HistoricalStandingsChart: React.FC<HistoricalStandingsChartProps> =
               }`}
             />
           </button>
-          <span className={`text-sm font-medium ${isLeftToRight ? 'text-primary' : 'text-muted-foreground'}`}>
+          <span className={`text-sm font-medium ${isLeftToRight ? 'text-[#FFC72C]' : 'text-muted-foreground'}`}>
             →
           </span>
         </div>

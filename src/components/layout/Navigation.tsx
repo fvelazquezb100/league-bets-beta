@@ -96,7 +96,7 @@ export const Navigation = () => {
         className={cn(
           'flex items-center gap-2 py-4 px-2 text-sm font-medium border-b-2 transition-colors',
           isActive
-            ? 'border-primary text-primary'
+            ? 'border-[#FFC72C] text-[#FFC72C]'
             : 'border-transparent text-muted-foreground hover:text-foreground'
         )}
         onClick={() => setIsOpen(false)}
@@ -110,7 +110,7 @@ export const Navigation = () => {
   return (
     <>
       {/* Desktop Navigation */}
-      <nav className="bg-card border-b border-border/50 hidden md:block bg-background">
+      <nav className="bg-card border-b border-border/50 hidden md:block">
         <div className="container mx-auto px-6">
           <div className="flex space-x-8">
             {navigationItems
