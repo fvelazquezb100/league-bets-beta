@@ -485,8 +485,7 @@ const LiveBets = () => {
                       <div className="flex items-center gap-2">
                         {getBetsForFixture(match.fixture.id).length > 0 && (
                           <Badge
-                            variant="secondary"
-                            className="ml-2 bg-white text-black border-2 border-[#FFC72C] hover:bg-white focus:bg-white focus:ring-0 focus:ring-offset-0 cursor-default pointer-events-none"
+                            className="ml-2 bg-white dark:bg-card border-2 border-[#FFC72C] text-black dark:text-foreground hover:bg-white dark:hover:bg-card focus:bg-white dark:focus:bg-card focus:ring-0 focus:ring-offset-0 cursor-default pointer-events-none"
                           >
                             {getBetsForFixture(match.fixture.id).length} boleto
                             {getBetsForFixture(match.fixture.id).length > 1 ? 's' : ''}

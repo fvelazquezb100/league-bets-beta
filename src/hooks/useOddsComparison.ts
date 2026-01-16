@@ -27,25 +27,26 @@ export const useOddsComparison = () => {
             .from('match_odds_cache')
             .select('data')
             .eq('id', currentId)
-            .single(),
+            .maybeSingle(),
           supabase
             .from('match_odds_cache')
             .select('data')
             .eq('id', previousId)
-            .single()
+            .maybeSingle()
         ]);
 
+        // Log errors but don't throw - return null data instead
         if (currentResult.error) {
-          throw new Error(`Error fetching current odds (id=${currentId}): ${currentResult.error.message}`);
+          console.warn(`Error fetching current odds (id=${currentId}):`, currentResult.error.message);
         }
 
         if (previousResult.error) {
-          throw new Error(`Error fetching previous odds (id=${previousId}): ${previousResult.error.message}`);
+          console.warn(`Error fetching previous odds (id=${previousId}):`, previousResult.error.message);
         }
 
         return {
-          current: currentResult.data?.data,
-          previous: previousResult.data?.data
+          current: currentResult.data?.data || null,
+          previous: previousResult.data?.data || null
         };
       };
 

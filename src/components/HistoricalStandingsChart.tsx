@@ -191,7 +191,7 @@ export const HistoricalStandingsChart: React.FC<HistoricalStandingsChartProps> =
                       dataKey={username}
                       stroke={colors[index % colors.length]}
                       strokeWidth={2}
-                      dot={{ r: 4 }}
+                      dot={false}
                       activeDot={{ r: 6 }}
                     />
                   ))}
