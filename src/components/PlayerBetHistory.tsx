@@ -250,17 +250,24 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                         {hasBoost ? (
-                          <Badge className={`text-xs ${
-                            bet.status === 'cancelled' 
-                              ? 'bg-white dark:bg-card text-gray-600 dark:text-muted-foreground border-2 border-gray-400 dark:border-border hover:bg-white dark:hover:bg-card hover:text-gray-600 dark:hover:text-muted-foreground' 
-                              : bet.status === 'lost'
-                              ? 'bg-red-600 text-white border-red-600 hover:bg-red-700'
-                              : bet.status === 'pending'
-                              ? 'bg-white dark:bg-card text-[#FFC72C] border-2 border-[#FFC72C] hover:bg-white dark:hover:bg-card'
-                              : 'bg-yellow-400 text-black border-yellow-400 hover:bg-yellow-500'
-                          }`}>
-                            SUPER
-                          </Badge>
+                          <>
+                            <Badge className={`text-xs ${
+                              bet.status === 'cancelled' 
+                                ? 'bg-white dark:bg-card text-gray-600 dark:text-muted-foreground border-2 border-gray-400 dark:border-border hover:bg-white dark:hover:bg-card hover:text-gray-600 dark:hover:text-muted-foreground' 
+                                : bet.status === 'lost'
+                                ? 'bg-red-600 text-white border-red-600 hover:bg-red-700'
+                                : bet.status === 'pending'
+                                ? 'bg-white dark:bg-card text-[#FFC72C] border-2 border-[#FFC72C] hover:bg-white dark:hover:bg-card'
+                                : 'bg-yellow-400 text-black border-yellow-400 hover:bg-yellow-500'
+                            }`}>
+                              SUPER
+                            </Badge>
+                            {boostMultiplier && (
+                              <Badge variant="outline" className="text-xs border-[#FFC72C] text-[#FFC72C]">
+                                x{boostMultiplier.toFixed(2).replace('.', ',')}
+                              </Badge>
+                            )}
+                          </>
                         ) : (
                           <Badge 
                             variant="outline"
@@ -292,7 +299,6 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                                 )}
                                 <span className="text-sm">
                                   {getBettingTranslation(selection.market)}: {getBettingTranslation(selection.selection) || selection.selection} @ {selection.odds}
-                                  {showBoostStyle && boostMultiplier && <span className="text-yellow-600 font-medium"> x{boostMultiplier.toFixed(2).replace('.', ',')}</span>}
                                 </span>
                               </div>
                             </div>
@@ -402,10 +408,9 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                             </div>
                             {/* Apuesta justo debajo */}
                             <div className={`flex items-center gap-2 text-sm font-medium text-foreground border-l-2 pl-2 ${showBoostStyle ? 'border-yellow-400' : 'border-muted'}`}>
-                              {!hasBoost && getStatusIcon(sel.status)}
+                              {getStatusIcon(sel.status)}
                               <span>
                                 {sel.market}: {getBettingTranslation(sel.selection) || sel.selection} @ {sel.odds}
-                                {showBoostStyle && boostMultiplier && <span className="text-yellow-600 font-medium"> x{boostMultiplier.toFixed(2).replace('.', ',')}</span>}
                               </span>
                             </div>
                           </div>
