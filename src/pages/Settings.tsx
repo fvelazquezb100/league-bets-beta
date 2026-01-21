@@ -13,6 +13,7 @@ import { useCookieConsent } from '@/hooks/useCookieConsent';
 import { useUserDonations } from '@/hooks/useUserDonations';
 import { PremiumUpgradeModal } from '@/components/PremiumUpgradeModal';
 import { PremiumFeaturesModal } from '@/components/PremiumFeaturesModal';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface Profile {
   id: string;
@@ -33,6 +34,7 @@ export const Settings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { consent } = useCookieConsent();
+  const queryClient = useQueryClient();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [league, setLeague] = useState<League | null>(null);
   const [loading, setLoading] = useState(true);
@@ -344,8 +346,14 @@ export const Settings = () => {
       // Update local state
       setProfile(prev => prev ? { ...prev, theme: newTheme } : null);
       
-      // Apply theme immediately
+      // Apply theme immediately and sync with localStorage
       applyTheme(newTheme);
+      localStorage.setItem('jambol-theme', newTheme);
+
+      // Invalidate user profile query to refresh theme in ThemeProvider
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ['user-profile', user.id] });
+      }
 
       toast({
         title: '¡Tema actualizado!',

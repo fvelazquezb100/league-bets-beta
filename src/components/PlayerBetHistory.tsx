@@ -291,6 +291,7 @@ export const PlayerBetHistory: React.FC<PlayerBetHistoryProps> = ({ playerId, pl
                             <div key={selection.id || `selection-${index}`} className="flex items-center gap-3">
                               {/* Partido, marcador y cuota en la misma línea */}
                               <div className="flex items-center gap-3 flex-1">
+                                {getStatusIcon(selection.status)}
                                 <span className="text-sm font-medium">{getMatchName(selection.match_description)}</span>
                                 {matchResult && (
                                   <span className="text-xs text-muted-foreground">

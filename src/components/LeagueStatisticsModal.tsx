@@ -6,6 +6,7 @@ import { Trophy, Target, TrendingUp, Users, BarChart3, Award, Star, Calendar } f
 import { LeagueStatistics } from '@/hooks/useLeagueStatistics';
 import { useWeekStatistics } from '@/hooks/useWeekStatistics';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { formatStatNumber } from '@/lib/utils';
 
 interface LeagueStatisticsModalProps {
   isOpen: boolean;
@@ -82,18 +83,18 @@ export const LeagueStatisticsModal: React.FC<LeagueStatisticsModalProps> = ({
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center p-4 bg-muted/50 rounded-lg">
-                    <div className="text-2xl font-bold text-foreground">€{statistics?.totalStake.toFixed(0) || '0'}</div>
+                    <div className="text-2xl font-bold text-foreground">€{formatStatNumber(statistics?.totalStake)}</div>
                     <div className="text-sm text-muted-foreground">Total Apostado</div>
                   </div>
                   
                   <div className="text-center p-4 bg-muted/50 rounded-lg">
-                    <div className="text-2xl font-bold text-[#FFC72C]">€{statistics?.totalPayout.toFixed(0) || '0'}</div>
+                    <div className="text-2xl font-bold text-[#FFC72C]">€{formatStatNumber(statistics?.totalPayout)}</div>
                     <div className="text-sm text-muted-foreground">Total Ganado</div>
                   </div>
                   
                   <div className="text-center p-4 bg-muted/50 rounded-lg">
                     <div className={`text-2xl font-bold ${(statistics?.netProfit || 0) >= 0 ? 'text-[#FFC72C]' : 'text-red-600'}`}>
-                      €{statistics?.netProfit.toFixed(0) || '0'}
+                      €{formatStatNumber(statistics?.netProfit)}
                     </div>
                     <div className="text-sm text-muted-foreground">Beneficio Neto</div>
                   </div>
@@ -119,17 +120,17 @@ export const LeagueStatisticsModal: React.FC<LeagueStatisticsModalProps> = ({
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center p-4 bg-muted/50 rounded-lg">
-                    <div className="text-2xl font-bold text-primary">{statistics?.totalBets || 0}</div>
+                    <div className="text-2xl font-bold text-primary">{formatStatNumber(statistics?.totalBets)}</div>
                     <div className="text-sm text-muted-foreground">Total Boletos</div>
                   </div>
                   
                   <div className="text-center p-4 bg-muted/50 rounded-lg">
-                    <div className="text-2xl font-bold text-[#FFC72C]">{statistics?.totalWonBets || 0}</div>
+                    <div className="text-2xl font-bold text-[#FFC72C]">{formatStatNumber(statistics?.totalWonBets)}</div>
                     <div className="text-sm text-muted-foreground">Boletos Ganados</div>
                   </div>
                   
                   <div className="text-center p-4 bg-muted/50 rounded-lg">
-                    <div className="text-2xl font-bold text-red-600">{statistics?.totalLostBets || 0}</div>
+                    <div className="text-2xl font-bold text-red-600">{formatStatNumber(statistics?.totalLostBets)}</div>
                     <div className="text-sm text-muted-foreground">Boletos Perdidos</div>
                   </div>
                   
@@ -155,7 +156,7 @@ export const LeagueStatisticsModal: React.FC<LeagueStatisticsModalProps> = ({
                   <span className="text-sm font-medium">Mercado Favorito:</span>
                   <div className="text-right">
                     <div className="text-sm text-foreground">{statistics?.mostPopularMarket || 'N/A'}</div>
-                    <div className="text-xs text-muted-foreground">{statistics?.mostPopularMarketBets || 0} boletos</div>
+                    <div className="text-xs text-muted-foreground">{formatStatNumber(statistics?.mostPopularMarketBets)} boletos</div>
                   </div>
                 </div>
                 
@@ -163,7 +164,7 @@ export const LeagueStatisticsModal: React.FC<LeagueStatisticsModalProps> = ({
                   <span className="text-sm font-medium">Equipo Favorito:</span>
                   <div className="text-right">
                     <div className="text-sm text-foreground">{statistics?.mostPopularTeam || 'N/A'}</div>
-                    <div className="text-xs text-muted-foreground">{statistics?.mostPopularTeamBets || 0} boletos</div>
+                    <div className="text-xs text-muted-foreground">{formatStatNumber(statistics?.mostPopularTeamBets)} boletos</div>
                   </div>
                 </div>
                 
@@ -187,7 +188,7 @@ export const LeagueStatisticsModal: React.FC<LeagueStatisticsModalProps> = ({
                   <div className="flex items-center gap-2">
                     <Award className="h-4 w-4 text-yellow-500" />
                     <span className="text-sm font-medium">{statistics?.topPlayerByWins.username || 'N/A'}</span>
-                    <span className="text-xs text-muted-foreground">({statistics?.topPlayerByWins.wins || 0})</span>
+                    <span className="text-xs text-muted-foreground">({formatStatNumber(statistics?.topPlayerByWins.wins)})</span>
                   </div>
                 </div>
                 
@@ -205,7 +206,7 @@ export const LeagueStatisticsModal: React.FC<LeagueStatisticsModalProps> = ({
                   <div className="flex items-center gap-2">
                     <BarChart3 className="h-4 w-4 text-blue-500" />
                     <span className="text-sm font-medium">{statistics?.topPlayerByBets.username || 'N/A'}</span>
-                    <span className="text-xs text-muted-foreground">({statistics?.topPlayerByBets.bets || 0})</span>
+                    <span className="text-xs text-muted-foreground">({formatStatNumber(statistics?.topPlayerByBets.bets)})</span>
                   </div>
                 </div>
                 
@@ -214,7 +215,7 @@ export const LeagueStatisticsModal: React.FC<LeagueStatisticsModalProps> = ({
                   <div className="flex items-center gap-2">
                     <TrendingUp className="h-4 w-4 text-[#FFC72C]" />
                     <span className="text-sm font-medium">{statistics?.topPlayerByBiggestWin.username || 'N/A'}</span>
-                    <span className="text-xs text-muted-foreground">({statistics?.topPlayerByBiggestWin.biggestWin || 0} pts)</span>
+                    <span className="text-xs text-muted-foreground">({formatStatNumber(statistics?.topPlayerByBiggestWin.biggestWin)} pts)</span>
                   </div>
                 </div>
                 
@@ -231,7 +232,7 @@ export const LeagueStatisticsModal: React.FC<LeagueStatisticsModalProps> = ({
                   <span className="text-sm font-medium">Total Jugadores:</span>
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-blue-500" />
-                    <span className="text-sm font-medium">{statistics?.totalPlayers || 0}</span>
+                    <span className="text-sm font-medium">{formatStatNumber(statistics?.totalPlayers)}</span>
                   </div>
                 </div>
               </div>
