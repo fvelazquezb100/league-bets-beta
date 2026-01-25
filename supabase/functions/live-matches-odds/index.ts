@@ -1,5 +1,5 @@
 // @ts-ignore - Deno import URL
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 // @ts-ignore - Deno global
 declare const Deno: any;

@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -52,8 +52,25 @@ serve(async (req) => {
     };
     console.log("Service role key info:", keyInfo);
     
+    if (!SUPABASE_URL) {
+      const errorResponse = {
+        error: "Missing SUPABASE_URL secret",
+        code: "MISSING_SUPABASE_URL",
+        hint: "Set SUPABASE_URL in Edge Function secrets (usually auto-injected).",
+      };
+      console.error("ERROR: Missing Supabase URL");
+      return new Response(JSON.stringify(errorResponse), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    
     if (!SERVICE_ROLE_KEY) {
-      const errorResponse = { error: "Missing SUPABASE_SERVICE_ROLE_KEY secret", keyInfo };
+      const errorResponse = {
+        error: "Missing SUPABASE_SERVICE_ROLE_KEY secret",
+        code: "MISSING_SERVICE_ROLE_KEY",
+        hint: "Set SUPABASE_SERVICE_ROLE_KEY in Edge Function secrets (Dashboard → Project Settings → Edge Functions).",
+      };
       console.error("ERROR: Missing service role key");
       return new Response(JSON.stringify(errorResponse), {
         status: 500,
@@ -63,7 +80,7 @@ serve(async (req) => {
 
     // Create Supabase admin client
     console.log("Creating Supabase client with service role key");
-    const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+    const supabaseAdmin = createClient(SUPABASE_URL!, SERVICE_ROLE_KEY, {
       auth: {
         autoRefreshToken: false,
         persistSession: false
@@ -76,7 +93,11 @@ serve(async (req) => {
     
     const INTERNAL_SECRET = Deno.env.get("INTERNAL_FUNCTION_SECRET");
     if (!INTERNAL_SECRET) {
-      const errorResponse = { error: "Missing INTERNAL_FUNCTION_SECRET", keyInfo };
+      const errorResponse = {
+        error: "Missing INTERNAL_FUNCTION_SECRET",
+        code: "MISSING_INTERNAL_SECRET",
+        hint: "Set INTERNAL_FUNCTION_SECRET in Edge Function secrets (Dashboard → Project Settings → Edge Functions). Same value as in Vault for cron.",
+      };
       console.error("ERROR: Missing internal function secret");
       return new Response(JSON.stringify(errorResponse), {
         status: 500,
@@ -96,21 +117,43 @@ serve(async (req) => {
     console.log(`Function invocation took ${invokeEndTime - invokeStartTime}ms`);
 
     if (error) {
-      console.error("Function invocation error:", error);
-      console.error("Error details:", JSON.stringify(error, null, 2));
-      
-      // Try to get more detailed error information from the response
-      let detailedError = String(error);
-      try {
-        if (error.context && error.context.json) {
-          const errorBody = await error.context.json();
-          detailedError = errorBody.error || errorBody.message || String(error);
-        }
-      } catch (e) {
-        console.log("Could not parse error response body");
+      console.error("Function invocation error:", error.message);
+      const resp = error.context as Response | undefined;
+      if (resp) {
+        console.error("process-matchday-results response status:", resp.status, resp.statusText);
       }
+
+      let innerError = "";
+      let innerCode: string | undefined;
+      let rawBody = "";
+      try {
+        if (resp && typeof resp.text === "function") {
+          rawBody = await resp.text();
+          console.error("process-matchday-results response body (raw):", rawBody);
+        }
+      } catch (_) {
+        console.error("Could not read process-matchday-results response body");
+      }
+      if (rawBody) {
+        try {
+          const errorBody = JSON.parse(rawBody) as { error?: string; message?: string; code?: string };
+          innerError = errorBody.error || errorBody.message || "";
+          innerCode = errorBody.code;
+        } catch (_) {}
+      }
+      const fallbackError = innerError || rawBody || error.message;
       
-      throw new Error(detailedError);
+      const errorResponse = {
+        error: fallbackError,
+        code: innerCode ?? "PROCESS_MATCHDAY_ERROR",
+        source: "process-matchday-results",
+        keyInfo,
+        timing: { totalMs: invokeEndTime - startTime, invokeMs: invokeEndTime - invokeStartTime },
+      };
+      return new Response(JSON.stringify(errorResponse), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     console.log("Function invocation successful");
@@ -132,26 +175,29 @@ serve(async (req) => {
     });
   } catch (e) {
     const endTime = Date.now();
+    const err = e instanceof Error ? e : new Error(String(e));
     console.error("=== ERROR in secure-run-process-matchday-results ===");
-    console.error("Error message:", e.message);
-    console.error("Error stack:", e.stack);
+    console.error("Error message:", err.message);
+    console.error("Error stack:", err.stack);
     console.error("Full error object:", JSON.stringify(e, null, 2));
     console.error(`Error occurred after ${endTime - startTime}ms`);
     
+    const sk = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const keyInfo = {
-      present: !!Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
-      prefix: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY").slice(0, 3) : "none",
-      isLegacyJWT: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY").startsWith("eyJ") : false,
-      length: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.length ?? 0,
+      present: !!sk,
+      prefix: sk ? sk.slice(0, 3) : "none",
+      isLegacyJWT: sk ? sk.startsWith("eyJ") : false,
+      length: sk?.length ?? 0,
     };
     
-    return new Response(JSON.stringify({ 
-      error: String(e), 
+    const errorResponse = {
+      error: err.message,
+      code: "SECURE_RUN_UNEXPECTED",
+      source: "secure-run-process-matchday-results",
       keyInfo,
-      timing: {
-        totalMs: endTime - startTime
-      }
-    }), {
+      timing: { totalMs: endTime - startTime },
+    };
+    return new Response(JSON.stringify(errorResponse), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
