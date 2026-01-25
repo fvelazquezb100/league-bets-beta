@@ -762,19 +762,11 @@ const Bets = () => {
     }
 
     const dateStr = date.toISOString().split('T')[0];
-    const hasAvailability = availabilityMap.has(dateStr);
     const isEnabled = availabilityMap.get(dateStr) ?? false;
 
-    // Only show matches for days that exist in the league's availability control
-    // (except for Selecciones, Copa del Rey and Supercopa which show all matches)
-    if (!hasAvailability && !isSelecciones && !isCoparey && !isSupercopa && !developerMode) {
-      // Skip matches for days not in this league's availability
-      return;
-    }
-
     // All leagues use the same availability logic:
-    // - Show in "Partidos disponibles" if date is enabled OR developer mode is active
-    // - Show in "Próximos encuentros" if date is not enabled
+    // - Show in "Partidos disponibles" if date is enabled in match_availability_control
+    // - Show in "Próximos encuentros" if date is not enabled (or doesn't exist in availability)
     if (isEnabled || developerMode) {
       liveBettingMatches.push(match);
     } else {
