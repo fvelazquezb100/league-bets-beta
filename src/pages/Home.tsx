@@ -9,6 +9,7 @@ import { NewsBoard } from '@/components/NewsBoard';
 import { useMatchOdds, type MatchData } from '@/hooks/useMatchOdds';
 import { useUserBetHistory } from '@/hooks/useUserBets';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useAvailableLeagues } from '@/hooks/useAvailableLeagues';
 
 
 
@@ -32,9 +33,25 @@ export const Home = () => {
   const { data: userProfile } = useUserProfile(user?.id);
   const { data: allMatches = [], isLoading: matchesLoading } = useMatchOdds();
   const { data: allBets = [], isLoading: betsLoading } = useUserBetHistory(user?.id);
+  const { data: availableLeagueIds = [] } = useAvailableLeagues(user?.id);
 
-  // Derived data
-  const upcoming = allMatches.slice(0, 2); // Top 2 matches
+  // Filter matches by available leagues, sort by date, and get upcoming 3
+  const upcoming = allMatches
+    .filter(match => {
+      // If no available leagues data yet, show all matches
+      if (!availableLeagueIds || availableLeagueIds.length === 0) return true;
+      // Filter by league.id or teams.league_id (Champions=2, Europa=3, La Liga=140, etc.)
+      const leagueId = match.league?.id || match.teams?.league_id;
+      return leagueId && availableLeagueIds.includes(leagueId);
+    })
+    .sort((a, b) => {
+      // Sort by fixture date (upcoming first)
+      const dateA = new Date(a.fixture?.date || 0).getTime();
+      const dateB = new Date(b.fixture?.date || 0).getTime();
+      return dateA - dateB;
+    })
+    .slice(0, 3); // Top 3 upcoming matches
+  
   const recentBets = allBets.slice(0, 3); // Latest 3 bets
 
   // Loading states
@@ -147,6 +164,10 @@ export const Home = () => {
                   <Skeleton className="h-5 w-2/3 mb-2 bg-muted" />
                   <Skeleton className="h-4 w-1/3 bg-muted" />
                 </div>
+                <div className="p-4 rounded-lg bg-muted/50 border border-border">
+                  <Skeleton className="h-5 w-2/3 mb-2 bg-muted" />
+                  <Skeleton className="h-4 w-1/3 bg-muted" />
+                </div>
               </>
             ) : upcoming.length === 0 ? (
               <p className="text-muted-foreground">No hay partidos disponibles en este momento.</p>
@@ -212,7 +233,25 @@ export const Home = () => {
                 // Get bet description based on type and stake
                 let betDescription;
                 if (bet.bet_type === 'combo') {
-                  betDescription = `Combinada @ €${stake.toFixed(0)}`;
+                  // Get unique match names from bet_selections
+                  const matchNames: string[] = [];
+                  if (bet.bet_selections && bet.bet_selections.length > 0) {
+                    bet.bet_selections.forEach((selection) => {
+                      if (selection.match_description && !matchNames.includes(selection.match_description)) {
+                        matchNames.push(selection.match_description);
+                      }
+                    });
+                  }
+                  
+                  // Format: show up to 3 matches, add "..." if more
+                  if (matchNames.length > 0) {
+                    const displayedMatches = matchNames.slice(0, 3);
+                    const matchesText = displayedMatches.join(', ');
+                    const ellipsis = matchNames.length > 3 ? '...' : '';
+                    betDescription = `Combinada (${matchesText}${ellipsis}) @ €${stake.toFixed(0)}`;
+                  } else {
+                    betDescription = `Combinada @ €${stake.toFixed(0)}`;
+                  }
                 } else {
                   betDescription = `${bet.match_description || 'Partido'} @ €${stake.toFixed(0)}`;
                 }

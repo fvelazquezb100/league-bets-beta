@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
+import { Instagram, Facebook } from 'lucide-react';
 import { APP_CONFIG } from '@/config/app';
 import { useCookieConsent } from '@/hooks/useCookieConsent';
 
@@ -74,8 +75,28 @@ export const SiteFooter: React.FC = () => {
                 </div>
               </td>
               
-              {/* Columna 2: Vacía */}
+              {/* Columna 2: Redes sociales */}
               <td className="align-top text-center w-1/3">
+                <div className="flex items-center justify-center gap-4">
+                  <a 
+                    href="https://www.instagram.com/jamboleague/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-foreground hover:text-[#FFC72C] transition-colors"
+                    aria-label="Instagram"
+                  >
+                    <Instagram className="h-6 w-6" />
+                  </a>
+                  <a 
+                    href="https://www.facebook.com/profile.php?id=61586810945924" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-foreground hover:text-[#FFC72C] transition-colors"
+                    aria-label="Facebook"
+                  >
+                    <Facebook className="h-6 w-6" />
+                  </a>
+                </div>
               </td>
               
               {/* Columna 3: Enlaces legales */}

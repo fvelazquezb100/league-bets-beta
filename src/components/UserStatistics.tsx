@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { BarChart3, TrendingUp, Target, DollarSign, Calendar, Trophy, Users, Zap, TrendingDown, Award } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { cn } from '@/lib/utils';
+import { cn, formatStatNumber } from '@/lib/utils';
 
 interface UserStats {
   totalBets: number;
@@ -655,21 +655,21 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                 <Card>
                   <CardContent className="p-4 text-center">
                     <BarChart3 className="w-6 h-6 mx-auto mb-2 text-blue-500" />
-                    <div className="text-2xl font-bold">{stats.totalBets}</div>
+                    <div className="text-2xl font-bold">{formatStatNumber(stats.totalBets)}</div>
                     <div className="text-sm text-muted-foreground">Total</div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4 text-center">
                     <DollarSign className="w-6 h-6 mx-auto mb-2 text-green-500" />
-                    <div className="text-2xl font-bold">{stats.totalStake.toFixed(0)}</div>
+                    <div className="text-2xl font-bold">{formatStatNumber(stats.totalStake)}</div>
                     <div className="text-sm text-muted-foreground">Total de puntos invertidos</div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4 text-center">
                     <Trophy className="w-6 h-6 mx-auto mb-2 text-yellow-500" />
-                    <div className="text-2xl font-bold">{stats.totalPayout.toFixed(0)}</div>
+                    <div className="text-2xl font-bold">{formatStatNumber(stats.totalPayout)}</div>
                     <div className="text-sm text-muted-foreground">Total Ganado</div>
                   </CardContent>
                 </Card>
@@ -729,7 +729,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                       <CardContent>
                         <div className="text-2xl font-bold mb-1">{stats.favoriteMarket}</div>
                         <div className="text-sm text-muted-foreground">
-                          {stats.marketStats.find(m => m.market === stats.favoriteMarket)?.bets || 0} boletos
+                          {formatStatNumber(stats.marketStats.find(m => m.market === stats.favoriteMarket)?.bets || 0)} boletos
                         </div>
                       </CardContent>
                     </Card>
@@ -759,7 +759,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                       <CardContent>
                         <div className="text-2xl font-bold mb-1">{stats.favoriteLeague}</div>
                         <div className="text-sm text-muted-foreground">
-                          {stats.favoriteLeagueBets} boletos
+                          {formatStatNumber(stats.favoriteLeagueBets)} boletos
                         </div>
                       </CardContent>
                     </Card>
@@ -774,7 +774,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                       <CardContent>
                         <div className="text-2xl font-bold mb-1">{stats.favoriteTeam}</div>
                         <div className="text-sm text-muted-foreground">
-                          {stats.teamStats.find(t => t.team === stats.favoriteTeam)?.bets || 0} boletos
+                          {formatStatNumber(stats.teamStats.find(t => t.team === stats.favoriteTeam)?.bets || 0)} boletos
                         </div>
                       </CardContent>
                     </Card>
@@ -800,7 +800,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-2xl font-bold mb-1">{stats.biggestWin.toFixed(0)} pts</div>
+                        <div className="text-2xl font-bold mb-1">{formatStatNumber(stats.biggestWin)} pts</div>
                         <div className="text-sm text-muted-foreground">
                           {stats.biggestWinMatch}
                           {stats.biggestWinResult && (
@@ -849,7 +849,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                       <CardContent>
                         <div className="text-2xl font-bold mb-1">{stats.favoriteMarket}</div>
                         <div className="text-sm text-muted-foreground">
-                          {stats.marketStats.find(m => m.market === stats.favoriteMarket)?.bets || 0} boletos
+                          {formatStatNumber(stats.marketStats.find(m => m.market === stats.favoriteMarket)?.bets || 0)} boletos
                         </div>
                       </CardContent>
                     </Card>
@@ -879,7 +879,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                       <CardContent>
                         <div className="text-2xl font-bold mb-1">{stats.favoriteLeague}</div>
                         <div className="text-sm text-muted-foreground">
-                          {stats.favoriteLeagueBets} boletos
+                          {formatStatNumber(stats.favoriteLeagueBets)} boletos
                         </div>
                       </CardContent>
                     </Card>
@@ -894,7 +894,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                       <CardContent>
                         <div className="text-2xl font-bold mb-1">{stats.favoriteTeam}</div>
                         <div className="text-sm text-muted-foreground">
-                          {stats.teamStats.find(t => t.team === stats.favoriteTeam)?.bets || 0} boletos
+                          {formatStatNumber(stats.teamStats.find(t => t.team === stats.favoriteTeam)?.bets || 0)} boletos
                         </div>
                       </CardContent>
                     </Card>
@@ -920,7 +920,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-2xl font-bold mb-1">{stats.biggestWin.toFixed(0)} pts</div>
+                        <div className="text-2xl font-bold mb-1">{formatStatNumber(stats.biggestWin)} pts</div>
                         <div className="text-sm text-muted-foreground">
                           {stats.biggestWinMatch}
                           {stats.biggestWinResult && (
@@ -962,13 +962,13 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                                     ? 'bg-white dark:bg-card border-[#FFC72C] text-[#2D2D2D] dark:text-foreground' 
                                     : 'bg-white dark:bg-card border-red-500 text-red-600 dark:text-red-400'
                                 )}>
-                                  {isPositive ? '+' : ''}{profit.toFixed(0)} pts
+                                  {isPositive ? '+' : ''}{formatStatNumber(profit)} pts
                                 </Badge>
                                 <Badge className="bg-white dark:bg-card border-[#FFC72C] text-[#2D2D2D] dark:text-foreground border-2 cursor-default">
                                   {market.successRate.toFixed(1)}%
                                 </Badge>
                                 <Badge className="bg-white dark:bg-card border-[#FFC72C] text-[#2D2D2D] dark:text-foreground border-2 cursor-default">
-                                  {market.bets} boletos
+                                  {formatStatNumber(market.bets)} boletos
                                 </Badge>
                               </div>
                             </div>
@@ -1028,13 +1028,13 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                                     ? 'bg-white dark:bg-card border-[#FFC72C] text-[#2D2D2D] dark:text-foreground' 
                                     : 'bg-white dark:bg-card border-red-500 text-red-600 dark:text-red-400'
                                 )}>
-                                  {isPositive ? '+' : ''}{profit.toFixed(0)} pts
+                                  {isPositive ? '+' : ''}{formatStatNumber(profit)} pts
                                 </Badge>
                                 <Badge className="bg-white dark:bg-card border-[#FFC72C] text-[#2D2D2D] dark:text-foreground border-2 cursor-default">
                                   {team.successRate.toFixed(1)}%
                                 </Badge>
                                 <Badge className="bg-white dark:bg-card border-[#FFC72C] text-[#2D2D2D] dark:text-foreground border-2 cursor-default">
-                                  {team.bets} boletos
+                                  {formatStatNumber(team.bets)} boletos
                                 </Badge>
                               </div>
                             </div>
@@ -1079,7 +1079,7 @@ export const UserStatistics = ({ isOpen, onClose }: UserStatisticsProps) => {
                           <div className="text-sm text-muted-foreground">{week.bets} boletos</div>
                         </div>
                         <div className={`text-lg font-bold ${week.profit >= 0 ? 'text-[#FFC72C]' : 'text-red-500'}`}>
-                          {week.profit >= 0 ? '+' : ''}{week.profit.toFixed(0)} pts
+                          {week.profit >= 0 ? '+' : ''}{formatStatNumber(week.profit)} pts
                         </div>
                       </div>
                     ))}

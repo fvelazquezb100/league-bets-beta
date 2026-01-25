@@ -1,34 +1,67 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
+
+const THEME_STORAGE_KEY = 'jambol-theme';
 
 /**
  * ThemeProvider applies the user's theme preference globally
  * This ensures the theme persists across all pages, including those without MainLayout
+ * Uses localStorage as backup to ensure immediate theme application
  */
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
-  const { data: userProfile } = useUserProfile(user?.id);
+  const { user, loading: authLoading } = useAuth();
+  const { data: userProfile, isLoading: profileLoading } = useUserProfile(user?.id);
+  const themeAppliedRef = useRef(false);
 
-  // Apply theme based on user profile globally
-  useEffect(() => {
+  // Apply theme function
+  const applyTheme = (theme: 'light' | 'dark') => {
     const root = document.documentElement;
-    const theme = (userProfile?.theme || 'light') as 'light' | 'dark';
-    
     if (theme === 'dark') {
       root.classList.add('dark');
     } else {
       root.classList.remove('dark');
     }
-  }, [userProfile?.theme]);
+    // Store in localStorage as backup
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+    themeAppliedRef.current = true;
+  };
 
-  // Also apply theme on initial load if user is not logged in (default to light)
+  // Apply theme immediately on mount from localStorage (before profile loads)
   useEffect(() => {
-    if (!user) {
-      const root = document.documentElement;
-      root.classList.remove('dark');
+    if (themeAppliedRef.current) return;
+    
+    const storedTheme = localStorage.getItem(THEME_STORAGE_KEY) as 'light' | 'dark' | null;
+    if (storedTheme && (storedTheme === 'light' || storedTheme === 'dark')) {
+      applyTheme(storedTheme);
+    } else {
+      // Default to light if no stored theme
+      applyTheme('light');
     }
-  }, [user]);
+  }, []);
+
+  // Apply theme based on user profile when loaded
+  useEffect(() => {
+    if (authLoading || profileLoading) return;
+    
+    if (user && userProfile?.theme) {
+      const theme = (userProfile.theme || 'light') as 'light' | 'dark';
+      applyTheme(theme);
+    } else if (!user) {
+      // If user logs out, default to light but keep localStorage value
+      applyTheme('light');
+    }
+  }, [user, authLoading, userProfile?.theme, profileLoading]);
+
+  // Sync localStorage when theme changes in profile
+  useEffect(() => {
+    if (userProfile?.theme) {
+      const theme = (userProfile.theme || 'light') as 'light' | 'dark';
+      if (localStorage.getItem(THEME_STORAGE_KEY) !== theme) {
+        applyTheme(theme);
+      }
+    }
+  }, [userProfile?.theme]);
 
   return <>{children}</>;
 };

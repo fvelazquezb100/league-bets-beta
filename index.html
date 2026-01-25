@@ -369,6 +369,22 @@
   </head>
 
   <body>
+    <script>
+      // Apply theme immediately from localStorage before React loads to prevent flash
+      (function() {
+        try {
+          const storedTheme = localStorage.getItem('jambol-theme');
+          const root = document.documentElement;
+          if (storedTheme === 'dark') {
+            root.classList.add('dark');
+          } else {
+            root.classList.remove('dark');
+          }
+        } catch (e) {
+          // Ignore localStorage errors
+        }
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
